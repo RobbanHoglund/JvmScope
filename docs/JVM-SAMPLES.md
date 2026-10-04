@@ -105,6 +105,16 @@ generated README/results. They do not download JVMs. When a Java release arrives
 extend the target manifest and rerun that version and relevant vendors. This checks
 input compatibility, not whether JvmScope's Java 25 server can run on that old JDK.
 
+TLS replay checks diagnostic families against the controlled scenario and endpoint
+role. An untrusted client must report trust evidence; the other endpoint may only
+observe a remote rejection or socket abort. A protocol-version error cannot stand
+in for a trust failure. Client-authentication cases also require CertificateRequest
+and a client Certificate message, a presented subject for mutual authentication,
+and an explicit empty certificate list for TLS 1.3 cases without a client certificate.
+Incomplete or contradictory evidence fails validation instead of being counted as
+verified. Capture jobs retain per-case validation errors; imports validate the
+entire bundle before writing any evidence or updating the generated matrix.
+
 ## Local pilot
 
 Use a Java 8 compiler plus the runtime being tested (absolute JDK home paths):

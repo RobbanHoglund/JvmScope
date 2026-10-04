@@ -30,6 +30,23 @@ export function selection(input, allowed, label) {
     assert.ok(values.length && values.every(v => allowed.map(String).includes(v)), `Unknown ${label}: ${input}`);
     return values.map(v => allowed.find(a => String(a) === v));
 }
+function tlsDiagnosticFamily(interaction, oracle) {
+    const reason = String(interaction.failureReason || '');
+    const alertMatch = reason.match(/Fatal\s+\(([A-Z_]+)\)|(?:Received|Sent) fatal alert:\s*([a-z_]+)/i);
+    const alert = (alertMatch?.[1] || alertMatch?.[2] || '').toLowerCase();
+    if (alert && !['certificate_unknown', 'unknown_ca', 'certificate_required', 'bad_certificate',
+        'handshake_failure', 'unexpected_message'].includes(alert)) return 'other';
+    if (/PKIX path building failed|unable to find valid certification path|\b(?:certificate_unknown|unknown_ca)\b/i.test(reason)) return 'trust';
+    if (/empty (?:client |server )?certificate chain|\b(?:certificate_required|bad_certificate)\b/i.test(reason)) return 'client-auth';
+    if (/broken pipe|connection reset|unexpected EOF|peer closed connection/i.test(reason)
+        || /^Fatal \(HANDSHAKE_FAILURE\): Couldn't kickstart handshaking/i.test(reason)
+        // Some SunJSSE releases wrap an OS socket abort in a local alert. The
+        // independent endpoint exception must confirm that this was transport.
+        || (/SocketException$/.test(oracle.exception)
+            && /^(?:Fatal \(UNEXPECTED_MESSAGE\):|Sent fatal alert: unexpected_message)/i.test(reason))) return 'remote-abort';
+    if (/^Received fatal alert: handshake_failure$/i.test(reason)) return 'remote-rejection';
+    return 'other';
+}
 export function validateCase(item, directory) {
     assert.ok(['tda', 'tls'].includes(item.analyzer));
     assert.ok(item.expected && typeof item.expected === 'object', 'Missing independent workload oracle');
@@ -40,6 +57,7 @@ export function validateCase(item, directory) {
     if (item.analyzer === 'tls') {
         assert.ok(['success', 'untrusted', 'mutual', 'optional-client-auth', 'required-client-auth', 'resumption'].includes(e.scenario));
         assert.ok(['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'].includes(e.protocol));
+        assert.ok(['client', 'server'].includes(e.side), 'Missing or invalid endpoint side');
         const expectedCount = e.scenario === 'resumption' ? 2 : 1;
         assert.equal(e.results.length, expectedCount, 'Workload did not complete all requested connections');
         const failure = ['untrusted', 'required-client-auth'].includes(e.scenario);
@@ -51,10 +69,24 @@ export function validateCase(item, directory) {
         assert.equal(parsed.interactions.length, expectedCount, 'Handshake correlation changed');
         for (const [index, it] of parsed.interactions.entries()) {
             assert.equal(it.outcome, failure ? 'failure' : 'success');
-            if (failure) assert.ok(it.failureReason && /cert|trust|fatal|handshake|broken|reset|socket|connection/i.test(it.failureReason), 'Missing TLS diagnostic');
-            else {
+            if (failure) {
+                const family = tlsDiagnosticFamily(it, e.results[index]);
+                const allowed = e.scenario === 'untrusted'
+                    ? (e.side === 'client' ? ['trust'] : ['trust', 'remote-abort', 'remote-rejection'])
+                    : (e.side === 'server' ? ['client-auth'] : ['client-auth', 'remote-abort', 'remote-rejection']);
+                assert.ok(allowed.includes(family), `Wrong TLS diagnostic family for ${e.scenario}/${e.side}: ${it.failureReason || 'missing'}`);
+            } else {
                 assert.equal(it.tlsVersion, e.protocol);
                 assert.equal(it.cipherSuite, e.results[index].cipher);
+            }
+            if (['mutual', 'optional-client-auth', 'required-client-auth'].includes(e.scenario)) {
+                assert.ok(it.sawCertRequest, 'Missing captured CertificateRequest');
+                assert.ok(it.sawProducedClientCertificate, 'Missing captured client Certificate message');
+                if (e.scenario === 'mutual') assert.ok(it.clientCertSubject && !it.clientCertificateEmpty, 'Missing presented client certificate');
+                else {
+                    assert.ok(!it.clientCertSubject, 'Expected an absent client certificate');
+                    if (e.protocol === 'TLSv1.3') assert.ok(it.clientCertificateEmpty, 'Missing explicit empty client certificate list');
+                }
             }
             assert.ok(it.rawLines.length && text.replaceAll('\r\n', '\n').includes(it.rawLines.join('\n')), 'Raw evidence mapping changed');
         }

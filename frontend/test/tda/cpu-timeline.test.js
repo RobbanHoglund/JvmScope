@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { analyzeThreadDumpData } from '../../assets/javautils/tda/analysis.js';
 
 import {
     buildCpuTimelineModel,
@@ -15,6 +16,8 @@ function occurrence(dumpIndex, name, ratePercent, overrides = {}) {
         cpuDeltaMs: ratePercent == null ? null : ratePercent * 10,
         cpuIntervalMs: 1000,
         cpuRateBasis: 'snapshot-time',
+        cpuIntervalQuality: ratePercent == null ? 'unavailable' : 'reliable',
+        cpuIntervalUncertaintyMs: ratePercent == null ? null : 1,
         javaState: 'RUNNABLE',
         ...overrides,
     };
@@ -169,4 +172,34 @@ test('omits series without computed CPU rates', () => {
 
     assert.deepEqual(model.series, []);
     assert.equal(model.maximumRatePercent, null);
+});
+
+test('only reliable intervals contribute to measured ranking, averages and points', () => {
+    const worker = series('mixed-worker', [null, 150, 30, 50, 200, 300]);
+    ['unavailable', 'estimated', 'estimated', 'reliable', 'conflicting', undefined].forEach((quality, index) => {
+        worker.occurrences[index].thread.cpuIntervalQuality = quality;
+    });
+    const model = buildCpuTimelineModel({ dumps: Array.from({ length: 6 }, (_, index) => ({ index })),
+        series: [worker, series('measured-worker', [null, 60])] });
+    assert.deepEqual(model.series.map(s => s.name), ['measured-worker', 'mixed-worker']);
+    assert.equal(model.maximumRatePercent, 60);
+    const measured = model.series[1];
+    assert.equal(measured.maximumRatePercent, 50);
+    assert.equal(measured.averageRatePercent, 50);
+    assert.deepEqual(measured.points.map(p => p.dumpIndex), [3]);
+    assert.equal(measured.points[0].intervalQuality, 'reliable');
+    assert.equal(measured.points[0].intervalUncertaintyMs, 1);
+});
+
+test('real parsed coarse clocks are excluded while elapsed-counter measurements remain available', () => {
+    const dump = (second, cpu, elapsed = '') => `2026-10-04 12:00:0${second}\nFull thread dump OpenJDK 64-Bit Server VM:\n\n"mixed-worker" #11 prio=5 os_prio=0 cpu=${cpu}ms ${elapsed ? `elapsed=${elapsed}s ` : ''}tid=0x11 nid=0x65 runnable [0x1100]\n   java.lang.Thread.State: RUNNABLE\n    at example.Work.run(Work.java:1)\n\nJNI global refs: 1\n`;
+    const analysis = analyzeThreadDumpData([dump(0, 100), dump(1, 1600), dump(2, 1900, '2.000'),
+        dump(3, 2400, '3.000'), dump(4, 2700, '30.000')].join('\n'));
+    assert.deepEqual(analysis.parsedDumps.map(d => d.threads[0].cpuIntervalQuality), ['unavailable', 'estimated', 'estimated', 'reliable', 'conflicting']);
+    const model = buildCpuTimelineModel({ dumps: analysis.parsedDumps, series: analysis.threadSeries });
+    assert.equal(model.maximumRatePercent, 50);
+    assert.deepEqual(model.series[0].points.map(p => p.dumpIndex), [3]);
+    const coarse = buildCpuTimelineModel({ dumps: analysis.parsedDumps.slice(0, 2), series: analysis.threadSeries });
+    assert.equal(coarse.measuredSeriesCount, 0);
+    assert.equal(coarse.maximumRatePercent, null);
 });

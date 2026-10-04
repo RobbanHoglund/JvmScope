@@ -478,11 +478,23 @@ export function splitIntoInteractionsFromLines(lines) {
         const key = pl.tid ? 'tid:' + pl.tid.toUpperCase() : 'legacy';
         let current = currentByThread.get(key);
         const clientHello = /^(?:Produced|Consuming|Legacy) ClientHello\b/.test(pl.msg);
+        let boundaryWarning = null;
         if (clientHello && current?.hasAnyContent()) {
             if (current.sawClientHello && current.helloRetryPending && !current.sawHandshakeFinished && !current.failureReason) current.helloRetryPending = false;
-            else { finish(key); current = null; }
+            else {
+                // A JVM thread is not a connection ID. A new ClientHello cannot
+                // retire an unfinished handshake or make its later records attributable.
+                if (pl.tid && current.isRealHandshakeInteraction()
+                    && (isTlsCorrelationAmbiguous(current) || (!current.sawHandshakeFinished && !current.failureReason))) {
+                    boundaryWarning = 'A new ClientHello shares a JVM thread with an unresolved handshake; subsequent records have no reliable connection identity.';
+                    current.markCorrelationAmbiguous(boundaryWarning);
+                }
+                finish(key);
+                current = null;
+            }
         }
         if (!current) { current = new Interaction(); currentByThread.set(key, current); }
+        if (boundaryWarning) current.markCorrelationAmbiguous(boundaryWarning);
         current.observedRecords.push({
             message: pl.msg, epochMillis: pl.epochMillis, tsRaw: pl.tsRaw,
             format: pl.format, prefixLength: record.prefixLength,

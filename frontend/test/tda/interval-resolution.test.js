@@ -60,6 +60,7 @@ test('coarse estimates stay visible but cannot establish CPU or allocation heat'
     annotateThreadChanges([{ index: 0, threads: [previous] }, { index: 1, threads: [current] }], []);
     assert.deepEqual(current.snapshotChange.changes, []);
     assert.match(buildThreadDetailsViewModel(current).coreFacts.find(fact => fact.label === 'Allocation rate').value, /^≈ /);
+    assert.equal(buildThreadDetailsViewModel(current).coreFacts.find(fact => fact.label === 'CPU rate').value, '≈ 156.0%');
     assert.equal(buildThreadDependencyGraph([current]).threadNodes[0].cpuIntervalQuality, 'estimated');
 });
 
@@ -81,6 +82,7 @@ test('an interval conflict retains deltas and prevents both normalized rates', (
     assert.equal(t.cpuDeltaStatus, 'interval-conflict');
     assert.equal(t.cpuDeltaMs, 10);
     assert.equal(t.cpuRatePercent, null);
+    assert.equal(buildThreadDetailsViewModel(t).coreFacts.find(fact => fact.label === 'CPU rate').value, '—');
     assert.equal(t.allocatedDeltaBytes, 1024);
     assert.equal(t.allocationDeltaStatus, 'interval-conflict');
     assert.equal(t.allocationRateBytesPerSecond, null);

@@ -147,6 +147,12 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
         { label: 'Daemon', value: typeof thread.daemon === 'boolean' ? (thread.daemon ? 'Yes' : 'No') : '—' },
         { label: 'CPU total', value: formatMetric(thread.cpuMs, 'ms') },
         { label: 'CPU delta', value: formatMetric(thread.cpuDeltaMs, 'ms') },
+        {
+            label: 'CPU rate',
+            value: Number.isFinite(thread.cpuRatePercent)
+                ? `${thread.cpuIntervalQuality === 'estimated' ? '≈ ' : ''}${thread.cpuRatePercent.toFixed(1)}%`
+                : '—',
+        },
         { label: 'Allocated total', value: hasValue(thread.allocated) ? String(thread.allocated) : formatBytes(thread.allocatedBytes) },
         { label: 'Allocation delta', value: formatBytes(thread.allocatedDeltaBytes) },
         {

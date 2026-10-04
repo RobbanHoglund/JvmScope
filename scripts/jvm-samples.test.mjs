@@ -83,13 +83,52 @@ test('evidence paths reject absolute paths, traversal, empty segments and symlin
 test('corrupt or semantically wrong captures abort the entire import before repository writes', t => {
     const root = scaffold(t), raw = Buffer.from('not a TLS log');
     const c = { analyzer: 'tls', id: 'bad', file: 'bad.txt', status: 'verified', bytes: raw.length, sha256: sha256(raw),
-        expected: { protocol: 'TLSv1.2', scenario: 'success', results: [{ outcome: 'success', cipher: 'fake' }] } };
+        expected: { protocol: 'TLSv1.2', scenario: 'success', side: 'client', results: [{ outcome: 'success', cipher: 'fake' }] } };
     const b = bundle(t, [c]); b.report.runtime = { 'java.runtime.version': '25+36', 'java.vm.name': 'OpenJDK 64-Bit Server VM', provider: 'SunJSSE 25.0' };
     saveJson(join(b.path, 'temurin-25/report.json'), b.report);
     writeFileSync(join(b.path, 'temurin-25/bad.txt'), raw);
     assert.throws(() => importBundle(b.path, root), /success/);
     assert.equal(existsSync(join(root, 'testdata/jvm-samples')), false);
     assert.throws(() => validateCase({ ...c, sha256: '0'.repeat(64) }, join(b.path, 'temurin-25')), /Changed capture/);
+});
+
+test('valid hashes cannot turn protocol errors or generic alerts into trust-validation evidence', t => {
+    const directory = temporary(t);
+    const expected = { protocol: 'TLSv1.2', scenario: 'untrusted', side: 'client', results: [
+        { outcome: 'failure', exception: 'javax.net.ssl.SSLHandshakeException', message: 'PKIX path building failed' },
+    ] };
+    const record = m => `javax.net.ssl|DEBUG|A|worker|2026-10-04 12:00:00.000 UTC|Test.java:1|${m}`;
+    const validate = (reason, side = 'client') => {
+        const raw = Buffer.from([record('Produced ClientHello handshake message'), record(reason)].join('\n'));
+        writeFileSync(join(directory, 'test.log'), raw);
+        return validateCase({ analyzer: 'tls', file: 'test.log', bytes: raw.length, sha256: sha256(raw), expected: { ...expected, side } }, directory);
+    };
+    for (const reason of ['Received fatal alert: protocol_version', 'Received fatal alert: handshake_failure',
+        'Received fatal alert: bad_certificate', 'Fatal (PROTOCOL_VERSION): PKIX path building failed',
+        'Received fatal alert: protocol_version\n' + record('java.net.SocketException: Connection reset')]) assert.throws(() => validate(reason), /diagnostic family/);
+    assert.equal(validate('Fatal (CERTIFICATE_UNKNOWN): PKIX path building failed').outcome, 'failure');
+    assert.equal(validate('Received fatal alert: certificate_unknown', 'server').outcome, 'failure');
+    assert.equal(validate('java.net.SocketException: Connection reset', 'server').outcome, 'failure');
+    assert.throws(() => validate('Received fatal alert: protocol_version', 'server'), /diagnostic family/);
+    assert.throws(() => validate('java.net.SocketException: Connection reset'), /diagnostic family/);
+});
+
+test('client authentication scenarios require captured requests and the expected certificate presence', t => {
+    const directory = join(ROOT, 'testdata/jvm-samples');
+    const report = JSON.parse(readFileSync(join(directory, 'gh-37178210582-1-temurin-17-all.json'), 'utf8'));
+    const find = scenario => report.cases.find(c => c.status === 'verified' && c.analyzer === 'tls' && c.expected.scenario === scenario && c.expected.side === 'client');
+    const mutual = find('mutual'), success = find('success');
+    validateCase(mutual, directory);
+    assert.throws(() => validateCase({ ...success, expected: { ...success.expected, scenario: 'mutual' } }, directory), /CertificateRequest/);
+    assert.throws(() => validateCase({ ...mutual, expected: { ...mutual.expected, scenario: 'optional-client-auth' } }, directory), /absent client certificate/);
+    assert.throws(() => validateCase({ ...mutual, expected: { ...mutual.expected, side: 'other' } }, directory), /endpoint side/);
+    const empty = report.cases.find(c => c.status === 'verified' && c.expected?.scenario === 'optional-client-auth'
+        && c.expected.side === 'client' && c.expected.protocol === 'TLSv1.3');
+    validateCase(empty, directory);
+    const raw = Buffer.from(readFileSync(safeFile(directory, empty.file), 'utf8').replace(/"certificate_list"\s*:\s*\[\s*\]/g, ''));
+    const altered = temporary(t);
+    writeFileSync(join(altered, 'missing-body.log'), raw);
+    assert.throws(() => validateCase({ ...empty, file: 'missing-body.log', sha256: sha256(raw), bytes: raw.length }, altered), /explicit empty client certificate list/);
 });
 test('imports are idempotent, conflicting IDs fail, partial reports retain old evidence and docs drift fails CI', t => {
     const root = scaffold(t), b = bundle(t, [{ id: 'failed', analyzer: 'tda', status: 'capture-error', error: 'timeout' }]);

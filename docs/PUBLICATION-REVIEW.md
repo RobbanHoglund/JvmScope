@@ -118,3 +118,32 @@ not claimed active while this repository remains private:
 The dated [2026-10-03 review](PUBLICATION-REVIEW-2026-10-03.md) records the original
 baseline, former Spring findings and older test gaps; it is historical evidence,
 not the current support matrix or remaining release blockers.
+
+## Re-review corrections — 2026-10-04
+
+The three independently reproduced negative controls are covered by permanent
+regressions:
+
+- TLS keeps both sides of an unfinished same-thread ClientHello boundary
+  ambiguous. Later groups on that thread remain uncertain; completed sequential
+  handshakes, completed failures, other threads and HelloRetryRequest retain their
+  normal behavior. Raw records and source positions remain available.
+- CPU timeline points, peaks and averages use only reliable comparable intervals.
+  Coarse estimates remain qualified in thread details and cannot outrank measured
+  activity. Clock conflicts produce gaps; rates are not artificially capped at
+  100%. Point tooltips retain structured quality and printed time uncertainty.
+  A pending mouse-leave timer cannot dismiss a newly focused tooltip.
+- JVM fixture replay compares TLS diagnostic families with the controlled scenario
+  and endpoint role, and verifies client-authentication request/certificate
+  evidence. A protocol error cannot validate a trust-failure case, even with a
+  valid byte count/hash. Missing TLS 1.3 empty client-certificate lists fail
+  verification. Existing immutable captures and generated coverage counts are
+  unchanged after replay.
+
+The worker/filter/inspector and mixed-quality CPU cases run in the frontend,
+Java/container and strict-static Pages browser suites. These checks strengthen
+interpretation and test oracles; they do not certify undetectable TLS interleaving
+or every vendor build. Already open tabs and deployed artifacts receive the new
+behavior only after rebuilding/redeployment and reload. User captures remain local
+and are not rewritten or uploaded. Use the exact pushed revision's Actions results
+for the final publication decision.

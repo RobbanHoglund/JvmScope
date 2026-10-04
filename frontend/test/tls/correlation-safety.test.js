@@ -48,6 +48,34 @@ test('complete sequential connections, separate threads and HelloRetryRequest re
     assert.equal(retry.interactions[0].outcome, 'success');
 });
 
+test('missing records cannot resolve an unfinished same-thread boundary', () => {
+    for (const expanded of [false, true]) {
+        for (const finished of [['Produced client Finished', 'Consuming server Finished'],
+            ['Produced Finished', 'Consuming Finished']]) {
+            const client = line(messages[0], 'A', expanded);
+            const end = [messages[1], ...finished.map(m => `${m} handshake message`)].map(m => line(m, 'A', expanded));
+            for (const tail of [end, end.slice(1), end.slice(0, 2), [end[0], end[2]]]) {
+                const raw = [client, client, ...tail];
+                const result = parse(raw);
+                assert.equal(result.status, 'partial');
+                assert.ok(result.interactions.every(it => it.outcome === 'unknown' && it.correlationQuality === 'ambiguous-thread'));
+                assert.equal(result.interactions.flatMap(it => it.rawLines).join('\n'), raw.join('\n'));
+                assert.ok(result.interactions.every(it => tlsDiagnosis(it) === 'Grouping uncertain'));
+                assert.equal(selectTlsEntries(prepareTlsAnalysis(result.interactions), { ...createTlsFilters(), outcome: 'success' }).length, 0);
+            }
+        }
+    }
+});
+
+test('uncertainty persists on the affected thread, but completed failures and other threads stay independent', () => {
+    const full = messages.map(m => line(m));
+    const uncertain = parse([full[0], ...full, ...full, ...messages.map(m => line(m, 'B'))]);
+    assert.deepEqual(uncertain.interactions.map(it => it.outcome), ['unknown', 'unknown', 'unknown', 'success']);
+    assert.deepEqual(parse([full[1], ...full]).interactions.map(it => it.outcome), ['unknown', 'unknown']);
+    assert.deepEqual(parse([full[0], full[0], line('Received fatal alert: certificate_unknown'), ...full]).interactions.map(it => it.outcome), ['unknown', 'unknown', 'unknown']);
+    assert.deepEqual(parse([full[0], line('Received fatal alert: certificate_unknown'), ...full]).interactions.map(it => it.outcome), ['failure', 'success']);
+});
+
 test('contradicting Finished roles, duplicates and extra ServerHello cannot establish success', () => {
     const full = messages.map(m => line(m));
     for (const records of [[full[0],full[1],line('Produced server Finished handshake message'),full[3]],

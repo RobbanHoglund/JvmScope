@@ -47,6 +47,7 @@ function timelineSeriesSummary(threadSeries, intervalEndIndexes) {
     const measured = occurrences.filter((occurrence) =>
         intervalEndIndexes.has(Number(occurrence.dumpIndex))
         && occurrence.thread?.cpuDeltaStatus === 'computed'
+        && occurrence.thread?.cpuIntervalQuality === 'reliable'
         && finiteNumber(occurrence.thread?.cpuRatePercent) != null);
     if (!measured.length) return null;
 
@@ -76,6 +77,8 @@ function enrichTimelineSeries(summary) {
             ratePercent: finiteNumber(thread.cpuRatePercent),
             deltaMs: finiteNumber(thread.cpuDeltaMs),
             intervalMs: finiteNumber(thread.cpuIntervalMs),
+            intervalQuality: text(thread.cpuIntervalQuality),
+            intervalUncertaintyMs: finiteNumber(thread.cpuIntervalUncertaintyMs),
             rateBasis: text(thread.cpuRateBasis),
             intervalReason: text(thread.cpuIntervalReason),
             state: text(thread.javaState) || 'UNKNOWN',

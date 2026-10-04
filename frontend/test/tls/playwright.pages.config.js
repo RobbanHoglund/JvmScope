@@ -8,7 +8,7 @@ export default defineConfig({
     ...config,
     outputDir: fileURLToPath(new URL('../../../.run/pages-browser-results/',import.meta.url)),
     testMatch: ['pages-hosting.spec.js','help-search.spec.js','example-library.spec.js','tda-session.spec.js',
-        'tda-raw-tab.spec.js','tda-thread-details.spec.js','tls-investigation.spec.js'],
-    grep: /Pages|guide|loads every named example|real CPU example|real virtual workers|files, Paste|raw evidence opens|raw-tab details|thread details keep|actual Java 27|events jump|linked investigation|real mutual TLS/,
+        'tda-raw-tab.spec.js','tda-thread-details.spec.js','tls-investigation.spec.js','analysis-safety.spec.js'],
+    grep: /Pages|guide|loads every named example|real CPU example|real virtual workers|files, Paste|raw evidence opens|raw-tab details|thread details keep|actual Java 27|events jump|linked investigation|real mutual TLS|unfinished boundary|coarse CPU/,
     projects: config.projects.map(project => ({ ...project, name:`pages-${project.name}`, metadata:{pages:true} })),
 });

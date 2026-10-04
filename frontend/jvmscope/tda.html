@@ -241,7 +241,7 @@
                                 <li><strong>Deadlocked only</strong> selects JVM-confirmed deadlock members. <strong>Carrying VT only</strong> selects platform threads carrying mounted virtual threads.</li>
                                 <li>Click chart slices or legend buttons to filter by state, cumulative CPU time, elapsed time, allocated bytes or allocation rate. The active-filter bar reports the combined visible count and offers a clear action.</li>
                                 <li>Charts with unavailable measurements are hidden. A measured zero is data. CPU timelines and allocation rates require suitable adjacent snapshots and counters.</li>
-                                <li>The <strong>Thread CPU timeline</strong> plots measured CPU percentage for exact adjacent observations. A point belongs to the interval ending at that snapshot; click it to select the ending snapshot. Hover or select a legend entry to highlight its thread. Its name filter and 5/10/20-series limit are independent of table search. Unsafe comparisons create gaps, not zero activity.</li>
+                                <li>The <strong>Thread CPU timeline</strong> plots CPU percentage only for reliable intervals between exact adjacent observations. Coarse time estimates remain in thread details, marked with ≈, and do not enter the chart or its peak ranking. A point belongs to the interval ending at that snapshot; click it to select the ending snapshot. Hover or select a legend entry to highlight its thread. Its name filter and 5/10/20-series limit are independent of table search. Unsafe comparisons create gaps, not zero activity.</li>
                                 <li>Table and chart filters apply across snapshot navigation. Add to session retains chart filters and clears focused-cluster selection. Replace session resets capture-specific chart/cluster controls but keeps generic table filters. Clear resets every filter.</li>
                             </ul>
                             <h3 id="guide-thread-table" class="docs-subtitle">Reading the thread table</h3>
@@ -609,7 +609,7 @@
 					<div class="thread-state-chart-header cpu-timeline-header">
 						<div>
 							<div class="thread-state-chart-title">Thread CPU timeline</div>
-							<div class="thread-state-chart-subtitle">Measured CPU percentage between exact adjacent thread snapshots</div>
+							<div class="thread-state-chart-subtitle">Measured CPU percentage for reliable intervals between exact adjacent snapshots</div>
 						</div>
 						<div class="cpu-timeline-controls">
 							<label class="cpu-timeline-search-wrap" for="cpuTimelineSearch">

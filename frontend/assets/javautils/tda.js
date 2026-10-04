@@ -2246,7 +2246,7 @@ function renderCpuTimelineChart() {
     if (!model.series.length) {
         container.innerHTML = hasTimelineFilter
             ? '<div class="thread-state-empty">No measured CPU series match the current filter.</div>'
-            : '<div class="thread-state-empty">No exact adjacent thread snapshots have computed CPU rates.</div>';
+            : '<div class="thread-state-empty">No exact adjacent thread snapshots have reliable CPU rates. Coarse estimates remain in thread details.</div>';
         return;
     }
 
@@ -5290,6 +5290,7 @@ function renderCpuTimelineTooltip(tooltipEl, point) {
     appendTooltipFact(facts, 'CPU consumed', Number.isFinite(point.deltaMs) ? `${point.deltaMs.toFixed(2)} ms` : 'Unavailable');
     appendTooltipFact(facts, 'Measured over', Number.isFinite(point.intervalMs) ? `${point.intervalMs.toFixed(0)} ms` : 'Unavailable');
     appendTooltipFact(facts, 'Rate basis', point.rateBasis ? point.rateBasis.replaceAll('-', ' ') : 'Unavailable');
+    if (Number.isFinite(point.intervalUncertaintyMs)) appendTooltipFact(facts, 'Time uncertainty', `±${point.intervalUncertaintyMs.toFixed(0)} ms`);
     if (point.intervalReason) appendTooltipFact(facts, 'Interval quality', point.intervalReason);
     appendTooltipFact(facts, 'Native ID', point.nativeId || 'Unavailable');
     tooltipEl.appendChild(facts);
@@ -5357,6 +5358,9 @@ function showAppTooltip(target, clientX, clientY) {
     const text = getTooltipTextFromTarget(target);
     if (!text) return;
 
+    // A pending mouse-leave timer belongs to the previous tooltip, not to a
+    // newly focused target (including keyboard focus on a CPU timeline point).
+    clearTimeout(tooltipHideTimer);
     activeTooltipTarget = target;
     const cpuTimelinePayload = getCpuTimelineTooltipPayload(target);
     const diagnosticPayload = getDiagnosticTooltipPayload(target);
