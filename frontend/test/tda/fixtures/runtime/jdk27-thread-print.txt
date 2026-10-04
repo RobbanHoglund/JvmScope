@@ -1,0 +1,77 @@
+2026-10-02 20:56:07
+Full thread dump OpenJDK 64-Bit Server VM (27+35-2325 interpreted mode, sharing)
+                 JDK version: OpenJDK Runtime Environment (27.0+35) (build 27+35-2325)
+
+"sample-owner" #29 [1220] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.17s allocated=1904B defined_classes=2 tid=0x00000137ffca87a0 nid=1220 waiting on condition  [0x0000001d9f3fe000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@27/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@27/Thread.java:562)
+	at java.lang.Thread.sleep(java.base@27/Thread.java:593)
+	at FormatRegressionSample.pause(FormatRegressionSample.java:10)
+	at FormatRegressionSample.reenter(FormatRegressionSample.java:16)
+	- locked <0x00000007043d1dc8> (a java.lang.Object)
+	at FormatRegressionSample.lambda$main$1(FormatRegressionSample.java:33)
+	- locked <0x00000007043d1dc8> (a java.lang.Object)
+	at FormatRegressionSample$$Lambda/0x0000000036208400.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@27/Thread.java:1540)
+	at java.lang.Thread.run(java.base@27/Thread.java:1527)
+
+   Locked ownable synchronizers:
+	- None
+
+"sample-waiter" #30 [31480] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.17s allocated=0B defined_classes=0 tid=0x00000137ffca8090 nid=31480 waiting for monitor entry  [0x0000001d9f4ff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at FormatRegressionSample.lambda$main$2(FormatRegressionSample.java:39)
+	- waiting to lock <0x00000007043d1dc8> (a java.lang.Object)
+	at FormatRegressionSample$$Lambda/0x0000000036209800.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@27/Thread.java:1540)
+	at java.lang.Thread.run(java.base@27/Thread.java:1527)
+
+   Locked ownable synchronizers:
+	- None
+
+"sample-"quoted"" #34 [9500] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.17s allocated=32B defined_classes=0 tid=0x000001378df83d50 nid=9500 waiting on condition  [0x0000001d9f7ff000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@27/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@27/Thread.java:562)
+	at java.lang.Thread.sleep(java.base@27/Thread.java:593)
+	at FormatRegressionSample.pause(FormatRegressionSample.java:10)
+	at FormatRegressionSample$$Lambda/0x000000003620b000.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@27/Thread.java:1540)
+	at java.lang.Thread.run(java.base@27/Thread.java:1527)
+
+   Locked ownable synchronizers:
+	- None
+
+"sample-sync-owner" #36 [1608] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.16s allocated=32B defined_classes=0 tid=0x000001378df86ec0 nid=1608 waiting on condition  [0x0000001d9f9ff000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@27/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@27/Thread.java:562)
+	at java.lang.Thread.sleep(java.base@27/Thread.java:593)
+	at FormatRegressionSample.pause(FormatRegressionSample.java:10)
+	at FormatRegressionSample.lambda$main$3(FormatRegressionSample.java:53)
+	at FormatRegressionSample$$Lambda/0x000000003620b400.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@27/Thread.java:1540)
+	at java.lang.Thread.run(java.base@27/Thread.java:1527)
+
+   Locked ownable synchronizers:
+	- <0x0000000704079ef8> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+
+"sample-sync-waiter" #37 [36612] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.16s allocated=48B defined_classes=0 tid=0x000001378df867b0 nid=36612 waiting on condition  [0x0000001d9faff000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@27/Native Method)
+	- parking to wait for  <0x0000000704079ef8> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@27/LockSupport.java:223)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@27/AbstractQueuedSynchronizer.java:790)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@27/AbstractQueuedSynchronizer.java:1031)
+	at java.util.concurrent.locks.ReentrantLock$Sync.lock(java.base@27/ReentrantLock.java:154)
+	at java.util.concurrent.locks.ReentrantLock.lock(java.base@27/ReentrantLock.java:323)
+	at FormatRegressionSample.lambda$main$4(FormatRegressionSample.java:59)
+	at FormatRegressionSample$$Lambda/0x000000003620b800.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@27/Thread.java:1540)
+	at java.lang.Thread.run(java.base@27/Thread.java:1527)
+
+   Locked ownable synchronizers:
+	- None
+
+JNI global refs: 0

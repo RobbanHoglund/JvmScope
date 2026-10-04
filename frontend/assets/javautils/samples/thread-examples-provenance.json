@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-04T05:28:02.658Z",
+  "javaVersion": "openjdk version \"25.0.3\" 2026-04-21 LTS\nOpenJDK Runtime Environment Corretto-25.0.3.9.1 (build 25.0.3+9-LTS)\nOpenJDK 64-Bit Server VM Corretto-25.0.3.9.1 (build 25.0.3+9-LTS, mixed mode, sharing)",
+  "sourcePath": "tools/thread-dump-generator/ThreadLibraryScenarios.java",
+  "sourceNormalization": "UTF-8 with LF line endings",
+  "sourceSha256": "398515f871b6f95c2d6d3601a4a377b0fea5d71f09f5df9829966ed724219ed9",
+  "mainClass": "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios",
+  "javaOptions": [
+    "-Xms16m",
+    "-Xmx64m",
+    "-XX:+UseSerialGC",
+    "-XX:ActiveProcessorCount=2"
+  ],
+  "cpu": {
+    "command": "jcmd <owned-child-pid> Thread.print -e -l",
+    "snapshotCount": 4,
+    "intervalMs": 1500,
+    "transformation": "Complete dumps; LF normalization and actual collector ISO timestamps added. No thread records or counters altered."
+  },
+  "virtual": {
+    "command": "jcmd <owned-child-pid> Thread.dump_to_file -format=json <file>",
+    "snapshotCount": 1,
+    "transformation": "Complete, unchanged JVM JSON output, including supporting platform threads."
+  },
+  "files": [
+    {
+      "name": "tda-cpu-hot-sequence.txt",
+      "bytes": 33023,
+      "sha256": "e7ec44db3f95a15978d755e640f0e18236f87ca7b8a150d01849ab3e48e0bb74"
+    },
+    {
+      "name": "tda-virtual-workers.json",
+      "bytes": 13712,
+      "sha256": "0a9bf8ebeee54b6d2e06a9dd777af7847daf56497a63cbcad2b32ed25528180a"
+    }
+  ]
+}

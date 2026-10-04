@@ -1,0 +1,26 @@
+2026-09-13 12:00:00
+Full thread dump OpenJDK 64-Bit Server VM (25 mixed mode):
+
+"alpha" #1 prio=5 os_prio=0 cpu=2.00ms elapsed=10.00s tid=0x1 nid=1 waiting for monitor entry
+   java.lang.Thread.State: BLOCKED (on object monitor)
+        at example.Deadlock.left(Deadlock.java:20)
+        - waiting to lock <0x00000000aaaabbbb> (a example.LockA)
+        - locked <0x00000000ccccdddd> (a example.LockB)
+
+"beta" #2 prio=5 os_prio=0 cpu=2.00ms elapsed=10.00s tid=0x2 nid=2 waiting for monitor entry
+   java.lang.Thread.State: BLOCKED (on object monitor)
+        at example.Deadlock.right(Deadlock.java:30)
+        - waiting to lock <0x00000000ccccdddd> (a example.LockB)
+        - locked <0x00000000aaaabbbb> (a example.LockA)
+
+Found one Java-level deadlock:
+=============================
+"alpha":
+  waiting to lock monitor 0x0000000000000001 (object 0x00000000aaaabbbb, a example.LockA),
+  which is held by "beta"
+
+"beta":
+  waiting to lock monitor 0x0000000000000002 (object 0x00000000ccccdddd, a example.LockB),
+  which is held by "alpha"
+
+Java stack information for the threads listed above:

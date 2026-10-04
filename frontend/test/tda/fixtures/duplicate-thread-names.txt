@@ -1,0 +1,11 @@
+Full thread dump OpenJDK 64-Bit Server VM:
+
+"worker" #31 [301] daemon prio=5 os_prio=0 cpu=1.00ms elapsed=5.00s tid=0x0000000000000031 nid=0x12d waiting for monitor entry [0x0000000000003100]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at example.First.run(First.java:31)
+	- waiting to lock <0x00000000aaaabbbb> (a example.FirstLock)
+
+"worker" #32 [302] daemon prio=5 os_prio=0 cpu=2.00ms elapsed=5.00s tid=0x0000000000000032 nid=0x12e waiting for monitor entry [0x0000000000003200]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at example.Second.run(Second.java:32)
+	- waiting to lock <0x00000000ccccdddd> (a example.SecondLock)

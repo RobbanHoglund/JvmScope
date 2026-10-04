@@ -1,0 +1,247 @@
+/* Shared desktop identity for the two analyzer pages. Raw evidence workspaces
+   keep their existing styles. */
+body:is(.tls-page, .tda-page) {
+  --analyzer-ui-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --analyzer-brand-border: #40556b;
+  --analyzer-brand-muted: #a1bad3;
+  font-family: var(--analyzer-ui-font);
+}
+
+body.tls-page {
+  --analyzer-brand-border: #365b64;
+  --analyzer-brand-muted: #a1c3c7;
+}
+
+:is(.tls-page, .tda-page) .analyzer-header {
+  padding: 0 0 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--analyzer-brand-border);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+:is(.tls-page, .tda-page) .analyzer-header .header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  min-height: 44px;
+}
+
+:is(.tls-page, .tda-page) .analyzer-brand {
+  display: flex;
+  flex: 1 1 480px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+:is(.tls-page, .tda-page) .analyzer-brand-mark {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+:is(.tls-page, .tda-page) .analyzer-brand-copy { flex-shrink: 0; }
+
+:is(.tls-page, .tda-page) .analyzer-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: .2px;
+}
+
+:is(.tls-page, .tda-page) .analyzer-brand-tagline {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--analyzer-brand-muted);
+}
+
+:is(.tls-page, .tda-page) .analyzer-file-name {
+  flex: 0 1 330px;
+  min-width: 0;
+  max-width: 330px;
+  padding-left: 14px;
+  border-left: 1px solid var(--analyzer-brand-border);
+  color: #adb8c8;
+  font-size: 14px;
+}
+
+:is(.tls-page, .tda-page) .analyzer-file-label {
+  display: block;
+  color: var(--analyzer-brand-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+:is(.tls-page, .tda-page) .analyzer-file-name strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+:is(.tls-page, .tda-page) .analyzer-header :is(.tls-file-actions, .header-center) {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+:is(.tls-page, .tda-page) .analyzer-header .btn {
+  min-height: 32px;
+  padding: 6px 11px;
+  font-family: var(--analyzer-ui-font);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+:is(.tls-page, .tda-page) .analyzer-header :is(.filter-group-label, .dump-select-label, .toggles-row, .toggle, .filter-pill) {
+  font-size: 13px;
+}
+
+:is(.tls-page, .tda-page) .analyzer-header :is(.filter-group-label, .dump-select-label) {
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+:is(.tls-page, .tda-page) .analyzer-header select {
+  font-family: var(--analyzer-ui-font);
+}
+
+/* Capture controls appear after input is accepted, even when filters match no rows. */
+:is(.tls-page, .tda-page).analyzer-empty [data-capture-only],
+:is(.tls-page, .tda-page) :is(.analyzer-start, .analyzer-no-matches)[hidden] { display: none !important; }
+:is(.tls-page, .tda-page).analyzer-empty.analyzer-busy #clearBtn { display: inline-flex !important; }
+:is(.tls-page, .tda-page) .analyzer-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .42fr);
+  gap: 36px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 40px;
+  margin: 12px 0 24px;
+  border: 1px solid #354655;
+  border-radius: 14px;
+  background: #141922;
+}
+:is(.tls-page, .tda-page) .analyzer-start h2 { margin: 8px 0 12px; font-size: 28px; line-height: 1.3; }
+:is(.tls-page, .tda-page) .analyzer-start p { max-width: 720px; line-height: 1.65; color: #c4cfdd; }
+:is(.tls-page, .tda-page) .analyzer-start .analyzer-start-eyebrow { margin: 0; color: var(--analyzer-brand-muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+:is(.tls-page, .tda-page) .analyzer-start .analyzer-start-context { color: #a1aec0; }
+:is(.tls-page, .tda-page) .analyzer-start-actions { display: flex; gap: 10px; margin: 24px 0 18px; }
+:is(.tls-page, .tda-page) .analyzer-start .analyzer-start-privacy { margin: 0; color: #91cbbd; font-size: 13px; }
+:is(.tls-page, .tda-page) .analyzer-start-format { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 34px 20px; min-height: 180px; border: 1px dashed #526677; border-radius: 10px; text-align: center; }
+:is(.tls-page, .tda-page) .analyzer-start-format span { color: #a1aec0; font-size: 13px; }
+:is(.tls-page, .tda-page) .analyzer-start.is-dragging { border-color: #72e0d1; background: #1b3036; }
+:is(.tls-page, .tda-page) .analyzer-no-matches { padding: 28px; text-align: center; color: #c4cfdd; }
+:is(.tls-page, .tda-page) .analyzer-start .btn:focus-visible { outline: 2px solid #72e0d1; outline-offset: 3px; }
+
+/* The guide search stays above the independently scrolling documentation. */
+:is(.tls-page, .tda-page) #howToUseModal .help-search-toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(240px, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 16px;
+  flex-shrink: 0;
+  background: #141922;
+  border-bottom: 1px solid #354655;
+  font-size: 13px;
+}
+:is(.tls-page, .tda-page) #howToUseModal [data-help-search] { width: 100%; min-width: 0; padding: 9px 12px; border: 1px solid #526677; border-radius: 6px; background: #10151d; color: #e9eef7; font: inherit; }
+:is(.tls-page, .tda-page) #howToUseModal [data-help-search]:focus-visible { outline: 2px solid #72e0d1; outline-offset: 2px; }
+:is(.tls-page, .tda-page) #howToUseModal [data-help-search-count] { grid-column: 2 / -1; color: #a1bad3; font-size: 12px; }
+:is(.tls-page, .tda-page) #howToUseModal :is(.help-search-topic, .help-quickstart, .docs-layout, .help-search-empty, .docs-nav a)[hidden] { display: none; }
+:is(.tls-page, .tda-page) #howToUseModal .help-search-empty { padding: 24px; color: #c4cfdd; text-align: center; }
+:is(.tls-page, .tda-page) #howToUseModal mark[data-help-match] { background: #66551f; color: #fff2b4; border-radius: 2px; padding: 0; }
+
+/* Only documentation scrolls: the title, search and close controls share one
+   viewport height budget. These rules do not affect evidence/error dialogs. */
+:is(.tls-page, .tda-page) #howToUseModal {
+  width: min(1120px, calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
+  height: min(960px, calc(100dvh - 40px));
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  overflow: hidden;
+}
+:is(.tls-page, .tda-page) #howToUseModal .help-modal-dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  margin: 0;
+  box-sizing: border-box;
+  border: 1px solid #354655;
+  border-radius: 12px;
+  background: #141922;
+  font-size: 14px;
+  font-weight: 400;
+}
+:is(.tls-page, .tda-page) #howToUseModal :is(.help-modal-header, .help-modal-footer) {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 12px 16px;
+  background: #1b222c;
+}
+:is(.tls-page, .tda-page) #howToUseModal .modal-title { margin: 0; font-size: 18px; font-weight: 650; line-height: 1.4; }
+:is(.tls-page, .tda-page) #howToUseModal .help-modal-subtitle { margin: 4px 0 0; color: #b8c5d5; font-size: 13px; line-height: 1.5; }
+:is(.tls-page, .tda-page) #howToUseModal .help-modal-body {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none;
+  display: block;
+  padding: 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+:is(.tls-page, .tda-page) #howToUseModal .help-quickstart { margin-bottom: 16px; border-radius: 8px; }
+:is(.tls-page, .tda-page) #howToUseModal .help-quickstart-label { font-weight: 600; }
+:is(.tls-page, .tda-page) #howToUseModal .help-quickstart-steps span { font-size: 13px; line-height: 1.5; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-layout { grid-template-columns: 210px minmax(0, 1fr); gap: 16px; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-nav {
+  max-height: calc(100dvh - 300px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  border-radius: 8px;
+  background: #10151d;
+}
+:is(.tls-page, .tda-page) #howToUseModal .docs-nav a { color: #c4cfdd; font-size: 13px; font-weight: 500; line-height: 1.4; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-card { margin: 0; padding: 18px 22px; min-width: 0; border: 1px solid #354655; border-radius: 8px; background: #1b222c; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-content > .help-search-topic { margin-top: 22px; padding-top: 20px; border-top: 1px solid #354655; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-content > .help-search-topic:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+:is(.tls-page, .tda-page) #howToUseModal .help-search-topic > .docs-subtitle { margin: 0 0 10px; padding: 0; border: 0; font-size: 16px; font-weight: 650; line-height: 1.5; scroll-margin-top: 16px; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-list { max-width: 78ch; margin: 0; padding-left: 20px; color: #d0d9e5; font-size: 14px; font-weight: 400; line-height: 1.65; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-list li { margin: 0 0 10px; }
+:is(.tls-page, .tda-page) #howToUseModal strong { font-weight: 650; }
+:is(.tls-page, .tda-page) #howToUseModal :is(code, .kbd) { white-space: normal; overflow-wrap: anywhere; font-size: .9em; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-content a { color: #8bd8ed; text-decoration: underline; text-underline-offset: 3px; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-content a:visited { color: #c3b9f5; }
+:is(.tls-page, .tda-page) #howToUseModal .docs-content a:hover { color: #d7f3ff; }
+:is(.tls-page, .tda-page) #howToUseModal :is(button, a[href]):focus-visible { outline: 2px solid #72e0d1; outline-offset: 2px; }
+
+/* Example controls and the library are scoped to the two diagnostic analyzers. */
+:is(.tls-page, .tda-page) .example-actions { display: inline-flex; gap: 0; align-items: stretch; }
+:is(.tls-page, .tda-page) .example-actions > .btn:first-child { border-radius: 6px 0 0 6px; }
+:is(.tls-page, .tda-page) .example-actions > .btn:last-child { border-radius: 0 6px 6px 0; border-left: 0; padding-inline: 10px; }
+:is(.tls-page, .tda-page) .example-modal .modal-dialog { width: min(1100px, calc(100vw - 64px)); max-height: calc(100vh - 64px); }
+:is(.tls-page, .tda-page) .example-description { margin: 6px 0 0; color: #adb8c8; font-size: 13px; line-height: 1.5; }
+:is(.tls-page, .tda-page) .example-toolbar { display: grid; grid-template-columns: auto minmax(200px, 1fr) auto; align-items: center; gap: 8px 12px; padding: 12px 16px; border-bottom: 1px solid #354655; flex-shrink: 0; font-size: 13px; }
+:is(.tls-page, .tda-page) .example-toolbar :is(input, select) { min-width: 0; padding: 9px 12px; border: 1px solid #526677; border-radius: 6px; background: #10151d; color: #e9eef7; font: inherit; }
+:is(.tls-page, .tda-page) #exampleCount { grid-column: 2 / -1; color: #a1bad3; font-size: 12px; }
+:is(.tls-page, .tda-page) .example-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+:is(.tls-page, .tda-page) .example-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid #354655; border-radius: 9px; background: #1b222c; color: #e9eef7; text-align: left; font: inherit; cursor: pointer; }
+:is(.tls-page, .tda-page) .example-card:hover { border-color: #78c6d5; background: #21313c; }
+:is(.tls-page, .tda-page) .example-title { font-size: 15px; font-weight: 650; }
+:is(.tls-page, .tda-page) .example-meta { color: #8cd7cf; font-size: 12px; }
+:is(.tls-page, .tda-page) .example-summary { color: #adb8c8; font-size: 13px; line-height: 1.6; }
+:is(.tls-page, .tda-page) .example-modal :is(button, input, select):focus-visible { outline: 2px solid #72e0d1; outline-offset: 2px; }
+:is(.tls-page, .tda-page) .example-modal :is(.example-card, .example-empty)[hidden] { display: none; }
+:is(.tls-page, .tda-page) .example-empty { padding: 24px; text-align: center; color: #adb8c8; }
+:is(.tls-page, .tda-page) .example-modal .modal-footer > span { margin-right: auto; color: #adb8c8; font-size: 12px; }

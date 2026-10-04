@@ -1,0 +1,1438 @@
+{
+  "schemaVersion": 1,
+  "id": "gh-37178916324-1-oracle-19-all",
+  "major": 19,
+  "distribution": "oracle",
+  "capturedAt": "2026-10-04T05:19:38.920Z",
+  "status": "complete",
+  "sourceCommit": "cd39251ea66c06061742aca772ee02306ed518de",
+  "package": {
+    "id": "18040794d8fe70d998cda7145b091f39",
+    "archive_type": "tar.gz",
+    "distribution": "oracle",
+    "major_version": 19,
+    "java_version": "19.0.2",
+    "distribution_version": "19.0.2",
+    "jdk_version": 19,
+    "latest_build_available": true,
+    "release_status": "ga",
+    "term_of_support": "sts",
+    "operating_system": "linux",
+    "lib_c_type": "glibc",
+    "architecture": "x64",
+    "fpu": "unknown",
+    "package_type": "jdk",
+    "javafx_bundled": false,
+    "directly_downloadable": true,
+    "filename": "jdk-19.0.2_linux-x64_bin.tar.gz",
+    "links": {
+      "pkg_info_uri": "https://api.foojay.io/disco/v3.0/ids/18040794d8fe70d998cda7145b091f39",
+      "pkg_download_redirect": "https://api.foojay.io/disco/v3.0/ids/18040794d8fe70d998cda7145b091f39/redirect"
+    },
+    "free_use_in_production": true,
+    "tck_tested": "unknown",
+    "tck_cert_uri": "",
+    "aqavit_certified": "unknown",
+    "aqavit_cert_uri": "",
+    "size": 189896383,
+    "feature": [],
+    "direct_download_uri": "https://download.oracle.com/java/19/archive/jdk-19.0.2_linux-x64_bin.tar.gz",
+    "download_site_uri": "",
+    "signature_uri": "",
+    "checksum_uri": "https://download.oracle.com/java/19/archive/jdk-19.0.2_linux-x64_bin.tar.gz.sha256",
+    "checksum": "",
+    "checksum_type": "sha256",
+    "infoUrl": "https://api.foojay.io/disco/v3.0/ids/18040794d8fe70d998cda7145b091f39"
+  },
+  "download": {
+    "url": "https://download.oracle.com/java/19/archive/jdk-19.0.2_linux-x64_bin.tar.gz",
+    "finalUrl": "https://download.oracle.com/java/19/archive/jdk-19.0.2_linux-x64_bin.tar.gz",
+    "bytes": 189896383,
+    "archiveSha256": "59f26ace2727d0e9b24fc09d5a48393c9dbaffe04c932a02938e8d6d582058c6",
+    "catalogChecksum": null,
+    "catalogChecksumType": "sha256",
+    "verification": "HTTPS; catalog checksum unavailable",
+    "packageId": "18040794d8fe70d998cda7145b091f39"
+  },
+  "material": "all",
+  "commands": [
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "/home/runner/work/JvmScope/JvmScope/tools/jvm-samples/TlsWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "probe"
+      ]
+    },
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "/home/runner/work/JvmScope/JvmScope/tools/jvm-samples/ThreadWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "ThreadWorkload",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/thread-oracle.json",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/javacore.txt"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2288",
+        "help",
+        "Thread.print"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2288",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2288",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2288",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "fixture",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=localhost,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "other",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=unrelated-test-anchor,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "success",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-success-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-success-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "success",
+        "46127",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-success-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-untrusted-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-untrusted-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "39125",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-untrusted-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-mutual-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-mutual-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "36899",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-mutual-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-optional-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-optional-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "35609",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-optional-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-required-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-required-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "38549",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-required-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-resumption-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-resumption-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "34823",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.2-resumption-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "success",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-success-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-success-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "success",
+        "35429",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-success-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "untrusted",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-untrusted-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-untrusted-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "untrusted",
+        "39887",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-untrusted-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "mutual",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-mutual-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-mutual-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "mutual",
+        "45759",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-mutual-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "optional-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-optional-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-optional-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "optional-client-auth",
+        "43819",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-optional-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "required-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-required-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-required-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "required-client-auth",
+        "42955",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-required-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "resumption",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-resumption-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-resumption-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/fixture.jks",
+        "TLSv1.3",
+        "resumption",
+        "43825",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/tlsv1.3-resumption-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/oracle-19/work/untrusted.jks"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": "tools/jvm-samples/TlsWorkload.java",
+      "normalizedSha256": "827ed7bb1d5c26ca0e61d185a5f00c033b04e2c2d7c6b1a6d9557e9a36b8dcbd"
+    },
+    {
+      "path": "tools/jvm-samples/ThreadWorkload.java",
+      "normalizedSha256": "8f6425539352c4bcf9ab33628754ce85731e01dae619050ae469dfb6213e5029"
+    }
+  ],
+  "cases": [
+    {
+      "analyzer": "tda",
+      "id": "classic-sequence",
+      "file": "gh-37178916324-1-oracle-19-all/classic-sequence.txt",
+      "bytes": 49634,
+      "sha256": "99e899aaa5d993354cdcf44f93e0d56f535684a872b8372c9b284c3bc7b07ba5",
+      "expected": {
+        "scenario": "classic-sequence",
+        "snapshots": 3,
+        "threads": [
+          {
+            "name": "matrix-cpu-hot",
+            "state": "RUNNABLE",
+            "id": 19,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-parked",
+            "state": "WAITING",
+            "id": 20,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-sleeping",
+            "state": "TIMED_WAITING",
+            "id": 21,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-owner",
+            "state": "WAITING",
+            "id": 22,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-waiter",
+            "state": "BLOCKED",
+            "id": 23,
+            "lockOwner": "matrix-monitor-owner"
+          },
+          {
+            "name": "matrix-lock-owner",
+            "state": "WAITING",
+            "id": 24,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-lock-waiter",
+            "state": "WAITING",
+            "id": 25,
+            "lockOwner": "matrix-lock-owner"
+          },
+          {
+            "name": "matrix-initializer",
+            "state": "WAITING",
+            "id": 26,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-init-waiter",
+            "state": "RUNNABLE",
+            "id": 27,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-deadlock-a",
+            "state": "BLOCKED",
+            "id": 28,
+            "lockOwner": "matrix-deadlock-b"
+          },
+          {
+            "name": "matrix-deadlock-b",
+            "state": "BLOCKED",
+            "id": 29,
+            "lockOwner": "matrix-deadlock-a"
+          }
+        ],
+        "deadlocked": [
+          "matrix-deadlock-a",
+          "matrix-deadlock-b"
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "snapshots": 3,
+        "workloadThreads": 11
+      }
+    },
+    {
+      "analyzer": "tda",
+      "id": "virtual-json",
+      "status": "unavailable",
+      "error": "Virtual-thread file capture requires Java 21+"
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-success-client.txt",
+      "bytes": 19278,
+      "sha256": "ecf05820f5c7ded9034b30b854ac2123cfdb7ffab898071be8b5c19029253d03",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-success-server.txt",
+      "bytes": 22001,
+      "sha256": "4826f788d42813352e9f66a7ba98ea891d7b68da20ae176867472227224c6835",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-untrusted-client.txt",
+      "bytes": 15460,
+      "sha256": "3fe36378dc417af5448469843456e86ba9a840061e24df8e05a870689f0fc266",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-untrusted-server.txt",
+      "bytes": 21437,
+      "sha256": "4f16b9d86f5956ed717ab9686eae28fbcf9262c41437c0d8ec79cdb29cbe8425",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "Broken pipe"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-mutual-client.txt",
+      "bytes": 28598,
+      "sha256": "86ec7b232c16a82c6653dc4d7fa976533c6c7a64be3742b6352c3eb6740dd2d9",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-mutual-server.txt",
+      "bytes": 28991,
+      "sha256": "ed3da02ff0ac71b770dc2cfc62fbc143abe54841447e38f7b02a600c134a669c",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-optional-client-auth-client.txt",
+      "bytes": 22932,
+      "sha256": "c70fe5a031723b87d9677c8675a81675531fdc4e3fef4f0b64eb8805fe5672cd",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-optional-client-auth-server.txt",
+      "bytes": 22863,
+      "sha256": "87cd2f16af1cc55702c59a509563f7d198a6443e0868508c86f8e3ee211023bb",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-required-client-auth-client.txt",
+      "bytes": 22961,
+      "sha256": "cf83a23a3a18b821366af0d836dbd840228f4b7847cd7829bd66141d49c750ac",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "Broken pipe"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-required-client-auth-server.txt",
+      "bytes": 18562,
+      "sha256": "4884f187f99788831dd16a1553c87a2888e6710af0d765eab52f0213cfdc21b8",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Empty server certificate chain"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-resumption-client.txt",
+      "bytes": 40667,
+      "sha256": "22f7d68b5483dfae639c779870648accfddce05ca4a7f8b0992434c38af3585e",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.2-resumption-server.txt",
+      "bytes": 43251,
+      "sha256": "5ef07e6e744157bfde706080fc92a1bb3d22465774629ab0d8bfa2bf96cd9d24",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-success-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-success-client.txt",
+      "bytes": 16958,
+      "sha256": "d0f82a7e06b9d31879064db71c6093a0d4a2e115447152cef75385ea62fbee56",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "success",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-success-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-success-server.txt",
+      "bytes": 20842,
+      "sha256": "914f98fd30c1f8d9da8800ed0e9637cce48ca869264793309b7b4e97b0ca5e65",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "success",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-untrusted-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-untrusted-client.txt",
+      "bytes": 14524,
+      "sha256": "8dbbda900ec437eb466ac7ed4eb313625b6666737d9d321019fe53091456e31c",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "untrusted",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-untrusted-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-untrusted-server.txt",
+      "bytes": 17120,
+      "sha256": "213a74c4d338f882a1574e4baf79e2b35ee56ef69398fd858688c63c568738a9",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "untrusted",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Received fatal alert: certificate_unknown"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-mutual-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-mutual-client.txt",
+      "bytes": 27082,
+      "sha256": "7c348fb3d3acfba19a58da46cd91b7ee913daf0023b4ab049ba902fbf15ee31d",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "mutual",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-mutual-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-mutual-server.txt",
+      "bytes": 28357,
+      "sha256": "029ba05de7665e3a2a35b2a4c5a22fdee976990878581b789ac59410ab5cc79c",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "mutual",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-optional-client-auth-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-optional-client-auth-client.txt",
+      "bytes": 21431,
+      "sha256": "067137232ef565e88b8fa785543ec945069415a9df5f85e6f3c3fc03800c4070",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "optional-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-optional-client-auth-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-optional-client-auth-server.txt",
+      "bytes": 22151,
+      "sha256": "f1961678b79d175b1a6f8e1b6453f3e096dae7c439de067a981d4d1968c16cc5",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "optional-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-required-client-auth-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-required-client-auth-client.txt",
+      "bytes": 19450,
+      "sha256": "c0a4e2eef99d4170665963afcbf4fc92a94f9ae6dce5b36dadaeff095ede5d8d",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "required-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Received fatal alert: bad_certificate"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-required-client-auth-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-required-client-auth-server.txt",
+      "bytes": 19349,
+      "sha256": "0f3c3c6741339ddeca80f112a4518ec7fa363191352e7f5f7875f8397cd86d1e",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "required-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Empty client certificate chain"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-resumption-client",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-resumption-client.txt",
+      "bytes": 37371,
+      "sha256": "d6afdde7fd10b5d90b91955c3907266663c2b9f61ea39e2776a150d88681f9ea",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "resumption",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-resumption-server",
+      "file": "gh-37178916324-1-oracle-19-all/tlsv1.3-resumption-server.txt",
+      "bytes": 42604,
+      "sha256": "2b1b1f1d7140f707aff5c0f7a0bd879eca2da4a4d251e28073b1e1cab7ffa65d",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "resumption",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    }
+  ],
+  "runtime": {
+    "java.version": "19.0.2",
+    "java.runtime.version": "19.0.2+7-44",
+    "java.vendor": "Oracle Corporation",
+    "java.vm.name": "Java HotSpot(TM) 64-Bit Server VM",
+    "java.vm.version": "19.0.2+7-44",
+    "os.name": "Linux",
+    "os.arch": "amd64",
+    "provider": "SunJSSE 19.0",
+    "protocols": "[TLSv1.3, TLSv1.2]"
+  },
+  "transformation": "Classic sequence: complete stdout dumps, LF normalization and actual collector ISO timestamps. TLS: complete merged stdout/stderr in emission order. File dumps: unchanged JVM bytes."
+}

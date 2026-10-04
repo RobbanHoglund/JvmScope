@@ -1,0 +1,1438 @@
+{
+  "schemaVersion": 1,
+  "id": "gh-37178916324-1-graalvm-20-all",
+  "major": 20,
+  "distribution": "graalvm",
+  "capturedAt": "2026-10-04T05:22:17.853Z",
+  "status": "complete",
+  "sourceCommit": "cd39251ea66c06061742aca772ee02306ed518de",
+  "package": {
+    "id": "bb93ab4074a5a2b1c670002adb9786d3",
+    "archive_type": "tar.gz",
+    "distribution": "graalvm",
+    "major_version": 20,
+    "java_version": "20.0.2",
+    "distribution_version": "20.0.2",
+    "jdk_version": 20,
+    "latest_build_available": true,
+    "release_status": "ga",
+    "term_of_support": "sts",
+    "operating_system": "linux",
+    "lib_c_type": "glibc",
+    "architecture": "x64",
+    "fpu": "unknown",
+    "package_type": "jdk",
+    "javafx_bundled": false,
+    "directly_downloadable": true,
+    "filename": "graalvm-jdk-20.0.2_linux-x64_bin.tar.gz",
+    "links": {
+      "pkg_info_uri": "https://api.foojay.io/disco/v3.0/ids/bb93ab4074a5a2b1c670002adb9786d3",
+      "pkg_download_redirect": "https://api.foojay.io/disco/v3.0/ids/bb93ab4074a5a2b1c670002adb9786d3/redirect"
+    },
+    "free_use_in_production": true,
+    "tck_tested": "unknown",
+    "tck_cert_uri": "",
+    "aqavit_certified": "unknown",
+    "aqavit_cert_uri": "",
+    "size": 343540907,
+    "feature": [],
+    "direct_download_uri": "https://download.oracle.com/graalvm/20/archive/graalvm-jdk-20.0.2_linux-x64_bin.tar.gz",
+    "download_site_uri": "",
+    "signature_uri": "",
+    "checksum_uri": "https://download.oracle.com/graalvm/20/archive/graalvm-jdk-20.0.2_linux-x64_bin.tar.gz.sha256",
+    "checksum": "",
+    "checksum_type": "sha256",
+    "infoUrl": "https://api.foojay.io/disco/v3.0/ids/bb93ab4074a5a2b1c670002adb9786d3"
+  },
+  "download": {
+    "url": "https://download.oracle.com/graalvm/20/archive/graalvm-jdk-20.0.2_linux-x64_bin.tar.gz",
+    "finalUrl": "https://download.oracle.com/graalvm/20/archive/graalvm-jdk-20.0.2_linux-x64_bin.tar.gz",
+    "bytes": 343540907,
+    "archiveSha256": "242862bfd2fd2633950a8d85dd1fb4d0307c35cbc7445089aa593a931c8b17db",
+    "catalogChecksum": null,
+    "catalogChecksumType": "sha256",
+    "verification": "HTTPS; catalog checksum unavailable",
+    "packageId": "bb93ab4074a5a2b1c670002adb9786d3"
+  },
+  "material": "all",
+  "commands": [
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "/home/runner/work/JvmScope/JvmScope/tools/jvm-samples/TlsWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "probe"
+      ]
+    },
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "/home/runner/work/JvmScope/JvmScope/tools/jvm-samples/ThreadWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "ThreadWorkload",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/thread-oracle.json",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/javacore.txt"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2251",
+        "help",
+        "Thread.print"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2251",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2251",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "2251",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "fixture",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=localhost,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "other",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=unrelated-test-anchor,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "success",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-success-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-success-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "success",
+        "44343",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-success-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-untrusted-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-untrusted-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "44441",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-untrusted-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-mutual-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-mutual-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "45509",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-mutual-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-optional-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-optional-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "33295",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-optional-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-required-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-required-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "44315",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-required-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-resumption-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-resumption-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "43859",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.2-resumption-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "success",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-success-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-success-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "success",
+        "43077",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-success-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "untrusted",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-untrusted-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-untrusted-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "untrusted",
+        "43583",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-untrusted-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "mutual",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-mutual-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-mutual-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "mutual",
+        "42885",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-mutual-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "optional-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-optional-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-optional-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "optional-client-auth",
+        "36899",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-optional-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "required-client-auth",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-required-client-auth-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-required-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "required-client-auth",
+        "45571",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-required-client-auth-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "server",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "resumption",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-resumption-port.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-resumption-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work",
+        "TlsWorkload",
+        "client",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/fixture.jks",
+        "TLSv1.3",
+        "resumption",
+        "38853",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/tlsv1.3-resumption-client-oracle.txt",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/graalvm-20/work/untrusted.jks"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": "tools/jvm-samples/TlsWorkload.java",
+      "normalizedSha256": "827ed7bb1d5c26ca0e61d185a5f00c033b04e2c2d7c6b1a6d9557e9a36b8dcbd"
+    },
+    {
+      "path": "tools/jvm-samples/ThreadWorkload.java",
+      "normalizedSha256": "8f6425539352c4bcf9ab33628754ce85731e01dae619050ae469dfb6213e5029"
+    }
+  ],
+  "cases": [
+    {
+      "analyzer": "tda",
+      "id": "classic-sequence",
+      "file": "gh-37178916324-1-graalvm-20-all/classic-sequence.txt",
+      "bytes": 51764,
+      "sha256": "6c569587277f60067b1b8f4e610579a11163935d8d8bf85a33973d49d14aac99",
+      "expected": {
+        "scenario": "classic-sequence",
+        "snapshots": 3,
+        "threads": [
+          {
+            "name": "matrix-cpu-hot",
+            "state": "RUNNABLE",
+            "id": 18,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-parked",
+            "state": "WAITING",
+            "id": 19,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-sleeping",
+            "state": "TIMED_WAITING",
+            "id": 20,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-owner",
+            "state": "WAITING",
+            "id": 21,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-waiter",
+            "state": "BLOCKED",
+            "id": 22,
+            "lockOwner": "matrix-monitor-owner"
+          },
+          {
+            "name": "matrix-lock-owner",
+            "state": "WAITING",
+            "id": 23,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-lock-waiter",
+            "state": "WAITING",
+            "id": 24,
+            "lockOwner": "matrix-lock-owner"
+          },
+          {
+            "name": "matrix-initializer",
+            "state": "WAITING",
+            "id": 25,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-init-waiter",
+            "state": "RUNNABLE",
+            "id": 26,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-deadlock-a",
+            "state": "BLOCKED",
+            "id": 27,
+            "lockOwner": "matrix-deadlock-b"
+          },
+          {
+            "name": "matrix-deadlock-b",
+            "state": "BLOCKED",
+            "id": 28,
+            "lockOwner": "matrix-deadlock-a"
+          }
+        ],
+        "deadlocked": [
+          "matrix-deadlock-a",
+          "matrix-deadlock-b"
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "snapshots": 3,
+        "workloadThreads": 11
+      }
+    },
+    {
+      "analyzer": "tda",
+      "id": "virtual-json",
+      "status": "unavailable",
+      "error": "Virtual-thread file capture requires Java 21+"
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-success-client.txt",
+      "bytes": 18912,
+      "sha256": "cf25f004af2a79bf717b49fc506da88ad626feb7dec8272dbef073cfe986ea49",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-success-server.txt",
+      "bytes": 21635,
+      "sha256": "901a6423679d955bbb09860f3f133d10ddaaebfc05ed9979caeeb6d78ec430a3",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-untrusted-client.txt",
+      "bytes": 15091,
+      "sha256": "400ca1b435ccb8e8ae20c478878bbf1463b7aa061a306afee3aad500edf5c98e",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-untrusted-server.txt",
+      "bytes": 21068,
+      "sha256": "832d6460dc9a6a8fef85637e5e98ac3045b2ef383994a2ee8f1031f890c89635",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "Broken pipe"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-mutual-client.txt",
+      "bytes": 25906,
+      "sha256": "6875e57e72d6b9ecb33598676b1840cb244b09150a783027122bb5390f3962e4",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-mutual-server.txt",
+      "bytes": 28630,
+      "sha256": "697230243e7a07506260112e8e7b2f50c8f3e48c9b36a9609395e9e962d7471a",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-optional-client-auth-client.txt",
+      "bytes": 20235,
+      "sha256": "f8763ec0f3d6a8bdb20df0deb601e8d6652b2156abde4810d04a0145c92c44b6",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-optional-client-auth-server.txt",
+      "bytes": 22497,
+      "sha256": "9dcc1b1d4dd8beca50027db7186c96e588babe84f2915e9c9d13b0074ac4504d",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-required-client-auth-client.txt",
+      "bytes": 20261,
+      "sha256": "2800bdf8db5129930b831ace7e32852236c2a8861e9dcb5c73619f8772c9ee1a",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "Broken pipe"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-required-client-auth-server.txt",
+      "bytes": 18193,
+      "sha256": "df33b9aeb2f51cd1586272877acc36e3351104435a22d682a8722e89e1fea407",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Empty server certificate chain"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-resumption-client.txt",
+      "bytes": 39755,
+      "sha256": "c0996e1d282f7041e2678c29e3c5b21500c567e055d49c5d6fd48a2bbb886e0b",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.2-resumption-server.txt",
+      "bytes": 42339,
+      "sha256": "4c15373f71b7c65bf63045fc31b61ee4787c8ff18d405bdb3896a6018830fb85",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-success-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-success-client.txt",
+      "bytes": 17144,
+      "sha256": "202be0f1c0fb5adeef77f5308ecb9254121c79fba644721051c3f7ff481907dd",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "success",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-success-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-success-server.txt",
+      "bytes": 19249,
+      "sha256": "f246ca90ccac3acfcc91df12919c03aba026f77feccd16c4507044419b9bdabe",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "success",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-untrusted-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-untrusted-client.txt",
+      "bytes": 14707,
+      "sha256": "bde6c54c4b51273a3829cc2b39881391d48cc50635e35ef6cd7293e1bffc8af0",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "untrusted",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-untrusted-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-untrusted-server.txt",
+      "bytes": 20414,
+      "sha256": "ceb882d1c76835bfd6b4d64d4ceecd9beb1bebeef1fbca94fadae94013bdb294",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "untrusted",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "Broken pipe"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-mutual-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-mutual-client.txt",
+      "bytes": 25522,
+      "sha256": "7e62d26db6a6d043668ea6df0ceae8b6c91acb73d8e54925b276d436bd6d69e0",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "mutual",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-mutual-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-mutual-server.txt",
+      "bytes": 26797,
+      "sha256": "9d3d7ac0d0b538c5f268c267b1ad4867898827cbdffff7cde90ba3a149052a7a",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "mutual",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-optional-client-auth-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-optional-client-auth-client.txt",
+      "bytes": 19838,
+      "sha256": "3bfc270d3ad4e2552b654d749cad67a5af3dc88cfa948312323c64a0e688d72d",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "optional-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-optional-client-auth-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-optional-client-auth-server.txt",
+      "bytes": 20558,
+      "sha256": "f5619cf677e6cdc9538fdf84ce70f4265c7db85e9124f0cabf795819a2eb7cef",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "optional-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-required-client-auth-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-required-client-auth-client.txt",
+      "bytes": 17854,
+      "sha256": "8d371991601ac59bdbafb5ad0d56d3b4fb28cf9b8dfe25818781eb932e21951a",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "required-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Received fatal alert: bad_certificate"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-required-client-auth-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-required-client-auth-server.txt",
+      "bytes": 17753,
+      "sha256": "f14362bf59341061d6e5ef60f2cad41bf7a80023da0dfc84ed712866b021d070",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "required-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Empty client certificate chain"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-resumption-client",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-resumption-client.txt",
+      "bytes": 37563,
+      "sha256": "4fcfead0e06f7211b2fb74e49da56eefdd4287e1c1c41afb034b0b9b3cc6b998",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "resumption",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-resumption-server",
+      "file": "gh-37178916324-1-graalvm-20-all/tlsv1.3-resumption-server.txt",
+      "bytes": 41017,
+      "sha256": "ab64ccb498ae59d7a95510b6c56f96951814102cc410586638cb82f05b2a6394",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "resumption",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    }
+  ],
+  "runtime": {
+    "java.version": "20.0.2",
+    "java.runtime.version": "20.0.2+9-jvmci-23.0-b14",
+    "java.vendor": "Oracle Corporation",
+    "java.vm.name": "Java HotSpot(TM) 64-Bit Server VM",
+    "java.vm.version": "20.0.2+9-jvmci-23.0-b14",
+    "os.name": "Linux",
+    "os.arch": "amd64",
+    "provider": "SunJSSE 20.0",
+    "protocols": "[TLSv1.3, TLSv1.2]"
+  },
+  "transformation": "Classic sequence: complete stdout dumps, LF normalization and actual collector ISO timestamps. TLS: complete merged stdout/stderr in emission order. File dumps: unchanged JVM bytes."
+}

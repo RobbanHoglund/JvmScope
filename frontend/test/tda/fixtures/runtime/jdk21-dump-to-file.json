@@ -1,0 +1,58 @@
+{
+  "threadDump": {
+    "processId": "6316",
+    "time": "2026-09-08T04:35:22.580713100Z",
+    "runtimeVersion": "21.0.8+9-LTS",
+    "threadContainers": [
+      {
+        "container": "<root>",
+        "parent": null,
+        "owner": null,
+        "threads": [
+          {
+            "tid": "22",
+            "name": "sample-owner",
+            "stack": [
+              "java.base/java.lang.Thread.sleep0(Native Method)",
+              "java.base/java.lang.Thread.sleep(Thread.java:509)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "FormatRegressionSample.reenter(FormatRegressionSample.java:15)",
+              "FormatRegressionSample.lambda$main$0(FormatRegressionSample.java:21)",
+              "java.base/java.lang.Thread.run(Thread.java:1583)"
+            ]
+          },
+          {
+            "tid": "23",
+            "name": "sample-waiter",
+            "stack": [
+              "FormatRegressionSample.lambda$main$1(FormatRegressionSample.java:27)",
+              "java.base/java.lang.Thread.run(Thread.java:1583)"
+            ]
+          },
+          {
+            "tid": "26",
+            "name": "sample-\"quoted\"",
+            "stack": [
+              "java.base/java.lang.Thread.sleep0(Native Method)",
+              "java.base/java.lang.Thread.sleep(Thread.java:509)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "java.base/java.lang.Thread.run(Thread.java:1583)"
+            ]
+          },
+          {
+            "tid": "24",
+            "name": "sample-virtual-parked",
+            "stack": [
+              "java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:635)",
+              "java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:807)",
+              "java.base/java.lang.Thread.sleep(Thread.java:507)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "java.base/java.lang.VirtualThread.run(VirtualThread.java:329)"
+            ]
+          }
+        ],
+        "threadCount": "4"
+      }
+    ]
+  }
+}

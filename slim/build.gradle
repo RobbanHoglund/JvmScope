@@ -1,0 +1,125 @@
+import java.nio.file.Files
+import java.security.MessageDigest
+import java.util.zip.GZIPOutputStream
+
+plugins { id 'java' }
+
+group = 'com.robbanhoglund'
+version = '0.1.0'
+// The wrapper belongs to the root project. Retain standalone -p slim builds.
+if (project == rootProject) {
+    tasks.named('wrapper') {
+        scriptFile = file('../scripts/gradlew')
+        jarFile = file('../gradle/wrapper/gradle-wrapper.jar')
+    }
+}
+java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
+
+// No repositories or dependencies: the server uses java.base + jdk.httpserver.
+def npm = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+def frontend = layout.buildDirectory.dir('frontend')
+def generated = layout.buildDirectory.dir('generated/resources')
+sourceSets.main.resources.srcDir(generated)
+def verifyBuildTarget = { File target ->
+    assert target.canonicalFile.toPath().startsWith(new File(projectDir.canonicalFile, 'build').toPath())
+}
+
+tasks.register('npmInstall', Exec) {
+    workingDir = file('../frontend')
+    commandLine npm, 'ci'
+}
+tasks.register('npmBuild', Exec) {
+    dependsOn('npmInstall')
+    workingDir = file('../frontend')
+    commandLine npm, 'run', 'build:slim'
+}
+
+def mimeTypes = [html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8',
+    css: 'text/css; charset=utf-8', svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg',
+    jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', ico: 'image/x-icon',
+    woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', otf: 'font/otf', wasm: 'application/wasm',
+    txt: 'text/plain; charset=utf-8', json: 'application/json; charset=utf-8']
+def digest = { byte[] bytes -> MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex().toString() }
+
+tasks.register('prepareAssets') {
+    dependsOn('npmBuild')
+    inputs.dir(frontend)
+    outputs.dir(generated)
+    doLast {
+        def source = frontend.get().asFile.toPath()
+        def target = generated.get().asFile
+        verifyBuildTarget(target)
+        delete(target)
+        def web = new File(target, 'web')
+        web.mkdirs()
+        def entries = []
+        fileTree(source).files.sort { it.path }.each { asset ->
+            def path = source.relativize(asset.toPath()).toString().replace('\\', '/')
+            if (!(path in ['jvmscope/tls.html', 'jvmscope/tda.html']) && !path.startsWith('assets/')) {
+                throw new GradleException("Unexpected slim asset: $path")
+            }
+            if (path.toLowerCase().contains('dockerutils')) throw new GradleException("Docker asset in slim build: $path")
+            def extension = path.substring(path.lastIndexOf('.') + 1)
+            def mime = mimeTypes[extension]
+            if (!mime) throw new GradleException("No MIME type for $path")
+            byte[] bytes = Files.readAllBytes(asset.toPath())
+            def copy = new File(web, path)
+            copy.parentFile.mkdirs()
+            copy.bytes = bytes
+            def gzipBytes = new ByteArrayOutputStream()
+            new GZIPOutputStream(gzipBytes).withCloseable { it.write(bytes) }
+            byte[] zipped = gzipBytes.toByteArray()
+            boolean compressed = bytes.length > 512 && zipped.length < bytes.length
+            if (compressed) new File(web, path + '.gz').bytes = zipped
+            entries << ["/$path", bytes.length, digest(bytes), mime,
+                compressed ? zipped.length : 0, compressed ? digest(zipped) : '-'].join('\t')
+        }
+        new File(web, 'assets.index').text = entries.join('\n') + '\n'
+    }
+}
+tasks.named('processResources') {
+    dependsOn('prepareAssets')
+    from('..') {
+        include('LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.md')
+        into('META-INF')
+    }
+}
+tasks.named('jar') {
+    archiveFileName = 'jvmscope-slim.jar'
+    manifest { attributes('Main-Class': 'com.robbanhoglund.jvmscope.server.SlimServer') }
+}
+
+// Integration tests run against the real JDK HTTP server, without JUnit.
+tasks.named('test') { enabled = false; dependsOn('serverTest') }
+tasks.register('serverTest', JavaExec) {
+    dependsOn('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.robbanhoglund.jvmscope.server.SlimServerTest'
+}
+tasks.named('check') { dependsOn('serverTest') }
+
+def runtime = layout.buildDirectory.dir('runtime')
+def jdk = javaToolchains.launcherFor(java.toolchain).map { it.metadata.installationPath }
+tasks.register('linkRuntime', Exec) {
+    inputs.file(jdk.map { it.file('release') })
+    outputs.dir(runtime)
+    doFirst {
+        def target = runtime.get().asFile
+        verifyBuildTarget(target)
+        delete(target)
+        def executable = new File(jdk.get().asFile, "bin/jlink${npm.endsWith('.cmd') ? '.exe' : ''}")
+        commandLine executable, '--add-modules', 'jdk.httpserver', '--strip-debug',
+            '--no-header-files', '--no-man-pages', '--compress=zip-6', '--output', target
+    }
+}
+tasks.register('stageSlim', Sync) {
+    dependsOn('jar', 'check', 'linkRuntime')
+    into(layout.buildDirectory.dir('package'))
+    from(runtime) { into('runtime') }
+    from(tasks.named('jar')) { rename { 'app.jar' } }
+    from('..') { include('LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.md') }
+    from('../scripts/package') { into('scripts') }
+    filesMatching(['runtime/bin/*', 'scripts/run.sh']) { permissions { unix('rwxr-xr-x') } }
+    doFirst { verifyBuildTarget(layout.buildDirectory.dir('package').get().asFile) }
+}
+tasks.register('assembleSlim') { dependsOn('stageSlim') }

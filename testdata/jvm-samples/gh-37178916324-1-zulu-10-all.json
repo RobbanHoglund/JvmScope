@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "id": "gh-37178916324-1-zulu-10-all",
+  "major": 10,
+  "distribution": "zulu",
+  "capturedAt": "2026-10-04T05:09:00.740Z",
+  "status": "capture-error",
+  "sourceCommit": "cd39251ea66c06061742aca772ee02306ed518de",
+  "package": {
+    "id": "936f8b166c410d3b2b18a500494b27ba",
+    "archive_type": "tar.gz",
+    "distribution": "zulu",
+    "major_version": 10,
+    "java_version": "10.0.2+13",
+    "distribution_version": "10.3.5",
+    "jdk_version": 10,
+    "latest_build_available": true,
+    "release_status": "ga",
+    "term_of_support": "sts",
+    "operating_system": "linux",
+    "lib_c_type": "glibc",
+    "architecture": "x64",
+    "fpu": "unknown",
+    "package_type": "jdk",
+    "javafx_bundled": false,
+    "directly_downloadable": true,
+    "filename": "zulu10.3+5-jdk10.0.2-linux_x64.tar.gz",
+    "links": {
+      "pkg_info_uri": "https://api.foojay.io/disco/v3.0/ids/936f8b166c410d3b2b18a500494b27ba",
+      "pkg_download_redirect": "https://api.foojay.io/disco/v3.0/ids/936f8b166c410d3b2b18a500494b27ba/redirect"
+    },
+    "free_use_in_production": true,
+    "tck_tested": "yes",
+    "tck_cert_uri": "https://cdn.azul.com/zulu/pdf/cert.zulu10.3+5-jdk10.0.2-linux_x64.tar.gz.pdf",
+    "aqavit_certified": "unknown",
+    "aqavit_cert_uri": "",
+    "size": 206425799,
+    "feature": [],
+    "direct_download_uri": "https://cdn.azul.com/zulu/bin/zulu10.3+5-jdk10.0.2-linux_x64.tar.gz",
+    "download_site_uri": "",
+    "signature_uri": "",
+    "checksum_uri": "",
+    "checksum": "47ef4b708689f1923a2be9325b17c9df8545a33769a7f11b00dc70f0be4f12ca",
+    "checksum_type": "sha256",
+    "infoUrl": "https://api.foojay.io/disco/v3.0/ids/936f8b166c410d3b2b18a500494b27ba"
+  },
+  "download": {
+    "url": "https://cdn.azul.com/zulu/bin/zulu10.3+5-jdk10.0.2-linux_x64.tar.gz",
+    "finalUrl": "https://cdn.azul.com/zulu/bin/zulu10.3+5-jdk10.0.2-linux_x64.tar.gz",
+    "bytes": 206425799,
+    "archiveSha256": "47ef4b708689f1923a2be9325b17c9df8545a33769a7f11b00dc70f0be4f12ca",
+    "catalogChecksum": "47ef4b708689f1923a2be9325b17c9df8545a33769a7f11b00dc70f0be4f12ca",
+    "catalogChecksumType": "sha256",
+    "verification": "HTTPS plus catalog checksum",
+    "packageId": "936f8b166c410d3b2b18a500494b27ba"
+  },
+  "material": "all",
+  "commands": [
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/zulu-10/work",
+        "/home/runner/work/JvmScope/JvmScope/tools/jvm-samples/TlsWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "/home/runner/work/JvmScope/JvmScope/.run/jvm-captures/zulu-10/work",
+        "TlsWorkload",
+        "probe"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": "tools/jvm-samples/TlsWorkload.java",
+      "normalizedSha256": "827ed7bb1d5c26ca0e61d185a5f00c033b04e2c2d7c6b1a6d9557e9a36b8dcbd"
+    }
+  ],
+  "cases": [],
+  "error": "java: Exception in thread \"main\" java.lang.ExceptionInInitializerError\n\tat java.base/javax.crypto.JceSe\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000nager.java:65)\n\tat java.base/javax.crypto.Cipher.getConfiguredPermission(Cipher.java:2613)\n\tat java.base/javax.crypto.Cipher.getMaxAllowedKeyLength(Cipher.java:2635)\n\tat java.base/sun.security.ssl.CipherSuite$BulkCipher.isUnlimited(CipherSuite.java:603)\n\tat java.base/sun.security.ssl.CipherSuite$BulkCipher.<init>(CipherSuite.java:575)\n\tat java.base/sun.security.ssl.CipherSuite$BulkCipher.<clinit>(CipherSuite.java:461)\n\tat java.base/sun.security.ssl.CipherSuite.<clinit>(CipherSuite.java:1075)\n\tat java.base/sun.security.ssl.SSLContextImpl.getApplicableSupportedCipherSuiteList(SSLContextImpl.java:354)\n\tat java.base/sun.security.ssl.SSLContextImpl.access$100(SSLContextImpl.java:42)\n\tat java.base/sun.security.ssl.SSLContextImpl$AbstractTLSContext.<clinit>(SSLContextImpl.java:590)\n\tat java.base/java.lang.Class.forName0(Native Method)\n\tat java.base/java.lang.Class.forName(Class.java:291)\n\tat java.base/java.security.Provider$Service.getImplClass(Provider.java:1848)\n\tat java.base/java.security.Provider$Service.newInstance(Provider.java:1824)\n\tat java.base/sun.security.jca.GetInstance.getInstance(GetInstance.java:236)\n\tat java.base/sun.security.jca.GetInstance.getInstance(GetInstance.java:164)\n\tat java.base/javax.net.ssl.SSLContext.getInstance(SSLContext.java:168)\n\tat java.base/javax.net.ssl.SSLContext.getDefault(SSLContext.java:99)\n\tat TlsWorkload.main(TlsWorkload.java:16)\nCaused by: java.lang.SecurityException: Can not initialize cryptographic mechanism\n\tat java.base/javax.crypto.JceSecurity.<clinit>(JceSecurity.java:118)\n\t... 19 more\nCaused by: java.nio.file.Invalid\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000opt/\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\n\tat java.base/sun.nio.fs.UnixPath.checkNotNul(UnixPath.java:91)\n\tat java.base/sun.nio.fs.UnixPath.normalizeAndCheck(UnixPath.java:81)\n\tat java.base/sun.nio.fs.UnixPath.<init>(UnixPath.java:69)\n\tat java.base/sun.nio.fs.UnixFileSystem.getPath(UnixFileSystem.java:280)\n\tat java.base/java.nio.file.Paths.get(Paths.java:84)\n\tat java.base/javax.crypto.JceSecurity.setupJurisdictionPolicies(JceSecurity.java:311)\n\tat java.base/javax.crypto.JceSecurity.access$000(JceSecurity.java:73)\n\tat java.base/javax.crypto.JceSecurity$1.run(JceSecurity.java:109)\n\tat java.base/javax.crypto.JceSecurity$1.run(JceSecurity.java:106)\n\tat java.base/java.security.AccessController.doPrivileged(Native Method)\n\tat java.base/javax.crypto.JceSecurity.<clinit>(JceSecurity.java:105)\n\t... 19 more\n",
+  "transformation": "Classic sequence: complete stdout dumps, LF normalization and actual collector ISO timestamps. TLS: complete merged stdout/stderr in emission order. File dumps: unchanged JVM bytes."
+}

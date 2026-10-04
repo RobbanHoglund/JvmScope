@@ -1,0 +1,61 @@
+{
+  "threadDump": {
+    "processId": "11040",
+    "time": "2026-09-08T04:35:46.801466400Z",
+    "runtimeVersion": "24.0.2+12",
+    "threadContainers": [
+      {
+        "container": "<root>",
+        "parent": null,
+        "owner": null,
+        "threads": [
+          {
+            "tid": "22",
+            "name": "sample-owner",
+            "stack": [
+              "java.base/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base/java.lang.Thread.sleepNanos(Thread.java:482)",
+              "java.base/java.lang.Thread.sleep(Thread.java:513)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "FormatRegressionSample.reenter(FormatRegressionSample.java:15)",
+              "FormatRegressionSample.lambda$main$0(FormatRegressionSample.java:21)",
+              "java.base/java.lang.Thread.run(Thread.java:1447)"
+            ]
+          },
+          {
+            "tid": "23",
+            "name": "sample-waiter",
+            "stack": [
+              "FormatRegressionSample.lambda$main$1(FormatRegressionSample.java:27)",
+              "java.base/java.lang.Thread.run(Thread.java:1447)"
+            ]
+          },
+          {
+            "tid": "27",
+            "name": "sample-\"quoted\"",
+            "stack": [
+              "java.base/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base/java.lang.Thread.sleepNanos(Thread.java:482)",
+              "java.base/java.lang.Thread.sleep(Thread.java:513)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "java.base/java.lang.Thread.run(Thread.java:1447)"
+            ]
+          },
+          {
+            "tid": "25",
+            "name": "sample-virtual-parked",
+            "stack": [
+              "java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:788)",
+              "java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:967)",
+              "java.base/java.lang.Thread.sleepNanos(Thread.java:480)",
+              "java.base/java.lang.Thread.sleep(Thread.java:513)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "java.base/java.lang.VirtualThread.run(VirtualThread.java:466)"
+            ]
+          }
+        ],
+        "threadCount": "4"
+      }
+    ]
+  }
+}

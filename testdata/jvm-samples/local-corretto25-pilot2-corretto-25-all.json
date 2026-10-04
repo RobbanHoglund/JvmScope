@@ -1,0 +1,1652 @@
+{
+  "schemaVersion": 1,
+  "id": "local-corretto25-pilot2-corretto-25-all",
+  "major": 25,
+  "distribution": "corretto",
+  "capturedAt": "2026-10-04T04:33:11.726Z",
+  "status": "complete",
+  "sourceCommit": "working-tree",
+  "package": null,
+  "material": "all",
+  "commands": [
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "C:\\ws\\git\\JvmScope\\tools\\jvm-samples\\TlsWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "probe"
+      ]
+    },
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "C:\\ws\\git\\JvmScope\\tools\\jvm-samples\\ThreadWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "ThreadWorkload",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\thread-oracle.json",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\javacore.txt"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "30540",
+        "help",
+        "Thread.print"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "30540",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "30540",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "30540",
+        "Thread.print",
+        "-l",
+        "-e"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "30540",
+        "Thread.dump_to_file",
+        "-format=plain",
+        "\"C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\file-plain.txt\""
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "30540",
+        "Thread.dump_to_file",
+        "-format=json",
+        "\"C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\file-json.json\""
+      ]
+    },
+    {
+      "executable": "javac",
+      "arguments": [
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "C:\\ws\\git\\JvmScope\\tools\\thread-dump-generator\\ThreadLibraryScenarios.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios",
+        "virtual"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "10892",
+        "Thread.dump_to_file",
+        "-format=json",
+        "\"C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\virtual.json\""
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "fixture",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=localhost,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "other",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=unrelated-test-anchor,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "success",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-success-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-success-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "success",
+        "52989",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-success-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-untrusted-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-untrusted-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "52993",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-untrusted-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-mutual-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-mutual-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "52997",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-mutual-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-optional-client-auth-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-optional-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "53001",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-optional-client-auth-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-required-client-auth-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-required-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "53006",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-required-client-auth-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-resumption-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-resumption-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "53171",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.2-resumption-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "success",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-success-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-success-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "success",
+        "51116",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-success-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "untrusted",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-untrusted-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-untrusted-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "untrusted",
+        "51120",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-untrusted-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "mutual",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-mutual-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-mutual-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "mutual",
+        "51124",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-mutual-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "optional-client-auth",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-optional-client-auth-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-optional-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "optional-client-auth",
+        "51128",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-optional-client-auth-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "required-client-auth",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-required-client-auth-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-required-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "required-client-auth",
+        "51133",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-required-client-auth-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "resumption",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-resumption-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-resumption-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\fixture.jks",
+        "TLSv1.3",
+        "resumption",
+        "51135",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\tlsv1.3-resumption-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local25-pilot2\\corretto-25\\work\\untrusted.jks"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": "tools/jvm-samples/TlsWorkload.java",
+      "normalizedSha256": "1dd6e4e57323f210b1ad97f24e4cfa8851abf0b2535736ba6944d6b5a230adb8"
+    },
+    {
+      "path": "tools/jvm-samples/ThreadWorkload.java",
+      "normalizedSha256": "8f6425539352c4bcf9ab33628754ce85731e01dae619050ae469dfb6213e5029"
+    },
+    {
+      "path": "tools/thread-dump-generator/ThreadLibraryScenarios.java",
+      "normalizedSha256": "f49742d2bf4108bdb60f70108122b2c7d70e91235d9108be15c6bca0510d3512"
+    }
+  ],
+  "cases": [
+    {
+      "analyzer": "tda",
+      "id": "classic-sequence",
+      "file": "local-corretto25-pilot2-corretto-25-all/classic-sequence.txt",
+      "bytes": 51016,
+      "sha256": "84f3f464397e342d9330ea0fd87e23dd983007ad0dc304171b44910dca0ace9d",
+      "expected": {
+        "scenario": "classic-sequence",
+        "snapshots": 3,
+        "threads": [
+          {
+            "name": "matrix-cpu-hot",
+            "state": "RUNNABLE",
+            "id": 26,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-parked",
+            "state": "WAITING",
+            "id": 27,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-sleeping",
+            "state": "TIMED_WAITING",
+            "id": 28,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-owner",
+            "state": "WAITING",
+            "id": 29,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-waiter",
+            "state": "BLOCKED",
+            "id": 30,
+            "lockOwner": "matrix-monitor-owner"
+          },
+          {
+            "name": "matrix-lock-owner",
+            "state": "WAITING",
+            "id": 31,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-lock-waiter",
+            "state": "WAITING",
+            "id": 32,
+            "lockOwner": "matrix-lock-owner"
+          },
+          {
+            "name": "matrix-initializer",
+            "state": "WAITING",
+            "id": 33,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-init-waiter",
+            "state": "RUNNABLE",
+            "id": 34,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-deadlock-a",
+            "state": "BLOCKED",
+            "id": 35,
+            "lockOwner": "matrix-deadlock-b"
+          },
+          {
+            "name": "matrix-deadlock-b",
+            "state": "BLOCKED",
+            "id": 36,
+            "lockOwner": "matrix-deadlock-a"
+          }
+        ],
+        "deadlocked": [
+          "matrix-deadlock-a",
+          "matrix-deadlock-b"
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "snapshots": 3,
+        "workloadThreads": 11
+      }
+    },
+    {
+      "analyzer": "tda",
+      "id": "file-plain",
+      "file": "local-corretto25-pilot2-corretto-25-all/file-plain.txt",
+      "bytes": 9888,
+      "sha256": "a368ec8117d648975119a8d9cb05e67d6a51d8018048831d59b6eba65bdf5c89",
+      "expected": {
+        "scenario": "file-plain",
+        "snapshots": 1,
+        "threads": [
+          {
+            "name": "matrix-cpu-hot",
+            "state": "RUNNABLE",
+            "id": 26,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-parked",
+            "state": "WAITING",
+            "id": 27,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-sleeping",
+            "state": "TIMED_WAITING",
+            "id": 28,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-owner",
+            "state": "WAITING",
+            "id": 29,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-waiter",
+            "state": "BLOCKED",
+            "id": 30,
+            "lockOwner": "matrix-monitor-owner"
+          },
+          {
+            "name": "matrix-lock-owner",
+            "state": "WAITING",
+            "id": 31,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-lock-waiter",
+            "state": "WAITING",
+            "id": 32,
+            "lockOwner": "matrix-lock-owner"
+          },
+          {
+            "name": "matrix-initializer",
+            "state": "WAITING",
+            "id": 33,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-init-waiter",
+            "state": "RUNNABLE",
+            "id": 34,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-deadlock-a",
+            "state": "BLOCKED",
+            "id": 35,
+            "lockOwner": "matrix-deadlock-b"
+          },
+          {
+            "name": "matrix-deadlock-b",
+            "state": "BLOCKED",
+            "id": 36,
+            "lockOwner": "matrix-deadlock-a"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "snapshots": 1,
+        "workloadThreads": 11
+      }
+    },
+    {
+      "analyzer": "tda",
+      "id": "file-json",
+      "file": "local-corretto25-pilot2-corretto-25-all/file-json.json",
+      "bytes": 14498,
+      "sha256": "a01b4b74fb36623e01723075996142c3b4fd767e019a80edbc6dbaff084ca91c",
+      "expected": {
+        "scenario": "file-json",
+        "snapshots": 1,
+        "threads": [
+          {
+            "name": "matrix-cpu-hot",
+            "state": "RUNNABLE",
+            "id": 26,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-parked",
+            "state": "WAITING",
+            "id": 27,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-sleeping",
+            "state": "TIMED_WAITING",
+            "id": 28,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-owner",
+            "state": "WAITING",
+            "id": 29,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-waiter",
+            "state": "BLOCKED",
+            "id": 30,
+            "lockOwner": "matrix-monitor-owner"
+          },
+          {
+            "name": "matrix-lock-owner",
+            "state": "WAITING",
+            "id": 31,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-lock-waiter",
+            "state": "WAITING",
+            "id": 32,
+            "lockOwner": "matrix-lock-owner"
+          },
+          {
+            "name": "matrix-initializer",
+            "state": "WAITING",
+            "id": 33,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-init-waiter",
+            "state": "RUNNABLE",
+            "id": 34,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-deadlock-a",
+            "state": "BLOCKED",
+            "id": 35,
+            "lockOwner": "matrix-deadlock-b"
+          },
+          {
+            "name": "matrix-deadlock-b",
+            "state": "BLOCKED",
+            "id": 36,
+            "lockOwner": "matrix-deadlock-a"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "snapshots": 1,
+        "workloadThreads": 11
+      }
+    },
+    {
+      "analyzer": "tda",
+      "id": "virtual-json",
+      "file": "local-corretto25-pilot2-corretto-25-all/virtual.json",
+      "bytes": 13727,
+      "sha256": "21dbbe830b0b8593a50cb73031dcfd0bfba4c2063dd75b675663c19c0f99f0b8",
+      "expected": {
+        "scenario": "virtual-json",
+        "snapshots": 1,
+        "threads": [
+          {
+            "name": "example-virtual-cpu-hot-worker",
+            "state": "RUNNABLE",
+            "virtualRequired": true
+          },
+          {
+            "name": "example-virtual-parked-worker",
+            "state": "WAITING",
+            "virtualRequired": true
+          },
+          {
+            "name": "example-virtual-sleeping-worker",
+            "state": "TIMED_WAITING",
+            "virtualRequired": true
+          },
+          {
+            "name": "example-virtual-lock-owner",
+            "state": "WAITING",
+            "virtualRequired": true
+          },
+          {
+            "name": "example-virtual-lock-waiter",
+            "state": "WAITING",
+            "virtualRequired": true
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "snapshots": 1,
+        "workloadThreads": 5
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-success-client.txt",
+      "bytes": 56301,
+      "sha256": "2e356cb405125a43926a093b49a03996bbdd07e1ed7e908c5abbb8243c4fe06a",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-success-server.txt",
+      "bytes": 59381,
+      "sha256": "6ac1aabc02e9b676f05f324a8b6a11a8892564f2ddd161ff7c7fc4fa1f798c3c",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-untrusted-client.txt",
+      "bytes": 54320,
+      "sha256": "b4b5688718b3b018b0b99e23507e0a66c9e45e1f95331016afe2e4427d5081e1",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "(certificate_unknown) PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-untrusted-server.txt",
+      "bytes": 63131,
+      "sha256": "5a36d6edfe731b448c06a9ddfa4b415ebaab1ea8ad5861a446b5827247f3f5f8",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "En etablerad anslutning avbröts av programvaran i värddatorn"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-mutual-client.txt",
+      "bytes": 63793,
+      "sha256": "7aeed98d13bde7fd16a34ceea75addf24ab612c063471ff708999dc2b3ccdac1",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-mutual-server.txt",
+      "bytes": 67777,
+      "sha256": "83c5e605265d0cdef52fa8c6e3c26b5d0f5500667ca646a3755d43f2a3d5df2c",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-optional-client-auth-client.txt",
+      "bytes": 58097,
+      "sha256": "a01a9a5457491341cd6dea494efd5389e48456daf170cd8f7890a783faaa6bbf",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-optional-client-auth-server.txt",
+      "bytes": 60564,
+      "sha256": "305b1ab73bc9ff6d563ae081b24b0d80feadd9bddfece0b70088bbdfee747a3e",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-required-client-auth-client.txt",
+      "bytes": 62743,
+      "sha256": "c9ac27f85725a5ef43c193997587b983314b1ce7cc5fa57ef63a9b92472e7735",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "En etablerad anslutning avbröts av programvaran i värddatorn"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-required-client-auth-server.txt",
+      "bytes": 59342,
+      "sha256": "af09f8e1cb2d0b261f7673aa4f4d40aad0d91470c80891a2b1244c087dec5b14",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "(handshake_failure) Empty client certificate chain"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-resumption-client.txt",
+      "bytes": 72225,
+      "sha256": "09e5f86d0fc98d210b98d812002117be481143dc2721d6813e0d21fb88a957ad",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.2-resumption-server.txt",
+      "bytes": 75518,
+      "sha256": "0710c7670957f3a3f08f3df49654c47cc77f61d3aea11998bf40be9a935af309",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-success-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-success-client.txt",
+      "bytes": 61202,
+      "sha256": "6c5aeefbca77d0bc90a5711e93e5b24b4b29939a101991e2dc7117704d7263bc",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "success",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-success-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-success-server.txt",
+      "bytes": 60502,
+      "sha256": "1b0d7c2851b8ac51a8c14146965afdcdce592504a2f4cd20707a58e85ce63c5c",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "success",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-untrusted-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-untrusted-client.txt",
+      "bytes": 59100,
+      "sha256": "25f62d80e65835c25d29219e20869528ea7439ffb88b50b4e7eac337fbe2d51d",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "untrusted",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "(certificate_unknown) PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-untrusted-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-untrusted-server.txt",
+      "bytes": 66155,
+      "sha256": "15c44a10ba033e55a897c9c3e544e5f402725f8e2d8b72ade33a13967e568373",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "untrusted",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "En etablerad anslutning avbröts av programvaran i värddatorn"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-mutual-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-mutual-client.txt",
+      "bytes": 70100,
+      "sha256": "31ce69de5c36085fa27086901d46a89c5139a78d6d82f7593973ffeb4a27c47e",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "mutual",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-mutual-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-mutual-server.txt",
+      "bytes": 69487,
+      "sha256": "3b0c16fced20ee426138552e556d3ff30bd23540d86442b4e18a922a7a29b3a2",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "mutual",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-optional-client-auth-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-optional-client-auth-client.txt",
+      "bytes": 64377,
+      "sha256": "f97cee239f28715ac9abc68dc28283407eb41ca8c22e54d941299da5f04f99c2",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "optional-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-optional-client-auth-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-optional-client-auth-server.txt",
+      "bytes": 62142,
+      "sha256": "fa78ee9e0da4407d874bae37b3d2ad6402a2d60e06907ed06ae8be4a83a8ff56",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "optional-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-required-client-auth-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-required-client-auth-client.txt",
+      "bytes": 64468,
+      "sha256": "a02237b2e0f75ed425a7747bea7acc1890fbc4ccc42b2da317c3e2c0e35ad0a9",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "required-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "(certificate_required) Received fatal alert: certificate_required"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-required-client-auth-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-required-client-auth-server.txt",
+      "bytes": 62723,
+      "sha256": "4c6e4e2c6c3a14e0a4c3b1de329e6919e65cdedb06bd892b3f6ce7ef6b010811",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "required-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "(certificate_required) Empty client certificate chain"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-resumption-client",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-resumption-client.txt",
+      "bytes": 83860,
+      "sha256": "f4645c9004f31ed395b7d0d06f63ebcbda56037673b76cb06a141a2a12491187",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "resumption",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.3-resumption-server",
+      "file": "local-corretto25-pilot2-corretto-25-all/tlsv1.3-resumption-server.txt",
+      "bytes": 82471,
+      "sha256": "1bf93549160298bade7bda3adb931aecef43ebeeeb829f3f9b4105cccadc03ed",
+      "expected": {
+        "protocol": "TLSv1.3",
+        "scenario": "resumption",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.3",
+            "cipher": "TLS_AES_256_GCM_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    }
+  ],
+  "runtime": {
+    "java.version": "25.0.3",
+    "java.runtime.version": "25.0.3+9-LTS",
+    "java.vendor": "Amazon.com Inc.",
+    "java.vm.name": "OpenJDK 64-Bit Server VM",
+    "java.vm.version": "25.0.3+9-LTS",
+    "os.name": "Windows 11",
+    "os.arch": "amd64",
+    "provider": "SunJSSE 25.0",
+    "protocols": "[TLSv1.3, TLSv1.2]"
+  },
+  "transformation": "Classic sequence: complete stdout dumps, LF normalization and actual collector ISO timestamps. TLS: complete merged stdout/stderr in emission order. File dumps: unchanged JVM bytes."
+}

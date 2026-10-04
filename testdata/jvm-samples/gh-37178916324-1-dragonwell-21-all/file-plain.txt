@@ -1,0 +1,145 @@
+2230
+2026-10-04T05:23:46.861673111Z
+21.0.12.0.12
+
+#1 "main"
+      java.base/java.lang.Thread.sleep0(Native Method)
+      java.base/java.lang.Thread.sleep(Thread.java:509)
+      ThreadWorkload.main(ThreadWorkload.java:85)
+
+#9 "Reference Handler"
+      java.base/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+      java.base/java.lang.ref.Reference.processPendingReferences(Reference.java:246)
+      java.base/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)
+
+#10 "Finalizer"
+      java.base/java.lang.Object.wait0(Native Method)
+      java.base/java.lang.Object.wait(Object.java:366)
+      java.base/java.lang.Object.wait(Object.java:339)
+      java.base/java.lang.ref.NativeReferenceQueue.await(NativeReferenceQueue.java:48)
+      java.base/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:158)
+      java.base/java.lang.ref.NativeReferenceQueue.remove(NativeReferenceQueue.java:89)
+      java.base/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:173)
+
+#11 "Signal Dispatcher"
+
+#16 "Notification Thread"
+
+#17 "Common-Cleaner"
+      java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1886)
+      java.base/java.lang.ref.ReferenceQueue.await(ReferenceQueue.java:71)
+      java.base/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:143)
+      java.base/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:218)
+      java.base/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:140)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+      java.base/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:186)
+
+#18 "matrix-cpu-hot"
+      ThreadWorkload$1.run(ThreadWorkload.java:38)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#19 "matrix-parked"
+      java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:788)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1133)
+      java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+      ThreadWorkload.park(ThreadWorkload.java:14)
+      ThreadWorkload.access$100(ThreadWorkload.java:8)
+      ThreadWorkload$2.run(ThreadWorkload.java:41)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#20 "matrix-sleeping"
+      java.base/java.lang.Thread.sleep0(Native Method)
+      java.base/java.lang.Thread.sleep(Thread.java:509)
+      ThreadWorkload$3.run(ThreadWorkload.java:44)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#21 "matrix-monitor-owner"
+      java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:788)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1133)
+      java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+      ThreadWorkload.park(ThreadWorkload.java:14)
+      ThreadWorkload.access$100(ThreadWorkload.java:8)
+      ThreadWorkload$4.run(ThreadWorkload.java:49)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#22 "matrix-monitor-waiter"
+      ThreadWorkload$5.run(ThreadWorkload.java:51)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#23 "matrix-lock-owner"
+      java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:788)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1133)
+      java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+      ThreadWorkload.park(ThreadWorkload.java:14)
+      ThreadWorkload.access$100(ThreadWorkload.java:8)
+      ThreadWorkload$6.run(ThreadWorkload.java:55)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#24 "matrix-lock-waiter"
+      java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:788)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:1024)
+      java.base/java.util.concurrent.locks.ReentrantLock$Sync.lock(ReentrantLock.java:153)
+      java.base/java.util.concurrent.locks.ReentrantLock.lock(ReentrantLock.java:322)
+      ThreadWorkload$7.run(ThreadWorkload.java:57)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#25 "matrix-initializer"
+      java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:788)
+      java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1133)
+      java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+      ThreadWorkload.park(ThreadWorkload.java:14)
+      ThreadWorkload.access$100(ThreadWorkload.java:8)
+      ThreadWorkload$StalledInitialization.<clinit>(ThreadWorkload.java:31)
+      java.base/java.lang.Class.forName0(Native Method)
+      java.base/java.lang.Class.forName(Class.java:423)
+      java.base/java.lang.Class.forName(Class.java:414)
+      ThreadWorkload.initialize(ThreadWorkload.java:34)
+      ThreadWorkload.access$300(ThreadWorkload.java:8)
+      ThreadWorkload$8.run(ThreadWorkload.java:59)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#26 "matrix-init-waiter"
+      java.base/java.lang.Class.forName0(Native Method)
+      java.base/java.lang.Class.forName(Class.java:423)
+      java.base/java.lang.Class.forName(Class.java:414)
+      ThreadWorkload.initialize(ThreadWorkload.java:34)
+      ThreadWorkload.access$300(ThreadWorkload.java:8)
+      ThreadWorkload$9.run(ThreadWorkload.java:61)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#27 "matrix-deadlock-a"
+      ThreadWorkload$10.run(ThreadWorkload.java:64)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#28 "matrix-deadlock-b"
+      ThreadWorkload$11.run(ThreadWorkload.java:65)
+      java.base/java.lang.Thread.run(Thread.java:1583)
+
+#29 "Attach Listener"
+      java.base/java.lang.Thread.getStackTrace(Thread.java:2451)
+      java.base/jdk.internal.vm.ThreadDumper.dumpThread(ThreadDumper.java:165)
+      java.base/jdk.internal.vm.ThreadDumper.lambda$dumpThreads$0(ThreadDumper.java:158)
+      java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+      java.base/java.util.Spliterators$ArraySpliterator.forEachRemaining(Spliterators.java:1024)
+      java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+      java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+      java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310)
+      java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734)
+      java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762)
+      java.base/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:158)
+      java.base/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:154)
+      java.base/jdk.internal.vm.ThreadDumper.dumpThreadsToFile(ThreadDumper.java:119)
+      java.base/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:68)
+

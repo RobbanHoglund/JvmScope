@@ -1,0 +1,833 @@
+{
+  "schemaVersion": 1,
+  "id": "local-zulu7-pilot2-zulu-7-all",
+  "major": 7,
+  "distribution": "zulu",
+  "capturedAt": "2026-10-04T04:40:32.411Z",
+  "status": "complete",
+  "sourceCommit": "working-tree",
+  "package": null,
+  "download": null,
+  "material": "all",
+  "commands": [
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "C:\\ws\\git\\JvmScope\\tools\\jvm-samples\\TlsWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "probe"
+      ]
+    },
+    {
+      "executable": "javac",
+      "arguments": [
+        "-source",
+        "7",
+        "-target",
+        "7",
+        "-encoding",
+        "UTF-8",
+        "-d",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "C:\\ws\\git\\JvmScope\\tools\\jvm-samples\\ThreadWorkload.java"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "ThreadWorkload",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\thread-oracle.json",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\javacore.txt"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "21288",
+        "help",
+        "Thread.print"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "21288",
+        "Thread.print",
+        "-l"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "21288",
+        "Thread.print",
+        "-l"
+      ]
+    },
+    {
+      "executable": "jcmd",
+      "arguments": [
+        "21288",
+        "Thread.print",
+        "-l"
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "fixture",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=localhost,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "keytool",
+      "arguments": [
+        "-genkeypair",
+        "-alias",
+        "other",
+        "-keyalg",
+        "RSA",
+        "-keysize",
+        "2048",
+        "-sigalg",
+        "SHA256withRSA",
+        "-dname",
+        "CN=unrelated-test-anchor,O=JvmScope controlled sample",
+        "-validity",
+        "30",
+        "-keystore",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\untrusted.jks",
+        "-storetype",
+        "JKS",
+        "-storepass",
+        "fixture-only",
+        "-keypass",
+        "fixture-only",
+        "-noprompt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "success",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-success-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-success-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "success",
+        "64023",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-success-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-untrusted-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-untrusted-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "untrusted",
+        "64025",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-untrusted-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-mutual-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-mutual-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "mutual",
+        "61505",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-mutual-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-optional-client-auth-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-optional-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "optional-client-auth",
+        "61507",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-optional-client-auth-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-required-client-auth-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-required-client-auth-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "required-client-auth",
+        "61509",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-required-client-auth-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\untrusted.jks"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "server",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-resumption-port.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-resumption-server-oracle.txt"
+      ]
+    },
+    {
+      "executable": "java",
+      "arguments": [
+        "-Duser.language=en",
+        "-Duser.country=US",
+        "-Duser.timezone=UTC",
+        "-Dfile.encoding=UTF-8",
+        "-Xms16m",
+        "-Xmx64m",
+        "-Djavax.net.debug=ssl,handshake",
+        "-cp",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work",
+        "TlsWorkload",
+        "client",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\fixture.jks",
+        "TLSv1.2",
+        "resumption",
+        "61511",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\tlsv1.2-resumption-client-oracle.txt",
+        "C:\\ws\\git\\JvmScope\\.run\\jvm-local7-pilot2\\zulu-7\\work\\untrusted.jks"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": "tools/jvm-samples/TlsWorkload.java",
+      "normalizedSha256": "1dd6e4e57323f210b1ad97f24e4cfa8851abf0b2535736ba6944d6b5a230adb8"
+    },
+    {
+      "path": "tools/jvm-samples/ThreadWorkload.java",
+      "normalizedSha256": "8f6425539352c4bcf9ab33628754ce85731e01dae619050ae469dfb6213e5029"
+    }
+  ],
+  "cases": [
+    {
+      "analyzer": "tda",
+      "id": "classic-sequence",
+      "file": "local-zulu7-pilot2-zulu-7-all/classic-sequence.txt",
+      "bytes": 36356,
+      "sha256": "db0db290a4710ae3347d660d38c04b3157328917746ada708607745a29a45fce",
+      "expected": {
+        "scenario": "classic-sequence",
+        "snapshots": 3,
+        "threads": [
+          {
+            "name": "matrix-cpu-hot",
+            "state": "RUNNABLE",
+            "id": 9,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-parked",
+            "state": "WAITING",
+            "id": 10,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-sleeping",
+            "state": "TIMED_WAITING",
+            "id": 11,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-owner",
+            "state": "WAITING",
+            "id": 12,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-monitor-waiter",
+            "state": "BLOCKED",
+            "id": 13,
+            "lockOwner": "matrix-monitor-owner"
+          },
+          {
+            "name": "matrix-lock-owner",
+            "state": "WAITING",
+            "id": 14,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-lock-waiter",
+            "state": "WAITING",
+            "id": 15,
+            "lockOwner": "matrix-lock-owner"
+          },
+          {
+            "name": "matrix-initializer",
+            "state": "WAITING",
+            "id": 16,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-init-waiter",
+            "state": "RUNNABLE",
+            "id": 17,
+            "lockOwner": null
+          },
+          {
+            "name": "matrix-deadlock-a",
+            "state": "BLOCKED",
+            "id": 18,
+            "lockOwner": "matrix-deadlock-b"
+          },
+          {
+            "name": "matrix-deadlock-b",
+            "state": "BLOCKED",
+            "id": 19,
+            "lockOwner": "matrix-deadlock-a"
+          }
+        ],
+        "deadlocked": [
+          "matrix-deadlock-a",
+          "matrix-deadlock-b"
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "snapshots": 3,
+        "workloadThreads": 11
+      }
+    },
+    {
+      "analyzer": "tda",
+      "id": "virtual-json",
+      "status": "unavailable",
+      "error": "Virtual-thread file capture requires Java 21+"
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-client",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-success-client.txt",
+      "bytes": 21833,
+      "sha256": "adaf36f19edb611d1223cca3149d18753e71f59548033a4d2a608e12237aacd9",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-success-server",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-success-server.txt",
+      "bytes": 19343,
+      "sha256": "764f1138521ea239482c85f396d1025d42967e80a08e4c0310e94c859329e313",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "success",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-client",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-untrusted-client.txt",
+      "bytes": 17171,
+      "sha256": "8e3b4fcd01d7c8288e58301ae339c3d884352cf8d5c77bb8d126e5fea6fa6078",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-untrusted-server",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-untrusted-server.txt",
+      "bytes": 16685,
+      "sha256": "7b8b2e5e6d9df85dfbcd5afeaf156715ef6e6c6eb4945a0e6e8c2b62ed5b681e",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "untrusted",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "Received fatal alert: certificate_unknown"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-client",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-mutual-client.txt",
+      "bytes": 25955,
+      "sha256": "0f0b97ff1009549ab053d7329632157210536b529617afb4b123d00a752b01b8",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-mutual-server",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-mutual-server.txt",
+      "bytes": 26031,
+      "sha256": "0ab40ce3dffc9622a92f72e955ebb7ac06d3a7bf24c329d415dabaa2d215f613",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "mutual",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-client",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-optional-client-auth-client.txt",
+      "bytes": 23037,
+      "sha256": "92302fff537d539b0b6a8a89a77141e55606f157b3cb3f27138605b288f1abee",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-optional-client-auth-server",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-optional-client-auth-server.txt",
+      "bytes": 20551,
+      "sha256": "a2b4ab9af573c40bf4b2c661f4df860be14415f48dd27a86a64cb0f1d2e402c3",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "optional-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-client",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-required-client-auth-client.txt",
+      "bytes": 24475,
+      "sha256": "0eb770b70ace53d20918f6673416ba8d8aec5e43258fad1855336e3b599ca93e",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "java.net.SocketException",
+            "message": "Software caused connection abort: recv failed"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-required-client-auth-server",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-required-client-auth-server.txt",
+      "bytes": 18271,
+      "sha256": "1a405536ec18e3f833b00b97cf3eb0962c03c9c95f07d0c8129b718c454b6cf6",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "required-client-auth",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "failure",
+            "exception": "javax.net.ssl.SSLHandshakeException",
+            "message": "null cert chain"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 1,
+        "outcome": "failure"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-client",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-resumption-client.txt",
+      "bytes": 28420,
+      "sha256": "57bd35a655a96877f0c0b99609abee34d8aa5c27b5334e505168eb0830b584bf",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "client",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    },
+    {
+      "analyzer": "tls",
+      "id": "tlsv1.2-resumption-server",
+      "file": "local-zulu7-pilot2-zulu-7-all/tlsv1.2-resumption-server.txt",
+      "bytes": 25825,
+      "sha256": "b6fe584ed2f7f2e5c7c646ce15f71b91b41d74bf1f7597a9fb6e33433fa32ce8",
+      "expected": {
+        "protocol": "TLSv1.2",
+        "scenario": "resumption",
+        "side": "server",
+        "results": [
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          },
+          {
+            "outcome": "success",
+            "protocol": "TLSv1.2",
+            "cipher": "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+          }
+        ]
+      },
+      "status": "verified",
+      "validation": {
+        "interactions": 2,
+        "outcome": "success"
+      }
+    }
+  ],
+  "runtime": {
+    "java.version": "1.7.0_352",
+    "java.runtime.version": "1.7.0_352-b01",
+    "java.vendor": "Azul Systems, Inc.",
+    "java.vm.name": "OpenJDK 64-Bit Server VM",
+    "java.vm.version": "24.352-b01",
+    "os.name": "Windows 10",
+    "os.arch": "amd64",
+    "provider": "SunJSSE 1.7",
+    "protocols": "[TLSv1.2]"
+  },
+  "transformation": "Classic sequence: complete stdout dumps, LF normalization and actual collector ISO timestamps. TLS: complete merged stdout/stderr in emission order. File dumps: unchanged JVM bytes."
+}

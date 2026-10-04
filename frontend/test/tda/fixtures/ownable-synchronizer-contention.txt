@@ -1,0 +1,14 @@
+Full thread dump OpenJDK 64-Bit Server VM:
+
+"lock-owner" #10 [201] prio=5 os_prio=0 cpu=1.00ms elapsed=5.00s tid=0x0000000000000010 nid=0xc9 runnable [0x0000000000001000]
+   java.lang.Thread.State: RUNNABLE
+	at example.Owner.run(Owner.java:10)
+Locked ownable synchronizers:
+	- <0x00000000aaaabbbb> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+
+"lock-waiter" #11 [202] prio=5 os_prio=0 cpu=1.00ms elapsed=5.00s tid=0x0000000000000011 nid=0xca waiting on condition [0x0000000000001100]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x00000000aaaabbbb> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+Locked ownable synchronizers:
+	- None

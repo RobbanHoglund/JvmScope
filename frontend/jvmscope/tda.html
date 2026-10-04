@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>JvmScope · Java Thread Dump Analyzer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/assets/javautils/java-thread-mark.svg" />
+<link rel="stylesheet" href="/assets/javautils/styles.css" />
+<link rel="stylesheet" href="/assets/javautils/analyzer-shell.css" />
+
+</head>
+<body class="tda-page analyzer-empty">
+	<header class="tda-header analyzer-header">
+		<div class="header-top">
+			<div class="header-group header-left analyzer-brand">
+				<img class="analyzer-brand-mark" src="/assets/javautils/java-thread-mark.svg" width="44" height="44" alt="" />
+				<div class="analyzer-brand-copy">
+					<h1>JvmScope · Java Thread Dump Analyzer</h1>
+					<p class="analyzer-brand-tagline">Follow the threads. Inspect the evidence.</p>
+				</div>
+				<div class="analyzer-file-name"><span class="analyzer-file-label">Capture</span><strong id="fileName">No file loaded</strong></div>
+			</div>
+
+			<div class="header-group header-center">
+				<div class="tabbar tda-file-actions" role="group" aria-label="Dump actions">
+					<label class="dump-select-wrap session-input-mode" for="sessionInputMode" data-capture-only>
+						<span class="dump-select-label">Input</span>
+						<select id="sessionInputMode" class="dump-select" aria-describedby="sessionInputHelp">
+							<option value="append">Add to session</option>
+							<option value="replace">Replace session</option>
+						</select>
+					</label>
+					<input id="fileInput" type="file" accept=".log,.txt,.json,text/plain,application/json" multiple
+						aria-label="Choose JVM thread dump files" class="sr-only" /> <label for="fileInput" class="btn btn-primary">
+						<svg class="tda-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 8V5h6l2 3h10v3M3 8v12h16l3-9H7l-4 9"/></svg>
+						Choose dumps</label>
+					<span class="example-actions" role="group" aria-label="Sample choices">
+					<button id="loadSampleBtn" class="btn btn-sm btn-accent" title="Start a new session with the mixed-symptom sample">
+						<svg class="tda-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h6m-5 0v6L5 18a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M8 14h8"/></svg>
+						Sample</button>
+					<button id="chooseExampleBtn" class="btn btn-sm btn-accent" type="button" aria-label="Choose example" aria-haspopup="dialog" aria-controls="exampleModal" title="Browse named examples by symptom and Java version">▾</button>
+					</span>
+					<button id="pasteClipboardBtn" class="btn btn-sm btn-accent"
+						type="button"><svg class="tda-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H6a2 2 0 0 0-2 2v13h16V7a2 2 0 0 0-2-2h-2M8 12h8m-8 4h6"/></svg>Paste</button>
+					<button id="clearBtn" class="btn btn-sm btn-danger-soft" data-capture-only>
+						<svg class="tda-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg>
+						Clear</button>
+					<button id="openRawDumpBtn" class="btn btn-sm" type="button" disabled data-capture-only
+						title="Open the complete selected raw dump evidence in a new tab"><svg class="tda-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3h7v7m0-7L11 13M10 5H4v15h15v-6"/></svg><span data-raw-dump-label>Raw dump</span></button>
+					<button id="howToUseBtn" class="btn btn-sm" type="button"
+						aria-haspopup="dialog" aria-controls="howToUseModal"><svg class="tda-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01"/></svg>Help</button>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="header-sub">
+			<div id="dumpNavigator" class="dump-nav hidden" role="group" aria-label="Snapshot navigation">
+				<div class="dump-nav-left">
+					<div class="file-pill dump-count-pill">
+						<strong id="dumpCountLabel">1 dump</strong>
+					</div>
+
+					<button id="prevDumpBtn" class="btn btn-sm" type="button"
+						title="Previous snapshot (Left arrow)">◀ Previous snapshot</button>
+					<button id="nextDumpBtn" class="btn btn-sm" type="button"
+						title="Next snapshot (Right arrow)">Next snapshot ▶</button>
+
+					<label class="dump-select-wrap" for="dumpSelect"> <span
+						class="dump-select-label">Snapshot</span> <select id="dumpSelect"
+						class="dump-select"></select>
+					</label>
+				</div>
+
+				<div class="dump-nav-right">
+					<div id="dumpDeltaSummary" class="dump-delta-summary"></div>
+				</div>
+			</div>
+			<output id="dumpNavigationAnnouncement" class="sr-only"
+				aria-live="polite" aria-atomic="true"></output>
+
+			<div class="tda-filter-row" data-capture-only>
+				<div class="toggles-row" role="group" aria-labelledby="tdaFilterLabel">
+					<span id="tdaFilterLabel" class="dump-select-label">Filters</span>
+					<label class="toggle" title="Only show daemon threads"> <input
+						id="onlyDaemonToggle" type="checkbox" /> Daemon only
+					</label> <label class="toggle" title="Show BLOCKED threads. If WAITING is also selected, either state matches."> <input
+						id="onlyBlockedToggle" type="checkbox" aria-describedby="stateFilterHelp" /> BLOCKED
+					</label> <label class="toggle"
+						title="Show WAITING or TIMED_WAITING threads. If BLOCKED is also selected, either state matches."> <input
+						id="onlyWaitingToggle" type="checkbox" aria-describedby="stateFilterHelp" /> WAITING
+					</label> <label class="toggle"
+						title="Only show threads that are part of a confirmed Java deadlock">
+						<input id="onlyDeadlockedToggle" type="checkbox" /> Deadlocked
+						only
+					</label> <label class="toggle"
+						title="Only show platform threads that are carrying a mounted virtual thread">
+						<input id="onlyCarrierToggle" type="checkbox" /> Carrying VT
+						only
+					</label>
+					<span id="stateFilterHelp" class="sr-only">BLOCKED and WAITING are state choices and combine with OR. Daemon, deadlocked, carrier, search, chart, and focused-table filters combine with AND.</span>
+				</div>
+				<label class="dump-select-wrap cpu-profile-select-wrap" for="cpuThresholdProfile">
+					<span class="dump-select-label">CPU profile</span>
+					<select id="cpuThresholdProfile" class="dump-select"
+						aria-describedby="cpuThresholdProfileHelp">
+						<option value="balanced">Balanced</option>
+						<option value="sensitive">Sensitive</option>
+						<option value="high-throughput">High-throughput</option>
+					</select>
+				</label>
+				<span id="cpuThresholdProfileHelp" class="sr-only">Controls CPU finding,
+					scenario, confidence, and livelock interpretation thresholds. It does
+					not change measured CPU rates.</span>
+			</div>
+		</div>
+
+		<div class="meta" id="metaBar" data-capture-only>
+			<div id="statsSummary">No data loaded.</div>
+			<div id="lastUpdated"></div>
+		</div>
+		<output id="rawDumpStatus" class="analysis-input-status hidden" role="status" aria-live="polite"></output>
+		<p id="sessionInputHelp" class="session-input-help" data-capture-only>Files, Paste and Ctrl+V add snapshots to this session in input order. Clear starts over. Sample opens a new session.</p>
+		<output id="sessionInputStatus" class="analysis-input-status hidden" role="status" aria-live="polite" aria-atomic="true"></output>
+	</header>
+
+	<main>
+		<section id="analyzerStart" class="analyzer-start drop-zone" aria-labelledby="analyzerStartTitle">
+			<div class="analyzer-start-copy">
+				<p class="analyzer-start-eyebrow">Thread dump analysis</p>
+				<h2 id="analyzerStartTitle">Start a thread dump session</h2>
+				<p>Choose or drop one or more thread dumps, paste text, or try the built-in sample.</p>
+				<p class="analyzer-start-context">Add dumps from separate files or pasted captures to build a timeline in the same session.</p>
+				<div class="analyzer-start-actions">
+					<button class="btn btn-primary" type="button" data-start-action="choose">Choose dump files</button>
+					<button class="btn" type="button" data-start-action="paste">Paste dump</button>
+					<button class="btn" type="button" data-start-action="sample">Try sample</button>
+					<button class="btn" type="button" data-example-open aria-haspopup="dialog" aria-controls="exampleModal">Browse examples</button>
+				</div>
+				<p class="analyzer-start-privacy">Analyzed locally in your browser. Nothing is uploaded.</p>
+			</div>
+			<div class="analyzer-start-format">
+				<img src="/assets/javautils/java-thread-mark.svg" width="56" height="56" alt="" />
+				<strong>Drop thread dumps here</strong>
+				<span>HotSpot text or JSON · .txt, .log, .json</span>
+			</div>
+		</section>
+		<dialog id="howToUseModal" class="modal help-modal hidden" aria-hidden="true"
+            aria-labelledby="howToUseModalTitle" aria-describedby="howToUseModalDescription">
+            <div class="modal-backdrop" data-close="how-to-use"></div>
+            <div class="modal-dialog help-modal-dialog">
+                <div class="modal-header help-modal-header">
+                    <div>
+                        <h2 class="modal-title" id="howToUseModalTitle">JvmScope · Java Thread Dump Analyzer · Guide</h2>
+                        <p id="howToUseModalDescription" class="help-modal-subtitle">Load snapshots, compare observations, then inspect the evidence.</p>
+                    </div>
+                    <button id="howToUseModalClose" class="modal-close" type="button" aria-label="Close analyzer guide" autofocus>✕</button>
+                </div>
+                <div class="help-search-toolbar">
+                    <label for="guideSearchInput">Search guide</label>
+                    <input id="guideSearchInput" type="search" data-help-search maxlength="160" placeholder="Search topics, terms or Java versions…" aria-describedby="guideSearchCount" autocomplete="off" />
+                    <button class="btn btn-sm" type="button" data-help-search-clear disabled>Clear search</button>
+                    <output id="guideSearchCount" data-help-search-count role="status" aria-live="polite" aria-atomic="true"></output>
+                </div>
+                <div class="modal-body help-modal-body">
+                    <p class="help-search-empty" data-help-search-empty hidden>No guide topics match your search. Try another term or clear the search.</p>
+                    <div class="help-quickstart" aria-label="Recommended workflow">
+                        <div class="help-quickstart-label">Recommended workflow</div>
+                        <div class="help-quickstart-steps">
+                            <span><strong>1</strong> Load dumps</span>
+                            <span><strong>2</strong> Check findings</span>
+                            <span><strong>3</strong> Filter threads</span>
+                            <span><strong>4</strong> Inspect evidence and history</span>
+                        </div>
+                    </div>
+                    <div class="docs-layout">
+                        <nav class="docs-nav" aria-label="Guide topics">
+                            <a href="#guide-getting-started">Getting started</a>
+                            <a href="#guide-session">Sessions and input errors</a>
+                            <a href="#guide-input-formats">Formats and Java versions</a>
+                            <a href="#guide-capture">Collecting thread dumps</a>
+                            <a href="#guide-timing">Snapshot timing and CPU profiles</a>
+                            <a href="#guide-search">Search, filters and charts</a>
+                            <a href="#guide-thread-table">Reading the thread table</a>
+                            <a href="#guide-thread-details">Thread details and raw dump</a>
+                            <a href="#guide-scenarios">Scenarios and findings</a>
+                            <a href="#guide-contention">Deadlocks and lock contention</a>
+                            <a href="#guide-dependency-graph">Thread and lock dependency map</a>
+                            <a href="#guide-runnable">Recurring RUNNABLE stack shapes</a>
+                            <a href="#guide-similarity">Similarity, normalization and fingerprints</a>
+                            <a href="#guide-methods">Similarity methods</a>
+                            <a href="#guide-trends">Recurring-stack trends</a>
+                            <a href="#guide-comparison">Side-by-side comparison</a>
+                            <a href="#guide-workflow">Workflow and keyboard tips</a>
+                            <a href="#guide-privacy">Privacy and performance</a>
+                        </nav>
+                        <div class="docs-card docs-content">
+                            <h3 id="guide-getting-started" class="docs-subtitle">Getting started</h3>
+                            <ul class="docs-list">
+                                <li>Choose dumps, drop files onto the page, or use <strong>Paste</strong>. The analysis workspace appears after input is accepted.</li>
+                                <li><strong>Sample</strong> opens the built-in overview. <strong>Browse examples</strong>, or the arrow beside Sample, opens named symptom cases and Java 25/26/27 captures. Cards label controlled JVM captures and synthetic scenarios. Selecting an example starts a new session; browsing keeps your current data.</li>
+                                <li><strong>Clear</strong> cancels pending input, removes the session and resets all filters. Reloading the page also clears the in-memory session. See <strong>Sessions and input errors</strong> to combine captures.</li>
+                            </ul>
+                            <h3 id="guide-session" class="docs-subtitle">Sessions and input errors</h3>
+                            <ul class="docs-list">
+                                <li><strong>Add to session</strong> is the default: files and pastes extend the timeline and thread histories. Choose or drop several files together, including a mix of text and JSON. The snapshot selector identifies each source.</li>
+                                <li>Load snapshots in chronological order. The session preserves submission order and snapshot order within each file. Repeated input remains a separate observation; duplicated or reversed timestamps are qualified rather than reordered.</li>
+                                <li>A text file may contain several snapshots. Load JSON documents as separate files or pastes; concatenated JSON is not a supported input.</li>
+                                <li><strong>Replace session</strong> starts a new capture. Invalid input keeps the valid session; valid files in a mixed batch are still accepted. Sample and library examples always start a new session.</li>
+                                <li>Empty, invalid or unreadable input opens an error dialog. Partial acceptance opens a warning with source details and the number of snapshots loaded. The message says whether the existing session was kept. You can retry the same file after correcting it.</li>
+                                <li>The input status shows the source being analyzed. Additions are queued in submission order; Clear cancels the queue and its analysis.</li>
+                                <li>Use sources from the same JVM for thread history. Different reported process IDs split histories. Missing process identity cannot prove that sources came from one JVM; matching uses reported thread IDs, not names alone.</li>
+                            </ul>
+                            <h3 id="guide-input-formats" class="docs-subtitle">Formats and Java versions</h3>
+                            <ul class="docs-list">
+                                <li>Supports HotSpot classic thread dumps from Java <strong>7–27</strong> and <code>Thread.dump_to_file</code> text and JSON from Java <strong>21–27</strong>. Regression tests replay controlled captures. Check the <a href="https://github.com/RobbanHoglund/JvmScope#java-input-compatibility" target="_blank" rel="noopener noreferrer">generated compatibility matrix</a> for exact builds, distributions and formats; coverage does not certify every vendor, update or platform. OpenJ9 javacores and arbitrary log wrappers are outside this coverage.</li>
+                                <li>Java 25–27 file dumps report per-thread states and monitor observations, but no CPU or allocation counters. Unavailable values stay <strong>—</strong>, not zero. Threads are observed separately, so a lock-graph cycle does not prove a simultaneous deadlock.</li>
+                                <li>Java 26+ parking records may report an owner ID. Locks presents it as an observation, without inventing held locks or a confirmed deadlock.</li>
+                                <li>Java 27 JSON <strong>formatVersion 2</strong> numeric IDs and compatibility v1 string IDs are supported. IDs beyond JavaScript’s safe integer range must be strings to retain their exact value.</li>
+                                <li>The server’s Java version is independent of the versions of dumps you can analyze.</li>
+                            </ul>
+                            <h3 id="guide-capture" class="docs-subtitle">Collecting thread dumps</h3>
+                            <ul class="docs-list">
+                                <li>For platform threads and JVM-reported deadlocks, use <code>jcmd PID Thread.print -l</code> or <code>jstack -l PID</code>. Replace PID with your application’s process ID and use the matching JDK tools.</li>
+                                <li>Check <code>jcmd PID help Thread.print</code> for options supported by that JVM. Where available, <code>jcmd PID Thread.print -e -l</code> adds extended per-thread information. Older JDKs may reject <code>-e</code>; available counters vary by version and format.</li>
+                                <li>For virtual and platform threads on Java 21+, use <code>jcmd PID Thread.dump_to_file -format=json /path/to/dump.json</code>, or <code>-format=plain</code> for text. File dumps do not supply CPU/allocation counters.</li>
+                                <li>Collect several snapshots from the same JVM to compare behavior. Keep the original timestamps and source order. A single lifetime CPU counter cannot establish that a thread is currently CPU hot.</li>
+                            </ul>
+                            <h3 id="guide-timing" class="docs-subtitle">Snapshot timing and CPU profiles</h3>
+                            <ul class="docs-list">
+                                <li>Use <strong>Previous snapshot</strong>, <strong>Next snapshot</strong> or the Snapshot selector to navigate. Timestamp labels distinguish valid, missing, duplicated and reversed times. <strong>TZ?</strong> means no timezone was supplied.</li>
+                                <li>The delta summary compares the selected snapshot with its predecessor: state totals and exact identities that are <strong>New</strong>, <strong>Ended</strong> or materially <strong>Changed</strong>. Hover a pill for names. Unresolved identity prevents a definite Ended count.</li>
+                                <li>CPU and allocation rates require an exact adjacent thread match, counter deltas and a positive comparable interval. The finer consistent JVM timestamp or thread elapsed-counter interval is used; collector timestamps alone do not establish JVM sampling precision.</li>
+                                <li>Details and tooltips explain the interval basis and uncertainty. Rounded measurements are approximate. Conflicting clocks keep counter deltas but suppress rates; coarse estimates marked <strong>≈</strong> do not establish CPU or allocation heat.</li>
+                                <li><strong>CPU profile</strong> adjusts interpretation of measured rates. Balanced uses the defaults, Sensitive surfaces lower sustained rates, and High-throughput requires higher sustained rates. The URL’s <code>cpuProfile</code> parameter retains the selected setting.</li>
+                            </ul>
+                            <h3 id="guide-search" class="docs-subtitle">Search, filters and charts</h3>
+                            <ul class="docs-list">
+                                <li>Search is literal and case-insensitive. It covers identity, state, JVM status, full stack lines (including mounted virtual-thread stacks), scenarios, findings, reasons and evidence metadata.</li>
+                                <li><strong>Daemon only</strong> selects daemon threads. <strong>BLOCKED</strong> selects that state; <strong>WAITING</strong> includes WAITING and TIMED_WAITING. Selecting both state controls combines them. Other filters and search must also match.</li>
+                                <li><strong>Deadlocked only</strong> selects JVM-confirmed deadlock members. <strong>Carrying VT only</strong> selects platform threads carrying mounted virtual threads.</li>
+                                <li>Click chart slices or legend buttons to filter by state, cumulative CPU time, elapsed time, allocated bytes or allocation rate. The active-filter bar reports the combined visible count and offers a clear action.</li>
+                                <li>Charts with unavailable measurements are hidden. A measured zero is data. CPU timelines and allocation rates require suitable adjacent snapshots and counters.</li>
+                                <li>The <strong>Thread CPU timeline</strong> plots measured CPU percentage for exact adjacent observations. A point belongs to the interval ending at that snapshot; click it to select the ending snapshot. Hover or select a legend entry to highlight its thread. Its name filter and 5/10/20-series limit are independent of table search. Unsafe comparisons create gaps, not zero activity.</li>
+                                <li>Table and chart filters apply across snapshot navigation. Add to session retains chart filters and clears focused-cluster selection. Replace session resets capture-specific chart/cluster controls but keeps generic table filters. Clear resets every filter.</li>
+                            </ul>
+                            <h3 id="guide-thread-table" class="docs-subtitle">Reading the thread table</h3>
+                            <ul class="docs-list">
+                                <li>Each row represents a thread in the selected snapshot. Click anywhere on the row or its <strong>Details</strong> button. A focused row also opens with <strong>Enter</strong> or <strong>Space</strong>.</li>
+                                <li><strong>Java state</strong> and the header’s <strong>JVM status</strong> describe different layers and can differ. RUNNABLE alone does not prove CPU consumption; a thread may be waiting in native I/O.</li>
+                                <li><strong>Locks held</strong> counts distinct reported monitors and ownable synchronizers. <strong>—</strong> means unavailable; zero means lock information was supplied and no hold was reported. Deadlock marks JVM-confirmed members. Carrier marks a platform thread carrying a mounted virtual thread.</li>
+                                <li><strong>Top frame</strong> is the first meaningful Java frame found. <strong>CPU time</strong> is a cumulative per-thread counter, not current CPU usage. Hover for its delta and comparable rate; Details explains the adjacent comparison.</li>
+                                <li><strong>Allocated</strong> is cumulative per-thread heap allocation, not retained/live heap. Allocation rate uses an exact adjacent counter delta. Neither proves a memory leak.</li>
+                                <li><strong>NEW</strong> marks a new exact identity. <strong>Δ</strong> lists changes in state, frame, locks, deadlock, name or measured activity. <strong>IDENTITY?</strong> means no safe comparison was possible.</li>
+                            </ul>
+                            <h3 id="guide-thread-details" class="docs-subtitle">Thread details and raw dump</h3>
+                            <ul class="docs-list">
+                                <li>Overview, Locks and History occupy the left panel; the central panel keeps the thread dump visible. Each panel scrolls independently. The header identifies the snapshot, source and qualified capture time.</li>
+                                <li><strong>Stack</strong> is the readable view for classic, text and JSON dumps. It displays reported identity, available state and frames without inventing missing counters. <strong>Original</strong> or <strong>Original JSON</strong> preserves the source block’s indentation and blank lines.</li>
+                                <li><strong>Colors</strong> distinguishes headers, states, locks, JVM frames, common libraries and other frames. Package colors help navigation; they do not prove application ownership or a diagnosis. Original view uses neutral text.</li>
+                                <li>Use the stack search box or <span class="kbd">Ctrl + F</span> for literal, case-insensitive search of the selected view. Switching Stack/Original keeps the query and recalculates matches. <span class="kbd">Enter</span> and <span class="kbd">Shift + Enter</span> navigate up to 1000 highlighted matches. <span class="kbd">Esc</span> clears a query first, then closes Details. Opening another detail view resets search, enables colors and selects Stack.</li>
+                                <li><strong>Copy raw thread block</strong> always copies the complete original evidence, including whitespace. Display formatting, colors and highlights are excluded. <strong>No matched diagnostic rule</strong> does not establish that a thread is problem-free.</li>
+                                <li><strong>Raw dump</strong> opens the selected snapshot in a separate browser tab, with search, thread filters and links back to Details or the dependency map. Snapshot changes, additions, replacement or Clear invalidate and close that tab. If blocked, allow the popup and retry.</li>
+                            </ul>
+                            <h3 id="guide-scenarios" class="docs-subtitle">Scenarios and findings</h3>
+                            <ul class="docs-list">
+                                <li>Badges identify patterns such as Java deadlock, monitor contention, CPU hot, allocation hot, executor idle, carrier thread, selector/event loop, possible starvation and possible livelock.</li>
+                                <li>Provenance matters: <strong>JVM FACT</strong> is reported data; <strong>MEASURED</strong> is an adjacent-snapshot measurement; <strong>MIXED</strong> combines measured and inferred evidence; <strong>INFERRED</strong> interprets state/stack/lock data; <strong>HEURISTIC</strong> is a possibility that dumps alone cannot prove.</li>
+                                <li>Confidence describes rule-match strength, not probability. A deterministic <strong>pattern evidence score</strong> from 0–100 uses recognized frames, parsed locks/parking metadata and compatible states. A high score never turns an inference into a JVM fact. Hover badges or open Details for the basis and limitations.</li>
+                                <li>Synchronization and selector rules use JVM/library frames, parsed lock semantics and state. Application or sample thread names alone do not trigger those rules.</li>
+                                <li><strong>CPU hot</strong> and <strong>Allocation hot</strong> require exact adjacent identities and measured rates; lifetime totals alone cannot trigger them. Allocation heat indicates churn, not retained memory, off-heap growth or a proven leak.</li>
+                                <li><strong>Possible starvation</strong> and <strong>Possible livelock</strong> remain heuristic. Livelock additionally requires measured current CPU activity; that still does not prove a lack of useful progress.</li>
+                                <li>Scenario arrow badges compare first and latest endpoints as growing, shrinking or stable. Details shows intermediate fluctuations and streaks. Series trends require at least two adjacent exactly matched observations; identity ambiguity or gaps produce <strong>insufficient data</strong>.</li>
+                            </ul>
+                            <h3 id="guide-contention" class="docs-subtitle">Deadlocks and lock contention</h3>
+                            <ul class="docs-list">
+                                <li>A JVM-reported Java deadlock opens a dedicated panel. Inspect the full cycle, lock relationships and participating threads. The contention panel also shows owners and waiters when no deadlock is reported.</li>
+                                <li>A <strong>confirmed hold</strong> was listed by the JVM in that snapshot. <strong>Observed contention</strong> is a reported wait; a <strong>likely bottleneck</strong> is an observed holder with waiters. These labels do not measure hold duration or prove causality.</li>
+                                <li>Across snapshots, lock changes mean appeared, persisted or no longer observed. They do not establish an exact release time.</li>
+                                <li>A later possible-livelock pattern may be associated with an earlier exact thread/lock relationship. This <strong>heuristic temporal association</strong> is an investigation hint, not proof that contention caused livelock.</li>
+                            </ul>
+                            <h3 id="guide-dependency-graph" class="docs-subtitle">Thread and lock dependency map</h3>
+                            <ul class="docs-list">
+                                <li><strong>Resource map</strong> shows waiter → resource → observed owner/initializer. Resources include monitors, ownable synchronizers and class initialization.</li>
+                                <li><strong>Thread dependencies</strong> collapses the resource hop into waiter → blocker edges. Select or hover an edge for supporting lock IDs and wait kinds.</li>
+                                <li>Scope selects connected threads, active contention or confirmed deadlock members. Search accepts names, thread IDs, lock types/IDs and top frames.</li>
+                                <li>Wheel to zoom; drag the background to pan or a node to pin it. Use the minimap, Fit, Reflow, fullscreen, neighborhood focus and PNG export for navigation.</li>
+                                <li>A graph cycle is a diagnostic signal. It becomes a <strong>confirmed deadlock</strong> only with the JVM’s explicit deadlock evidence.</li>
+                            </ul>
+                            <h3 id="guide-runnable" class="docs-subtitle">Recurring RUNNABLE stack shapes</h3>
+                            <ul class="docs-list">
+                                <li>Multiple snapshots reveal recurring RUNNABLE stack shapes. A cluster reports snapshots seen, total occurrences, longest consecutive run and average similarity.</li>
+                                <li>Timeline cells show presence across snapshots. Click a non-empty cell to select that snapshot and focus the table on the cluster’s exact members. Other filters still apply; the focus bar shows the remaining count and a clear action.</li>
+                                <li>Collapsing the cluster panel keeps its table focus. Changing snapshots clears this snapshot-specific focus.</li>
+                                <li>Repeating stacks indicate repeated observations, not continuous execution, CPU consumption or useful progress. Consult measured counters and source evidence.</li>
+                            </ul>
+                            <h3 id="guide-similarity" class="docs-subtitle">Similarity, normalization and fingerprints</h3>
+                            <ul class="docs-list">
+                                <li>Stacks are normalized before comparison. Volatile differences such as line numbers, generated lambda IDs, native-method markers and hexadecimal-like suffixes are removed or softened.</li>
+                                <li>Meaningful frames receive more attention than generic runner, wait and park frames. This reduces matches caused only by shared JVM infrastructure.</li>
+                                <li><strong>App frames</strong> are non-JDK frame hints and may include third-party libraries. They do not prove application ownership, CPU consumption or useful progress.</li>
+                                <li><strong>Fingerprints</strong> are compact comparison keys made from normalized frames. Stricter and looser views allow related variants to group together; they are not identities for the complete original stack. Inspect the raw evidence when exact differences matter.</li>
+                            </ul>
+                            <h3 id="guide-methods" class="docs-subtitle">Similarity methods</h3>
+                            <ul class="docs-list">
+                                <li><strong>Normalized exact</strong>: identical normalized stack shapes.</li>
+                                <li><strong>Common tail</strong>: strongly shared lower frames, with possible differences above them.</li>
+                                <li><strong>Shifted subsequence</strong>: a shared contiguous frame block occurs at a different stack depth.</li>
+                                <li><strong>Near sequence</strong>: many frames share their relative order, with differences or gaps.</li>
+                                <li><strong>Frame overlap</strong>: shared frames with looser order or structure.</li>
+                                <li><strong>Variant merge</strong>: a heuristic merge into a broader recurring family; review its variants rather than treating it as an exact match.</li>
+                                <li>The method explains how stacks grouped; <strong>similarity %</strong> describes how closely they matched after normalization. It is a relative algorithm score, not a probability, thread identity or proof of equivalent behavior.</li>
+                            </ul>
+                            <h3 id="guide-trends" class="docs-subtitle">Recurring-stack trends</h3>
+                            <ul class="docs-list">
+                                <li>These trends describe observed thread counts for a stack shape, not CPU load or elapsed duration.</li>
+                                <li><strong>Growing / Fading</strong>: the count at the last observed endpoint is higher/lower than the first. <strong>Persistent</strong>: present in every snapshot with equal endpoint counts; intermediate counts may vary.</li>
+                                <li><strong>Bursty</strong>: observed in at most two snapshots when absent from others. <strong>Intermittent</strong>: present in at least three snapshots with a gap between observations. <strong>Stable</strong>: a consecutive observed run with equal endpoint counts, absent from some other snapshots.</li>
+                                <li><strong>Unavailable</strong>: incomplete or incompatible collection coverage/processes prevent safe count comparisons. Missing or partial captures cannot establish that activity decreased.</li>
+                            </ul>
+                            <h3 id="guide-comparison" class="docs-subtitle">Side-by-side comparison</h3>
+                            <ul class="docs-list">
+                                <li>Open <strong>Show side by side</strong> in a recurring RUNNABLE cluster. Stack shape 1 is the reference; other shapes are displayed as diffs against it.</li>
+                                <li>Neutral lines are unchanged, <strong>+</strong> means added and <strong>−</strong> means removed. This compares stack variants, not source-code changes.</li>
+                            </ul>
+                            <h3 id="guide-workflow" class="docs-subtitle">Workflow and keyboard tips</h3>
+                            <ul class="docs-list">
+                                <li>Read the snapshot summary, then check confirmed deadlocks and contention. Use charts and filters to find threads worth inspecting. Open Details and review evidence and history; with multiple snapshots, compare recurring stacks and measured rates.</li>
+                                <li><span class="kbd">Ctrl + V</span> pastes a dump when focus is outside a text field. <span class="kbd">←</span> / <span class="kbd">→</span> select adjacent snapshots; <span class="kbd">Home</span> / <span class="kbd">End</span> select first/last, when focus is outside form controls and dialogs.</li>
+                                <li>In this guide, search matches complete topics containing all entered terms. Use the topic links to jump within the guide. <span class="kbd">Tab</span> moves between controls and links; <span class="kbd">Esc</span> closes the guide and returns focus to Help.</li>
+                                <li><code>?readclipboard</code> requests clipboard input on page open. Browser clipboard permissions still apply.</li>
+                            </ul>
+                            <h3 id="guide-privacy" class="docs-subtitle">Privacy and performance</h3>
+                            <ul class="docs-list">
+                                <li>Your dumps are parsed and analyzed locally in browser workers. Captures are not uploaded and the tool sends no telemetry. Built-in examples are downloaded from this application’s server, then analyzed locally.</li>
+                                <li>Sessions remain in browser memory. Reload or Clear removes them; Clear also cancels pending analysis. Large captures are limited by available browser memory.</li>
+                                <li>Copy actions put selected evidence on your clipboard. Raw-dump tabs and exported maps contain the source information you chose to display.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer help-modal-footer">
+                    <button id="howToUseModalClose2" class="btn" type="button">Close guide</button>
+                </div>
+            </div>
+        </dialog>
+
+		<dialog id="inputFeedbackModal" class="modal hidden" aria-hidden="true" role="alertdialog"
+			aria-labelledby="inputFeedbackTitle" aria-describedby="inputFeedbackSummary inputFeedbackOutcome inputFeedbackGuidance">
+			<div class="modal-backdrop" data-close="input-feedback"></div>
+			<div class="modal-dialog">
+				<div class="modal-header">
+					<div><div id="inputFeedbackLevel" class="input-feedback-level">Input error</div><h2 id="inputFeedbackTitle" class="modal-title">Invalid thread dump</h2></div>
+					<button id="inputFeedbackClose" class="modal-close" type="button" aria-label="Close input message" data-close-input-feedback>✕</button>
+				</div>
+				<div class="modal-body">
+					<p id="inputFeedbackSummary"></p>
+					<p id="inputFeedbackOutcome" class="input-feedback-outcome"></p>
+					<p id="inputFeedbackGuidance"></p>
+					<section id="inputFeedbackSourceDetails" hidden><h3>Source details</h3><ul id="inputFeedbackNotes"></ul></section>
+				</div>
+				<div class="modal-footer">
+					<button id="inputFeedbackChoose" class="btn btn-accent" type="button">Choose dumps</button>
+					<button class="btn" type="button" data-close-input-feedback>Close</button>
+				</div>
+			</div>
+		</dialog>
+
+		<output id="loadingState" class="analysis-input-status analysis-input-loading hidden"
+			aria-live="polite" aria-atomic="true"></output>
+		<output id="errorState" class="analysis-input-status hidden"
+			aria-live="assertive" aria-atomic="true"></output>
+
+		<section id="smartAnalysisPanel"
+			class="smart-analysis-panel panel-host hidden"
+			aria-live="polite">
+			<div id="smartAnalysisPanelBody"></div>
+		</section>
+
+		<section id="deadlockPanel"
+			class="deadlock-panel panel-host panel-host-danger hidden"
+			aria-live="polite">
+			<div id="deadlockPanelBody"></div>
+		</section>
+
+		<section id="classInitializationPanel"
+			class="class-initialization-panel panel-host panel-host-warn hidden"
+			aria-live="polite">
+			<div id="classInitializationPanelBody"></div>
+		</section>
+
+		<section id="contentionPanel"
+			class="contention-panel panel-host panel-host-warn hidden"
+			aria-live="polite">
+			<div id="contentionPanelBody"></div>
+		</section>
+
+
+		<section id="dependencyGraphPanel" class="dependency-graph-panel hidden"
+			aria-label="Thread and lock dependency graph">
+			<details id="dependencyGraphDetails" class="dependency-graph-details">
+				<summary class="dependency-graph-summary app-section-summary">
+					<div class="app-section-summary-inner">
+						<div class="app-section-summary-title">Thread &amp; lock dependency map</div>
+						<div id="dependencyGraphSubtitle" class="app-section-summary-subtitle">
+							Interactive wait-for graph with threads, monitors, class initialization, synchronizers, owners, and deadlock paths.
+						</div>
+					</div>
+				</summary>
+
+				<div class="dependency-graph-surface">
+					<div class="dependency-graph-toolbar" role="toolbar" aria-label="Dependency graph controls">
+                        <button id="contentionGraphReturn" class="btn btn-sm" type="button" hidden>← Back to lock contention</button>
+                        <button id="rawDumpReturn" class="btn btn-sm" type="button" hidden>← Back to raw dump</button>
+						<div class="dependency-graph-control-group dependency-graph-primary-controls">
+							<label class="dependency-graph-select-wrap" for="dependencyGraphViewMode">
+								<span>View</span>
+								<select id="dependencyGraphViewMode" class="dependency-graph-select">
+									<option value="resource">Resource map</option>
+									<option value="dependency">Thread dependencies</option>
+								</select>
+							</label>
+							<label class="dependency-graph-select-wrap" for="dependencyGraphScope">
+								<span>Scope</span>
+								<select id="dependencyGraphScope" class="dependency-graph-select">
+									<option value="contention" selected>Contention overview</option>
+									<option value="deadlock">Deadlock only</option>
+									<option value="connected">All connected relationships</option>
+									<option value="all">All nodes (raw / dense)</option>
+								</select>
+							</label>
+
+						</div>
+
+						<div class="dependency-graph-search-wrap">
+							<span aria-hidden="true">⌕</span>
+							<input id="dependencyGraphSearch" type="search" autocomplete="off"
+								placeholder="Find thread, lock ID, type, or stack frame…"
+								aria-label="Search dependency graph" />
+							<span id="dependencyGraphSearchCount" class="dependency-graph-search-count"></span>
+							<button id="dependencyGraphSearchClear" class="dependency-graph-icon-btn hidden" type="button" aria-label="Clear graph search">✕</button>
+						</div>
+
+						<div class="dependency-graph-actions" aria-label="Map navigation">
+							<button id="dependencyGraphZoomOut" class="dependency-graph-icon-btn" type="button" aria-label="Zoom out" title="Zoom out">−</button>
+							<button id="dependencyGraphZoomIn" class="dependency-graph-icon-btn" type="button" aria-label="Zoom in" title="Zoom in">＋</button>
+							<button id="dependencyGraphFocusSelected" class="dependency-graph-action-btn" type="button" title="Show only the selected node and its two-hop neighborhood" disabled>◎ Focus</button>
+							<button id="dependencyGraphFit" class="dependency-graph-action-btn" type="button" title="Fit every visible node">⊙ Fit</button>
+							<button id="dependencyGraphReheat" class="dependency-graph-action-btn" type="button" title="Restart the force layout">Reflow</button>
+							<button id="dependencyGraphExport" class="dependency-graph-action-btn" type="button" title="Export the current map as PNG">⇩ PNG</button>
+							<button id="dependencyGraphFullscreen" class="dependency-graph-action-btn" type="button" title="Open the graph in fullscreen">⛶ Fullscreen</button>
+						</div>
+					</div>
+
+                    <details class="dependency-graph-display-options">
+                        <summary class="btn btn-sm">Display options</summary>
+                        <div class="dependency-graph-display-content">
+                            <div class="dependency-graph-advanced-controls">
+							<label class="dependency-graph-select-wrap dependency-graph-density-select-wrap" for="dependencyGraphDensity">
+								<span>Density</span>
+								<select id="dependencyGraphDensity" class="dependency-graph-select" title="Limit hotspots and duplicate waiter threads in the contention overview">
+									<option value="compact" selected>Compact · 5 locks / 6 waiters</option>
+									<option value="balanced">Balanced · 10 / 12</option>
+									<option value="complete">Complete contention</option>
+								</select>
+							</label>
+							<label class="dependency-graph-select-wrap" for="dependencyGraphLayout">
+								<span>Layout</span>
+								<select id="dependencyGraphLayout" class="dependency-graph-select">
+									<option value="flow">Dependency flow</option>
+									<option value="constellation">Constellation</option>
+								</select>
+							</label>
+							<label class="dependency-graph-select-wrap" for="dependencyGraphLabels">
+								<span>Labels</span>
+								<select id="dependencyGraphLabels" class="dependency-graph-select">
+									<option value="smart">Smart</option>
+									<option value="all">All</option>
+									<option value="none">None</option>
+								</select>
+							</label>
+							<label class="dependency-graph-select-wrap dependency-graph-highlight-select-wrap" for="dependencyGraphHighlight">
+								<span>Highlight threads</span>
+								<select id="dependencyGraphHighlight" class="dependency-graph-select">
+									<option value="none" selected>None</option>
+									<optgroup label="synchronized / monitors">
+										<option value="monitor-waiter">Waiting to enter synchronized</option>
+										<option value="monitor-holder">Holding synchronized</option>
+										<option value="monitor-both">Holding + waiting for synchronized</option>
+									</optgroup>
+									<optgroup label="Synchronizers / Lock / AQS">
+										<option value="synchronizer-waiter">Waiting for synchronizer</option>
+										<option value="synchronizer-holder">Holding synchronizer</option>
+										<option value="synchronizer-both">Holding + waiting for synchronizer</option>
+									</optgroup>
+									<optgroup label="Any lock type">
+										<option value="any-waiter">Any lock waiter</option>
+										<option value="any-holder">Any lock holder</option>
+										<option value="any-both">Holding and waiting</option>
+										<option value="deadlock">Deadlock participants</option>
+									</optgroup>
+								</select>
+								<span id="dependencyGraphHighlightCount" class="dependency-graph-highlight-count" aria-live="polite"></span>
+							</label>
+                            </div>
+					<div class="dependency-graph-filterbar" aria-label="Resource and relationship visibility">
+						<div id="dependencyGraphResourceControls" class="dependency-graph-control-group dependency-graph-resource-controls" aria-label="Resource type filters">
+							<span class="dependency-graph-control-label">Resources</span>
+							<label class="dependency-graph-check dependency-graph-check-monitor"><input id="dependencyGraphShowMonitors" type="checkbox" checked /> Monitors / synchronized / class init</label>
+							<label class="dependency-graph-check dependency-graph-check-synchronizer"><input id="dependencyGraphShowSynchronizers" type="checkbox" checked /> Synchronizers / Lock-AQS</label>
+							<label class="dependency-graph-check dependency-graph-check-unresolved"><input id="dependencyGraphShowUnresolved" type="checkbox" checked /> Owner not observed</label>
+						</div>
+
+						<div id="dependencyGraphRelationControls" class="dependency-graph-control-group dependency-graph-relation-controls" aria-label="Resource relation filters">
+							<span class="dependency-graph-control-label">Relations</span>
+							<label class="dependency-graph-check is-resource-relation"><input id="dependencyGraphShowWaits" type="checkbox" checked /> Waits</label>
+							<label class="dependency-graph-check is-resource-relation"><input id="dependencyGraphShowHolds" type="checkbox" checked /> Holds</label>
+							<label class="dependency-graph-check is-resource-relation"><input id="dependencyGraphShowAwaits" type="checkbox" /> Notifications</label>
+							<label class="dependency-graph-check"><input id="dependencyGraphShowMounts" type="checkbox" /> VT mounts</label>
+							<label class="dependency-graph-check"><input id="dependencyGraphShowEdgeLabels" type="checkbox" /> Edge labels</label>
+						</div>
+					</div>
+
+                        </div>
+                    </details>
+
+					<div id="dependencyGraphDensityNotice" class="dependency-graph-density-notice hidden" aria-live="polite">
+						<div class="dependency-graph-density-copy">
+							<strong>Raw graph density guard</strong>
+							<span id="dependencyGraphDensityText"></span>
+						</div>
+						<div class="dependency-graph-density-actions">
+							<button id="dependencyGraphDensityContention" class="dependency-graph-action-btn" type="button">Contention overview</button>
+							<button id="dependencyGraphDensityDependencies" class="dependency-graph-action-btn" type="button">Thread dependencies</button>
+						</div>
+					</div>
+
+					<div id="dependencyGraphFocusBar" class="dependency-graph-focus-bar hidden" aria-live="polite">
+						<span id="dependencyGraphFocusText"></span>
+						<button id="dependencyGraphFocusClear" class="dependency-graph-action-btn" type="button">Show selected scope</button>
+					</div>
+
+					<div id="dependencyGraphMetrics" class="dependency-graph-metrics" aria-label="Dependency graph summary"></div>
+
+					<div class="dependency-graph-workspace">
+						<div id="dependencyGraphStage" class="dependency-graph-stage" tabindex="0"
+							aria-label="Interactive thread and lock dependency map. Use the mouse wheel to zoom and drag to pan.">
+							<svg id="dependencyGraphSvg" class="dependency-graph-svg" role="img"
+								aria-label="Thread and lock dependency graph"></svg>
+							<div id="dependencyGraphEmpty" class="dependency-graph-empty hidden"></div>
+							<div id="dependencyGraphZoomReadout" class="dependency-graph-zoom-readout">100%</div>
+							<div id="dependencyGraphMinimap" class="dependency-graph-minimap" aria-hidden="true">
+								<svg id="dependencyGraphMinimapSvg"></svg>
+							</div>
+							<div class="dependency-graph-stage-hint">Wheel: zoom · drag background: pan · click: inspect · Focus: isolate two hops · role highlight fades unrelated nodes</div>
+							<div id="dependencyGraphTooltip" class="dependency-graph-tooltip hidden" role="tooltip" aria-hidden="true"></div>
+						</div>
+
+						<aside id="dependencyGraphInspector" class="dependency-graph-inspector" aria-live="polite" hidden>
+							<div class="dependency-graph-inspector-empty">
+								<div class="dependency-graph-inspector-icon">◎</div>
+								<strong>Select a node</strong>
+								<span>Inspect its state, locks, owners, waiters, stack entry point, and immediate dependency neighborhood.</span>
+							</div>
+						</aside>
+					</div>
+
+					<div class="dependency-graph-legend" aria-label="Dependency graph legend">
+						<div class="dependency-graph-legend-group">
+							<span class="dependency-graph-legend-title">Thread state</span>
+							<span><i class="dependency-graph-legend-dot state-runnable"></i>RUNNABLE</span>
+							<span><i class="dependency-graph-legend-dot state-blocked"></i>BLOCKED</span>
+							<span><i class="dependency-graph-legend-dot state-waiting"></i>WAITING</span>
+							<span><i class="dependency-graph-legend-dot state-timed-waiting"></i>TIMED_WAITING</span>
+						</div>
+						<div class="dependency-graph-legend-group">
+							<span class="dependency-graph-legend-title">Resources</span>
+							<span><i class="dependency-graph-legend-diamond resource-monitor"></i>Monitor</span>
+							<span><i class="dependency-graph-legend-diamond resource-synchronizer"></i>Synchronizer</span>
+							<span><i class="dependency-graph-legend-diamond resource-class-initialization"></i>Class initialization</span>
+							<span><i class="dependency-graph-legend-ring resource-deadlock"></i>Deadlock</span>
+						</div>
+						<div class="dependency-graph-legend-group">
+							<span class="dependency-graph-legend-title">Flow</span>
+							<span><i class="dependency-graph-legend-line relation-wait"></i>waits for</span>
+							<span><i class="dependency-graph-legend-line relation-hold"></i>held by</span>
+							<span><i class="dependency-graph-legend-line relation-dependency"></i>depends on</span>
+						</div>
+						<div class="dependency-graph-evidence-note">
+							Wait-for edges are snapshot observations. Only edges backed by the JVM deadlock section are labelled confirmed deadlocks.
+						</div>
+					</div>
+				</div>
+			</details>
+		</section>
+
+		<section id="threadStateChartPanel" class="thread-state-chart-panel hidden">
+			<details class="thread-state-chart-details">
+				<summary class="thread-state-chart-summary app-section-summary">
+					<div class="app-section-summary-inner">
+						<div class="app-section-summary-title">Charts and
+							distributions</div>
+						<div class="app-section-summary-subtitle">CPU activity across
+							snapshots, plus state, elapsed time, and allocation distributions.</div>
+					</div>
+				</summary>
+
+				<div class="cpu-timeline-card">
+					<div class="thread-state-chart-header cpu-timeline-header">
+						<div>
+							<div class="thread-state-chart-title">Thread CPU timeline</div>
+							<div class="thread-state-chart-subtitle">Measured CPU percentage between exact adjacent thread snapshots</div>
+						</div>
+						<div class="cpu-timeline-controls">
+							<label class="cpu-timeline-search-wrap" for="cpuTimelineSearch">
+								<span class="sr-only">Filter CPU timeline by thread name</span>
+								<input id="cpuTimelineSearch" class="cpu-timeline-search" type="search"
+									placeholder="Filter thread name" autocomplete="off" />
+							</label>
+							<label class="cpu-timeline-limit-wrap" for="cpuTimelineLimit">
+								<span>Show</span>
+								<select id="cpuTimelineLimit" class="dump-select">
+									<option value="5">5 hottest</option>
+									<option value="10" selected>10 hottest</option>
+									<option value="20">20 hottest</option>
+								</select>
+							</label>
+						</div>
+					</div>
+					<output id="cpuTimelineSummary" class="cpu-timeline-summary"
+						aria-live="polite" aria-atomic="true"></output>
+					<div id="cpuTimelineChart" class="cpu-timeline-chart"></div>
+					<p class="hint-muted">Each point measures the preceding interval. Hover or select a thread below to highlight it; select again to clear. Click a point to open its ending snapshot.</p>
+					<div id="cpuTimelineLegend" class="cpu-timeline-legend"></div>
+				</div>
+
+				<div class="thread-state-chart-grid">
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Thread state
+									distribution</div>
+								<div class="thread-state-chart-subtitle">Current state mix
+									across parsed threads</div>
+							</div>
+							<button id="openThreadStateChartBtn" class="btn btn-sm"
+								type="button">Expand</button>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="threadStateChart"></div>
+							<div id="threadStateLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Cumulative CPU time</div>
+								<div class="thread-state-chart-subtitle">Bucketed JVM CPU
+									counters for the selected snapshot</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="cpuTimeChart"></div>
+							<div id="cpuTimeLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Elapsed</div>
+								<div class="thread-state-chart-subtitle">Bucketed elapsed
+									distribution</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="elapsedChart"></div>
+							<div id="elapsedLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Allocated</div>
+								<div class="thread-state-chart-subtitle">Bucketed cumulative heap allocation;
+									not retained/live heap</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="allocatedChart"></div>
+							<div id="allocatedLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Allocation rate</div>
+								<div class="thread-state-chart-subtitle">Measured allocated-byte delta per second
+									between exact adjacent snapshots</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="allocationRateChart"></div>
+							<div id="allocationRateLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+				</div>
+			</details>
+		</section>
+
+		<div class="table-container drop-zone" id="tableContainer" data-capture-only
+			aria-live="polite">
+			<div id="dropOverlay" class="drop-overlay hidden">
+				<div class="drop-message">Drop thread dump files here</div>
+			</div>
+
+			<div class="table-search-row">
+				<div class="search-wrapper table-search-wrapper">
+					<input id="searchInput" type="search"
+						placeholder="Search threads, full stacks, diagnostics, and evidence…"
+						aria-label="Search threads, full stack traces, diagnostics, and evidence" autocomplete="off" />
+
+					<button id="refreshBtn" class="btn" type="button"
+						title="Re-apply filters + sort">Refresh</button>
+				</div>
+			</div>
+
+			<div id="chartFilterBar" class="chart-filter-bar hidden">
+				<div id="chartFilterSummary" class="chart-filter-summary"
+					aria-live="polite" aria-atomic="true"></div>
+				<button id="clearChartFilterBtn" class="btn btn-sm hidden"
+					type="button" title="Clear the active chart filter and return to search">Clear chart filter</button>
+			</div>
+			<output id="chartFilterAnnouncement" class="sr-only"
+				aria-live="polite" aria-atomic="true"></output>
+			<div id="focusFilterBar" class="chart-filter-bar focus-filter-bar hidden">
+				<div id="focusFilterSummary" class="chart-filter-summary"
+					aria-live="polite" aria-atomic="true"></div>
+				<button id="clearFocusFilterBtn" class="btn btn-sm hidden"
+					type="button" title="Clear focused threads and return to search">Clear table focus</button>
+			</div>
+			<output id="focusFilterAnnouncement" class="sr-only"
+				aria-live="polite" aria-atomic="true"></output>
+
+
+
+			<div class="footer-bar">
+				<div class="footer-bar-left">
+					<span id="rowCount"></span> <span id="dumpPointInTime"
+						class="footer-dump-time"></span>
+				</div>
+				<div id="pager"></div>
+			</div>
+
+			<table id="threadTable">
+				<thead>
+					<tr>
+
+						<th data-key="index" class="sortable"># <span
+							class="sort-indicator"></span></th>
+						<th data-key="threadName" class="sortable">Thread <span
+							class="sort-indicator"></span></th>
+						<th data-key="javaState" class="sortable">Java state <span
+							class="sort-indicator"></span></th>
+						<th data-key="locksHeldCount" class="sortable">Locks held <span
+							class="sort-indicator"></span></th>
+						<th data-key="isDeadlocked" class="sortable">Deadlock <span
+							class="sort-indicator"></span></th>
+						<th data-key="daemon" class="sortable">Daemon <span
+							class="sort-indicator"></span></th>
+						<th data-key="prio" class="sortable">Prio <span
+							class="sort-indicator"></span></th>
+						<th data-key="osPrio" class="sortable">OS prio <span
+							class="sort-indicator"></span></th>
+						<th data-key="cpuMs" class="sortable">CPU time <span
+							class="sort-indicator"></span></th>
+						<th data-key="elapsedS" class="sortable">Elapsed <span
+							class="sort-indicator"></span></th>
+						<th data-key="allocatedBytes" class="sortable">Allocated <span
+								class="sort-indicator"></span></th>
+						<th data-key="allocationRateBytesPerSecond" class="sortable">Allocation rate <span
+								class="sort-indicator"></span></th>
+						<th data-key="definedClasses" class="sortable">Defined
+							classes <span class="sort-indicator"></span>
+						</th>
+						<th data-key="nativeIdDec" class="sortable">Native ID <span
+							class="sort-indicator"></span></th>
+						<th data-key="stateText" class="sortable">JVM status <span
+							class="sort-indicator"></span></th>
+						<th data-key="topFrame" class="sortable">Top frame <span
+							class="sort-indicator"></span></th>
+						<th data-key="stackFrames" class="sortable">Frames <span
+							class="sort-indicator"></span></th>
+						<th data-key="carrierVirtualThreadId" class="sortable">Carrier
+							<span class="sort-indicator"></span>
+						</th>
+						<th>Details</th>
+					</tr>
+
+				</thead>
+				<tbody id="threadTableBody"></tbody>
+			</table>
+			<div id="threadEmptyState" class="analyzer-no-matches" hidden role="status">
+				<p>No threads match your filters</p>
+				<button id="clearThreadFiltersBtn" class="btn" type="button">Clear thread filters</button>
+			</div>
+
+
+
+
+			<section id="runnableClusterPanel"
+				class="contention-panel panel-host panel-host-cyan hidden"
+				aria-live="polite">
+				<div id="runnableClusterPanelBody"></div>
+			</section>
+
+		</div>
+
+		<script>
+			const dependencyGraphPanel = document.getElementById('dependencyGraphPanel');
+			const tableContainer = document.getElementById('tableContainer');
+			tableContainer.after(dependencyGraphPanel);
+		</script>
+
+		<!-- Details modal -->
+		<dialog id="threadModal" class="modal thread-details-modal hidden" aria-hidden="true" aria-labelledby="threadModalTitle">
+		<div class="modal-backdrop" data-close="thread"></div>
+		<div class="modal-dialog thread-details-dialog">
+			<div class="modal-header thread-details-header">
+				<div class="thread-details-header-content">
+					<div class="thread-details-kicker">Thread details</div>
+					<div class="modal-title" id="threadModalTitle">Thread</div>
+					<div class="thread-details-context" id="threadModalContext"></div>
+				</div>
+				<button id="threadModalClose" class="modal-close" type="button" aria-label="Close thread details">✕</button>
+			</div>
+			<div class="modal-body thread-details-body" id="threadModalBody"></div>
+			<div class="modal-footer thread-details-footer">
+				<button id="threadModalCopyBtn" class="btn" type="button">Copy raw thread block</button>
+				<button id="threadModalClose2" class="btn" type="button">Close</button>
+			</div>
+		</div>
+		</dialog>
+
+		<dialog id="threadStateChartModal" class="modal hidden"
+			aria-hidden="true">
+		<div class="modal-backdrop" data-close-thread-state-chart-modal="true"></div>
+		<div class="modal-dialog">
+			<div class="modal-header">
+				<div class="modal-title">Thread state distribution</div>
+				<button id="threadStateChartModalCloseBtn" class="modal-close"
+					type="button" aria-label="Close">✕</button>
+			</div>
+
+			<div class="modal-body">
+				<div class="thread-state-chart-modal-wrap">
+					<div id="threadStateChartLarge"></div>
+					<div id="threadStateLegendLarge"
+						class="thread-state-legend thread-state-legend-large"></div>
+				</div>
+			</div>
+		</div>
+		</dialog>
+
+
+		<dialog id="deadlockedThreadsModal" class="modal hidden"
+			aria-hidden="true">
+		<div class="modal-backdrop" data-close="deadlocked-threads"></div>
+		<div
+			class="modal-dialog modal-dialog-xl deadlocked-threads-modal-dialog">
+			<div class="modal-header">
+				<div class="modal-title" id="deadlockedThreadsModalTitle">Deadlocked
+					threads</div>
+				<button id="deadlockedThreadsModalClose" class="modal-close"
+					aria-label="Close">✕</button>
+			</div>
+
+			<div class="deadlocked-threads-toolbar">
+				<label><input id="deadlockedThreadsWrap" type="checkbox"
+					aria-controls="deadlockedThreadsModalBody"> Wrap long lines</label>
+			</div>
+			<div class="modal-body" id="deadlockedThreadsModalBody"></div>
+
+			<div class="modal-footer">
+				<button id="deadlockedThreadsModalClose2" class="btn" type="button">Close</button>
+			</div>
+		</div>
+		</dialog>
+
+		<dialog id="runnableClusterCompareModal" class="modal hidden"
+			aria-hidden="true">
+		<div class="modal-backdrop" data-close="runnable-cluster-compare"></div>
+		<div
+			class="modal-dialog modal-dialog-xl runnable-compare-modal-dialog">
+			<div class="modal-header">
+				<div class="modal-title" id="runnableClusterCompareModalTitle">
+					Recurring RUNNABLE stack comparison</div>
+				<button id="runnableClusterCompareModalClose" class="modal-close"
+					aria-label="Close">✕</button>
+			</div>
+
+			<div class="modal-body" id="runnableClusterCompareModalBody"></div>
+
+			<div class="modal-footer">
+				<button id="runnableClusterCompareModalClose2" class="btn"
+					type="button">Close</button>
+			</div>
+		</div>
+		</dialog>
+	</main>
+	<div id="appTooltip" class="app-tooltip hidden" role="tooltip"
+		aria-hidden="true"></div>
+	<script src="/assets/js/d3.min.js"></script>
+	<script type="module" src="../assets/javautils/tda.js"></script>
+</body>
+</html>

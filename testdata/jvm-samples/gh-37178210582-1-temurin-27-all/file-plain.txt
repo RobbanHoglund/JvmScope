@@ -1,0 +1,160 @@
+2138
+2026-10-04T04:52:50.346135739Z
+27+35
+
+#3 "main" TIMED_WAITING 2026-10-04T04:52:50.358212599Z
+    at java.base/java.lang.Thread.sleepNanos0(Native Method)
+    at java.base/java.lang.Thread.sleepNanos(Thread.java:562)
+    at java.base/java.lang.Thread.sleep(Thread.java:593)
+    at ThreadWorkload.main(ThreadWorkload.java:85)
+
+#11 "Reference Handler" RUNNABLE 2026-10-04T04:52:50.359589246Z
+    at java.base/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+    at java.base/java.lang.ref.Reference.processPendingReferences(Reference.java:240)
+    at java.base/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:202)
+
+#12 "Finalizer" WAITING 2026-10-04T04:52:50.365454516Z
+    at java.base/java.lang.Object.wait0(Native Method)
+    - waiting on <java.lang.Object@4957608d>
+    at java.base/java.lang.Object.wait(Object.java:391)
+    at java.base/java.lang.Object.wait(Object.java:353)
+    at java.base/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:136)
+    at java.base/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:214)
+    - locked <java.lang.Object@4957608d>
+    at java.base/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:165)
+
+#13 "Signal Dispatcher" RUNNABLE 2026-10-04T04:52:50.365631402Z
+
+#18 "Notification Thread" RUNNABLE 2026-10-04T04:52:50.365695007Z
+
+#19 "Common-Cleaner" TIMED_WAITING 2026-10-04T04:52:50.365774367Z
+    at java.base/java.lang.Object.wait0(Native Method)
+    - waiting on <java.lang.Object@2efa250b>
+    at java.base/java.lang.Object.wait(Object.java:391)
+    at java.base/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:122)
+    at java.base/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:200)
+    - locked <java.lang.Object@2efa250b>
+    at java.base/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:146)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+    at java.base/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)
+
+#20 "matrix-cpu-hot" RUNNABLE 2026-10-04T04:52:50.367673469Z
+    at ThreadWorkload$1.run(ThreadWorkload.java:38)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#21 "matrix-parked" WAITING 2026-10-04T04:52:50.367802663Z
+    at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+    - parking to wait for <java.util.concurrent.CountDownLatch$Sync@36baf30c>
+    at java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)
+    at java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+    at ThreadWorkload.park(ThreadWorkload.java:14)
+    at ThreadWorkload.access$100(ThreadWorkload.java:8)
+    at ThreadWorkload$2.run(ThreadWorkload.java:41)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#22 "matrix-sleeping" TIMED_WAITING 2026-10-04T04:52:50.367991937Z
+    at java.base/java.lang.Thread.sleepNanos0(Native Method)
+    at java.base/java.lang.Thread.sleepNanos(Thread.java:562)
+    at java.base/java.lang.Thread.sleep(Thread.java:593)
+    at ThreadWorkload$3.run(ThreadWorkload.java:44)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#23 "matrix-monitor-owner" WAITING 2026-10-04T04:52:50.368100601Z
+    at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+    - parking to wait for <java.util.concurrent.CountDownLatch$Sync@36baf30c>
+    at java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)
+    at java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+    at ThreadWorkload.park(ThreadWorkload.java:14)
+    at ThreadWorkload.access$100(ThreadWorkload.java:8)
+    at ThreadWorkload$4.run(ThreadWorkload.java:49)
+    - locked <java.lang.Object@5027b651>
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#24 "matrix-monitor-waiter" BLOCKED 2026-10-04T04:52:50.368700472Z
+    at ThreadWorkload$5.run(ThreadWorkload.java:51)
+    - waiting to lock <java.lang.Object@5027b651>
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#25 "matrix-lock-owner" WAITING 2026-10-04T04:52:50.368796927Z
+    at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+    - parking to wait for <java.util.concurrent.CountDownLatch$Sync@36baf30c>
+    at java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)
+    at java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+    at ThreadWorkload.park(ThreadWorkload.java:14)
+    at ThreadWorkload.access$100(ThreadWorkload.java:8)
+    at ThreadWorkload$6.run(ThreadWorkload.java:55)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#26 "matrix-lock-waiter" WAITING 2026-10-04T04:52:50.369305541Z
+    at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+    - parking to wait for <java.util.concurrent.locks.ReentrantLock$NonfairSync@24d46ca6>, owner #25
+    at java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:1031)
+    at java.base/java.util.concurrent.locks.ReentrantLock$Sync.lock(ReentrantLock.java:154)
+    at java.base/java.util.concurrent.locks.ReentrantLock.lock(ReentrantLock.java:323)
+    at ThreadWorkload$7.run(ThreadWorkload.java:57)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#27 "matrix-initializer" WAITING 2026-10-04T04:52:50.369487664Z
+    at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+    - parking to wait for <java.util.concurrent.CountDownLatch$Sync@36baf30c>
+    at java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)
+    at java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)
+    at ThreadWorkload.park(ThreadWorkload.java:14)
+    at ThreadWorkload.access$100(ThreadWorkload.java:8)
+    at ThreadWorkload$StalledInitialization.<clinit>(ThreadWorkload.java:31)
+    at java.base/java.lang.Class.forName0(Native Method)
+    at java.base/java.lang.Class.forName(Class.java:479)
+    at java.base/java.lang.Class.forName(Class.java:469)
+    at ThreadWorkload.initialize(ThreadWorkload.java:34)
+    at ThreadWorkload.access$300(ThreadWorkload.java:8)
+    at ThreadWorkload$8.run(ThreadWorkload.java:59)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#28 "matrix-init-waiter" RUNNABLE 2026-10-04T04:52:50.371726317Z
+    at java.base/java.lang.Class.forName0(Native Method)
+    at java.base/java.lang.Class.forName(Class.java:479)
+    at java.base/java.lang.Class.forName(Class.java:469)
+    at ThreadWorkload.initialize(ThreadWorkload.java:34)
+    at ThreadWorkload.access$300(ThreadWorkload.java:8)
+    at ThreadWorkload$9.run(ThreadWorkload.java:61)
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#29 "matrix-deadlock-a" BLOCKED 2026-10-04T04:52:50.371862100Z
+    at ThreadWorkload$10.run(ThreadWorkload.java:64)
+    - locked <java.lang.Object@191516a4>
+    - waiting to lock <java.lang.Object@15dda21b>
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#30 "matrix-deadlock-b" BLOCKED 2026-10-04T04:52:50.371945396Z
+    at ThreadWorkload$11.run(ThreadWorkload.java:65)
+    - locked <java.lang.Object@15dda21b>
+    - waiting to lock <java.lang.Object@191516a4>
+    at java.base/java.lang.Thread.run(Thread.java:1527)
+
+#31 "Attach Listener" RUNNABLE 2026-10-04T04:52:50.372274710Z
+    at java.base/jdk.internal.vm.ThreadSnapshot.create(Native Method)
+    at java.base/jdk.internal.vm.ThreadSnapshot.of(ThreadSnapshot.java:63)
+    at java.base/jdk.internal.vm.ThreadDumper.dumpThread(ThreadDumper.java:181)
+    at java.base/jdk.internal.vm.ThreadDumper.lambda$dumpThreads$0(ThreadDumper.java:176)
+    at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:197)
+    at java.base/java.util.Spliterators$ArraySpliterator.forEachRemaining(Spliterators.java:1024)
+    at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:570)
+    at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:560)
+    at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:315)
+    at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734)
+    at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:803)
+    at java.base/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:176)
+    at java.base/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:172)
+    at java.base/jdk.internal.vm.ThreadDumper.dumpThreadsToFile(ThreadDumper.java:133)
+    at java.base/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:73)
+

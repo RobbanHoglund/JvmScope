@@ -1,0 +1,47 @@
+name: Bug report
+description: Report incorrect analysis, a UI problem or a startup/hosting issue.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. JvmScope is maintained solely by RobbanHoglund; pull requests are disabled.
+        Do not attach production logs, private dumps, credentials or personal data. Use a small synthetic or controlled example.
+        Report vulnerabilities privately as described in [SECURITY.md](https://github.com/RobbanHoglund/JvmScope/blob/main/SECURITY.md).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Thread Dump Analyzer
+        - TLS Log Analyzer
+        - Both analyzers
+        - Startup or hosting
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Version and environment
+      description: Include the JvmScope revision or site URL, browser, OS, and input Java version/vendor when known.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and reproduction steps
+      description: Describe how to reproduce the problem and the expected versus actual result.
+      value: |
+        Steps to reproduce:
+
+        Expected result:
+
+        Actual result:
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Optional synthetic or controlled example
+      description: Only include material that is safe to publish. Never paste a private or production capture.

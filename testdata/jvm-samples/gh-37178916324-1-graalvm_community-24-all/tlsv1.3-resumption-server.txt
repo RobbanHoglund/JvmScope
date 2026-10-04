@@ -1,0 +1,596 @@
+javax.net.ssl|DEBUG|30|main|2026-10-04 05:31:01.826 UTC|SSLCipher.java:423|jdk.tls.keyLimits:  entry = AES/GCM/NoPadding KeyUpdate 2^37. AES/GCM/NOPADDING:KEYUPDATE = 137438953472
+javax.net.ssl|DEBUG|30|main|2026-10-04 05:31:01.852 UTC|SSLCipher.java:423|jdk.tls.keyLimits:  entry =  ChaCha20-Poly1305 KeyUpdate 2^37. CHACHA20-POLY1305:KEYUPDATE = 137438953472
+READY
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.553 UTC|ClientHello.java:794|Consuming ClientHello handshake message (
+"ClientHello": {
+  "client version"      : "TLSv1.2",
+  "random"              : "FFAF241819FED733BD0569FD1F4A7CF65AE41110456E00B981A678186C44BC52",
+  "session id"          : "4B3169D06E8B5B16FC3376A99D3555AADC298014DDEBFF3BACB0A489AAD14EEE",
+  "cipher suites"       : "[TLS_AES_256_GCM_SHA384(0x1302), TLS_AES_128_GCM_SHA256(0x1301), TLS_CHACHA20_POLY1305_SHA256(0x1303)]",
+  "compression methods" : "00",
+  "extensions"          : [
+    "status_request (5)": {
+      "certificate status type": ocsp
+      "OCSP status request": {
+        "responder_id": <empty>
+        "request extensions": {
+          <empty>
+        }
+      }
+    },
+    "supported_groups (10)": {
+      "named groups": [x25519, secp256r1, secp384r1, secp521r1, x448, ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192]
+    },
+    "signature_algorithms (13)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, ed25519, ed448, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512, rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512, ecdsa_sha1, rsa_pkcs1_sha1]
+    },
+    "supported_versions (43)": {
+      "versions": [TLSv1.3]
+    },
+    "psk_key_exchange_modes (45)": {
+      "ke_modes": [psk_dhe_ke]
+    },
+    "signature_algorithms_cert (50)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, ed25519, ed448, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512, rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512, ecdsa_sha1, rsa_pkcs1_sha1]
+    },
+    "key_share (51)": {
+      "client_shares": [  
+        {
+          "named group": x25519
+          "key_exchange": {
+            0000: 83 FC E1 88 61 F4 2D 71   DE 0C 2E C5 D4 7C B6 AC  ....a.-q........
+            0010: 21 F2 C7 14 0E 87 46 4C   E2 23 3D EE 66 7A 6C 0F  !.....FL.#=.fzl.
+          }
+        },
+        {
+          "named group": secp256r1
+          "key_exchange": {
+            0000: 04 54 AB 70 6E 4C F5 C5   26 57 E4 14 BD 67 78 DE  .T.pnL..&W...gx.
+            0010: 14 5B D1 07 24 B5 17 3E   0A 32 46 24 22 8A 8F 67  .[..$..>.2F$"..g
+            0020: F1 11 88 4A 94 8B 22 7B   16 B1 B0 3E 1E DA 09 01  ...J.."....>....
+            0030: F9 53 18 E7 01 90 CA 9B   8A C9 81 CC C0 D6 34 A3  .S............4.
+            0040: 97 
+          }
+        },
+      ]
+    }
+  ]
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.554 UTC|SSLExtensions.java:204|Consumed extension: supported_versions
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.554 UTC|ClientHello.java:824|Negotiated protocol version: TLSv1.3
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.555 UTC|SSLExtensions.java:204|Consumed extension: psk_key_exchange_modes
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.556 UTC|PreSharedKeyExtension.java:835|Handling pre_shared_key absence.
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.556 UTC|SSLExtensions.java:185|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.557 UTC|SSLExtensions.java:185|Ignore unavailable extension: max_fragment_length
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.558 UTC|SSLExtensions.java:204|Consumed extension: status_request
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.558 UTC|SSLExtensions.java:204|Consumed extension: supported_groups
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.558 UTC|SSLExtensions.java:204|Consumed extension: signature_algorithms
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.558 UTC|SSLExtensions.java:185|Ignore unavailable extension: cookie
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.559 UTC|SSLExtensions.java:185|Ignore unavailable extension: certificate_authorities
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.559 UTC|SSLExtensions.java:204|Consumed extension: signature_algorithms_cert
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.567 UTC|SSLExtensions.java:204|Consumed extension: key_share
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.573 UTC|SSLExtensions.java:219|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.573 UTC|SSLExtensions.java:219|Ignore unavailable extension: max_fragment_length
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.574 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: status_request
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.579 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: supported_groups
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.580 UTC|SSLExtensions.java:219|Ignore unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.580 UTC|SSLExtensions.java:236|Populated with extension: signature_algorithms
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.580 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: supported_versions
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.582 UTC|SSLExtensions.java:219|Ignore unavailable extension: cookie
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.583 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: psk_key_exchange_modes
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.583 UTC|SSLExtensions.java:219|Ignore unavailable extension: certificate_authorities
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.583 UTC|SSLExtensions.java:236|Populated with extension: signature_algorithms_cert
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.583 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: key_share
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.584 UTC|ServerHello.java:729|use cipher suite TLS_AES_256_GCM_SHA384
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.597 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: pre_shared_key
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.599 UTC|ServerHello.java:581|Produced ServerHello handshake message (
+"ServerHello": {
+  "server version"      : "TLSv1.2",
+  "random"              : "6DB4C30125563628AAF804E02E2B97273847B8B7EED04F39151ED3F84070DF59",
+  "session id"          : "4B3169D06E8B5B16FC3376A99D3555AADC298014DDEBFF3BACB0A489AAD14EEE",
+  "cipher suite"        : "TLS_AES_256_GCM_SHA384(0x1302)",
+  "compression methods" : "00",
+  "extensions"          : [
+    "supported_versions (43)": {
+      "selected version": [TLSv1.3]
+    },
+    "key_share (51)": {
+      "server_share": {
+        "named group": x25519
+        "key_exchange": {
+          0000: 9C 26 D3 80 1B 72 D8 43   C8 B5 B0 95 1D 02 A9 C1  .&...r.C........
+          0010: E5 03 AA 6B 43 5D 64 DD   5F F1 E5 E6 F7 4D E7 18  ...kC]d._....M..
+        }
+      },
+    }
+  ]
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.642 UTC|SSLCipher.java:1827|KeyLimit read side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.649 UTC|SSLCipher.java:1988|KeyLimit write side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.651 UTC|ServerNameExtension.java:532|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.651 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: server_name
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.651 UTC|MaxFragExtension.java:459|Ignore unavailable max_fragment_length extension
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.651 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: max_fragment_length
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.656 UTC|AlpnExtension.java:375|Ignore unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.656 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.657 UTC|EncryptedExtensions.java:138|Produced EncryptedExtensions message (
+"EncryptedExtensions": [
+  "supported_groups (10)": {
+    "named groups": [x25519, secp256r1, secp384r1, secp521r1, x448, ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192]
+  }
+]
+)
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.670 UTC|X509Authentication.java:278|X509KeyManager class: sun.security.ssl.SunX509KeyManagerImpl
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.670 UTC|X509Authentication.java:297|No X.509 cert selected for EC
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.670 UTC|X509Authentication.java:297|No X.509 cert selected for EdDSA
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.673 UTC|StatusResponseManager.java:604|Staping disabled or is a resumed session
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.673 UTC|CertStatusExtension.java:1116|Stapling is disabled for this connection
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.674 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: status_request
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.680 UTC|CertificateMessage.java:1024|Produced server Certificate message (
+"Certificate": {
+  "certificate_request_context": "",
+  "certificate_list": [  
+  {
+    "certificate" : {
+      "version"            : "v3",
+      "serial number"      : "5a:04:e5:39:13:9c:0e:0f",
+      "signature algorithm": "SHA256withRSA",
+      "issuer"             : "CN=localhost, O=JvmScope controlled sample",
+      "not before"         : "2026-10-04 05:30:46.000 UTC",
+      "not  after"         : "2026-11-03 05:30:46.000 UTC",
+      "subject"            : "CN=localhost, O=JvmScope controlled sample",
+      "subject public key" : "RSA",
+      "extensions"         : [
+        {
+          ObjectId: 2.5.29.14 Criticality=false
+          SubjectKeyIdentifier [
+          KeyIdentifier [
+          0000: 51 78 13 FC 43 6D A0 45   7B CB 91 36 7B 04 41 40  Qx..Cm.E...6..A@
+          0010: E4 87 61 8D                                        ..a.
+          ]
+          ]
+        }
+      ]}
+    "extensions": {
+      <no extension>
+    }
+  },
+]
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.751 UTC|CertificateVerify.java:1117|Produced server CertificateVerify handshake message (
+"CertificateVerify": {
+  "signature algorithm": rsa_pss_rsae_sha256
+  "signature": {
+    0000: 88 A8 AE 21 05 9A BF DE   7F CF B4 BB 14 DE 30 D1  ...!..........0.
+    0010: C8 EE E7 82 30 6A 1D A4   D2 A6 5B 9F 39 71 60 16  ....0j....[.9q`.
+    0020: 1A AF AF 1C A0 8B 1A CA   43 22 24 1B 5D 06 47 6B  ........C"$.].Gk
+    0030: 13 DA A7 B8 F2 1D 99 E8   23 B5 27 38 F1 D1 11 1C  ........#.'8....
+    0040: A6 02 F0 31 02 9B 9B F5   EE 98 81 3E 6C 67 DA 9A  ...1.......>lg..
+    0050: BB F5 6D 2C E8 CA F1 A2   BD 65 42 DC 97 FD E1 D8  ..m,.....eB.....
+    0060: 9C 88 BE 2A 54 13 71 A3   29 A6 DD B6 55 5F CA 71  ...*T.q.)...U_.q
+    0070: 70 36 EE CB 69 F1 D5 66   0C 72 9E ED DE C6 78 7D  p6..i..f.r....x.
+    0080: C0 25 95 E0 4B 30 16 6F   0A D4 78 C1 2B 1F 17 7A  .%..K0.o..x.+..z
+    0090: AE 0C B8 52 BE 0B 13 56   5A 7A C0 90 69 5D 10 58  ...R...VZz..i].X
+    00A0: 30 9C 23 5A D3 5F 8F A4   C2 44 52 39 1B 0D 8F B5  0.#Z._...DR9....
+    00B0: 01 5E 47 4A 1A C6 EA E3   2D E0 91 0A C3 9C B7 57  .^GJ....-......W
+    00C0: 7D 52 7B 72 33 DF D9 E1   5C AD C3 A3 CF C9 FC D8  .R.r3...\.......
+    00D0: 14 49 CA 4D E8 79 6D 8C   42 96 4E BF 31 B7 0C 08  .I.M.ym.B.N.1...
+    00E0: F2 93 D5 E7 29 6F B8 6B   10 D0 F6 D5 B4 7D C4 C8  ....)o.k........
+    00F0: 39 72 13 CD 55 FC CE E4   A7 A0 AE B1 E6 59 1D 81  9r..U........Y..
+  }
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.754 UTC|Finished.java:781|Produced server Finished handshake message (
+"Finished": {
+  "verify data": {
+    0000: A4 3B 64 CD B5 E1 7A 5D   25 59 9C 65 F4 84 55 45  .;d...z]%Y.e..UE
+    0010: 0B DD F4 B1 01 52 7A 8E   5D 1E 8E 20 C7 B4 CA 44  .....Rz.].. ...D
+    0020: 1A 9D 03 FB 96 DE A0 E9   CF BE BD 09 D0 4A 89 31  .............J.1
+  }
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.756 UTC|SSLCipher.java:1988|KeyLimit write side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.756 UTC|ChangeCipherSpec.java:244|Consuming ChangeCipherSpec message
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.792 UTC|Finished.java:1059|Consuming client Finished handshake message (
+"Finished": {
+  "verify data": {
+    0000: 9C AF B1 57 E0 ED FE D8   32 FE 4C D7 74 3E 7C 53  ...W....2.L.t>.S
+    0010: A1 4C E0 6C 5A DD BA CA   B2 EE BE 78 9B 7B 57 97  .L.lZ......x..W.
+    0020: 10 96 85 11 17 B2 3F D3   CE 57 7D 06 9F DE 76 4F  ......?..W....vO
+  }
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.797 UTC|SSLCipher.java:1827|KeyLimit read side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.812 UTC|NewSessionTicket.java:455|Produced NewSessionTicket stateless post-handshake message (
+"NewSessionTicket": {
+  "ticket_lifetime"      : "86,400",
+  "ticket_age_add"       : "<omitted>",
+  "ticket_nonce"         : "01",
+  "ticket"               : {
+    0000: 3C 72 8F 78 30 6C C9 9E   6E D5 A8 87 91 8F B5 52  <r.x0l..n......R
+    0010: 2E A6 3B 82 31 4B E8 B1   4F 3C 8B 5A 48 04 E9 1B  ..;.1K..O<.ZH...
+    0020: 76 A7 13 45 C4 69 51 CA   B6 DE 7D 82 73 3E A6 34  v..E.iQ.....s>.4
+    0030: 8C 4E 38 A6 1F 30 B6 15   6D 89 6B 54 C2 0A E0 2E  .N8..0..m.kT....
+    0040: D4 0A 08 FE 93 E6 71 F8   E2 A4 C6 00 F1 9E C5 4A  ......q........J
+    0050: 8B CA C8 F3 8A 27 FF 55   70 DB 14 AC 0D 19 05 86  .....'.Up.......
+    0060: 79 11 61 D2 01 82 7B 8F   15 2D 35 20 32 7A 1C 65  y.a......-5 2z.e
+    0070: F7 D3 DB F4 3A 76 90 15   9B 49 66 98 B5 0F 82 39  ....:v...If....9
+    0080: 83 6C 6B D6 78 B4 A4 97   0D 08 CE 11 D8 F2 2C D2  .lk.x.........,.
+    0090: 8A 02 2E FA 3E 2C 53 D2   D7 AA 3B BD D9 7C 7A 03  ....>,S...;...z.
+    00A0: E2 2E 8F B1 DA 84 CA 00   97 BE BD 2A DF C0 08 6F  ...........*...o
+    00B0: C8 D9 76 38 BC D2 A5 AC   4E 7A 2B AA 39 40 47 C7  ..v8....Nz+.9@G.
+    00C0: 13 28 DF 15 40 1A 37 0C   9D 55 92 DD F0 A4 DD D7  .(..@.7..U......
+    00D0: 54 64 AC 9F 89 82 F8 01   82 B6 01 26 7C F9 68 A6  Td.........&..h.
+    00E0: AA 34 26 70 83 A4 17 96   63 88 40 8C A2 14 77 8D  .4&p....c.@...w.
+    00F0: 75 E1 E1 A1 D1 EF B8 06   FE 44 F8 C0 21 5A 08 E0  u........D..!Z..
+    0100: 30 E2 0B 7C 4F A6 2F DF   54 3D 90 52 24 78 A8 FD  0...O./.T=.R$x..
+    0110: 1C 4A EE 00 51 87 8E F9   B7 65 6D DB B8 DB 01 43  .J..Q....em....C
+    0120: 32 11 B0 8E 51 AA DA D5   09 49 B7 02 84 CA 4A C9  2...Q....I....J.
+    0130: EB 11 13 17 81 84 DC 34   89 ED 1A 5A A6 66 75 32  .......4...Z.fu2
+    0140: 57 D5 E1 0D 3B 4D F9 27   D4 2E 83 5C A5 57 AB 5A  W...;M.'...\.W.Z
+    0150: 4E A6 98 C9 1E 7A 45 A8   71 09 5A 4D 5D DD 8C E1  N....zE.q.ZM]...
+    0160: E3 79 A8 02 FC AB FD 0A   64 C5 9D 68 25 DC 9F F3  .y......d..h%...
+    0170: 1E D6 B3 71 80 0D 96 7A   A9 9F D4 96 2E 38 CA 81  ...q...z.....8..
+    0180: E3 75 61 AF 45 F5 0C 54   94 AF 2F E4 8B 23 60 40  .ua.E..T../..#`@
+    0190: C2 9F CC 63 25 D7 0E 35   15 95 E9 D5 FE 4E D1 E6  ...c%..5.....N..
+    01A0: 02 13 4D 68 86 27 E7 42   EC 8B B9 22 EE 59 B4 1D  ..Mh.'.B...".Y..
+    01B0: C3 94 2A 84 00 9F 64 70   93 0D 16 BE 9B D0 78 68  ..*...dp......xh
+    01C0: 38 33 CA 54 0F 09 9D A0   6A A6 E7 0D EA 53 90 1A  83.T....j....S..
+    01D0: BD 4F 93 09 73 33 7A 60   64 90 C8 04 09 52 4B A2  .O..s3z`d....RK.
+    01E0: 9A A5 6D B2 79 A9 94 F6   42 52 45 1E CB 50 1E 71  ..m.y...BRE..P.q
+    01F0: DD 28 6B CB 7B 22 A7 5D   26 0C B2 0D A6 C3 83 9D  .(k..".]&.......
+    0200: 0F 5C 5F 34 35 79 0D 60   2E 7C E2 35 FA CD 43 5C  .\_45y.`...5..C\
+    0210: D3 13 04 72 1A F2 8A 0C   ED D1 FE A2 35 9B 85 20  ...r........5.. 
+    0220: 81 82 2B A9 4F 87 7A F6   EA A0 64 5B 57 DB 92 6E  ..+.O.z...d[W..n
+    0230: 46 E3 62 4C 4B 4F CB A4   2A 62 1D DA 0D 2A 1A 9C  F.bLKO..*b...*..
+    0240: D0 56 05 5D 2B 27 03 97   CB 42 FF 41 9D 0C 37 85  .V.]+'...B.A..7.
+    0250: 5C 97 79 A2 5B 12 E7 B6   9A 82 5A 63 83 25 94 A5  \.y.[.....Zc.%..
+    0260: B3 74 40 F0 16 DE A9 F9   36 E8 BA 25 8A D4 1E A0  .t@.....6..%....
+    0270: CF 0F 6F C9 36 9F 37 C0   30 2D 75 9C 1F C4 23 7E  ..o.6.7.0-u...#.
+    0280: 62 5C 63 6C F4 B7 68 AF   0A 63 0B 88 CF D4 CC 50  b\cl..h..c.....P
+    0290: 80 B2 FC B4 01 0C 15 5F   EC AD 2F 5A 82 23 6D 5A  ......._../Z.#mZ
+    02A0: 18 08 AF 39 4B 09 11 89   71 C5 13 B2 D0 45 07 27  ...9K...q....E.'
+    02B0: C8 72 CF 28 FC D1 7D 13   28 40 F8 95 F1 43 9E B7  .r.(....(@...C..
+    02C0: DD 63 48 89 6F 49 7E FB   B0 3A 90 5F 82 0B 02 1B  .cH.oI...:._....
+    02D0: E6 37 9D 3F B6 3F 7B FB   55 52 B5 85 09 EB AF F5  .7.?.?..UR......
+    02E0: B9 CD 98 43 F2 C8 63 3A   88 46 87 F3 1E C5 C9 E1  ...C..c:.F......
+    02F0: DD 12 49 88 FD A8 7B 84   97 D2 D0 2D E6 B4 72 8D  ..I........-..r.
+    0300: 85 4C A3 4D 27 69 02 76   66 78 34 B7 B8 60 C3 F2  .L.M'i.vfx4..`..
+    0310: 49 4D 09 F5 45 09 BE B6   C7 DF 2C F7 D6 6F 03 81  IM..E.....,..o..
+    0320: DD 21 52 42 4D 73 F0 0C   DD 75 F3 35 1B F2 75 72  .!RBMs...u.5..ur
+    0330: A3 D0 EB 2A 10 A1 53 B4   3E E4 7B 75 FE 00 14 32  ...*..S.>..u...2
+    0340: 93 94 BB 32 B5 77 0B E0   21 F0 B6 ED 7D DB B1 9E  ...2.w..!.......
+    0350: F7 D5 95 53 76 17 2D 19   0A 19 12 7E 0B 90 87 B5  ...Sv.-.........
+    0360: 14 2D 10 76 58 89 C1 F5   57 A4 7E BD 9B BE 64 21  .-.vX...W.....d!
+    0370: 65 17 BB 0C 16 F7 10 83   55 31 88 DC F7 0C 8B F6  e.......U1......
+    0380: 7C DD 7E E5 F3 E2 8C C5   A3 4F FA C1 73 9F 7B 86  .........O..s...
+    0390: 69 20 81 65 4C EE 95 9D   4C 8A C8 A1 45 CC 29 6F  i .eL...L...E.)o
+    03A0: 01 23 26 45 F5 EA EE 1B   1A 14 49 5D 11 A0 C2 4A  .#&E......I]...J
+    03B0: E7 F9 CB 9E 20 B4 D8 6B   C1 61 32 39 F0 72 78 14  .... ..k.a29.rx.
+    03C0: 36 DC 37 0C E2 2E 6E F9   B0 20 2F B2 73 1D AE E3  6.7...n.. /.s...
+    03D0: D8 A4 5E 9D AD E4 8E 14   24 A0 CF 09 E5 B4 83 B8  ..^.....$.......
+    03E0: 31 03 95 CB 3C C5 F6 A4   D5 B4 F2 42 54 C1 69 63  1...<......BT.ic
+    03F0: F3 B4 14 00 A4 18 5D 78   D2 10 9E 95 AA 6E C2 06  ......]x.....n..
+    0400: 3E 10 6C 8C E2 83 67 40   E1 AB BC FA 19 27 76 0C  >.l...g@.....'v.
+    0410: 9A D1 
+  }  "extensions"           : [
+    <no extension>
+  ]
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.857 UTC|SSLSocketImpl.java:577|duplex close of SSLSocket
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.869 UTC|SSLSocketImpl.java:1777|close the SSL connection (passive)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.903 UTC|ClientHello.java:794|Consuming ClientHello handshake message (
+"ClientHello": {
+  "client version"      : "TLSv1.2",
+  "random"              : "86DC91F4E0FB43F3A137A985ED6E489885EE4520A4EC0323D693EDD8CECA97CB",
+  "session id"          : "BE179256E841D4D25B8893E231375552803EEE3A1A52C3ADBC27346B25A0A4ED",
+  "cipher suites"       : "[TLS_AES_256_GCM_SHA384(0x1302), TLS_AES_128_GCM_SHA256(0x1301), TLS_CHACHA20_POLY1305_SHA256(0x1303)]",
+  "compression methods" : "00",
+  "extensions"          : [
+    "status_request (5)": {
+      "certificate status type": ocsp
+      "OCSP status request": {
+        "responder_id": <empty>
+        "request extensions": {
+          <empty>
+        }
+      }
+    },
+    "supported_groups (10)": {
+      "named groups": [x25519, secp256r1, secp384r1, secp521r1, x448, ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192]
+    },
+    "signature_algorithms (13)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, ed25519, ed448, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512, rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512, ecdsa_sha1, rsa_pkcs1_sha1]
+    },
+    "supported_versions (43)": {
+      "versions": [TLSv1.3]
+    },
+    "psk_key_exchange_modes (45)": {
+      "ke_modes": [psk_dhe_ke]
+    },
+    "signature_algorithms_cert (50)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, ed25519, ed448, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512, rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512, ecdsa_sha1, rsa_pkcs1_sha1]
+    },
+    "key_share (51)": {
+      "client_shares": [  
+        {
+          "named group": x25519
+          "key_exchange": {
+            0000: D8 B5 76 BF 24 B0 6A 7C   12 D4 92 82 E5 DD 74 23  ..v.$.j.......t#
+            0010: 62 7F 57 96 3C 3C 64 91   D3 8C B6 5B 3A 02 B4 1E  b.W.<<d....[:...
+          }
+        },
+        {
+          "named group": secp256r1
+          "key_exchange": {
+            0000: 04 31 10 25 73 81 BA 35   BC CC 7D 32 82 AF 45 51  .1.%s..5...2..EQ
+            0010: 8B 6C 9F 2F 89 3A AA C5   C8 E8 72 90 11 5B 43 32  .l./.:....r..[C2
+            0020: 3D 0F 0B 46 74 78 30 13   D4 FA 8C 95 62 16 76 44  =..Ftx0.....b.vD
+            0030: 83 67 94 11 FE 70 FB E1   66 40 E0 7A 9A C8 D0 20  .g...p..f@.z... 
+            0040: 0C 
+          }
+        },
+      ]
+    },
+    "pre_shared_key (41)": {
+      "PreSharedKey": {
+        "identities": {
+          {
+            0000: 3C 72 8F 78 30 6C C9 9E   6E D5 A8 87 91 8F B5 52  <r.x0l..n......R
+            0010: 2E A6 3B 82 31 4B E8 B1   4F 3C 8B 5A 48 04 E9 1B  ..;.1K..O<.ZH...
+            0020: 76 A7 13 45 C4 69 51 CA   B6 DE 7D 82 73 3E A6 34  v..E.iQ.....s>.4
+            0030: 8C 4E 38 A6 1F 30 B6 15   6D 89 6B 54 C2 0A E0 2E  .N8..0..m.kT....
+            0040: D4 0A 08 FE 93 E6 71 F8   E2 A4 C6 00 F1 9E C5 4A  ......q........J
+            0050: 8B CA C8 F3 8A 27 FF 55   70 DB 14 AC 0D 19 05 86  .....'.Up.......
+            0060: 79 11 61 D2 01 82 7B 8F   15 2D 35 20 32 7A 1C 65  y.a......-5 2z.e
+            0070: F7 D3 DB F4 3A 76 90 15   9B 49 66 98 B5 0F 82 39  ....:v...If....9
+            0080: 83 6C 6B D6 78 B4 A4 97   0D 08 CE 11 D8 F2 2C D2  .lk.x.........,.
+            0090: 8A 02 2E FA 3E 2C 53 D2   D7 AA 3B BD D9 7C 7A 03  ....>,S...;...z.
+            00A0: E2 2E 8F B1 DA 84 CA 00   97 BE BD 2A DF C0 08 6F  ...........*...o
+            00B0: C8 D9 76 38 BC D2 A5 AC   4E 7A 2B AA 39 40 47 C7  ..v8....Nz+.9@G.
+            00C0: 13 28 DF 15 40 1A 37 0C   9D 55 92 DD F0 A4 DD D7  .(..@.7..U......
+            00D0: 54 64 AC 9F 89 82 F8 01   82 B6 01 26 7C F9 68 A6  Td.........&..h.
+            00E0: AA 34 26 70 83 A4 17 96   63 88 40 8C A2 14 77 8D  .4&p....c.@...w.
+            00F0: 75 E1 E1 A1 D1 EF B8 06   FE 44 F8 C0 21 5A 08 E0  u........D..!Z..
+            0100: 30 E2 0B 7C 4F A6 2F DF   54 3D 90 52 24 78 A8 FD  0...O./.T=.R$x..
+            0110: 1C 4A EE 00 51 87 8E F9   B7 65 6D DB B8 DB 01 43  .J..Q....em....C
+            0120: 32 11 B0 8E 51 AA DA D5   09 49 B7 02 84 CA 4A C9  2...Q....I....J.
+            0130: EB 11 13 17 81 84 DC 34   89 ED 1A 5A A6 66 75 32  .......4...Z.fu2
+            0140: 57 D5 E1 0D 3B 4D F9 27   D4 2E 83 5C A5 57 AB 5A  W...;M.'...\.W.Z
+            0150: 4E A6 98 C9 1E 7A 45 A8   71 09 5A 4D 5D DD 8C E1  N....zE.q.ZM]...
+            0160: E3 79 A8 02 FC AB FD 0A   64 C5 9D 68 25 DC 9F F3  .y......d..h%...
+            0170: 1E D6 B3 71 80 0D 96 7A   A9 9F D4 96 2E 38 CA 81  ...q...z.....8..
+            0180: E3 75 61 AF 45 F5 0C 54   94 AF 2F E4 8B 23 60 40  .ua.E..T../..#`@
+            0190: C2 9F CC 63 25 D7 0E 35   15 95 E9 D5 FE 4E D1 E6  ...c%..5.....N..
+            01A0: 02 13 4D 68 86 27 E7 42   EC 8B B9 22 EE 59 B4 1D  ..Mh.'.B...".Y..
+            01B0: C3 94 2A 84 00 9F 64 70   93 0D 16 BE 9B D0 78 68  ..*...dp......xh
+            01C0: 38 33 CA 54 0F 09 9D A0   6A A6 E7 0D EA 53 90 1A  83.T....j....S..
+            01D0: BD 4F 93 09 73 33 7A 60   64 90 C8 04 09 52 4B A2  .O..s3z`d....RK.
+            01E0: 9A A5 6D B2 79 A9 94 F6   42 52 45 1E CB 50 1E 71  ..m.y...BRE..P.q
+            01F0: DD 28 6B CB 7B 22 A7 5D   26 0C B2 0D A6 C3 83 9D  .(k..".]&.......
+            0200: 0F 5C 5F 34 35 79 0D 60   2E 7C E2 35 FA CD 43 5C  .\_45y.`...5..C\
+            0210: D3 13 04 72 1A F2 8A 0C   ED D1 FE A2 35 9B 85 20  ...r........5.. 
+            0220: 81 82 2B A9 4F 87 7A F6   EA A0 64 5B 57 DB 92 6E  ..+.O.z...d[W..n
+            0230: 46 E3 62 4C 4B 4F CB A4   2A 62 1D DA 0D 2A 1A 9C  F.bLKO..*b...*..
+            0240: D0 56 05 5D 2B 27 03 97   CB 42 FF 41 9D 0C 37 85  .V.]+'...B.A..7.
+            0250: 5C 97 79 A2 5B 12 E7 B6   9A 82 5A 63 83 25 94 A5  \.y.[.....Zc.%..
+            0260: B3 74 40 F0 16 DE A9 F9   36 E8 BA 25 8A D4 1E A0  .t@.....6..%....
+            0270: CF 0F 6F C9 36 9F 37 C0   30 2D 75 9C 1F C4 23 7E  ..o.6.7.0-u...#.
+            0280: 62 5C 63 6C F4 B7 68 AF   0A 63 0B 88 CF D4 CC 50  b\cl..h..c.....P
+            0290: 80 B2 FC B4 01 0C 15 5F   EC AD 2F 5A 82 23 6D 5A  ......._../Z.#mZ
+            02A0: 18 08 AF 39 4B 09 11 89   71 C5 13 B2 D0 45 07 27  ...9K...q....E.'
+            02B0: C8 72 CF 28 FC D1 7D 13   28 40 F8 95 F1 43 9E B7  .r.(....(@...C..
+            02C0: DD 63 48 89 6F 49 7E FB   B0 3A 90 5F 82 0B 02 1B  .cH.oI...:._....
+            02D0: E6 37 9D 3F B6 3F 7B FB   55 52 B5 85 09 EB AF F5  .7.?.?..UR......
+            02E0: B9 CD 98 43 F2 C8 63 3A   88 46 87 F3 1E C5 C9 E1  ...C..c:.F......
+            02F0: DD 12 49 88 FD A8 7B 84   97 D2 D0 2D E6 B4 72 8D  ..I........-..r.
+            0300: 85 4C A3 4D 27 69 02 76   66 78 34 B7 B8 60 C3 F2  .L.M'i.vfx4..`..
+            0310: 49 4D 09 F5 45 09 BE B6   C7 DF 2C F7 D6 6F 03 81  IM..E.....,..o..
+            0320: DD 21 52 42 4D 73 F0 0C   DD 75 F3 35 1B F2 75 72  .!RBMs...u.5..ur
+            0330: A3 D0 EB 2A 10 A1 53 B4   3E E4 7B 75 FE 00 14 32  ...*..S.>..u...2
+            0340: 93 94 BB 32 B5 77 0B E0   21 F0 B6 ED 7D DB B1 9E  ...2.w..!.......
+            0350: F7 D5 95 53 76 17 2D 19   0A 19 12 7E 0B 90 87 B5  ...Sv.-.........
+            0360: 14 2D 10 76 58 89 C1 F5   57 A4 7E BD 9B BE 64 21  .-.vX...W.....d!
+            0370: 65 17 BB 0C 16 F7 10 83   55 31 88 DC F7 0C 8B F6  e.......U1......
+            0380: 7C DD 7E E5 F3 E2 8C C5   A3 4F FA C1 73 9F 7B 86  .........O..s...
+            0390: 69 20 81 65 4C EE 95 9D   4C 8A C8 A1 45 CC 29 6F  i .eL...L...E.)o
+            03A0: 01 23 26 45 F5 EA EE 1B   1A 14 49 5D 11 A0 C2 4A  .#&E......I]...J
+            03B0: E7 F9 CB 9E 20 B4 D8 6B   C1 61 32 39 F0 72 78 14  .... ..k.a29.rx.
+            03C0: 36 DC 37 0C E2 2E 6E F9   B0 20 2F B2 73 1D AE E3  6.7...n.. /.s...
+            03D0: D8 A4 5E 9D AD E4 8E 14   24 A0 CF 09 E5 B4 83 B8  ..^.....$.......
+            03E0: 31 03 95 CB 3C C5 F6 A4   D5 B4 F2 42 54 C1 69 63  1...<......BT.ic
+            03F0: F3 B4 14 00 A4 18 5D 78   D2 10 9E 95 AA 6E C2 06  ......]x.....n..
+            0400: 3E 10 6C 8C E2 83 67 40   E1 AB BC FA 19 27 76 0C  >.l...g@.....'v.
+            0410: 9A D1 
+          }
+        }  "binders": "  {9594C2ECEA06CCA38248EEAF5398945A69A137CACB228B3150B8DF0683233FFB4F035AFA6F98B6599C02DD52B07BD1BD}",
+      }
+    }
+  ]
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.904 UTC|SSLExtensions.java:204|Consumed extension: supported_versions
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.905 UTC|ClientHello.java:824|Negotiated protocol version: TLSv1.3
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.905 UTC|SSLExtensions.java:204|Consumed extension: psk_key_exchange_modes
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.907 UTC|PreSharedKeyExtension.java:403|Resuming session:  (
+Session(1791091862573|TLS_AES_256_GCM_SHA384)
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.909 UTC|SSLExtensions.java:204|Consumed extension: pre_shared_key
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.909 UTC|SSLExtensions.java:185|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.909 UTC|SSLExtensions.java:185|Ignore unavailable extension: max_fragment_length
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.909 UTC|SSLExtensions.java:204|Consumed extension: status_request
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.909 UTC|SSLExtensions.java:204|Consumed extension: supported_groups
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.909 UTC|SSLExtensions.java:204|Consumed extension: signature_algorithms
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.910 UTC|SSLExtensions.java:185|Ignore unavailable extension: cookie
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.910 UTC|SSLExtensions.java:185|Ignore unavailable extension: certificate_authorities
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.910 UTC|SSLExtensions.java:204|Consumed extension: signature_algorithms_cert
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.912 UTC|SSLExtensions.java:204|Consumed extension: key_share
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.913 UTC|SSLExtensions.java:219|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.913 UTC|SSLExtensions.java:219|Ignore unavailable extension: max_fragment_length
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.913 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: status_request
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.913 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: supported_groups
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.913 UTC|SSLExtensions.java:219|Ignore unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.914 UTC|SSLExtensions.java:236|Populated with extension: signature_algorithms
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.914 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: supported_versions
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.914 UTC|SSLExtensions.java:219|Ignore unavailable extension: cookie
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.914 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: psk_key_exchange_modes
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.914 UTC|SSLExtensions.java:219|Ignore unavailable extension: certificate_authorities
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.916 UTC|SSLExtensions.java:236|Populated with extension: signature_algorithms_cert
+javax.net.ssl|WARNING|30|matrix-server|2026-10-04 05:31:02.917 UTC|SSLExtensions.java:227|Ignore impact of unsupported extension: key_share
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.919 UTC|SSLExtensions.java:236|Populated with extension: pre_shared_key
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.921 UTC|ServerHello.java:1199|Using PSK to derive early secret
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.925 UTC|ServerHello.java:581|Produced ServerHello handshake message (
+"ServerHello": {
+  "server version"      : "TLSv1.2",
+  "random"              : "5397491C184C436BD18A3EC5BE6CD2AC7DB089D740FC6C32FD6593DAF716821E",
+  "session id"          : "BE179256E841D4D25B8893E231375552803EEE3A1A52C3ADBC27346B25A0A4ED",
+  "cipher suite"        : "TLS_AES_256_GCM_SHA384(0x1302)",
+  "compression methods" : "00",
+  "extensions"          : [
+    "supported_versions (43)": {
+      "selected version": [TLSv1.3]
+    },
+    "key_share (51)": {
+      "server_share": {
+        "named group": x25519
+        "key_exchange": {
+          0000: A7 21 8B 05 41 4A 7A 41   D3 E1 3D 96 09 04 AA D3  .!..AJzA..=.....
+          0010: 74 D5 2A 36 FA 93 CA FF   CB DF C1 1F B5 EA 98 00  t.*6............
+        }
+      },
+    },
+    "pre_shared_key (41)": {
+      "PreSharedKey": {
+        "selected_identity"      : "0x0000",
+      }
+    }
+  ]
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.930 UTC|SSLCipher.java:1827|KeyLimit read side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.931 UTC|SSLCipher.java:1988|KeyLimit write side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.932 UTC|ServerNameExtension.java:532|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.932 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: server_name
+javax.net.ssl|ALL|30|matrix-server|2026-10-04 05:31:02.932 UTC|MaxFragExtension.java:459|Ignore unavailable max_fragment_length extension
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.932 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: max_fragment_length
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.932 UTC|AlpnExtension.java:375|Ignore unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.937 UTC|SSLExtensions.java:272|Ignore, context unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.939 UTC|EncryptedExtensions.java:138|Produced EncryptedExtensions message (
+"EncryptedExtensions": [
+  "supported_groups (10)": {
+    "named groups": [x25519, secp256r1, secp384r1, secp521r1, x448, ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192]
+  }
+]
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.940 UTC|Finished.java:781|Produced server Finished handshake message (
+"Finished": {
+  "verify data": {
+    0000: 9E 18 13 D4 B8 0D 27 3F   E1 15 8C D3 FF 60 4A 79  ......'?.....`Jy
+    0010: 2B 4B C4 33 A6 E6 1F 50   5B BE B4 42 CF E1 25 D8  +K.3...P[..B..%.
+    0020: 64 31 00 5B 0D 8C A4 EE   C5 AC 4C 8D 4A 9F CD D6  d1.[......L.J...
+  }
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.942 UTC|SSLCipher.java:1988|KeyLimit write side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.949 UTC|ChangeCipherSpec.java:244|Consuming ChangeCipherSpec message
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.988 UTC|Finished.java:1059|Consuming client Finished handshake message (
+"Finished": {
+  "verify data": {
+    0000: A1 0C CB 5A 9D 07 49 B3   4F C5 4D FC 79 CC 41 FE  ...Z..I.O.M.y.A.
+    0010: 87 7C C1 93 C4 94 07 CA   84 D6 FA 3C 11 C5 D9 63  ...........<...c
+    0020: D4 C1 88 8E 5A FB FA E3   AC 6E BB 2D C2 38 93 B2  ....Z....n.-.8..
+  }
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.990 UTC|SSLCipher.java:1827|KeyLimit read side: algorithm = AES/GCM/NoPadding:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:02.996 UTC|NewSessionTicket.java:455|Produced NewSessionTicket stateless post-handshake message (
+"NewSessionTicket": {
+  "ticket_lifetime"      : "86,400",
+  "ticket_age_add"       : "<omitted>",
+  "ticket_nonce"         : "01",
+  "ticket"               : {
+    0000: 3C 72 8F 78 6C 48 82 9D   A0 1F F2 9E 91 AA 91 DE  <r.xlH..........
+    0010: E7 8A A5 71 5A 94 84 8A   26 C6 9D 8B 4C D1 FD 8B  ...qZ...&...L...
+    0020: 27 26 55 4D 19 35 8A A5   E9 85 E6 04 53 29 DE 08  '&UM.5......S)..
+    0030: D3 C2 B3 36 B8 C8 BC 4A   CE AB 6D 25 69 AA 1F 25  ...6...J..m%i..%
+    0040: B7 61 1F 26 96 CE 13 F5   1F 51 71 56 26 B4 73 12  .a.&.....QqV&.s.
+    0050: 57 64 33 4D 82 12 81 79   85 26 A1 B9 15 18 3F AF  Wd3M...y.&....?.
+    0060: 21 B2 B4 E4 77 97 0A 1F   A3 A9 2C AE 00 E2 19 ED  !...w.....,.....
+    0070: AD DD 52 7C 7B FB 72 AF   38 03 C6 BF 71 C4 C4 9A  ..R...r.8...q...
+    0080: F3 CE EC 19 C7 71 BF 3E   74 43 0C AB 7C FC 06 F4  .....q.>tC......
+    0090: 50 F1 C5 F6 61 18 EC B7   21 4B 8D E4 C8 C4 A5 1B  P...a...!K......
+    00A0: C7 5A BB 38 7B F8 52 85   1D 95 F9 21 82 0D 69 C9  .Z.8..R....!..i.
+    00B0: CB 24 28 FF DB 22 2B 9C   EF 5C 7B 9D EB 09 E5 E4  .$(.."+..\......
+    00C0: E6 FC 9A F2 27 68 C5 58   89 D6 2A BD 15 40 7B D1  ....'h.X..*..@..
+    00D0: 2F BE 7C 4C 9E 73 72 33   CF 4A 83 5C 41 C2 F0 DF  /..L.sr3.J.\A...
+    00E0: 06 9F 0E FE 81 E0 BB AC   28 52 4C 82 76 8B E5 47  ........(RL.v..G
+    00F0: E2 89 58 FC 30 00 EC FF   04 AE 78 D9 01 FC 62 ED  ..X.0.....x...b.
+    0100: 53 AD D1 75 BB 3A 1F 1D   05 7F 40 E0 2D FB 12 3C  S..u.:....@.-..<
+    0110: CF 2E 9A 48 A7 9B 83 28   5A 19 C7 6A 52 15 09 29  ...H...(Z..jR..)
+    0120: 4E 59 53 62 14 E8 1C 79   C1 73 65 19 D8 23 37 A0  NYSb...y.se..#7.
+    0130: B0 62 40 72 03 38 0F 5E   B6 B1 43 3E 0E E2 30 65  .b@r.8.^..C>..0e
+    0140: CB 99 8F A3 2C 20 D5 FA   E1 19 DE 46 4C 62 07 E4  ...., .....FLb..
+    0150: 37 FB 7D 21 FD E1 8B A4   F6 85 25 0C DA D7 4E 0B  7..!......%...N.
+    0160: 7A 7C F8 98 1D 14 E8 CD   F1 DD 32 55 C3 C7 01 2B  z.........2U...+
+    0170: 4F 87 9E EA 84 DD 8E 65   20 E8 7A 4B A5 57 3E 13  O......e .zK.W>.
+    0180: 84 9A 0E BC E1 9E 97 F0   BA EF AC AF 05 2D 84 0D  .............-..
+    0190: D5 3B 63 31 1D 00 FA 5A   03 5D B1 10 99 0E DC FA  .;c1...Z.]......
+    01A0: E2 8B 66 37 4E 36 63 5D   5F DC 6F 6D A6 06 2A C4  ..f7N6c]_.om..*.
+    01B0: 15 7B 4C 72 B8 63 DA DF   1F B9 87 16 5A AA C0 C9  ..Lr.c......Z...
+    01C0: D4 73 DB 23 58 71 93 5C   E7 31 12 4C 76 B4 04 01  .s.#Xq.\.1.Lv...
+    01D0: A0 F3 08 AA 46 09 41 1C   AE 82 DE CF D1 CA 2A FE  ....F.A.......*.
+    01E0: 1D B4 CD C8 8F E3 43 8D   B4 D7 91 C4 10 FD 71 C3  ......C.......q.
+    01F0: 06 4B 08 EA E8 F9 B9 FF   BF 63 5A E5 85 8C 1A 92  .K.......cZ.....
+    0200: 15 14 65 94 D9 F2 02 B6   99 32 C2 2D 69 A1 2B A3  ..e......2.-i.+.
+    0210: 65 53 2F 8E EF 7E FA 61   CF 1E B1 38 8D AA BF F9  eS/....a...8....
+    0220: 7C 67 09 DA 4C 65 A2 30   BF 43 5A C1 74 BB CA 87  .g..Le.0.CZ.t...
+    0230: 7F 89 67 B6 1F EF AE A9   6F 90 C9 51 B5 F6 44 D4  ..g.....o..Q..D.
+    0240: 9E 62 B8 5D B9 11 47 EE   00 E0 FF 83 DA A7 3F 0F  .b.]..G.......?.
+    0250: 0A AE 9B C5 F7 82 BF D4   D4 A9 8A 3B 2C 6F 8B 83  ...........;,o..
+    0260: 64 13 D7 4C 70 16 6A 6D   94 57 33 26 45 18 4C 10  d..Lp.jm.W3&E.L.
+    0270: DD 9B 8B 01 4C 0B C9 2D   32 5A E0 A1 C6 26 EA C4  ....L..-2Z...&..
+    0280: E6 5A 0E 05 E0 39 BB 47   9B 5A 31 48 8A 70 FF F6  .Z...9.G.Z1H.p..
+    0290: A5 16 9A C0 B0 E8 E4 7E   70 27 74 39 4C 21 31 8D  ........p't9L!1.
+    02A0: 27 76 B5 3A 9C 15 E0 5F   79 CE F5 2D 4D 88 CB 70  'v.:..._y..-M..p
+    02B0: 07 35 5D 62 CB A5 A0 10   8F 9D A8 7D E4 54 C7 41  .5]b.........T.A
+    02C0: 03 E4 BD C9 44 C6 3C 2B   A3 3B 21 8D 7F 0E 19 34  ....D.<+.;!....4
+    02D0: A9 87 A5 AC C3 DC 4E 42   0B EF 0F BC 32 85 8E CC  ......NB....2...
+    02E0: 32 77 C5 18 CE 9C 76 85   30 BC 73 F9 68 6B 0D 01  2w....v.0.s.hk..
+    02F0: 3F 3E 6E 83 1E B2 5D B4   3F C9 3D 76 4F 1A EA CC  ?>n...].?.=vO...
+    0300: CD F4 87 FE AF 7A 04 39   6E F4 3D 13 F1 E0 00 77  .....z.9n.=....w
+    0310: 90 46 60 48 8F A1 4F 62   05 C5 9E EB 6F A6 C2 10  .F`H..Ob....o...
+    0320: 1A 03 83 AC 03 BE 0F 40   3A 99 3B B0 00 9B 34 20  .......@:.;...4 
+    0330: 19 D6 C8 FA 4C C5 3C EF   E9 46 DF 69 57 F7 7F 18  ....L.<..F.iW...
+    0340: 38 4A D1 01 C4 1E 7B E6   7A DE A5 EC 93 3F 98 DC  8J......z....?..
+    0350: 86 AA 82 65 C2 E5 F6 5C   FB 35 9C 71 3D C0 39 BE  ...e...\.5.q=.9.
+    0360: F6 FC EC 9D 3E 86 A4 FF   59 77 32 78 FB B8 92 55  ....>...Yw2x...U
+    0370: D6 DA 61 07 11 B7 D5 11   8A 62 96 BA 80 6A 83 BF  ..a......b...j..
+    0380: 15 23 C9 71 B3 BE F4 A7   29 5C 6E DE 8D 1B 7D 75  .#.q....)\n....u
+    0390: BA 7E 15 2C AF 60 6E 32   C1 1E 66 0D A5 E7 4D 5B  ...,.`n2..f...M[
+    03A0: C1 13 CD 88 6F 42 3C 13   23 09 3D 6C D3 81 F1 70  ....oB<.#.=l...p
+    03B0: 8B F0 2E A6 7A 97 4D F2   01 26 8D 72 B5 2F DC 91  ....z.M..&.r./..
+    03C0: 54 CE 28 46 5F CF 55 81   B6 D0 6D B5 69 6A 50 8A  T.(F_.U...m.ijP.
+    03D0: 3C CF 6C F4 3C 4E 1B 12   B9 23 24 C1 EC 83 D0 F4  <.l.<N...#$.....
+    03E0: 59 B8 94 06 35 59 72 46   8C 35 13 AC 03 81 2C 93  Y...5YrF.5....,.
+    03F0: 7E 63 52 9A 90 1F 56 C3   42 03 21 46 56 03 CA D2  .cR...V.B.!FV...
+    0400: A8 CE 6C 66 0F A5 F1 60   31 2A 12 E2 E4 8C 16 EE  ..lf...`1*......
+    0410: 8D 6B 
+  }  "extensions"           : [
+    <no extension>
+  ]
+}
+)
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:03.040 UTC|SSLSocketImpl.java:577|duplex close of SSLSocket
+javax.net.ssl|DEBUG|30|matrix-server|2026-10-04 05:31:03.041 UTC|SSLSocketImpl.java:1777|close the SSL connection (passive)

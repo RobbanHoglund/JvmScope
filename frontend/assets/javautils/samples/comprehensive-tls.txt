@@ -1,0 +1,159 @@
+javax.net.ssl|DEBUG|01|outbound-tls12|2026-08-31 08:00:00.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2", "cipher suites" : [TLS_RSA_WITH_AES_128_CBC_SHA]})
+javax.net.ssl|DEBUG|01|outbound-tls12|2026-08-31 08:00:00.010 GMT|null:-1|extension server_name, type=host_name (0), value=api.example.com
+javax.net.ssl|DEBUG|01|outbound-tls12|2026-08-31 08:00:00.080 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|01|outbound-tls12|2026-08-31 08:00:00.120 GMT|null:-1|"Certificates": [{"certificate" : {"subject" : "CN=api.example.com, O=Example Corp"}}]
+javax.net.ssl|DEBUG|01|outbound-tls12|2026-08-31 08:00:00.180 GMT|null:-1|Negotiated cipher suite: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+javax.net.ssl|DEBUG|01|outbound-tls12|2026-08-31 08:00:00.320 GMT|null:-1|Handshake completed
+javax.net.ssl|DEBUG|02|outbound-tls13|2026-08-31 08:00:04.000 UTC|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|02|outbound-tls13|2026-08-31 08:00:04.010 UTC|null:-1|extension server_name, type=host_name (0), value=h2.example.com
+javax.net.ssl|DEBUG|02|outbound-tls13|2026-08-31 08:00:04.050 UTC|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|02|outbound-tls13|2026-08-31 08:00:04.090 UTC|null:-1|Negotiated cipher suite: TLS_AES_256_GCM_SHA384
+javax.net.ssl|DEBUG|02|outbound-tls13|2026-08-31 08:00:04.100 UTC|null:-1|application_layer_protocol_negotiation (16): [h2]
+javax.net.ssl|DEBUG|02|outbound-tls13|2026-08-31 08:00:04.240 UTC|null:-1|Handshake completed
+javax.net.ssl|DEBUG|03|server-worker-1|2026-08-31 10:00:08.000 CEST|null:-1|Consuming ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|03|server-worker-1|2026-08-31 10:00:08.010 CEST|null:-1|extension server_name, type=host_name (0), value=inbound.example.com
+javax.net.ssl|DEBUG|03|server-worker-1|2026-08-31 10:00:08.020 CEST|null:-1|peer host: 192.0.2.44
+javax.net.ssl|DEBUG|03|server-worker-1|2026-08-31 10:00:08.060 CEST|null:-1|Produced ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|03|server-worker-1|2026-08-31 10:00:08.180 CEST|null:-1|Negotiated cipher suite: TLS_AES_128_GCM_SHA256
+javax.net.ssl|DEBUG|03|server-worker-1|2026-08-31 10:00:08.260 CEST|null:-1|Handshake completed
+javax.net.ssl|DEBUG|04|mtls-success|2026-08-31 09:00:12.000 CET|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|04|mtls-success|2026-08-31 09:00:12.010 CET|null:-1|extension server_name, type=host_name (0), value=mtls-success.example.com
+javax.net.ssl|DEBUG|04|mtls-success|2026-08-31 09:00:12.050 CET|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|04|mtls-success|2026-08-31 09:00:12.080 CET|null:-1|Consuming CertificateRequest handshake message (
+"certificate authorities": [
+  "CN=Example Root CA, O=Example, C=SE",
+  "CN=Example Intermediate CA, O=Example, C=SE"
+]
+)
+javax.net.ssl|DEBUG|04|mtls-success|2026-08-31 09:00:12.110 CET|null:-1|Produced client Certificate handshake message (
+"Certificates": [{"certificate" : {"subject" : "CN=payments-client, OU=Production, O=Example"}}]
+)
+javax.net.ssl|DEBUG|04|mtls-success|2026-08-31 09:00:12.180 CET|null:-1|Negotiated cipher suite: TLS_AES_128_GCM_SHA256
+javax.net.ssl|DEBUG|04|mtls-success|2026-08-31 09:00:12.300 CET|null:-1|Handshake completed
+javax.net.ssl|DEBUG|05|san-mismatch|2026-08-31 08:00:16.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|05|san-mismatch|2026-08-31 08:00:16.010 GMT|null:-1|extension server_name, type=host_name (0), value=10.0.0.12
+javax.net.ssl|DEBUG|05|san-mismatch|2026-08-31 08:00:16.080 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.2"})
+javax.net.ssl|ERROR|05|san-mismatch|2026-08-31 08:00:16.120 GMT|null:-1|SSLHandshakeException: (certificate_unknown) No subject alternative names matching IP address 10.0.0.12
+javax.net.ssl|ERROR|05|san-mismatch|2026-08-31 08:00:16.140 GMT|null:-1|Fatal (CERTIFICATE_UNKNOWN): Received fatal alert: certificate_unknown
+at sun.security.ssl.Alert.createSSLException(Alert.java:131)
+at sun.security.ssl.TransportContext.fatal(TransportContext.java:370)
+javax.net.ssl|DEBUG|06|pkix-failure|2026-08-31 08:00:20.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|06|pkix-failure|2026-08-31 08:00:20.010 GMT|null:-1|extension server_name, type=host_name (0), value=untrusted.example.net
+javax.net.ssl|DEBUG|06|pkix-failure|2026-08-31 08:00:20.070 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.2"})
+javax.net.ssl|ERROR|06|pkix-failure|2026-08-31 08:00:20.120 GMT|null:-1|SSLHandshakeException: PKIX path building failed: unable to find valid certification path to requested target
+javax.net.ssl|ERROR|06|pkix-failure|2026-08-31 08:00:20.140 GMT|null:-1|Fatal (UNKNOWN_CA): Received fatal alert: unknown_ca
+javax.net.ssl|DEBUG|07|mtls-missing-cert|2026-08-31 08:00:24.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|07|mtls-missing-cert|2026-08-31 08:00:24.010 GMT|null:-1|extension server_name, type=host_name (0), value=mtls-required.example.com
+javax.net.ssl|DEBUG|07|mtls-missing-cert|2026-08-31 08:00:24.070 GMT|null:-1|Consuming CertificateRequest handshake message (
+"certificate authorities": ["CN=Required Client CA, O=Example"]
+)
+javax.net.ssl|ALL|07|mtls-missing-cert|2026-08-31 08:00:24.100 GMT|null:-1|No X.509 cert selected for EC
+javax.net.ssl|ALL|07|mtls-missing-cert|2026-08-31 08:00:24.110 GMT|null:-1|KeyMgr: no matching key found
+javax.net.ssl|ERROR|07|mtls-missing-cert|2026-08-31 08:00:24.150 GMT|null:-1|Fatal (CERTIFICATE_REQUIRED): Received fatal alert: certificate_required
+javax.net.ssl|DEBUG|08|issuer-mismatch|2026-08-31 08:00:28.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|08|issuer-mismatch|2026-08-31 08:00:28.010 GMT|null:-1|extension server_name, type=host_name (0), value=strict-mtls.example.com
+javax.net.ssl|DEBUG|08|issuer-mismatch|2026-08-31 08:00:28.070 GMT|null:-1|Consuming CertificateRequest handshake message
+javax.net.ssl|ALL|08|issuer-mismatch|2026-08-31 08:00:28.100 GMT|null:-1|matching alias: client-ec-prod
+javax.net.ssl|ALL|08|issuer-mismatch|2026-08-31 08:00:28.110 GMT|null:-1|issuers do not match
+javax.net.ssl|ERROR|08|issuer-mismatch|2026-08-31 08:00:28.150 GMT|null:-1|Fatal (CERTIFICATE_UNKNOWN): Received fatal alert: certificate_unknown
+javax.net.ssl|DEBUG|09|auth-scheme-failure|2026-08-31 08:00:32.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|WARNING|09|auth-scheme-failure|2026-08-31 08:00:32.100 GMT|null:-1|No available authentication scheme
+javax.net.ssl|ERROR|09|auth-scheme-failure|2026-08-31 08:00:32.150 GMT|null:-1|Fatal (HANDSHAKE_FAILURE): Received fatal alert: handshake_failure
+javax.net.ssl|DEBUG|10|connection-reset|2026-08-31 08:00:36.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|10|connection-reset|2026-08-31 08:00:36.010 GMT|null:-1|extension server_name, type=host_name (0), value=reset.example.org
+javax.net.ssl|ERROR|10|connection-reset|2026-08-31 08:00:36.120 GMT|null:-1|java.net.SocketException: Connection reset
+java.net.SocketException: Connection reset
+at java.base/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:328)
+javax.net.ssl|DEBUG|11|read-timeout|2026-08-31 08:00:40.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|11|read-timeout|2026-08-31 08:00:40.010 GMT|null:-1|extension server_name, type=host_name (0), value=slow.example.org
+javax.net.ssl|ERROR|11|read-timeout|2026-08-31 08:00:42.500 GMT|null:-1|java.net.SocketTimeoutException: Read timed out
+javax.net.ssl|DEBUG|12|unknown-sni|2026-08-31 08:00:44.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|12|unknown-sni|2026-08-31 08:00:44.010 GMT|null:-1|extension server_name, type=host_name (0), value=wrong-vhost.example.com
+javax.net.ssl|ERROR|12|unknown-sni|2026-08-31 08:00:44.120 GMT|null:-1|Fatal (UNRECOGNIZED_NAME): Received fatal alert: unrecognized_name
+javax.net.ssl|DEBUG|13|legacy-client|2026-08-31 08:00:48.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.1"})
+javax.net.ssl|ERROR|13|legacy-client|2026-08-31 08:00:48.080 GMT|null:-1|Fatal (PROTOCOL_VERSION): Received fatal alert: protocol_version
+javax.net.ssl|DEBUG|14|alpn-mismatch|2026-08-31 08:00:52.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|14|alpn-mismatch|2026-08-31 08:00:52.010 GMT|null:-1|extension server_name, type=host_name (0), value=h2-only.example.com
+javax.net.ssl|ERROR|14|alpn-mismatch|2026-08-31 08:00:52.100 GMT|null:-1|Fatal (NO_APPLICATION_PROTOCOL): Received fatal alert: no_application_protocol
+javax.net.ssl|DEBUG|15|expired-certificate|2026-08-31 08:00:56.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|15|expired-certificate|2026-08-31 08:00:56.010 GMT|null:-1|extension server_name, type=host_name (0), value=expired.example.com
+javax.net.ssl|ERROR|15|expired-certificate|2026-08-31 08:00:56.120 GMT|null:-1|Fatal (CERTIFICATE_EXPIRED): Received fatal alert: certificate_expired
+javax.net.ssl|DEBUG|16|incomplete-capture|2026-08-31 08:01:00.000 GMT+00:00|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|16|incomplete-capture|2026-08-31 08:01:00.010 GMT+00:00|null:-1|extension server_name, type=host_name (0), value=incomplete.example.com
+javax.net.ssl|DEBUG|16|incomplete-capture|2026-08-31 08:01:00.100 GMT+00:00|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|17|clean-close|2026-08-31 08:01:04.000 +00:00|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|17|clean-close|2026-08-31 08:01:04.100 +00:00|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|17|clean-close|2026-08-31 08:01:04.180 +00:00|null:-1|Handshake completed
+javax.net.ssl|DEBUG|17|clean-close|2026-08-31 08:01:04.260 +00:00|null:-1|Received close_notify
+javax.net.ssl|DEBUG|17|clean-close|2026-08-31 08:01:04.280 +00:00|null:-1|closing inbound
+javax.net.ssl|DEBUG|17|clean-close|2026-08-31 08:01:04.300 +00:00|null:-1|closing outbound
+javax.net.ssl|DEBUG|18|interleaved-client|2026-08-31 08:01:08.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|19|interleaved-server|2026-08-31 08:01:08.010 GMT|null:-1|Consuming ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|18|interleaved-client|2026-08-31 08:01:08.020 GMT|null:-1|extension server_name, type=host_name (0), value=parallel.example.com
+javax.net.ssl|DEBUG|19|interleaved-server|2026-08-31 08:01:08.030 GMT|null:-1|extension server_name, type=host_name (0), value=denied.example.com
+javax.net.ssl|DEBUG|19|interleaved-server|2026-08-31 08:01:08.040 GMT|null:-1|peer host: 198.51.100.27
+javax.net.ssl|DEBUG|18|interleaved-client|2026-08-31 08:01:08.080 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|ERROR|19|interleaved-server|2026-08-31 08:01:08.090 GMT|null:-1|Fatal (ACCESS_DENIED): Received fatal alert: access_denied
+javax.net.ssl|DEBUG|18|interleaved-client|2026-08-31 08:01:08.130 GMT|null:-1|Negotiated cipher suite: TLS_CHACHA20_POLY1305_SHA256
+javax.net.ssl|DEBUG|18|interleaved-client|2026-08-31 08:01:08.200 GMT|null:-1|Handshake completed
+javax.net.ssl|DEBUG|20|resumed-session|2026-08-31 08:01:12.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|20|resumed-session|2026-08-31 08:01:12.010 GMT|null:-1|extension server_name, type=host_name (0), value=resumed.example.com
+javax.net.ssl|DEBUG|20|resumed-session|2026-08-31 08:01:12.040 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|20|resumed-session|2026-08-31 08:01:12.060 GMT|null:-1|Resuming session: pre_shared_key selected_identity=0
+javax.net.ssl|DEBUG|20|resumed-session|2026-08-31 08:01:12.080 GMT|null:-1|Negotiated cipher suite: TLS_AES_128_GCM_SHA256
+javax.net.ssl|DEBUG|20|resumed-session|2026-08-31 08:01:12.140 GMT|null:-1|Handshake completed
+javax.net.ssl|DEBUG|21|server-worker-2|2026-08-31 08:01:16.000 GMT|null:-1|Consuming ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|21|server-worker-2|2026-08-31 08:01:16.010 GMT|null:-1|peer host: 203.0.113.18
+javax.net.ssl|DEBUG|21|server-worker-2|2026-08-31 08:01:16.040 GMT|null:-1|Produced ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|21|server-worker-2|2026-08-31 08:01:16.080 GMT|null:-1|Negotiated cipher suite: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+javax.net.ssl|DEBUG|21|server-worker-2|2026-08-31 08:01:16.160 GMT|null:-1|Handshake completed
+javax.net.ssl|DEBUG|22|outbound-ip-no-sni|2026-08-31 08:01:20.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|22|outbound-ip-no-sni|2026-08-31 08:01:20.010 GMT|null:-1|peer host: 203.0.113.77
+javax.net.ssl|DEBUG|22|outbound-ip-no-sni|2026-08-31 08:01:20.050 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|22|outbound-ip-no-sni|2026-08-31 08:01:20.080 GMT|null:-1|Negotiated cipher suite: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+javax.net.ssl|DEBUG|22|outbound-ip-no-sni|2026-08-31 08:01:20.180 GMT|null:-1|Handshake completed
+javax.net.ssl|DEBUG|23|bad-certificate|2026-08-31 08:01:24.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|23|bad-certificate|2026-08-31 08:01:24.010 GMT|null:-1|extension server_name, type=host_name (0), value=bad-cert.example.com
+javax.net.ssl|ERROR|23|bad-certificate|2026-08-31 08:01:24.100 GMT|null:-1|Fatal (BAD_CERTIFICATE): Received fatal alert: bad_certificate
+javax.net.ssl|DEBUG|24|revoked-certificate|2026-08-31 08:01:28.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|24|revoked-certificate|2026-08-31 08:01:28.010 GMT|null:-1|extension server_name, type=host_name (0), value=revoked.example.com
+javax.net.ssl|ERROR|24|revoked-certificate|2026-08-31 08:01:28.100 GMT|null:-1|Fatal (CERTIFICATE_REVOKED): Received fatal alert: certificate_revoked
+javax.net.ssl|DEBUG|25|decrypt-error|2026-08-31 08:01:32.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|25|decrypt-error|2026-08-31 08:01:32.010 GMT|null:-1|extension server_name, type=host_name (0), value=crypto-error.example.com
+javax.net.ssl|ERROR|25|decrypt-error|2026-08-31 08:01:32.100 GMT|null:-1|Fatal (DECRYPT_ERROR): Received fatal alert: decrypt_error
+javax.net.ssl|DEBUG|26|illegal-parameter|2026-08-31 08:01:36.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|26|illegal-parameter|2026-08-31 08:01:36.010 GMT|null:-1|extension server_name, type=host_name (0), value=parameter-error.example.com
+javax.net.ssl|ERROR|26|illegal-parameter|2026-08-31 08:01:36.100 GMT|null:-1|Fatal (ILLEGAL_PARAMETER): Received fatal alert: illegal_parameter
+javax.net.ssl|DEBUG|27|cipher-mismatch|2026-08-31 08:01:40.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2", "cipher suites" : [TLS_RSA_WITH_3DES_EDE_CBC_SHA]})
+javax.net.ssl|DEBUG|27|cipher-mismatch|2026-08-31 08:01:40.010 GMT|null:-1|extension server_name, type=host_name (0), value=modern-only.example.com
+javax.net.ssl|WARNING|27|cipher-mismatch|2026-08-31 08:01:40.080 GMT|null:-1|No cipher suites in common
+javax.net.ssl|ERROR|27|cipher-mismatch|2026-08-31 08:01:40.100 GMT|null:-1|Fatal (HANDSHAKE_FAILURE): Received fatal alert: handshake_failure
+javax.net.ssl|DEBUG|28|algorithm-constraints|2026-08-31 08:01:44.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|28|algorithm-constraints|2026-08-31 08:01:44.010 GMT|null:-1|extension server_name, type=host_name (0), value=weak-key.example.com
+javax.net.ssl|ERROR|28|algorithm-constraints|2026-08-31 08:01:44.080 GMT|null:-1|SSLHandshakeException: Certificates do not conform to algorithm constraints
+javax.net.ssl|ERROR|28|algorithm-constraints|2026-08-31 08:01:44.100 GMT|null:-1|Fatal (INSUFFICIENT_SECURITY): Received fatal alert: insufficient_security
+javax.net.ssl|DEBUG|29|unexpected-eof|2026-08-31 08:01:48.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|29|unexpected-eof|2026-08-31 08:01:48.010 GMT|null:-1|extension server_name, type=host_name (0), value=eof.example.com
+java.io.EOFException: SSL peer shut down incorrectly
+at java.base/sun.security.ssl.SSLSocketInputRecord.read(SSLSocketInputRecord.java:489)
+javax.net.ssl|DEBUG|30|broken-pipe|2026-08-31 08:01:52.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.2"})
+javax.net.ssl|DEBUG|30|broken-pipe|2026-08-31 08:01:52.010 GMT|null:-1|extension server_name, type=host_name (0), value=broken-pipe.example.com
+javax.net.ssl|ERROR|30|broken-pipe|2026-08-31 08:01:52.080 GMT|null:-1|java.net.SocketException: Broken pipe
+javax.net.ssl|DEBUG|31|unsupported-certificate|2026-08-31 08:01:56.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|31|unsupported-certificate|2026-08-31 08:01:56.010 GMT|null:-1|extension server_name, type=host_name (0), value=unsupported-cert.example.com
+javax.net.ssl|ERROR|31|unsupported-certificate|2026-08-31 08:01:56.080 GMT|null:-1|Fatal (UNSUPPORTED_CERTIFICATE): Received fatal alert: unsupported_certificate
+javax.net.ssl|DEBUG|32|unsupported-extension|2026-08-31 08:02:00.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|32|unsupported-extension|2026-08-31 08:02:00.010 GMT|null:-1|extension server_name, type=host_name (0), value=unsupported-extension.example.com
+javax.net.ssl|ERROR|32|unsupported-extension|2026-08-31 08:02:00.080 GMT|null:-1|Fatal (UNSUPPORTED_EXTENSION): Received fatal alert: unsupported_extension
+javax.net.ssl|DEBUG|33|peer-close|2026-08-31 08:02:04.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|33|peer-close|2026-08-31 08:02:04.010 GMT|null:-1|extension server_name, type=host_name (0), value=peer-close.example.com
+javax.net.ssl|ERROR|33|peer-close|2026-08-31 08:02:04.080 GMT|null:-1|Connection closed by peer
+javax.net.ssl|DEBUG|34|hostname-mismatch|2026-08-31 08:02:08.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|34|hostname-mismatch|2026-08-31 08:02:08.010 GMT|null:-1|extension server_name, type=host_name (0), value=api.example.com
+javax.net.ssl|DEBUG|34|hostname-mismatch|2026-08-31 08:02:08.060 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|34|hostname-mismatch|2026-08-31 08:02:08.090 GMT|null:-1|"Certificates": [{"certificate" : {"subject" : "CN=other.example.com, O=Example Corp"}}]
+javax.net.ssl|ERROR|34|hostname-mismatch|2026-08-31 08:02:08.120 GMT|null:-1|javax.net.ssl.SSLHandshakeException: java.security.cert.CertificateException: No subject alternative DNS name matching api.example.com found.
+javax.net.ssl|DEBUG|35|internal-error|2026-08-31 08:02:12.000 GMT|null:-1|Produced ClientHello handshake message ("ClientHello": {"client version" : "TLSv1.3"})
+javax.net.ssl|DEBUG|35|internal-error|2026-08-31 08:02:12.010 GMT|null:-1|extension server_name, type=host_name (0), value=internal-error.example.com
+javax.net.ssl|DEBUG|35|internal-error|2026-08-31 08:02:12.060 GMT|null:-1|Consuming ServerHello handshake message ("ServerHello": {"server version" : "TLSv1.3"})
+javax.net.ssl|ERROR|35|internal-error|2026-08-31 08:02:12.110 GMT|null:-1|Fatal (INTERNAL_ERROR): Received fatal alert: internal_error

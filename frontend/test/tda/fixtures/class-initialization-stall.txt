@@ -1,0 +1,23 @@
+2026-08-28T12:00:00Z
+Full thread dump OpenJDK 64-Bit Server VM:
+
+"class-initializer" #1 [101] daemon prio=5 os_prio=0 cpu=2.00ms elapsed=10.00s tid=0x1 nid=101 in Object.wait() [0x101]
+   java.lang.Thread.State: WAITING (on object monitor)
+        at java.lang.Object.wait0(java.base@21/Native Method)
+        - waiting on <0x00000000000000aa> (a example.InstanceFuture)
+        at example.InstanceFuture.get(InstanceFuture.java:20)
+        - locked <0x00000000000000aa> (a example.InstanceFuture)
+        at example.MapMetadataHandler.<clinit>(MapMetadataHandler.java:48)
+        at example.Bootstrap.start(Bootstrap.java:12)
+
+"class-waiter-1" #2 [102] daemon prio=5 os_prio=0 cpu=1.00ms elapsed=9.00s tid=0x2 nid=102 in Object.wait() [0x102]
+   java.lang.Thread.State: RUNNABLE
+        at example.PermissionPolicy.getPermissions(PermissionPolicy.java:70)
+        - waiting on the Class initialization monitor for example.MapMetadataHandler
+        at example.Worker.run(Worker.java:10)
+
+"class-waiter-2" #3 [103] daemon prio=5 os_prio=0 cpu=1.00ms elapsed=9.00s tid=0x3 nid=103 in Object.wait() [0x103]
+   java.lang.Thread.State: RUNNABLE
+        at example.PermissionPolicy.getPermissions(PermissionPolicy.java:70)
+        - waiting on the Class initialization monitor for example.MapMetadataHandler
+        at example.Worker.run(Worker.java:10)

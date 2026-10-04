@@ -1,0 +1,932 @@
+2026-10-04T05:20:28.505Z
+2228:
+2026-10-04 05:20:28
+Full thread dump OpenJDK 64-Bit Server VM (20.0.2+9 mixed mode, sharing):
+
+Threads class SMR info:
+_java_thread_list=0x00007f6c840027e0, length=22, elements={
+0x00007f6d08029310, 0x00007f6d080a7300, 0x00007f6d080a8830, 0x00007f6d080aa300,
+0x00007f6d080ab790, 0x00007f6d080acc10, 0x00007f6d080ae630, 0x00007f6d080afbd0,
+0x00007f6d080bde20, 0x00007f6d080c1ff0, 0x00007f6d080c6f70, 0x00007f6d080c7e60,
+0x00007f6d080ca170, 0x00007f6d080cb6a0, 0x00007f6d080cc8e0, 0x00007f6d080cdf40,
+0x00007f6d080cf480, 0x00007f6d080d0920, 0x00007f6d080d2050, 0x00007f6d080d3800,
+0x00007f6d080d4e20, 0x00007f6c840017e0
+}
+
+"main" #1 [2229] prio=5 os_prio=0 cpu=75.89ms elapsed=1.44s allocated=799K defined_classes=127 tid=0x00007f6d08029310 nid=2229 waiting on condition  [0x00007f6d0d9fe000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleep0(java.base@20.0.2/Native Method)
+	at java.lang.Thread.sleep(java.base@20.0.2/Thread.java:484)
+	at ThreadWorkload.main(ThreadWorkload.java:85)
+
+   Locked ownable synchronizers:
+	- None
+
+"Reference Handler" #8 [2236] daemon prio=10 os_prio=0 cpu=0.20ms elapsed=1.41s allocated=104B defined_classes=0 tid=0x00007f6d080a7300 nid=2236 waiting on condition  [0x00007f6d0c5fe000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ref.Reference.waitForReferencePendingList(java.base@20.0.2/Native Method)
+	at java.lang.ref.Reference.processPendingReferences(java.base@20.0.2/Reference.java:246)
+	at java.lang.ref.Reference$ReferenceHandler.run(java.base@20.0.2/Reference.java:208)
+
+   Locked ownable synchronizers:
+	- None
+
+"Finalizer" #9 [2237] daemon prio=8 os_prio=0 cpu=0.21ms elapsed=1.41s allocated=0B defined_classes=0 tid=0x00007f6d080a8830 nid=2237 in Object.wait()  [0x00007f6d0c4fe000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@20.0.2/Native Method)
+	- waiting on <0x00000000fcf01668> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.Object.wait(java.base@20.0.2/Object.java:366)
+	at java.lang.Object.wait(java.base@20.0.2/Object.java:339)
+	at java.lang.ref.NativeReferenceQueue.await(java.base@20.0.2/NativeReferenceQueue.java:48)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@20.0.2/ReferenceQueue.java:158)
+	at java.lang.ref.NativeReferenceQueue.remove(java.base@20.0.2/NativeReferenceQueue.java:89)
+	- locked <0x00000000fcf01668> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.ref.Finalizer$FinalizerThread.run(java.base@20.0.2/Finalizer.java:173)
+
+   Locked ownable synchronizers:
+	- None
+
+"Signal Dispatcher" #10 [2238] daemon prio=9 os_prio=0 cpu=0.35ms elapsed=1.41s allocated=264B defined_classes=0 tid=0x00007f6d080aa300 nid=2238 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Service Thread" #11 [2239] daemon prio=9 os_prio=0 cpu=0.11ms elapsed=1.41s allocated=0B defined_classes=0 tid=0x00007f6d080ab790 nid=2239 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Monitor Deflation Thread" #12 [2240] daemon prio=9 os_prio=0 cpu=0.18ms elapsed=1.41s allocated=0B defined_classes=0 tid=0x00007f6d080acc10 nid=2240 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"C2 CompilerThread0" #13 [2241] daemon prio=9 os_prio=0 cpu=6.70ms elapsed=1.41s allocated=0B defined_classes=0 tid=0x00007f6d080ae630 nid=2241 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"C1 CompilerThread0" #14 [2242] daemon prio=9 os_prio=0 cpu=20.84ms elapsed=1.41s allocated=112B defined_classes=0 tid=0x00007f6d080afbd0 nid=2242 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"Notification Thread" #15 [2243] daemon prio=9 os_prio=0 cpu=0.06ms elapsed=1.41s allocated=0B defined_classes=0 tid=0x00007f6d080bde20 nid=2243 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Common-Cleaner" #17 [2245] daemon prio=8 os_prio=0 cpu=0.30ms elapsed=1.40s allocated=784B defined_classes=0 tid=0x00007f6d080c1ff0 nid=2245 waiting on condition  [0x00007f6cf08fc000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf120f8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@20.0.2/LockSupport.java:269)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@20.0.2/AbstractQueuedSynchronizer.java:1847)
+	at java.lang.ref.ReferenceQueue.await(java.base@20.0.2/ReferenceQueue.java:71)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@20.0.2/ReferenceQueue.java:143)
+	at java.lang.ref.ReferenceQueue.remove(java.base@20.0.2/ReferenceQueue.java:218)
+	at jdk.internal.ref.CleanerImpl.run(java.base@20.0.2/CleanerImpl.java:140)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+	at jdk.internal.misc.InnocuousThread.run(java.base@20.0.2/InnocuousThread.java:186)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-cpu-hot" #18 [2246] daemon prio=5 os_prio=0 cpu=1280.53ms elapsed=1.40s allocated=0B defined_classes=0 tid=0x00007f6d080c6f70 nid=2246 runnable  [0x00007f6cf07fb000]
+   java.lang.Thread.State: RUNNABLE
+	at ThreadWorkload$1.run(ThreadWorkload.java:38)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-parked" #19 [2247] daemon prio=5 os_prio=0 cpu=0.15ms elapsed=1.40s allocated=176B defined_classes=1 tid=0x00007f6d080c7e60 nid=2247 waiting on condition  [0x00007f6cf06fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$2.run(ThreadWorkload.java:41)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-sleeping" #20 [2248] daemon prio=5 os_prio=0 cpu=0.15ms elapsed=1.39s allocated=0B defined_classes=0 tid=0x00007f6d080ca170 nid=2248 waiting on condition  [0x00007f6cf05fc000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleep0(java.base@20.0.2/Native Method)
+	at java.lang.Thread.sleep(java.base@20.0.2/Thread.java:484)
+	at ThreadWorkload$3.run(ThreadWorkload.java:44)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-monitor-owner" #21 [2249] daemon prio=5 os_prio=0 cpu=0.16ms elapsed=1.38s allocated=32B defined_classes=0 tid=0x00007f6d080cb6a0 nid=2249 waiting on condition  [0x00007f6cf04fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$4.run(ThreadWorkload.java:49)
+	- locked <0x00000000fcf1ab28> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-monitor-waiter" #22 [2250] daemon prio=5 os_prio=0 cpu=0.16ms elapsed=1.38s allocated=0B defined_classes=0 tid=0x00007f6d080cc8e0 nid=2250 waiting for monitor entry  [0x00007f6cf03fc000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$5.run(ThreadWorkload.java:51)
+	- waiting to lock <0x00000000fcf1ab28> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-lock-owner" #23 [2251] daemon prio=5 os_prio=0 cpu=0.13ms elapsed=1.36s allocated=32B defined_classes=0 tid=0x00007f6d080cdf40 nid=2251 waiting on condition  [0x00007f6cf02fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$6.run(ThreadWorkload.java:55)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- <0x00000000fcf1c540> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+
+"matrix-lock-waiter" #24 [2252] daemon prio=5 os_prio=0 cpu=0.11ms elapsed=1.36s allocated=64B defined_classes=0 tid=0x00007f6d080cf480 nid=2252 waiting on condition  [0x00007f6cf01fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf1c540> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:990)
+	at java.util.concurrent.locks.ReentrantLock$Sync.lock(java.base@20.0.2/ReentrantLock.java:153)
+	at java.util.concurrent.locks.ReentrantLock.lock(java.base@20.0.2/ReentrantLock.java:322)
+	at ThreadWorkload$7.run(ThreadWorkload.java:57)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-initializer" #25 [2253] daemon prio=5 os_prio=0 cpu=0.50ms elapsed=1.35s allocated=2752B defined_classes=1 tid=0x00007f6d080d0920 nid=2253 waiting on condition  [0x00007f6ce1ffd000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$StalledInitialization.<clinit>(ThreadWorkload.java:31)
+	at java.lang.Class.forName0(java.base@20.0.2/Native Method)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:391)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:382)
+	at ThreadWorkload.initialize(ThreadWorkload.java:34)
+	at ThreadWorkload.access$300(ThreadWorkload.java:8)
+	at ThreadWorkload$8.run(ThreadWorkload.java:59)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-init-waiter" #26 [2254] daemon prio=5 os_prio=0 cpu=0.12ms elapsed=1.35s allocated=0B defined_classes=0 tid=0x00007f6d080d2050 nid=2254 waiting on condition  [0x00007f6ce1efe000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.Class.forName0(java.base@20.0.2/Native Method)
+	- waiting on the Class initialization monitor for ThreadWorkload$StalledInitialization
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:391)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:382)
+	at ThreadWorkload.initialize(ThreadWorkload.java:34)
+	at ThreadWorkload.access$300(ThreadWorkload.java:8)
+	at ThreadWorkload$9.run(ThreadWorkload.java:61)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-deadlock-a" #27 [2255] daemon prio=5 os_prio=0 cpu=0.30ms elapsed=1.35s allocated=64B defined_classes=0 tid=0x00007f6d080d3800 nid=2255 waiting for monitor entry  [0x00007f6ce1dfe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$10.run(ThreadWorkload.java:64)
+	- waiting to lock <0x00000000fcfd7cd8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cc8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-deadlock-b" #28 [2256] daemon prio=5 os_prio=0 cpu=0.27ms elapsed=1.35s allocated=0B defined_classes=0 tid=0x00007f6d080d4e20 nid=2256 waiting for monitor entry  [0x00007f6ce1cfe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$11.run(ThreadWorkload.java:65)
+	- waiting to lock <0x00000000fcfd7cc8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cd8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"Attach Listener" #29 [2275] daemon prio=9 os_prio=0 cpu=0.47ms elapsed=0.91s allocated=0B defined_classes=0 tid=0x00007f6c840017e0 nid=2275 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"VM Thread" os_prio=0 cpu=1.14ms elapsed=1.42s tid=0x00007f6d08097a50 nid=2235 runnable  
+
+"GC Thread#0" os_prio=0 cpu=0.14ms elapsed=1.44s tid=0x00007f6d0804e0f0 nid=2230 runnable  
+
+"G1 Main Marker" os_prio=0 cpu=0.07ms elapsed=1.44s tid=0x00007f6d0804fa90 nid=2231 runnable  
+
+"G1 Conc#0" os_prio=0 cpu=0.05ms elapsed=1.44s tid=0x00007f6d080509b0 nid=2232 runnable  
+
+"G1 Refine#0" os_prio=0 cpu=0.08ms elapsed=1.43s tid=0x00007f6d08067890 nid=2233 runnable  
+
+"G1 Service" os_prio=0 cpu=0.09ms elapsed=1.43s tid=0x00007f6d080687d0 nid=2234 runnable  
+
+"VM Periodic Task Thread" os_prio=0 cpu=0.62ms elapsed=1.41s tid=0x00007f6d080bf820 nid=2244 waiting on condition  
+
+JNI global refs: 4, weak refs: 0
+
+
+Found one Java-level deadlock:
+=============================
+"matrix-deadlock-a":
+  waiting to lock monitor 0x00007f6cdc0014a0 (object 0x00000000fcfd7cd8, a java.lang.Object),
+  which is held by "matrix-deadlock-b"
+
+"matrix-deadlock-b":
+  waiting to lock monitor 0x00007f6ce80014a0 (object 0x00000000fcfd7cc8, a java.lang.Object),
+  which is held by "matrix-deadlock-a"
+
+Java stack information for the threads listed above:
+===================================================
+"matrix-deadlock-a":
+	at ThreadWorkload$10.run(ThreadWorkload.java:64)
+	- waiting to lock <0x00000000fcfd7cd8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cc8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+"matrix-deadlock-b":
+	at ThreadWorkload$11.run(ThreadWorkload.java:65)
+	- waiting to lock <0x00000000fcfd7cc8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cd8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+Found 1 deadlock.
+
+2026-10-04T05:20:29.927Z
+2228:
+2026-10-04 05:20:30
+Full thread dump OpenJDK 64-Bit Server VM (20.0.2+9 mixed mode, sharing):
+
+Threads class SMR info:
+_java_thread_list=0x00007f6c840027e0, length=22, elements={
+0x00007f6d08029310, 0x00007f6d080a7300, 0x00007f6d080a8830, 0x00007f6d080aa300,
+0x00007f6d080ab790, 0x00007f6d080acc10, 0x00007f6d080ae630, 0x00007f6d080afbd0,
+0x00007f6d080bde20, 0x00007f6d080c1ff0, 0x00007f6d080c6f70, 0x00007f6d080c7e60,
+0x00007f6d080ca170, 0x00007f6d080cb6a0, 0x00007f6d080cc8e0, 0x00007f6d080cdf40,
+0x00007f6d080cf480, 0x00007f6d080d0920, 0x00007f6d080d2050, 0x00007f6d080d3800,
+0x00007f6d080d4e20, 0x00007f6c840017e0
+}
+
+"main" #1 [2229] prio=5 os_prio=0 cpu=75.89ms elapsed=2.83s allocated=799K defined_classes=127 tid=0x00007f6d08029310 nid=2229 waiting on condition  [0x00007f6d0d9fe000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleep0(java.base@20.0.2/Native Method)
+	at java.lang.Thread.sleep(java.base@20.0.2/Thread.java:484)
+	at ThreadWorkload.main(ThreadWorkload.java:85)
+
+   Locked ownable synchronizers:
+	- None
+
+"Reference Handler" #8 [2236] daemon prio=10 os_prio=0 cpu=0.20ms elapsed=2.80s allocated=104B defined_classes=0 tid=0x00007f6d080a7300 nid=2236 waiting on condition  [0x00007f6d0c5fe000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ref.Reference.waitForReferencePendingList(java.base@20.0.2/Native Method)
+	at java.lang.ref.Reference.processPendingReferences(java.base@20.0.2/Reference.java:246)
+	at java.lang.ref.Reference$ReferenceHandler.run(java.base@20.0.2/Reference.java:208)
+
+   Locked ownable synchronizers:
+	- None
+
+"Finalizer" #9 [2237] daemon prio=8 os_prio=0 cpu=0.21ms elapsed=2.80s allocated=0B defined_classes=0 tid=0x00007f6d080a8830 nid=2237 in Object.wait()  [0x00007f6d0c4fe000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@20.0.2/Native Method)
+	- waiting on <0x00000000fcf01668> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.Object.wait(java.base@20.0.2/Object.java:366)
+	at java.lang.Object.wait(java.base@20.0.2/Object.java:339)
+	at java.lang.ref.NativeReferenceQueue.await(java.base@20.0.2/NativeReferenceQueue.java:48)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@20.0.2/ReferenceQueue.java:158)
+	at java.lang.ref.NativeReferenceQueue.remove(java.base@20.0.2/NativeReferenceQueue.java:89)
+	- locked <0x00000000fcf01668> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.ref.Finalizer$FinalizerThread.run(java.base@20.0.2/Finalizer.java:173)
+
+   Locked ownable synchronizers:
+	- None
+
+"Signal Dispatcher" #10 [2238] daemon prio=9 os_prio=0 cpu=0.35ms elapsed=2.80s allocated=264B defined_classes=0 tid=0x00007f6d080aa300 nid=2238 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Service Thread" #11 [2239] daemon prio=9 os_prio=0 cpu=0.12ms elapsed=2.80s allocated=0B defined_classes=0 tid=0x00007f6d080ab790 nid=2239 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Monitor Deflation Thread" #12 [2240] daemon prio=9 os_prio=0 cpu=0.30ms elapsed=2.80s allocated=0B defined_classes=0 tid=0x00007f6d080acc10 nid=2240 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"C2 CompilerThread0" #13 [2241] daemon prio=9 os_prio=0 cpu=6.70ms elapsed=2.80s allocated=0B defined_classes=0 tid=0x00007f6d080ae630 nid=2241 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"C1 CompilerThread0" #14 [2242] daemon prio=9 os_prio=0 cpu=20.84ms elapsed=2.80s allocated=112B defined_classes=0 tid=0x00007f6d080afbd0 nid=2242 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"Notification Thread" #15 [2243] daemon prio=9 os_prio=0 cpu=0.06ms elapsed=2.80s allocated=0B defined_classes=0 tid=0x00007f6d080bde20 nid=2243 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Common-Cleaner" #17 [2245] daemon prio=8 os_prio=0 cpu=0.30ms elapsed=2.79s allocated=784B defined_classes=0 tid=0x00007f6d080c1ff0 nid=2245 waiting on condition  [0x00007f6cf08fc000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf120f8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@20.0.2/LockSupport.java:269)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@20.0.2/AbstractQueuedSynchronizer.java:1847)
+	at java.lang.ref.ReferenceQueue.await(java.base@20.0.2/ReferenceQueue.java:71)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@20.0.2/ReferenceQueue.java:143)
+	at java.lang.ref.ReferenceQueue.remove(java.base@20.0.2/ReferenceQueue.java:218)
+	at jdk.internal.ref.CleanerImpl.run(java.base@20.0.2/CleanerImpl.java:140)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+	at jdk.internal.misc.InnocuousThread.run(java.base@20.0.2/InnocuousThread.java:186)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-cpu-hot" #18 [2246] daemon prio=5 os_prio=0 cpu=2623.86ms elapsed=2.79s allocated=0B defined_classes=0 tid=0x00007f6d080c6f70 nid=2246 runnable  [0x00007f6cf07fb000]
+   java.lang.Thread.State: RUNNABLE
+	at ThreadWorkload$1.run(ThreadWorkload.java:38)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-parked" #19 [2247] daemon prio=5 os_prio=0 cpu=0.15ms elapsed=2.79s allocated=176B defined_classes=1 tid=0x00007f6d080c7e60 nid=2247 waiting on condition  [0x00007f6cf06fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$2.run(ThreadWorkload.java:41)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-sleeping" #20 [2248] daemon prio=5 os_prio=0 cpu=0.15ms elapsed=2.78s allocated=0B defined_classes=0 tid=0x00007f6d080ca170 nid=2248 waiting on condition  [0x00007f6cf05fc000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleep0(java.base@20.0.2/Native Method)
+	at java.lang.Thread.sleep(java.base@20.0.2/Thread.java:484)
+	at ThreadWorkload$3.run(ThreadWorkload.java:44)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-monitor-owner" #21 [2249] daemon prio=5 os_prio=0 cpu=0.16ms elapsed=2.77s allocated=32B defined_classes=0 tid=0x00007f6d080cb6a0 nid=2249 waiting on condition  [0x00007f6cf04fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$4.run(ThreadWorkload.java:49)
+	- locked <0x00000000fcf1ab28> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-monitor-waiter" #22 [2250] daemon prio=5 os_prio=0 cpu=0.19ms elapsed=2.77s allocated=0B defined_classes=0 tid=0x00007f6d080cc8e0 nid=2250 waiting for monitor entry  [0x00007f6cf03fc000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$5.run(ThreadWorkload.java:51)
+	- waiting to lock <0x00000000fcf1ab28> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-lock-owner" #23 [2251] daemon prio=5 os_prio=0 cpu=0.13ms elapsed=2.75s allocated=32B defined_classes=0 tid=0x00007f6d080cdf40 nid=2251 waiting on condition  [0x00007f6cf02fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$6.run(ThreadWorkload.java:55)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- <0x00000000fcf1c540> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+
+"matrix-lock-waiter" #24 [2252] daemon prio=5 os_prio=0 cpu=0.11ms elapsed=2.75s allocated=64B defined_classes=0 tid=0x00007f6d080cf480 nid=2252 waiting on condition  [0x00007f6cf01fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf1c540> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:990)
+	at java.util.concurrent.locks.ReentrantLock$Sync.lock(java.base@20.0.2/ReentrantLock.java:153)
+	at java.util.concurrent.locks.ReentrantLock.lock(java.base@20.0.2/ReentrantLock.java:322)
+	at ThreadWorkload$7.run(ThreadWorkload.java:57)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-initializer" #25 [2253] daemon prio=5 os_prio=0 cpu=0.50ms elapsed=2.74s allocated=2752B defined_classes=1 tid=0x00007f6d080d0920 nid=2253 waiting on condition  [0x00007f6ce1ffd000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$StalledInitialization.<clinit>(ThreadWorkload.java:31)
+	at java.lang.Class.forName0(java.base@20.0.2/Native Method)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:391)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:382)
+	at ThreadWorkload.initialize(ThreadWorkload.java:34)
+	at ThreadWorkload.access$300(ThreadWorkload.java:8)
+	at ThreadWorkload$8.run(ThreadWorkload.java:59)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-init-waiter" #26 [2254] daemon prio=5 os_prio=0 cpu=0.12ms elapsed=2.74s allocated=0B defined_classes=0 tid=0x00007f6d080d2050 nid=2254 waiting on condition  [0x00007f6ce1efe000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.Class.forName0(java.base@20.0.2/Native Method)
+	- waiting on the Class initialization monitor for ThreadWorkload$StalledInitialization
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:391)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:382)
+	at ThreadWorkload.initialize(ThreadWorkload.java:34)
+	at ThreadWorkload.access$300(ThreadWorkload.java:8)
+	at ThreadWorkload$9.run(ThreadWorkload.java:61)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-deadlock-a" #27 [2255] daemon prio=5 os_prio=0 cpu=0.33ms elapsed=2.74s allocated=64B defined_classes=0 tid=0x00007f6d080d3800 nid=2255 waiting for monitor entry  [0x00007f6ce1dfe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$10.run(ThreadWorkload.java:64)
+	- waiting to lock <0x00000000fcfd7cd8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cc8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-deadlock-b" #28 [2256] daemon prio=5 os_prio=0 cpu=0.29ms elapsed=2.74s allocated=0B defined_classes=0 tid=0x00007f6d080d4e20 nid=2256 waiting for monitor entry  [0x00007f6ce1cfe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$11.run(ThreadWorkload.java:65)
+	- waiting to lock <0x00000000fcfd7cc8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cd8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"Attach Listener" #29 [2275] daemon prio=9 os_prio=0 cpu=0.66ms elapsed=2.30s allocated=0B defined_classes=0 tid=0x00007f6c840017e0 nid=2275 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"VM Thread" os_prio=0 cpu=2.08ms elapsed=2.81s tid=0x00007f6d08097a50 nid=2235 runnable  
+
+"GC Thread#0" os_prio=0 cpu=0.17ms elapsed=2.83s tid=0x00007f6d0804e0f0 nid=2230 runnable  
+
+"G1 Main Marker" os_prio=0 cpu=0.07ms elapsed=2.83s tid=0x00007f6d0804fa90 nid=2231 runnable  
+
+"G1 Conc#0" os_prio=0 cpu=0.05ms elapsed=2.83s tid=0x00007f6d080509b0 nid=2232 runnable  
+
+"G1 Refine#0" os_prio=0 cpu=0.08ms elapsed=2.83s tid=0x00007f6d08067890 nid=2233 runnable  
+
+"G1 Service" os_prio=0 cpu=0.11ms elapsed=2.82s tid=0x00007f6d080687d0 nid=2234 runnable  
+
+"VM Periodic Task Thread" os_prio=0 cpu=1.23ms elapsed=2.80s tid=0x00007f6d080bf820 nid=2244 waiting on condition  
+
+JNI global refs: 4, weak refs: 0
+
+
+Found one Java-level deadlock:
+=============================
+"matrix-deadlock-a":
+  waiting to lock monitor 0x00007f6cdc0014a0 (object 0x00000000fcfd7cd8, a java.lang.Object),
+  which is held by "matrix-deadlock-b"
+
+"matrix-deadlock-b":
+  waiting to lock monitor 0x00007f6ce80014a0 (object 0x00000000fcfd7cc8, a java.lang.Object),
+  which is held by "matrix-deadlock-a"
+
+Java stack information for the threads listed above:
+===================================================
+"matrix-deadlock-a":
+	at ThreadWorkload$10.run(ThreadWorkload.java:64)
+	- waiting to lock <0x00000000fcfd7cd8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cc8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+"matrix-deadlock-b":
+	at ThreadWorkload$11.run(ThreadWorkload.java:65)
+	- waiting to lock <0x00000000fcfd7cc8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cd8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+Found 1 deadlock.
+
+2026-10-04T05:20:31.302Z
+2228:
+2026-10-04 05:20:31
+Full thread dump OpenJDK 64-Bit Server VM (20.0.2+9 mixed mode, sharing):
+
+Threads class SMR info:
+_java_thread_list=0x00007f6c840027e0, length=22, elements={
+0x00007f6d08029310, 0x00007f6d080a7300, 0x00007f6d080a8830, 0x00007f6d080aa300,
+0x00007f6d080ab790, 0x00007f6d080acc10, 0x00007f6d080ae630, 0x00007f6d080afbd0,
+0x00007f6d080bde20, 0x00007f6d080c1ff0, 0x00007f6d080c6f70, 0x00007f6d080c7e60,
+0x00007f6d080ca170, 0x00007f6d080cb6a0, 0x00007f6d080cc8e0, 0x00007f6d080cdf40,
+0x00007f6d080cf480, 0x00007f6d080d0920, 0x00007f6d080d2050, 0x00007f6d080d3800,
+0x00007f6d080d4e20, 0x00007f6c840017e0
+}
+
+"main" #1 [2229] prio=5 os_prio=0 cpu=75.89ms elapsed=4.20s allocated=799K defined_classes=127 tid=0x00007f6d08029310 nid=2229 waiting on condition  [0x00007f6d0d9fe000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleep0(java.base@20.0.2/Native Method)
+	at java.lang.Thread.sleep(java.base@20.0.2/Thread.java:484)
+	at ThreadWorkload.main(ThreadWorkload.java:85)
+
+   Locked ownable synchronizers:
+	- None
+
+"Reference Handler" #8 [2236] daemon prio=10 os_prio=0 cpu=0.20ms elapsed=4.18s allocated=104B defined_classes=0 tid=0x00007f6d080a7300 nid=2236 waiting on condition  [0x00007f6d0c5fe000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ref.Reference.waitForReferencePendingList(java.base@20.0.2/Native Method)
+	at java.lang.ref.Reference.processPendingReferences(java.base@20.0.2/Reference.java:246)
+	at java.lang.ref.Reference$ReferenceHandler.run(java.base@20.0.2/Reference.java:208)
+
+   Locked ownable synchronizers:
+	- None
+
+"Finalizer" #9 [2237] daemon prio=8 os_prio=0 cpu=0.21ms elapsed=4.18s allocated=0B defined_classes=0 tid=0x00007f6d080a8830 nid=2237 in Object.wait()  [0x00007f6d0c4fe000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@20.0.2/Native Method)
+	- waiting on <0x00000000fcf01668> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.Object.wait(java.base@20.0.2/Object.java:366)
+	at java.lang.Object.wait(java.base@20.0.2/Object.java:339)
+	at java.lang.ref.NativeReferenceQueue.await(java.base@20.0.2/NativeReferenceQueue.java:48)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@20.0.2/ReferenceQueue.java:158)
+	at java.lang.ref.NativeReferenceQueue.remove(java.base@20.0.2/NativeReferenceQueue.java:89)
+	- locked <0x00000000fcf01668> (a java.lang.ref.NativeReferenceQueue$Lock)
+	at java.lang.ref.Finalizer$FinalizerThread.run(java.base@20.0.2/Finalizer.java:173)
+
+   Locked ownable synchronizers:
+	- None
+
+"Signal Dispatcher" #10 [2238] daemon prio=9 os_prio=0 cpu=0.35ms elapsed=4.18s allocated=264B defined_classes=0 tid=0x00007f6d080aa300 nid=2238 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Service Thread" #11 [2239] daemon prio=9 os_prio=0 cpu=0.14ms elapsed=4.18s allocated=0B defined_classes=0 tid=0x00007f6d080ab790 nid=2239 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Monitor Deflation Thread" #12 [2240] daemon prio=9 os_prio=0 cpu=0.40ms elapsed=4.18s allocated=0B defined_classes=0 tid=0x00007f6d080acc10 nid=2240 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"C2 CompilerThread0" #13 [2241] daemon prio=9 os_prio=0 cpu=6.70ms elapsed=4.18s allocated=0B defined_classes=0 tid=0x00007f6d080ae630 nid=2241 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"C1 CompilerThread0" #14 [2242] daemon prio=9 os_prio=0 cpu=20.84ms elapsed=4.18s allocated=112B defined_classes=0 tid=0x00007f6d080afbd0 nid=2242 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"Notification Thread" #15 [2243] daemon prio=9 os_prio=0 cpu=0.06ms elapsed=4.17s allocated=0B defined_classes=0 tid=0x00007f6d080bde20 nid=2243 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Common-Cleaner" #17 [2245] daemon prio=8 os_prio=0 cpu=0.30ms elapsed=4.17s allocated=784B defined_classes=0 tid=0x00007f6d080c1ff0 nid=2245 waiting on condition  [0x00007f6cf08fc000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf120f8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@20.0.2/LockSupport.java:269)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@20.0.2/AbstractQueuedSynchronizer.java:1847)
+	at java.lang.ref.ReferenceQueue.await(java.base@20.0.2/ReferenceQueue.java:71)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@20.0.2/ReferenceQueue.java:143)
+	at java.lang.ref.ReferenceQueue.remove(java.base@20.0.2/ReferenceQueue.java:218)
+	at jdk.internal.ref.CleanerImpl.run(java.base@20.0.2/CleanerImpl.java:140)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+	at jdk.internal.misc.InnocuousThread.run(java.base@20.0.2/InnocuousThread.java:186)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-cpu-hot" #18 [2246] daemon prio=5 os_prio=0 cpu=3970.50ms elapsed=4.17s allocated=0B defined_classes=0 tid=0x00007f6d080c6f70 nid=2246 runnable  [0x00007f6cf07fb000]
+   java.lang.Thread.State: RUNNABLE
+	at ThreadWorkload$1.run(ThreadWorkload.java:38)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-parked" #19 [2247] daemon prio=5 os_prio=0 cpu=0.15ms elapsed=4.17s allocated=176B defined_classes=1 tid=0x00007f6d080c7e60 nid=2247 waiting on condition  [0x00007f6cf06fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$2.run(ThreadWorkload.java:41)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-sleeping" #20 [2248] daemon prio=5 os_prio=0 cpu=0.15ms elapsed=4.15s allocated=0B defined_classes=0 tid=0x00007f6d080ca170 nid=2248 waiting on condition  [0x00007f6cf05fc000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleep0(java.base@20.0.2/Native Method)
+	at java.lang.Thread.sleep(java.base@20.0.2/Thread.java:484)
+	at ThreadWorkload$3.run(ThreadWorkload.java:44)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-monitor-owner" #21 [2249] daemon prio=5 os_prio=0 cpu=0.16ms elapsed=4.14s allocated=32B defined_classes=0 tid=0x00007f6d080cb6a0 nid=2249 waiting on condition  [0x00007f6cf04fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$4.run(ThreadWorkload.java:49)
+	- locked <0x00000000fcf1ab28> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-monitor-waiter" #22 [2250] daemon prio=5 os_prio=0 cpu=0.22ms elapsed=4.14s allocated=0B defined_classes=0 tid=0x00007f6d080cc8e0 nid=2250 waiting for monitor entry  [0x00007f6cf03fc000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$5.run(ThreadWorkload.java:51)
+	- waiting to lock <0x00000000fcf1ab28> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-lock-owner" #23 [2251] daemon prio=5 os_prio=0 cpu=0.13ms elapsed=4.13s allocated=32B defined_classes=0 tid=0x00007f6d080cdf40 nid=2251 waiting on condition  [0x00007f6cf02fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$6.run(ThreadWorkload.java:55)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- <0x00000000fcf1c540> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+
+"matrix-lock-waiter" #24 [2252] daemon prio=5 os_prio=0 cpu=0.11ms elapsed=4.13s allocated=64B defined_classes=0 tid=0x00007f6d080cf480 nid=2252 waiting on condition  [0x00007f6cf01fc000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf1c540> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:990)
+	at java.util.concurrent.locks.ReentrantLock$Sync.lock(java.base@20.0.2/ReentrantLock.java:153)
+	at java.util.concurrent.locks.ReentrantLock.lock(java.base@20.0.2/ReentrantLock.java:322)
+	at ThreadWorkload$7.run(ThreadWorkload.java:57)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-initializer" #25 [2253] daemon prio=5 os_prio=0 cpu=0.50ms elapsed=4.12s allocated=2752B defined_classes=1 tid=0x00007f6d080d0920 nid=2253 waiting on condition  [0x00007f6ce1ffd000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@20.0.2/Native Method)
+	- parking to wait for  <0x00000000fcf18418> (a java.util.concurrent.CountDownLatch$Sync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@20.0.2/LockSupport.java:221)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@20.0.2/AbstractQueuedSynchronizer.java:754)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(java.base@20.0.2/AbstractQueuedSynchronizer.java:1099)
+	at java.util.concurrent.CountDownLatch.await(java.base@20.0.2/CountDownLatch.java:230)
+	at ThreadWorkload.park(ThreadWorkload.java:14)
+	at ThreadWorkload.access$100(ThreadWorkload.java:8)
+	at ThreadWorkload$StalledInitialization.<clinit>(ThreadWorkload.java:31)
+	at java.lang.Class.forName0(java.base@20.0.2/Native Method)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:391)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:382)
+	at ThreadWorkload.initialize(ThreadWorkload.java:34)
+	at ThreadWorkload.access$300(ThreadWorkload.java:8)
+	at ThreadWorkload$8.run(ThreadWorkload.java:59)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-init-waiter" #26 [2254] daemon prio=5 os_prio=0 cpu=0.12ms elapsed=4.11s allocated=0B defined_classes=0 tid=0x00007f6d080d2050 nid=2254 waiting on condition  [0x00007f6ce1efe000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.Class.forName0(java.base@20.0.2/Native Method)
+	- waiting on the Class initialization monitor for ThreadWorkload$StalledInitialization
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:391)
+	at java.lang.Class.forName(java.base@20.0.2/Class.java:382)
+	at ThreadWorkload.initialize(ThreadWorkload.java:34)
+	at ThreadWorkload.access$300(ThreadWorkload.java:8)
+	at ThreadWorkload$9.run(ThreadWorkload.java:61)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-deadlock-a" #27 [2255] daemon prio=5 os_prio=0 cpu=0.35ms elapsed=4.11s allocated=64B defined_classes=0 tid=0x00007f6d080d3800 nid=2255 waiting for monitor entry  [0x00007f6ce1dfe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$10.run(ThreadWorkload.java:64)
+	- waiting to lock <0x00000000fcfd7cd8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cc8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"matrix-deadlock-b" #28 [2256] daemon prio=5 os_prio=0 cpu=0.30ms elapsed=4.11s allocated=0B defined_classes=0 tid=0x00007f6d080d4e20 nid=2256 waiting for monitor entry  [0x00007f6ce1cfe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at ThreadWorkload$11.run(ThreadWorkload.java:65)
+	- waiting to lock <0x00000000fcfd7cc8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cd8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+   Locked ownable synchronizers:
+	- None
+
+"Attach Listener" #29 [2275] daemon prio=9 os_prio=0 cpu=0.80ms elapsed=3.67s allocated=0B defined_classes=0 tid=0x00007f6c840017e0 nid=2275 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"VM Thread" os_prio=0 cpu=2.90ms elapsed=4.18s tid=0x00007f6d08097a50 nid=2235 runnable  
+
+"GC Thread#0" os_prio=0 cpu=0.20ms elapsed=4.20s tid=0x00007f6d0804e0f0 nid=2230 runnable  
+
+"G1 Main Marker" os_prio=0 cpu=0.07ms elapsed=4.20s tid=0x00007f6d0804fa90 nid=2231 runnable  
+
+"G1 Conc#0" os_prio=0 cpu=0.05ms elapsed=4.20s tid=0x00007f6d080509b0 nid=2232 runnable  
+
+"G1 Refine#0" os_prio=0 cpu=0.08ms elapsed=4.20s tid=0x00007f6d08067890 nid=2233 runnable  
+
+"G1 Service" os_prio=0 cpu=0.16ms elapsed=4.20s tid=0x00007f6d080687d0 nid=2234 runnable  
+
+"VM Periodic Task Thread" os_prio=0 cpu=1.83ms elapsed=4.17s tid=0x00007f6d080bf820 nid=2244 waiting on condition  
+
+JNI global refs: 4, weak refs: 0
+
+
+Found one Java-level deadlock:
+=============================
+"matrix-deadlock-a":
+  waiting to lock monitor 0x00007f6cdc0014a0 (object 0x00000000fcfd7cd8, a java.lang.Object),
+  which is held by "matrix-deadlock-b"
+
+"matrix-deadlock-b":
+  waiting to lock monitor 0x00007f6ce80014a0 (object 0x00000000fcfd7cc8, a java.lang.Object),
+  which is held by "matrix-deadlock-a"
+
+Java stack information for the threads listed above:
+===================================================
+"matrix-deadlock-a":
+	at ThreadWorkload$10.run(ThreadWorkload.java:64)
+	- waiting to lock <0x00000000fcfd7cd8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cc8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+"matrix-deadlock-b":
+	at ThreadWorkload$11.run(ThreadWorkload.java:65)
+	- waiting to lock <0x00000000fcfd7cc8> (a java.lang.Object)
+	- locked <0x00000000fcfd7cd8> (a java.lang.Object)
+	at java.lang.Thread.runWith(java.base@20.0.2/Thread.java:1636)
+	at java.lang.Thread.run(java.base@20.0.2/Thread.java:1623)
+
+Found 1 deadlock.

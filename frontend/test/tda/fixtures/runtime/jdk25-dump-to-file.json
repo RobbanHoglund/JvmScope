@@ -1,0 +1,85 @@
+{
+  "threadDump": {
+    "processId": "42304",
+    "time": "2026-09-08T04:35:48.474069100Z",
+    "runtimeVersion": "25.0.3+9-LTS",
+    "threadContainers": [
+      {
+        "container": "<root>",
+        "parent": null,
+        "owner": null,
+        "threads": [
+          {
+            "tid": "22",
+            "time": "2026-09-08T04:35:48.478067500Z",
+            "name": "sample-owner",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base/java.lang.Thread.sleepNanos(Thread.java:509)",
+              "java.base/java.lang.Thread.sleep(Thread.java:540)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "FormatRegressionSample.reenter(FormatRegressionSample.java:15)",
+              "FormatRegressionSample.lambda$main$0(FormatRegressionSample.java:21)",
+              "java.base/java.lang.Thread.run(Thread.java:1474)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 4,
+                "locks": [
+                  "java.lang.Object@667f94a2"
+                ]
+              },
+              {
+                "depth": 5,
+                "locks": [
+                  "java.lang.Object@667f94a2"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "23",
+            "time": "2026-09-08T04:35:48.479066200Z",
+            "name": "sample-waiter",
+            "state": "BLOCKED",
+            "blockedOn": "java.lang.Object@667f94a2",
+            "stack": [
+              "FormatRegressionSample.lambda$main$1(FormatRegressionSample.java:27)",
+              "java.base/java.lang.Thread.run(Thread.java:1474)"
+            ]
+          },
+          {
+            "tid": "27",
+            "time": "2026-09-08T04:35:48.479066200Z",
+            "name": "sample-\"quoted\"",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base/java.lang.Thread.sleepNanos(Thread.java:509)",
+              "java.base/java.lang.Thread.sleep(Thread.java:540)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "java.base/java.lang.Thread.run(Thread.java:1474)"
+            ]
+          },
+          {
+            "tid": "25",
+            "time": "2026-09-08T04:35:48.480065100Z",
+            "virtual": true,
+            "name": "sample-virtual-parked",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:787)",
+              "java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:983)",
+              "java.base/java.lang.Thread.sleepNanos(Thread.java:507)",
+              "java.base/java.lang.Thread.sleep(Thread.java:540)",
+              "FormatRegressionSample.pause(FormatRegressionSample.java:9)",
+              "java.base/java.lang.VirtualThread.run(VirtualThread.java:460)"
+            ]
+          }
+        ],
+        "threadCount": "4"
+      }
+    ]
+  }
+}

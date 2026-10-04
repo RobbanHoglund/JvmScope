@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JvmScope</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080c14;
+      --panel: rgba(15, 23, 42, 0.72);
+      --panel-strong: rgba(17, 24, 39, 0.92);
+      --border: rgba(148, 163, 184, 0.16);
+      --border-hot: rgba(96, 165, 250, 0.36);
+      --text: #e5edf7;
+      --muted: #94a3b8;
+      --soft: #64748b;
+      --blue: #60a5fa;
+      --green: #86efac;
+      --amber: #fbbf24;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.46);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(37, 99, 235, 0.24), transparent 34%),
+        radial-gradient(circle at 82% 18%, rgba(14, 165, 233, 0.14), transparent 30%),
+        radial-gradient(circle at 50% 100%, rgba(34, 197, 94, 0.08), transparent 38%),
+        linear-gradient(180deg, #0a1020 0%, var(--bg) 58%, #05070d 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.78), transparent 82%);
+    }
+
+    .page-shell {
+      position: relative;
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 52px 0;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      background:
+        linear-gradient(135deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.52)),
+        radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 38%);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      border: 1px solid rgba(96, 165, 250, 0.26);
+      border-radius: 999px;
+      color: #bfdbfe;
+      background: rgba(37, 99, 235, 0.12);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+    }
+
+    .subtitle {
+      max-width: 650px;
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .hero-badge {
+      flex: 0 0 auto;
+      padding: 10px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 16px;
+      color: #dbeafe;
+      background: rgba(2, 6, 23, 0.42);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .utility-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .utility-card {
+      min-height: 210px;
+    }
+
+    .utility-card a {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      color: inherit;
+      text-decoration: none;
+      background:
+        linear-gradient(180deg, var(--panel), rgba(15, 23, 42, 0.46));
+      box-shadow: 0 14px 46px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(12px);
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .utility-card a:hover,
+    .utility-card a:focus-visible {
+      transform: translateY(-4px);
+      border-color: var(--border-hot);
+      background:
+        linear-gradient(180deg, var(--panel-strong), rgba(15, 23, 42, 0.62));
+      box-shadow:
+        0 22px 70px rgba(0, 0, 0, 0.38),
+        0 0 0 4px rgba(59, 130, 246, 0.10);
+      outline: none;
+    }
+
+    .card-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 18px;
+      border-radius: 16px;
+      background: rgba(96, 165, 250, 0.14);
+      border: 1px solid rgba(96, 165, 250, 0.24);
+      font-size: 24px;
+    }
+
+    .utility-card:nth-child(2) .card-icon {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: rgba(34, 197, 94, 0.22);
+    }
+
+    .utility-card:nth-child(3) .card-icon {
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.22);
+    }
+
+    .utility-card:nth-child(4) .card-icon {
+      background: rgba(167, 139, 250, 0.12);
+      border-color: rgba(167, 139, 250, 0.22);
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 1.12rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .card-arrow {
+      color: var(--blue);
+      font-size: 1.15rem;
+      transition: transform 0.18s ease;
+    }
+
+    .utility-card a:hover .card-arrow,
+    .utility-card a:focus-visible .card-arrow {
+      transform: translateX(3px);
+    }
+
+    .card-desc {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.94rem;
+    }
+
+    .card-tag {
+      margin-top: auto;
+      padding-top: 18px;
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 860px) {
+      .hero {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .utility-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .utility-card {
+        min-height: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero" aria-labelledby="pageTitle">
+      <div>
+        <div class="eyebrow">Diagnostics toolbox</div>
+        <h1 id="pageTitle">JvmScope</h1>
+        <p class="subtitle">
+          Browser-based tools for investigating Java thread dumps and TLS logs.
+          Choose a utility below to start analyzing captured data.
+        </p>
+      </div>
+      <div class="hero-badge">2 tools available</div>
+    </section>
+
+    <ul class="utility-grid" aria-label="Available utilities">
+      <li class="utility-card">
+        <a href="/jvmscope/tda.html">
+          <span class="card-icon">🧵</span>
+          <span class="card-title">JvmScope · Java Thread Dump Analyzer <span class="card-arrow">→</span></span>
+          <p class="card-desc">Inspect Java thread dumps, thread states, lock ownership, blockers, and runtime patterns.</p>
+          <span class="card-tag">JVM analysis</span>
+        </a>
+      </li>
+
+      <li class="utility-card">
+        <a href="/jvmscope/tls.html">
+          <span class="card-icon"><img src="/assets/javautils/java-tls-mark.svg" width="44" height="44" alt="" /></span>
+          <span class="card-title">JvmScope · Java TLS Log Analyzer <span class="card-arrow">→</span></span>
+          <p class="card-desc">Analyze JSSE/TLS debug logs, handshake outcomes, certificates, cipher suites, and failures.</p>
+          <span class="card-tag">TLS diagnostics</span>
+        </a>
+      </li>
+
+    </ul>
+  </main>
+</body>
+</html>

@@ -1,0 +1,293 @@
+javax.net.ssl|DEBUG|01|main|2026-10-04 05:10:33.011 UTC|SSLCipher.java:464|jdk.tls.keyLimits:  entry = AES/GCM/NoPadding KeyUpdate 2^37. AES/GCM/NOPADDING:KEYUPDATE = 137438953472
+javax.net.ssl|DEBUG|01|main|2026-10-04 05:10:33.024 UTC|SSLCipher.java:464|jdk.tls.keyLimits:  entry =  ChaCha20-Poly1305 KeyUpdate 2^37. CHACHA20-POLY1305:KEYUPDATE = 137438953472
+READY
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.502 UTC|SignatureScheme.java:302|Signature algorithm, ed25519, is not supported by the underlying providers
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.503 UTC|SignatureScheme.java:302|Signature algorithm, ed448, is not supported by the underlying providers
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.509 UTC|ClientHello.java:796|Consuming ClientHello handshake message (
+"ClientHello": {
+  "client version"      : "TLSv1.2",
+  "random"              : "BE 61 1D C4 5D AD 41 EC 51 3D A0 77 CD A0 6B 97 0A E9 0D 9C 73 9C F4 8D 5E 12 E1 D1 A9 A5 DF A9",
+  "session id"          : "58 22 77 B5 49 70 7D 20 9F 9C 54 AD A3 34 EC 50 22 CF AB 67 3F 36 C9 C7 96 A6 D1 27 31 1F B4 A3",
+  "cipher suites"       : "[TLS_AES_256_GCM_SHA384(0x1302), TLS_AES_128_GCM_SHA256(0x1301), TLS_CHACHA20_POLY1305_SHA256(0x1303)]",
+  "compression methods" : "00",
+  "extensions"          : [
+    "status_request (5)": {
+      "certificate status type": ocsp
+      "OCSP status request": {
+        "responder_id": <empty>
+        "request extensions": {
+          <empty>
+        }
+      }
+    },
+    "supported_groups (10)": {
+      "versions": [x25519, secp256r1, secp384r1, secp521r1, x448, ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192]
+    },
+    "signature_algorithms (13)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512]
+    },
+    "signature_algorithms_cert (50)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512, rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512, ecdsa_sha1, rsa_pkcs1_sha1]
+    },
+    "supported_versions (43)": {
+      "versions": [TLSv1.3]
+    },
+    "psk_key_exchange_modes (45)": {
+      "ke_modes": [psk_dhe_ke]
+    },
+    "key_share (51)": {
+      "client_shares": [  
+        {
+          "named group": x25519
+          "key_exchange": {
+            0000: B6 1F 48 7A B0 B2 15 88   C6 C2 F2 9E 42 03 C9 E2  ..Hz........B...
+            0010: 69 5A 09 2F C5 9C 87 D7   E4 36 47 49 D8 18 AB 61  iZ./.....6GI...a
+          }
+        },
+      ]
+    }
+  ]
+}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.509 UTC|SSLExtensions.java:192|Consumed extension: supported_versions
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.510 UTC|ClientHello.java:826|Negotiated protocol version: TLSv1.3
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.510 UTC|SSLExtensions.java:192|Consumed extension: psk_key_exchange_modes
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.510 UTC|PreSharedKeyExtension.java:808|Handling pre_shared_key absence.
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.511 UTC|SSLExtensions.java:173|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.511 UTC|SSLExtensions.java:173|Ignore unavailable extension: max_fragment_length
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.511 UTC|SSLExtensions.java:192|Consumed extension: status_request
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.512 UTC|SSLExtensions.java:192|Consumed extension: supported_groups
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.512 UTC|SSLExtensions.java:192|Consumed extension: signature_algorithms
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.512 UTC|SSLExtensions.java:192|Consumed extension: signature_algorithms_cert
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.512 UTC|SSLExtensions.java:173|Ignore unavailable extension: cookie
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.512 UTC|SSLExtensions.java:173|Ignore unavailable extension: certificate_authorities
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.532 UTC|SSLExtensions.java:192|Consumed extension: key_share
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.535 UTC|SSLExtensions.java:207|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.535 UTC|SSLExtensions.java:207|Ignore unavailable extension: max_fragment_length
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.536 UTC|SSLExtensions.java:215|Ignore impact of unsupported extension: status_request
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.536 UTC|SSLExtensions.java:215|Ignore impact of unsupported extension: supported_groups
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.536 UTC|SSLExtensions.java:224|Populated with extension: signature_algorithms
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.537 UTC|SSLExtensions.java:224|Populated with extension: signature_algorithms_cert
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.537 UTC|SSLExtensions.java:207|Ignore unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.537 UTC|SSLExtensions.java:215|Ignore impact of unsupported extension: supported_versions
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.537 UTC|SSLExtensions.java:207|Ignore unavailable extension: cookie
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.537 UTC|SSLExtensions.java:215|Ignore impact of unsupported extension: psk_key_exchange_modes
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.537 UTC|SSLExtensions.java:207|Ignore unavailable extension: certificate_authorities
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.538 UTC|SSLExtensions.java:215|Ignore impact of unsupported extension: key_share
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.538 UTC|ServerHello.java:734|use cipher suite TLS_AES_256_GCM_SHA384
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.552 UTC|SSLExtensions.java:260|Ignore, context unavailable extension: pre_shared_key
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.553 UTC|ServerHello.java:593|Produced ServerHello handshake message (
+"ServerHello": {
+  "server version"      : "TLSv1.2",
+  "random"              : "56 F4 AD 45 04 D6 EC 16 97 FD 47 4B 06 FA 76 43 20 B7 28 8C 4E B2 95 76 2A 4D 9A 19 79 D6 E1 3F",
+  "session id"          : "58 22 77 B5 49 70 7D 20 9F 9C 54 AD A3 34 EC 50 22 CF AB 67 3F 36 C9 C7 96 A6 D1 27 31 1F B4 A3",
+  "cipher suite"        : "TLS_AES_256_GCM_SHA384(0x1302)",
+  "compression methods" : "00",
+  "extensions"          : [
+    "supported_versions (43)": {
+      "selected version": [TLSv1.3]
+    },
+    "key_share (51)": {
+      "server_share": {
+        "named group": x25519
+        "key_exchange": {
+          0000: 27 85 67 1F 82 FD BE 62   CC 1E D7 F3 E0 6A F4 25  '.g....b.....j.%
+          0010: 70 7D 6C 94 2C 3F 21 6E   C1 F3 2B D7 49 54 36 09  p.l.,?!n..+.IT6.
+        }
+      },
+    }
+  ]
+}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.575 UTC|SSLCipher.java:1866|KeyLimit read side: algorithm = AES/GCM/NOPADDING:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.580 UTC|SSLCipher.java:2020|KeyLimit write side: algorithm = AES/GCM/NOPADDING:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.581 UTC|ServerNameExtension.java:527|Ignore unavailable extension: server_name
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.581 UTC|SSLExtensions.java:260|Ignore, context unavailable extension: server_name
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.581 UTC|MaxFragExtension.java:469|Ignore unavailable max_fragment_length extension
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.581 UTC|SSLExtensions.java:260|Ignore, context unavailable extension: max_fragment_length
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.584 UTC|AlpnExtension.java:384|Ignore unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.584 UTC|SSLExtensions.java:260|Ignore, context unavailable extension: application_layer_protocol_negotiation
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.585 UTC|EncryptedExtensions.java:137|Produced EncryptedExtensions message (
+"EncryptedExtensions": [
+  "supported_groups (10)": {
+    "versions": [x25519, secp256r1, secp384r1, secp521r1, x448, ffdhe2048, ffdhe3072, ffdhe4096, ffdhe6144, ffdhe8192]
+  }
+]
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.605 UTC|CertificateRequest.java:958|Produced CertificateRequest message (
+"CertificateRequest": {
+  "certificate_request_context": "",
+  "extensions": [
+    "signature_algorithms (13)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512]
+    },
+    "signature_algorithms_cert (50)": {
+      "signature schemes": [ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp521r1_sha512, rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512, rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512, rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512, ecdsa_sha1, rsa_pkcs1_sha1]
+    },
+    "certificate_authorities (47)": {
+      "certificate authorities": [
+        CN=localhost, O=JvmScope controlled sample]
+    }
+  ]
+}
+)
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.606 UTC|X509Authentication.java:291|X509KeyManager class: sun.security.ssl.SunX509KeyManagerImpl
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.607 UTC|X509Authentication.java:309|No X.509 cert selected for EC
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.607 UTC|CertificateMessage.java:1084|Unavailable authentication scheme: ecdsa_secp256r1_sha256
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.607 UTC|X509Authentication.java:291|X509KeyManager class: sun.security.ssl.SunX509KeyManagerImpl
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.607 UTC|X509Authentication.java:309|No X.509 cert selected for EC
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.607 UTC|CertificateMessage.java:1084|Unavailable authentication scheme: ecdsa_secp384r1_sha384
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.607 UTC|X509Authentication.java:291|X509KeyManager class: sun.security.ssl.SunX509KeyManagerImpl
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.608 UTC|X509Authentication.java:309|No X.509 cert selected for EC
+javax.net.ssl|WARNING|01|matrix-server|2026-10-04 05:10:33.608 UTC|CertificateMessage.java:1084|Unavailable authentication scheme: ecdsa_secp521r1_sha512
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.608 UTC|X509Authentication.java:291|X509KeyManager class: sun.security.ssl.SunX509KeyManagerImpl
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.609 UTC|StatusResponseManager.java:763|Staping disabled or is a resumed session
+javax.net.ssl|ALL|01|matrix-server|2026-10-04 05:10:33.609 UTC|CertStatusExtension.java:1112|Stapling is disabled for this connection
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.609 UTC|SSLExtensions.java:260|Ignore, context unavailable extension: status_request
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.611 UTC|CertificateMessage.java:1022|Produced server Certificate message (
+"Certificate": {
+  "certificate_request_context": "",
+  "certificate_list": [  
+  {
+    "certificate" : {
+      "version"            : "v3",
+      "serial number"      : "0A 2C 84 3E",
+      "signature algorithm": "SHA256withRSA",
+      "issuer"             : "CN=localhost, O=JvmScope controlled sample",
+      "not before"         : "2026-10-04 05:10:23.000 UTC",
+      "not  after"         : "2026-11-03 05:10:23.000 UTC",
+      "subject"            : "CN=localhost, O=JvmScope controlled sample",
+      "subject public key" : "RSA",
+      "extensions"         : [
+        {
+          ObjectId: 2.5.29.14 Criticality=false
+          SubjectKeyIdentifier [
+          KeyIdentifier [
+          0000: D2 D6 4A 7D D6 7A C0 E2   95 2A B1 AF F6 FC 52 9D  ..J..z...*....R.
+          0010: F4 E2 BC 53                                        ...S
+          ]
+          ]
+        }
+      ]}
+    "extensions": {
+      <no extension>
+    }
+  },
+]
+}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.693 UTC|CertificateVerify.java:1111|Produced server CertificateVerify handshake message (
+"CertificateVerify": {
+  "signature algorithm": rsa_pss_rsae_sha256
+  "signature": {
+    0000: 45 CB 56 FB D0 D9 24 EE   E1 B1 6A 29 82 2E 13 E3  E.V...$...j)....
+    0010: 99 13 B1 78 6B 2A 3A 70   CB BF A8 92 8F E4 96 81  ...xk*:p........
+    0020: 43 14 04 1C CA 7E 0E 44   23 83 87 0D 79 B5 0B 6A  C......D#...y..j
+    0030: 45 2A 2E 44 5B 27 A6 5D   89 7E 04 7B 44 A5 36 BB  E*.D['.]....D.6.
+    0040: 2B 08 DB A2 5C 5C 3F 9F   35 E2 28 61 A2 87 4A BC  +...\\?.5.(a..J.
+    0050: B4 7A D1 01 BB 10 AD 5C   D6 8A 69 F2 64 B4 5E 77  .z.....\..i.d.^w
+    0060: 8F 31 5B 81 96 90 86 CA   B0 D8 8E 73 B7 F0 96 00  .1[........s....
+    0070: 78 77 F8 89 21 AA A9 BE   AA 7B 5B A1 55 4A 46 94  xw..!.....[.UJF.
+    0080: E2 16 B3 E3 AF 83 66 58   BE 98 BA F4 40 79 E1 A0  ......fX....@y..
+    0090: 9F 2C 2B 5B 64 96 03 09   32 67 CB D2 BA 72 59 B5  .,+[d...2g...rY.
+    00A0: 9D 5A 12 65 C6 CD 7C 33   53 87 B1 48 1A 04 5B FA  .Z.e...3S..H..[.
+    00B0: 65 5E 91 D8 1B DF EB 60   CE 8D 0C 1E 68 40 A5 55  e^.....`....h@.U
+    00C0: D6 DE 23 8A 11 B4 C3 5B   13 9C 93 74 B7 63 CD 3B  ..#....[...t.c.;
+    00D0: AA BA 40 6C 2B 84 03 D8   D2 67 2B 82 03 A0 DA EB  ..@l+....g+.....
+    00E0: D0 72 FC 97 D1 87 4E 5F   BF 1B 10 0A 56 B1 22 DE  .r....N_....V.".
+    00F0: 62 15 57 E8 B0 06 D3 31   FD A2 62 B0 8B CF B4 43  b.W....1..b....C
+  }
+}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.700 UTC|Finished.java:767|Produced server Finished handshake message (
+"Finished": {
+  "verify data": {
+    0000: B4 E5 B2 9B E6 CD 6F AA   0A 75 14 61 EF 15 36 B0  ......o..u.a..6.
+    0010: EF 40 63 CF 3B FE 42 D9   A0 5C F5 03 1C 63 8B 3D  .@c.;.B..\...c.=
+    0020: 36 AC 7A 18 77 C4 4B AF   4C E0 F6 A8 1A 51 D9 36  6.z.w.K.L....Q.6
+  }'}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.708 UTC|SSLCipher.java:2020|KeyLimit write side: algorithm = AES/GCM/NOPADDING:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.709 UTC|ChangeCipherSpec.java:246|Consuming ChangeCipherSpec message
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.763 UTC|CertificateMessage.java:1187|Consuming client Certificate handshake message (
+"Certificate": {
+  "certificate_request_context": "",
+  "certificate_list": [  
+  {
+    "certificate" : {
+      "version"            : "v3",
+      "serial number"      : "0A 2C 84 3E",
+      "signature algorithm": "SHA256withRSA",
+      "issuer"             : "CN=localhost, O=JvmScope controlled sample",
+      "not before"         : "2026-10-04 05:10:23.000 UTC",
+      "not  after"         : "2026-11-03 05:10:23.000 UTC",
+      "subject"            : "CN=localhost, O=JvmScope controlled sample",
+      "subject public key" : "RSA",
+      "extensions"         : [
+        {
+          ObjectId: 2.5.29.14 Criticality=false
+          SubjectKeyIdentifier [
+          KeyIdentifier [
+          0000: D2 D6 4A 7D D6 7A C0 E2   95 2A B1 AF F6 FC 52 9D  ..J..z...*....R.
+          0010: F4 E2 BC 53                                        ...S
+          ]
+          ]
+        }
+      ]}
+    "extensions": {
+      <no extension>
+    }
+  },
+]
+}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.879 UTC|CertificateVerify.java:1171|Consuming CertificateVerify handshake message (
+"CertificateVerify": {
+  "signature algorithm": rsa_pss_rsae_sha256
+  "signature": {
+    0000: 9B E5 B2 BF BC 36 D0 C5   A9 03 BC C6 53 0C E9 CE  .....6......S...
+    0010: A3 09 51 C5 F8 86 66 52   8F B8 40 8C B9 D2 95 8D  ..Q...fR..@.....
+    0020: 38 0D BA 37 21 95 56 29   10 29 D2 57 9B BC 50 E1  8..7!.V).).W..P.
+    0030: 96 1D 04 85 98 A6 47 90   E4 46 A3 4E 12 F5 EC 63  ......G..F.N...c
+    0040: 41 5E 63 EF AA 25 98 DC   B6 80 CA BC 05 B1 FE 79  A^c..%.........y
+    0050: 49 D8 BF AA 02 F2 83 9C   61 CE 95 C6 28 4D D1 FD  I.......a...(M..
+    0060: 84 7F DD D5 5E AA B0 D3   4F F7 AD D9 4D 9E 43 8F  ....^...O...M.C.
+    0070: 99 9A 4E D7 7A 57 30 AD   22 5D B5 54 C7 BB C1 B9  ..N.zW0."].T....
+    0080: 78 59 B0 25 61 59 8C D5   9C DE 00 6D 95 22 AE 09  xY.%aY.....m."..
+    0090: F7 89 DB CE CD 74 2A 6B   D5 69 EE B5 DD EE D6 C5  .....t*k.i......
+    00A0: 81 32 77 53 F6 B0 D6 87   1A 2A 69 FF EA 35 40 03  .2wS.....*i..5@.
+    00B0: 0A AB 52 96 5C 6C EF 2A   03 89 5F D4 FC 30 57 56  ..R.\l.*.._..0WV
+    00C0: 24 47 1B 9A E3 C5 9D F0   90 AC A5 B6 17 34 D2 E0  $G...........4..
+    00D0: F4 06 5B 76 92 27 A8 CA   16 99 13 0F E9 8D 05 88  ..[v.'..........
+    00E0: 80 EF EE 8F B1 07 7E AE   2D DE 2D 6B 4A E9 4D 2F  ........-.-kJ.M/
+    00F0: FA 6C 57 CD BD 9B 79 D5   0D 2C 54 09 C9 FE 7D 5C  .lW...y..,T....\
+  }
+}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.882 UTC|Finished.java:1040|Consuming client Finished handshake message (
+"Finished": {
+  "verify data": {
+    0000: 1E 79 EB 29 A4 5B 86 99   7C 1B 57 3E A8 90 FD 84  .y.).[....W>....
+    0010: E3 02 F4 FA CB 8C 3C 52   CC F1 45 65 13 21 1C 95  ......<R..Ee.!..
+    0020: 9B 8D 4C 59 8D C5 68 F7   8C 39 E3 48 28 0D 9C 51  ..LY..h..9.H(..Q
+  }'}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.882 UTC|SSLCipher.java:1866|KeyLimit read side: algorithm = AES/GCM/NOPADDING:KEYUPDATE
+countdown value = 137438953472
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.883 UTC|Finished.java:1139|Sending new session ticket
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.884 UTC|NewSessionTicket.java:255|Produced NewSessionTicket handshake message (
+"NewSessionTicket": {
+  "ticket_lifetime"      : "86,400",
+  "ticket_age_add"       : "<omitted>",
+  "ticket_nonce"         : "01",
+  "ticket"               : "EB 1D 8F A2 67 13 75 2C F5 6E 9A B0 C0 4E 40 F8 3E EE BD 25 7A A5 F9 45 E9 00 C1 67 CF 69 F2 F0",
+  "extensions"           : [
+    <no extension>
+  ]
+}
+)
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.887 UTC|SSLSocketImpl.java:578|duplex close of SSLSocket
+javax.net.ssl|DEBUG|01|matrix-server|2026-10-04 05:10:33.890 UTC|SSLSocketImpl.java:1760|close the SSL connection (passive)

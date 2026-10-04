@@ -1,0 +1,9 @@
+public class ReviewCpuProbe {
+ static volatile boolean running=true;
+ static volatile long sink;
+ public static void main(String[] args) throws Exception {
+  Thread worker=new Thread(() -> { long x=1; while(running) { for(int i=0;i<100000;i++) x=(x*1664525+1013904223) ^ (x>>>7); sink=x; } },"audit-cpu-worker");
+  worker.start(); System.out.println("READY");
+  Thread.sleep(22000); running=false; worker.join();
+ }
+}

@@ -1,0 +1,328 @@
+{
+  "threadDump": {
+    "formatVersion": 2,
+    "processId": 2218,
+    "time": "2026-10-04T05:36:39.263671985Z",
+    "runtimeVersion": "27+35",
+    "threadContainers": [
+      {
+        "container": "<root>",
+        "parent": null,
+        "owner": null,
+        "threads": [
+          {
+            "tid": 3,
+            "time": "2026-10-04T05:36:39.265244452Z",
+            "name": "main",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base\/java.lang.Thread.sleepNanos(Thread.java:562)",
+              "java.base\/java.lang.Thread.sleep(Thread.java:593)",
+              "ThreadWorkload.main(ThreadWorkload.java:85)"
+            ]
+          },
+          {
+            "tid": 11,
+            "time": "2026-10-04T05:36:39.269424395Z",
+            "name": "Reference Handler",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/java.lang.ref.Reference.waitForReferencePendingList(Native Method)",
+              "java.base\/java.lang.ref.Reference.processPendingReferences(Reference.java:240)",
+              "java.base\/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:202)"
+            ]
+          },
+          {
+            "tid": 12,
+            "time": "2026-10-04T05:36:39.269758431Z",
+            "name": "Finalizer",
+            "state": "WAITING",
+            "waitingOn": "java.lang.Object@4957608d",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:391)",
+              "java.base\/java.lang.Object.wait(Object.java:353)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:136)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:214)",
+              "java.base\/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:165)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 4,
+                "locks": [
+                  "java.lang.Object@4957608d"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": 13,
+            "time": "2026-10-04T05:36:39.274194273Z",
+            "name": "Signal Dispatcher",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": 19,
+            "time": "2026-10-04T05:36:39.274366526Z",
+            "name": "Notification Thread",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": 20,
+            "time": "2026-10-04T05:36:39.274490228Z",
+            "name": "Common-Cleaner",
+            "state": "TIMED_WAITING",
+            "waitingOn": "java.lang.Object@251ec26f",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:391)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:122)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:200)",
+              "java.base\/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:146)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)",
+              "java.base\/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 3,
+                "locks": [
+                  "java.lang.Object@251ec26f"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": 21,
+            "time": "2026-10-04T05:36:39.276869025Z",
+            "name": "matrix-cpu-hot",
+            "state": "RUNNABLE",
+            "stack": [
+              "ThreadWorkload$1.run(ThreadWorkload.java:38)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 22,
+            "time": "2026-10-04T05:36:39.278574120Z",
+            "name": "matrix-parked",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.CountDownLatch$Sync@36baf30c"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)",
+              "java.base\/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)",
+              "ThreadWorkload.park(ThreadWorkload.java:14)",
+              "ThreadWorkload.access$100(ThreadWorkload.java:8)",
+              "ThreadWorkload$2.run(ThreadWorkload.java:41)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 23,
+            "time": "2026-10-04T05:36:39.279194713Z",
+            "name": "matrix-sleeping",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base\/java.lang.Thread.sleepNanos(Thread.java:562)",
+              "java.base\/java.lang.Thread.sleep(Thread.java:593)",
+              "ThreadWorkload$3.run(ThreadWorkload.java:44)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 24,
+            "time": "2026-10-04T05:36:39.279420246Z",
+            "name": "matrix-monitor-owner",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.CountDownLatch$Sync@36baf30c"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)",
+              "java.base\/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)",
+              "ThreadWorkload.park(ThreadWorkload.java:14)",
+              "ThreadWorkload.access$100(ThreadWorkload.java:8)",
+              "ThreadWorkload$4.run(ThreadWorkload.java:49)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 7,
+                "locks": [
+                  "java.lang.Object@5bc7f55c"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": 25,
+            "time": "2026-10-04T05:36:39.279892901Z",
+            "name": "matrix-monitor-waiter",
+            "state": "BLOCKED",
+            "blockedOn": "java.lang.Object@5bc7f55c",
+            "stack": [
+              "ThreadWorkload$5.run(ThreadWorkload.java:51)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 26,
+            "time": "2026-10-04T05:36:39.280038384Z",
+            "name": "matrix-lock-owner",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.CountDownLatch$Sync@36baf30c"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)",
+              "java.base\/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)",
+              "ThreadWorkload.park(ThreadWorkload.java:14)",
+              "ThreadWorkload.access$100(ThreadWorkload.java:8)",
+              "ThreadWorkload$6.run(ThreadWorkload.java:55)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 27,
+            "time": "2026-10-04T05:36:39.282282078Z",
+            "name": "matrix-lock-waiter",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.locks.ReentrantLock$NonfairSync@24d46ca6",
+              "owner": 26
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:1031)",
+              "java.base\/java.util.concurrent.locks.ReentrantLock$Sync.lock(ReentrantLock.java:154)",
+              "java.base\/java.util.concurrent.locks.ReentrantLock.lock(ReentrantLock.java:323)",
+              "ThreadWorkload$7.run(ThreadWorkload.java:57)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 28,
+            "time": "2026-10-04T05:36:39.282615213Z",
+            "name": "matrix-initializer",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.CountDownLatch$Sync@36baf30c"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1140)",
+              "java.base\/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)",
+              "ThreadWorkload.park(ThreadWorkload.java:14)",
+              "ThreadWorkload.access$100(ThreadWorkload.java:8)",
+              "ThreadWorkload$StalledInitialization.<clinit>(ThreadWorkload.java:31)",
+              "java.base\/java.lang.Class.forName0(Native Method)",
+              "java.base\/java.lang.Class.forName(Class.java:479)",
+              "java.base\/java.lang.Class.forName(Class.java:469)",
+              "ThreadWorkload.initialize(ThreadWorkload.java:34)",
+              "ThreadWorkload.access$300(ThreadWorkload.java:8)",
+              "ThreadWorkload$8.run(ThreadWorkload.java:59)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 29,
+            "time": "2026-10-04T05:36:39.282992159Z",
+            "name": "matrix-init-waiter",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/java.lang.Class.forName0(Native Method)",
+              "java.base\/java.lang.Class.forName(Class.java:479)",
+              "java.base\/java.lang.Class.forName(Class.java:469)",
+              "ThreadWorkload.initialize(ThreadWorkload.java:34)",
+              "ThreadWorkload.access$300(ThreadWorkload.java:8)",
+              "ThreadWorkload$9.run(ThreadWorkload.java:61)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ]
+          },
+          {
+            "tid": 30,
+            "time": "2026-10-04T05:36:39.283188336Z",
+            "name": "matrix-deadlock-a",
+            "state": "BLOCKED",
+            "blockedOn": "java.lang.Object@191516a4",
+            "stack": [
+              "ThreadWorkload$10.run(ThreadWorkload.java:64)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 0,
+                "locks": [
+                  "java.lang.Object@5cbc99e7"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": 31,
+            "time": "2026-10-04T05:36:39.285905208Z",
+            "name": "matrix-deadlock-b",
+            "state": "BLOCKED",
+            "blockedOn": "java.lang.Object@5cbc99e7",
+            "stack": [
+              "ThreadWorkload$11.run(ThreadWorkload.java:65)",
+              "java.base\/java.lang.Thread.run(Thread.java:1527)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 0,
+                "locks": [
+                  "java.lang.Object@191516a4"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": 32,
+            "time": "2026-10-04T05:36:39.286125190Z",
+            "name": "Attach Listener",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/jdk.internal.vm.ThreadSnapshot.create(Native Method)",
+              "java.base\/jdk.internal.vm.ThreadSnapshot.of(ThreadSnapshot.java:63)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThread(ThreadDumper.java:348)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:323)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:294)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToFile(ThreadDumper.java:131)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:89)"
+            ]
+          }
+        ],
+        "threadCount": 18
+      },
+      {
+        "container": "java.util.concurrent.ThreadPoolExecutor@7854fc13",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+        ],
+        "threadCount": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,287 @@
+{
+  "threadDump": {
+    "processId": "2384",
+    "time": "2026-10-04T05:31:31.875237560Z",
+    "runtimeVersion": "25.0.2+10-69",
+    "threadContainers": [
+      {
+        "container": "<root>",
+        "parent": null,
+        "owner": null,
+        "threads": [
+          {
+            "tid": "3",
+            "time": "2026-10-04T05:31:31.899126172Z",
+            "name": "main",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/java.lang.Thread.sleepNanos0(Native Method)",
+              "java.base\/java.lang.Thread.sleepNanos(Thread.java:509)",
+              "java.base\/java.lang.Thread.sleep(Thread.java:540)",
+              "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios.main(ThreadLibraryScenarios.java:86)"
+            ]
+          },
+          {
+            "tid": "12",
+            "time": "2026-10-04T05:31:31.901892915Z",
+            "name": "Reference Handler",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/java.lang.ref.Reference.waitForReferencePendingList(Native Method)",
+              "java.base\/java.lang.ref.Reference.processPendingReferences(Reference.java:246)",
+              "java.base\/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)"
+            ]
+          },
+          {
+            "tid": "13",
+            "time": "2026-10-04T05:31:31.902247258Z",
+            "name": "Finalizer",
+            "state": "WAITING",
+            "waitingOn": "java.lang.ref.ReferenceQueue$Lock@5046685c",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.base\/java.lang.Object.wait(Object.java:351)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:137)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:215)",
+              "java.base\/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:165)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 4,
+                "locks": [
+                  "java.lang.ref.ReferenceQueue$Lock@5046685c"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "14",
+            "time": "2026-10-04T05:31:31.913998262Z",
+            "name": "Signal Dispatcher",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": "19",
+            "time": "2026-10-04T05:31:31.914149906Z",
+            "name": "Notification Thread",
+            "state": "RUNNABLE",
+            "stack": [
+            ]
+          },
+          {
+            "tid": "20",
+            "time": "2026-10-04T05:31:31.914283677Z",
+            "name": "Common-Cleaner",
+            "state": "TIMED_WAITING",
+            "waitingOn": "java.lang.ref.ReferenceQueue$Lock@2ab65d69",
+            "stack": [
+              "java.base\/java.lang.Object.wait0(Native Method)",
+              "java.base\/java.lang.Object.wait(Object.java:389)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:123)",
+              "java.base\/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:201)",
+              "java.base\/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:146)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)",
+              "java.base\/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)"
+            ],
+            "monitorsOwned": [
+              {
+                "depth": 3,
+                "locks": [
+                  "java.lang.ref.ReferenceQueue$Lock@2ab65d69"
+                ]
+              }
+            ]
+          },
+          {
+            "tid": "21",
+            "time": "2026-10-04T05:31:31.917461500Z",
+            "name": "VirtualThread-unblocker",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/java.lang.VirtualThread.takeVirtualThreadListToUnblock(Native Method)",
+              "java.base\/java.lang.VirtualThread.unblockVirtualThreads(VirtualThread.java:1507)",
+              "java.base\/java.lang.Thread.run(Thread.java:1474)",
+              "java.base\/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)"
+            ]
+          },
+          {
+            "tid": "30",
+            "time": "2026-10-04T05:31:31.917892678Z",
+            "name": "Attach Listener",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/jdk.internal.vm.ThreadSnapshot.create(Native Method)",
+              "java.base\/jdk.internal.vm.ThreadSnapshot.of(ThreadSnapshot.java:60)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThread(ThreadDumper.java:316)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreads(ThreadDumper.java:291)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:266)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToFile(ThreadDumper.java:131)",
+              "java.base\/jdk.internal.vm.ThreadDumper.dumpThreadsToJson(ThreadDumper.java:89)"
+            ]
+          },
+          {
+            "tid": "22",
+            "time": "2026-10-04T05:31:31.918478746Z",
+            "virtual": true,
+            "name": "example-virtual-cpu-hot-worker",
+            "state": "RUNNABLE",
+            "stack": [
+              "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios.computePrimes(ThreadLibraryScenarios.java:22)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ],
+            "carrier": "23"
+          },
+          {
+            "tid": "24",
+            "time": "2026-10-04T05:31:31.919480011Z",
+            "virtual": true,
+            "name": "example-virtual-parked-worker",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.CountDownLatch$Sync@4360c61f"
+            },
+            "stack": [
+              "java.base\/java.lang.VirtualThread.park(VirtualThread.java:738)",
+              "java.base\/java.lang.System$1.parkVirtualThread(System.java:2284)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1139)",
+              "java.base\/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)",
+              "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios.awaitRelease(ThreadLibraryScenarios.java:33)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ]
+          },
+          {
+            "tid": "26",
+            "time": "2026-10-04T05:31:31.921309398Z",
+            "virtual": true,
+            "name": "example-virtual-sleeping-worker",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/java.lang.VirtualThread.parkNanos(VirtualThread.java:780)",
+              "java.base\/java.lang.VirtualThread.sleepNanos(VirtualThread.java:971)",
+              "java.base\/java.lang.Thread.sleepNanos(Thread.java:507)",
+              "java.base\/java.lang.Thread.sleep(Thread.java:540)",
+              "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios.sleep(ThreadLibraryScenarios.java:37)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ]
+          },
+          {
+            "tid": "28",
+            "time": "2026-10-04T05:31:31.923386800Z",
+            "virtual": true,
+            "name": "example-virtual-lock-owner",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.CountDownLatch$Sync@4360c61f"
+            },
+            "stack": [
+              "java.base\/java.lang.VirtualThread.park(VirtualThread.java:738)",
+              "java.base\/java.lang.System$1.parkVirtualThread(System.java:2284)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly(AbstractQueuedSynchronizer.java:1139)",
+              "java.base\/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:230)",
+              "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios.awaitRelease(ThreadLibraryScenarios.java:33)",
+              "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios.lambda$main$0(ThreadLibraryScenarios.java:73)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ]
+          },
+          {
+            "tid": "29",
+            "time": "2026-10-04T05:31:31.925723528Z",
+            "virtual": true,
+            "name": "example-virtual-lock-waiter",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.locks.ReentrantLock$NonfairSync@67c9b8e"
+            },
+            "stack": [
+              "java.base\/java.lang.VirtualThread.park(VirtualThread.java:738)",
+              "java.base\/java.lang.System$1.parkVirtualThread(System.java:2284)",
+              "java.base\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:221)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)",
+              "java.base\/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:1030)",
+              "java.base\/java.util.concurrent.locks.ReentrantLock$Sync.lock(ReentrantLock.java:154)",
+              "java.base\/java.util.concurrent.locks.ReentrantLock.lock(ReentrantLock.java:323)",
+              "com.robbanhoglund.jvmscope.samples.threaddump.ThreadLibraryScenarios.lambda$main$1(ThreadLibraryScenarios.java:77)",
+              "java.base\/java.lang.VirtualThread.run(VirtualThread.java:456)"
+            ]
+          }
+        ],
+        "threadCount": "13"
+      },
+      {
+        "container": "java.util.concurrent.ThreadPoolExecutor@61bbe9ba",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+        ],
+        "threadCount": "0"
+      },
+      {
+        "container": "ForkJoinPool-1\/jdk.internal.vm.SharedThreadContainer@3ea01302",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+          {
+            "tid": "23",
+            "time": "2026-10-04T05:31:31.933467325Z",
+            "name": "ForkJoinPool-1-worker-1",
+            "state": "RUNNABLE",
+            "stack": [
+              "java.base\/jdk.internal.vm.Continuation.run(Continuation.java:251)",
+              "java.base\/java.lang.VirtualThread.runContinuation(VirtualThread.java:293)",
+              "java.base\/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1750)",
+              "java.base\/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.compute(ForkJoinTask.java:1742)",
+              "java.base\/java.util.concurrent.ForkJoinTask$InterruptibleTask.exec(ForkJoinTask.java:1659)",
+              "java.base\/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)",
+              "java.base\/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)",
+              "java.base\/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)",
+              "java.base\/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)"
+            ]
+          },
+          {
+            "tid": "25",
+            "time": "2026-10-04T05:31:31.935480245Z",
+            "name": "ForkJoinPool-1-worker-2",
+            "state": "WAITING",
+            "parkBlocker": {
+              "object": "java.util.concurrent.ForkJoinPool@591390e1"
+            },
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:2109)",
+              "java.base\/java.util.concurrent.ForkJoinPool.deactivate(ForkJoinPool.java:2063)",
+              "java.base\/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2027)",
+              "java.base\/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)"
+            ]
+          },
+          {
+            "tid": "27",
+            "time": "2026-10-04T05:31:31.936435084Z",
+            "name": "ForkJoinPool-1-delayScheduler",
+            "state": "TIMED_WAITING",
+            "stack": [
+              "java.base\/jdk.internal.misc.Unsafe.park(Native Method)",
+              "java.base\/java.util.concurrent.DelayScheduler.loop(DelayScheduler.java:253)",
+              "java.base\/java.util.concurrent.DelayScheduler.run(DelayScheduler.java:221)"
+            ]
+          }
+        ],
+        "threadCount": "3"
+      },
+      {
+        "container": "ForkJoinPool.commonPool\/jdk.internal.vm.SharedThreadContainer@3a078a91",
+        "parent": "<root>",
+        "owner": null,
+        "threads": [
+        ],
+        "threadCount": "0"
+      }
+    ]
+  }
+}

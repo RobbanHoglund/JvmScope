@@ -1,0 +1,21 @@
+2026-09-13 12:00:00
+Full thread dump OpenJDK 64-Bit Server VM (25 mixed mode):
+
+"pool-1-thread-1" #1 daemon prio=5 os_prio=0 cpu=1.00ms elapsed=10.00s tid=0x1 nid=1 waiting on condition
+   java.lang.Thread.State: WAITING (parking)
+        at jdk.internal.misc.Unsafe.park(java.base@25/Native Method)
+        - parking to wait for <0xabc> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+        at java.util.concurrent.LinkedBlockingQueue.take(java.base@25/LinkedBlockingQueue.java:435)
+        at java.util.concurrent.ThreadPoolExecutor.getTask(java.base@25/ThreadPoolExecutor.java:1060)
+
+"pool-1-thread-2" #2 daemon prio=5 os_prio=0 cpu=1.00ms elapsed=10.00s tid=0x2 nid=2 waiting on condition
+   java.lang.Thread.State: WAITING (parking)
+        at jdk.internal.misc.Unsafe.park(java.base@25/Native Method)
+        - parking to wait for <0xabc> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+        at java.util.concurrent.LinkedBlockingQueue.take(java.base@25/LinkedBlockingQueue.java:435)
+        at java.util.concurrent.ThreadPoolExecutor.getTask(java.base@25/ThreadPoolExecutor.java:1060)
+
+"scheduled-worker" #3 daemon prio=5 os_prio=0 cpu=1.00ms elapsed=10.00s tid=0x3 nid=3 waiting on condition
+   java.lang.Thread.State: TIMED_WAITING (parking)
+        at jdk.internal.misc.Unsafe.park(java.base@25/Native Method)
+        at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(java.base@25/ScheduledThreadPoolExecutor.java:1170)

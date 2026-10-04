@@ -1,0 +1,54 @@
+37336
+2026-10-02T18:56:06.430710600Z
+26.0.2.1+1-7
+
+#27 "sample-owner" TIMED_WAITING 2026-10-02T18:56:06.438718200Z
+    at java.base/java.lang.Thread.sleepNanos0(Native Method)
+    at java.base/java.lang.Thread.sleepNanos(Thread.java:551)
+    at java.base/java.lang.Thread.sleep(Thread.java:582)
+    at FormatRegressionSample.pause(FormatRegressionSample.java:10)
+    at FormatRegressionSample.reenter(FormatRegressionSample.java:16)
+    - locked <java.lang.Object@1bc9b051>
+    at FormatRegressionSample.lambda$main$1(FormatRegressionSample.java:33)
+    - locked <java.lang.Object@1bc9b051>
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+
+#28 "sample-waiter" BLOCKED 2026-10-02T18:56:06.439717100Z
+    at FormatRegressionSample.lambda$main$2(FormatRegressionSample.java:39)
+    - waiting to lock <java.lang.Object@1bc9b051>
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+
+#32 "sample-"quoted"" TIMED_WAITING 2026-10-02T18:56:06.439717100Z
+    at java.base/java.lang.Thread.sleepNanos0(Native Method)
+    at java.base/java.lang.Thread.sleepNanos(Thread.java:551)
+    at java.base/java.lang.Thread.sleep(Thread.java:582)
+    at FormatRegressionSample.pause(FormatRegressionSample.java:10)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+
+#33 "sample-sync-owner" TIMED_WAITING 2026-10-02T18:56:06.439717100Z
+    at java.base/java.lang.Thread.sleepNanos0(Native Method)
+    at java.base/java.lang.Thread.sleepNanos(Thread.java:551)
+    at java.base/java.lang.Thread.sleep(Thread.java:582)
+    at FormatRegressionSample.pause(FormatRegressionSample.java:10)
+    at FormatRegressionSample.lambda$main$3(FormatRegressionSample.java:53)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+
+#34 "sample-sync-waiter" WAITING 2026-10-02T18:56:06.439717100Z
+    at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+    - parking to wait for <java.util.concurrent.locks.ReentrantLock$NonfairSync@5fe72908>, owner #33
+    at java.base/java.util.concurrent.locks.LockSupport.park(LockSupport.java:223)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:790)
+    at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:1030)
+    at java.base/java.util.concurrent.locks.ReentrantLock$Sync.lock(ReentrantLock.java:154)
+    at java.base/java.util.concurrent.locks.ReentrantLock.lock(ReentrantLock.java:323)
+    at FormatRegressionSample.lambda$main$4(FormatRegressionSample.java:59)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+
+#30 "sample-virtual-parked" virtual TIMED_WAITING 2026-10-02T18:56:06.439717100Z
+    at java.base/java.lang.VirtualThread.parkNanos(VirtualThread.java:805)
+    at java.base/java.lang.VirtualThread.sleepNanos(VirtualThread.java:1001)
+    at java.base/java.lang.Thread.sleepNanos(Thread.java:549)
+    at java.base/java.lang.Thread.sleep(Thread.java:582)
+    at FormatRegressionSample.pause(FormatRegressionSample.java:10)
+    at java.base/java.lang.VirtualThread.run(VirtualThread.java:475)
+

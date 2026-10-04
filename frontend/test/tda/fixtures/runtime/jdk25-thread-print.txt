@@ -1,0 +1,45 @@
+2026-09-08 06:35:48
+Full thread dump OpenJDK 64-Bit Server VM (25.0.3+9-LTS interpreted mode, sharing):
+
+"sample-owner" #22 [2212] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.13s allocated=1336B defined_classes=2 tid=0x0000027b66b1b920 nid=2212 waiting on condition  [0x000000c3f79ff000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@25.0.3/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@25.0.3/Thread.java:509)
+	at java.lang.Thread.sleep(java.base@25.0.3/Thread.java:540)
+	at FormatRegressionSample.pause(FormatRegressionSample.java:9)
+	at FormatRegressionSample.reenter(FormatRegressionSample.java:15)
+	- locked <0x0000000710a4dd58> (a java.lang.Object)
+	at FormatRegressionSample.lambda$main$0(FormatRegressionSample.java:21)
+	- locked <0x0000000710a4dd58> (a java.lang.Object)
+	at FormatRegressionSample$$Lambda/0x000000008215c210.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"sample-waiter" #23 [8532] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.13s allocated=0B defined_classes=0 tid=0x0000027b66b20410 nid=8532 waiting for monitor entry  [0x000000c3f7aff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at FormatRegressionSample.lambda$main$1(FormatRegressionSample.java:27)
+	- waiting to lock <0x0000000710a4dd58> (a java.lang.Object)
+	at FormatRegressionSample$$Lambda/0x000000008215c438.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"sample-"quoted"" #27 [35924] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=0.12s allocated=40B defined_classes=0 tid=0x0000027b66b262c0 nid=35924 waiting on condition  [0x000000c3f7dfe000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@25.0.3/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@25.0.3/Thread.java:509)
+	at java.lang.Thread.sleep(java.base@25.0.3/Thread.java:540)
+	at FormatRegressionSample.pause(FormatRegressionSample.java:9)
+	at FormatRegressionSample$$Lambda/0x000000008215da28.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+JNI global refs: 0

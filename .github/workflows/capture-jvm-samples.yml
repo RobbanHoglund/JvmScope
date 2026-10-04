@@ -1,0 +1,150 @@
+name: Capture JVM samples
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: 'Java majors, comma separated, or all (7–27)'
+        default: 'all'
+        required: true
+      vendors:
+        description: 'Catalog distribution IDs, comma separated, or all (see tools/jvm-samples/matrix.json)'
+        default: 'all'
+        required: true
+      material:
+        description: 'Diagnostic material'
+        type: choice
+        options: [all, tda, tls]
+        default: all
+
+permissions:
+  contents: read
+
+# Manual captures are never cancelled by an unrelated push or another capture.
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_jobs: ${{ steps.plan.outputs.has_jobs }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Resolve available exact GA builds and checksums
+        id: plan
+        env:
+          VERSIONS: ${{ inputs.versions }}
+          VENDORS: ${{ inputs.vendors }}
+          MATERIAL: ${{ inputs.material }}
+        run: >-
+          node scripts/jvm-samples.mjs discover
+          --versions "$VERSIONS" --vendors "$VENDORS" --material "$MATERIAL"
+          --run-id "gh-${{ github.run_id }}-${{ github.run_attempt }}"
+          --commit "${{ github.sha }}" --output .run/jvm-plan.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jvm-capture-plan
+          path: .run/jvm-plan.json
+          retention-days: 30
+          if-no-files-found: error
+
+  capture:
+    needs: prepare
+    if: needs.prepare.outputs.has_jobs == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v5
+        with:
+          name: jvm-capture-plan
+          path: .run
+      - uses: actions/setup-java@v6
+        id: compiler
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Download exact archive, verify catalog checksum and record SHA-256
+        id: download
+        run: >-
+          node scripts/jvm-samples.mjs download --plan .run/jvm-plan.json
+          --key "${{ matrix.key }}" --output .run/jdk
+      - uses: actions/setup-java@v6
+        id: runtime
+        with:
+          distribution: jdkfile
+          java-version: ${{ steps.download.outputs.major }}
+          jdk-file: ${{ steps.download.outputs.archive }}
+      - name: Capture controlled children and validate through browser parsers
+        id: collect
+        env:
+          SAMPLE_JAVA_HOME: ${{ steps.runtime.outputs.path }}
+          SAMPLE_COMPILER_HOME: ${{ steps.compiler.outputs.path }}
+        run: >-
+          node scripts/jvm-samples.mjs capture --plan .run/jvm-plan.json
+          --key "${{ matrix.key }}" --java-home "$SAMPLE_JAVA_HOME"
+          --compiler-home "$SAMPLE_COMPILER_HOME"
+          --archive-report .run/jdk/download.json
+          --output ".run/jvm-captures/${{ matrix.key }}"
+      - name: Record installation failure explicitly
+        if: failure() && steps.collect.outcome == 'skipped'
+        run: >-
+          node scripts/jvm-samples.mjs failure --plan .run/jvm-plan.json
+          --key "${{ matrix.key }}" --output ".run/jvm-captures/${{ matrix.key }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jvm-runtime-${{ matrix.key }}
+          path: .run/jvm-captures/
+          retention-days: 30
+          if-no-files-found: warn
+
+  report:
+    needs: [prepare, capture]
+    if: always() && needs.prepare.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v5
+        with:
+          name: jvm-capture-plan
+          path: .run
+      - uses: actions/download-artifact@v5
+        if: needs.prepare.outputs.has_jobs == 'true'
+        with:
+          pattern: jvm-runtime-*
+          merge-multiple: true
+          path: .run/jvm-bundle
+      - name: Account for every selected JVM, including missing/cancelled jobs
+        run: >-
+          node scripts/jvm-samples.mjs aggregate --plan .run/jvm-plan.json
+          --output .run/jvm-bundle
+      - name: Revalidate import and generated documentation
+        run: |
+          node scripts/jvm-samples.mjs import --bundle .run/jvm-bundle
+          node scripts/jvm-samples.mjs check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jvm-sample-bundle
+          path: .run/jvm-bundle/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Summarize runtime outcomes
+        run: |
+          node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs"; const root=".run/jvm-bundle/", s=JSON.parse(readFileSync(root+"summary.json")); const reports=s.reports.map(p=>JSON.parse(readFileSync(root+p))); appendFileSync(process.env.GITHUB_STEP_SUMMARY,"## JVM capture outcomes\n\n"+reports.map(r=>"- "+r.distribution+" Java "+r.major+": "+r.status+" ("+r.cases.filter(c=>c.status==="verified").length+" verified cases)").join("\n")+"\n\nDownload jvm-sample-bundle and import it locally. No repository changes are pushed by this workflow.\n"); if(reports.some(r=>!["complete","unavailable"].includes(r.status)))process.exitCode=1;'

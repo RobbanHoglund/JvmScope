@@ -1,0 +1,12 @@
+// One Java application: the dependency-free server in slim/.
+plugins { id 'base' }
+
+tasks.named('wrapper') {
+    scriptFile = file('scripts/gradlew')
+    jarFile = file('gradle/wrapper/gradle-wrapper.jar')
+}
+
+tasks.register('test') { dependsOn(':slim:serverTest') }
+tasks.named('check') { dependsOn(':slim:check') }
+tasks.named('assemble') { dependsOn(':slim:assembleSlim') }
+tasks.named('clean') { dependsOn(':slim:clean') }

@@ -1,0 +1,12 @@
+# Legacy configuration for services already using /slim/railway.toml.
+# For new services, follow the explicit service settings in slim/README.md.
+# Build context / service root must be the repository root.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "slim/Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

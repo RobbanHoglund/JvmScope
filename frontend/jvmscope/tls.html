@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>JvmScope · Java TLS Log Analyzer</title>
+<meta name="description" content="Inspect Java JSSE TLS logs with observed handshake sequences, certificate facts, timelines and linked raw evidence. Logs are analyzed locally in your browser." />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/assets/javautils/java-tls-mark.svg" />
+<link rel="stylesheet" href="/assets/javautils/styles.css" />
+<link rel="stylesheet" href="/assets/javautils/tls.css" />
+<link rel="stylesheet" href="/assets/javautils/analyzer-shell.css" />
+
+
+</head>
+<body class="tls-page tls-investigating analyzer-empty">
+	<header class="tls-header analyzer-header">
+		<div class="header-top">
+			<div class="tls-brand analyzer-brand">
+				<img class="tls-brand-mark analyzer-brand-mark" src="/assets/javautils/java-tls-mark.svg" width="44" height="44" alt="" />
+				<div class="tls-brand-copy analyzer-brand-copy">
+					<h1>JvmScope · Java TLS Log Analyzer</h1>
+					<p class="tls-brand-tagline analyzer-brand-tagline">Follow the handshake. Inspect the evidence.</p>
+				</div>
+				<div class="tls-file-name analyzer-file-name"><span class="tls-file-label analyzer-file-label">Capture</span><strong id="fileName">No file loaded</strong></div>
+			</div>
+			<div class="tls-file-actions" role="group" aria-label="TLS log actions">
+				<input id="fileInput" type="file" accept=".log,.txt,text/plain"
+					class="sr-only" aria-label="Choose a TLS log" />
+				<label for="fileInput" class="btn btn-primary">
+					<svg class="tls-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 8V5h6l2 3h10v3M3 8v12h16l3-9H7l-4 9"/></svg>
+					Choose TLS log</label>
+				<span class="example-actions" role="group" aria-label="Sample choices">
+				<button id="loadSampleBtn" class="btn btn-sm btn-accent" type="button"
+					title="Load a comprehensive JSSE sample with success, failure, mTLS, inbound, timeout, and incomplete scenarios">
+					<svg class="tls-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h6m-5 0v6L5 18a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M8 14h8"/></svg>
+					Full sample</button>
+				<button id="chooseExampleBtn" class="btn btn-sm btn-accent" type="button" aria-label="Choose example" aria-haspopup="dialog" aria-controls="exampleModal" title="Browse named examples by symptom and Java version">▾</button>
+				</span>
+				<button id="clearBtn" class="btn btn-sm btn-danger-soft" type="button" data-capture-only>
+					<svg class="tls-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg>
+					Clear</button>
+				<button id="howToUseBtn" class="btn btn-sm" type="button"
+					aria-haspopup="dialog" aria-controls="howToUseModal">
+					<svg class="tls-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01"/></svg>
+					Help</button>
+			</div>
+		</div>
+
+		<div class="tls-filter-row" data-capture-only>
+				<div class="filter-group" role="group" aria-labelledby="tlsFilterLabel">
+					<span class="filter-group-label" id="tlsFilterLabel">Filters</span>
+					<label class="filter-pill danger">
+						<input id="onlyFailuresToggle" type="checkbox" /> <span>Failures</span>
+					</label>
+					<label class="filter-pill success">
+						<input id="onlySuccessToggle" type="checkbox" /> <span>Success</span>
+					</label>
+					<label class="filter-pill warning">
+						<input id="onlyWarningsToggle" type="checkbox" /> <span>Warnings</span>
+					</label>
+				</div>
+
+				<div class="filter-group direction-group">
+					<span class="filter-group-label" id="tlsDirectionLabel">Direction</span>
+					<div class="segmented-filter" role="group"
+						aria-labelledby="tlsDirectionLabel">
+						<button type="button" data-direction-filter="all" class="active"
+							aria-pressed="true">All</button>
+						<button type="button" data-direction-filter="inbound"
+							aria-pressed="false">Inbound</button>
+						<button type="button" data-direction-filter="outbound"
+							aria-pressed="false">Outbound</button>
+					</div>
+				</div>
+		</div>
+		<div class="tls-meta" id="metaBar" data-capture-only>
+			<div id="statsSummary" class="metric-chips">No data loaded.</div>
+			<div id="lastUpdated"></div>
+		</div>
+	</header>
+
+	<main>
+		<section id="analyzerStart" class="analyzer-start drop-zone" aria-labelledby="analyzerStartTitle">
+			<div class="analyzer-start-copy">
+				<p class="analyzer-start-eyebrow">TLS log analysis</p>
+				<h2 id="analyzerStartTitle">Follow a Java TLS handshake</h2>
+				<p>Choose or drop a JSSE debug log, or explore the built-in sample.</p>
+				<p class="analyzer-start-context">Find failed interactions, narrow the timeline, and inspect the handshake and its raw evidence.</p>
+				<div class="analyzer-start-actions">
+					<button class="btn btn-primary" type="button" data-start-action="choose">Choose log file</button>
+					<button class="btn" type="button" data-start-action="sample">Try sample</button>
+					<button class="btn" type="button" data-example-open aria-haspopup="dialog" aria-controls="exampleModal">Browse examples</button>
+				</div>
+				<p class="analyzer-start-privacy">Analyzed locally in your browser. Nothing is uploaded.</p>
+			</div>
+			<div class="analyzer-start-format">
+				<img src="/assets/javautils/java-tls-mark.svg" width="56" height="56" alt="" />
+				<strong>Drop a TLS log here</strong>
+				<span>Java JSSE debug output · .txt, .log</span>
+			</div>
+		</section>
+		<div id="loadingState" class="state hidden" role="status">Parsing…</div>
+		<div id="errorState" class="state hidden" role="alert"></div>
+		<details id="tlsAnalysis" class="tls-analysis" open hidden>
+			<summary>Capture analysis <span id="tlsAnalysisCount"></span></summary>
+			<div class="tls-analysis-content">
+				<div class="tls-timeline-heading">
+					<h2>Interaction starts <span>UTC</span><span class="tls-outcome-legend"> · outcome colors</span></h2>
+					<span id="tlsSelectionSummary" class="tls-selection-summary"></span>
+					<div class="tls-zoom-controls" role="group" aria-label="Timeline scale">
+						<button id="tlsPanBack" class="btn btn-sm" type="button" aria-label="Earlier period">←</button>
+						<button id="tlsZoomIn" class="btn btn-sm" type="button">Zoom in</button>
+						<button id="tlsZoomOut" class="btn btn-sm" type="button">Zoom out</button>
+						<button id="tlsPanForward" class="btn btn-sm" type="button" aria-label="Later period">→</button>
+						<button id="tlsZoomSelection" class="btn btn-sm" type="button">Zoom to selection</button>
+						<button id="tlsZoomReset" class="btn btn-sm" type="button">Full range</button>
+					</div>
+				</div>
+				<div class="tls-timeline-caption"><span id="tlsTimelineScale"></span><span>Drag to select a period</span></div>
+				<svg id="tlsTimeline" class="tls-timeline" viewBox="0 0 1000 110" preserveAspectRatio="none" role="img" tabindex="0" aria-label="Interaction starts in UTC"></svg>
+				<p id="tlsTimelineEmpty" class="tls-timeline-empty" hidden>No reliable timestamps in this capture</p>
+				<div id="tlsTimelineAxis" class="tls-timeline-axis"></div>
+				<div class="tls-facet-row">
+						<span class="tls-scope-label">Filter capture</span>
+					<details class="tls-facet" id="tlsHostFacet">
+						<summary>Host / peer<span id="tlsHostCount"> · all</span></summary>
+						<div class="tls-facet-popover">
+							<p>Captured peer name, or outbound SNI fallback. Certificate names are not used.</p>
+							<input id="tlsHostSearch" type="search" aria-label="Find host" placeholder="Find host…">
+							<div id="tlsHostOptions" class="tls-facet-options"></div>
+						</div>
+					</details>
+					<details class="tls-facet" id="tlsSniFacet">
+						<summary>SNI / requested name<span id="tlsSniCount"> · all</span></summary>
+						<div class="tls-facet-popover">
+							<p>Requested server name. For inbound TLS this identifies the local server, not the peer.</p>
+							<input id="tlsSniSearch" type="search" aria-label="Find SNI" placeholder="Find SNI…">
+							<div id="tlsSniOptions" class="tls-facet-options"></div>
+						</div>
+					</details>
+					<details class="tls-facet tls-failure-facet" id="tlsFailureFacet">
+						<summary>Failure categories<span id="tlsFailureCount"> · all</span></summary>
+						<div class="tls-facet-popover">
+							<p>Observed diagnostics, counted once per failed interaction. Inspect Details for evidence.</p>
+							<input id="tlsFailureSearch" type="search" aria-label="Find failure category" placeholder="Find category…">
+							<div id="tlsFailureGroups" class="tls-failure-groups" role="group" aria-label="Filter by failure category"></div>
+						</div>
+					</details>
+					<details id="tlsPeriodMenu" class="tls-period-menu">
+						<summary>Exact UTC period</summary>
+						<div class="tls-period-popover">
+							<div class="tls-period-controls">
+								<label>From UTC <input id="tlsTimeFrom" type="datetime-local" step="0.001"></label>
+								<label>To UTC <input id="tlsTimeTo" type="datetime-local" step="0.001"></label>
+								<button id="tlsTimeApply" class="btn btn-sm" type="button">Apply period</button>
+								<button id="tlsTimeClear" class="btn btn-sm" type="button">Clear period</button>
+								<button id="tlsUntimed" class="btn btn-sm" type="button" aria-pressed="false">Without time: 0</button>
+							</div>
+							<p id="tlsTimeError" class="tls-time-error" role="alert"></p>
+							<p id="tlsTimelineNote" class="tls-timeline-note"></p>
+						</div>
+					</details>
+				</div>
+			</div>
+		</details>
+		<div class="tls-active-filter-row" data-capture-only>
+			<div id="tlsActiveFilters" class="tls-active-filters" role="group" aria-label="Active filters"></div>
+			<button id="tlsClearFilters" class="btn btn-sm" type="button" hidden>Clear filters</button>
+		</div>
+
+		<dialog id="howToUseModal" class="modal help-modal hidden" aria-hidden="true"
+            aria-labelledby="howToUseModalTitle" aria-describedby="howToUseModalDescription">
+            <div class="modal-backdrop" data-close="help"></div>
+            <div class="modal-dialog help-modal-dialog">
+                <div class="modal-header help-modal-header">
+                    <div>
+                        <h2 class="modal-title" id="howToUseModalTitle">JvmScope · Java TLS Log Analyzer · Guide</h2>
+                        <p id="howToUseModalDescription" class="help-modal-subtitle">Load a capture, filter interactions, then inspect the evidence.</p>
+                    </div>
+                    <button id="howToUseModalClose" class="modal-close" type="button" aria-label="Close TLS analyzer guide" autofocus>✕</button>
+                </div>
+                <div class="help-search-toolbar">
+                    <label for="guideSearchInput">Search guide</label>
+                    <input id="guideSearchInput" type="search" data-help-search maxlength="160" placeholder="Search topics, terms or Java versions…" aria-describedby="guideSearchCount" autocomplete="off" />
+                    <button class="btn btn-sm" type="button" data-help-search-clear disabled>Clear search</button>
+                    <output id="guideSearchCount" data-help-search-count role="status" aria-live="polite" aria-atomic="true"></output>
+                </div>
+                <div class="modal-body help-modal-body">
+                    <p class="help-search-empty" data-help-search-empty hidden>No guide topics match your search. Try another term or clear the search.</p>
+                    <div class="help-quickstart" aria-label="Recommended workflow">
+                        <div class="help-quickstart-label">Recommended workflow</div>
+                        <div class="help-quickstart-steps">
+                            <span><strong>1</strong> Load a log</span>
+                            <span><strong>2</strong> Filter interactions</span>
+                            <span><strong>3</strong> Select an interaction</span>
+                            <span><strong>4</strong> Inspect evidence</span>
+                        </div>
+                    </div>
+                    <div class="docs-layout">
+                        <nav class="docs-nav" aria-label="Guide topics">
+                            <a href="#guide-getting-started">Getting started</a>
+                            <a href="#guide-filters">Search, filters and timeline</a>
+                            <a href="#guide-evidence">Inspecting interactions and evidence</a>
+                            <a href="#guide-input-formats">Expected input and interpretation</a>
+                            <a href="#guide-capture">Collecting a TLS log</a>
+                            <a href="#guide-outcomes">Outcomes, warnings and grouping</a>
+                            <a href="#guide-sample">Full sample coverage</a>
+                            <a href="#guide-privacy">Privacy and performance</a>
+                            <a href="#guide-keyboard">Using this guide</a>
+                        </nav>
+                        <div class="docs-card docs-content">
+                            <h3 id="guide-getting-started" class="docs-subtitle">Getting started</h3>
+                            <ul class="docs-list">
+                                <li>Use <strong>Choose TLS log</strong> or drop a JSSE debug log onto the page. The table and inspector appear after a capture is accepted.</li>
+                                <li><strong>Full sample</strong> opens the built-in overview. Browse examples, or the arrow beside Full sample, opens named Java 25/26/27 captures and focused TLS cases. Cards label controlled JVM captures and synthetic scenarios. Selecting an example replaces the capture; browsing keeps your current data.</li>
+                                <li>A new file resets time, host, SNI and failure-category selections. Generic search, outcome and direction filters remain active. <strong>Clear filters</strong> keeps the capture; <strong>Clear</strong> removes it and resets every filter. Reloading clears the in-memory capture.</li>
+                            </ul>
+                            <h3 id="guide-filters" class="docs-subtitle">Search, filters and timeline</h3>
+                            <ul class="docs-list">
+                                <li>Search for host, SNI, cipher, TLS version, outcome, reason or warning text. Use <strong>Failures</strong>, <strong>Success</strong>, <strong>Warnings</strong> and direction controls to narrow the list.</li>
+                                <li>In <strong>Capture analysis</strong>, drag across the timeline or enter UTC times to select a period. Interactions overlapping it are included. Zoom changes the scale only; it does not apply a period filter.</li>
+                                <li>Select multiple hosts or SNI names and a failure category. Values within one filter are combined; different filters must all match. Choice counts apply the other active filters. Remove filter chips or use Clear filters to recover the full capture.</li>
+                                <li><strong>Without time</strong> shows missing, ambiguous or backwards-moving timestamps. These interactions have no reliable observed span and are excluded from period filters.</li>
+                                <li>Timeline bars count interaction starts, colored by the full interaction outcome. A red bar does not locate when failure occurred. <strong>Observed span</strong> includes closure and is not handshake latency.</li>
+                            </ul>
+                            <h3 id="guide-evidence" class="docs-subtitle">Inspecting interactions and evidence</h3>
+                            <ul class="docs-list">
+                                <li>Select a row in <strong>Investigate</strong> to follow its observed sequence. Source-line links jump to the original evidence. The inspector stays open as you move between interactions.</li>
+                                <li><strong>Overview</strong> and <strong>All columns</strong> offer wider tables. <strong>Full details</strong> opens the complete summary; diagnostic explanation buttons describe a matched issue, possible causes and checks.</li>
+                                <li>The sequence follows file order. Produced and consumed messages are JSSE observations, not verified network delivery. An outbound SNI is a requested server name, not a captured network address.</li>
+                                <li>Missing messages mean <strong>not captured</strong>, not that they never happened. Transport errors alone cannot establish who reset a socket or place the error before ServerHello.</li>
+                            </ul>
+                            <h3 id="guide-input-formats" class="docs-subtitle">Expected input and interpretation</h3>
+                            <ul class="docs-list">
+                                <li>Supports SunJSSE console format families used in Java <strong>7–27</strong>: legacy <code>*** ClientHello</code>, compact <code>javax.net.ssl|DEBUG|...</code> and expanded output. Controlled captures exercise available TLS 1.2/1.3 protocols, client authentication and trust failures; additional Java 25–27 fixtures cover expanded output. Check the <a href="https://github.com/RobbanHoglund/JvmScope#java-input-compatibility" target="_blank" rel="noopener noreferrer">generated compatibility matrix</a> for exact builds and providers. This does not certify every vendor, update or platform; custom logger wrappers and other TLS providers need separate verification.</li>
+                                <li>Expanded JSSE output is not necessarily valid JSON. Use the original debug log rather than treating an expanded message as a JSON input document.</li>
+                                <li>Legacy bodies omit reliable thread IDs and timestamps. Interleaved legacy captures remain unknown. Missing protocol, cipher, certificate and time values are not guessed.</li>
+                                <li>Java 27 hybrid key-exchange records, including <code>X25519MLKEM768</code>, remain in the raw log and observed sequence. They still describe TLS 1.3; the analyzer does not separately classify the negotiated key-exchange group.</li>
+                            </ul>
+                            <h3 id="guide-capture" class="docs-subtitle">Collecting a TLS log</h3>
+                            <ul class="docs-list">
+                                <li>Run <code>java -Djavax.net.debug=ssl,handshake -jar app.jar &gt; tls.log 2&gt;&amp;1</code>. Put the JVM option before <code>-jar</code> or the main class. Replace app.jar with your application.</li>
+                                <li><code>-Djavax.net.debug=ssl,handshake,expand</code> also enables supported expanded output. Keep stdout and stderr in their original order; avoid concatenating logs from different JVMs.</li>
+                                <li>Capture the complete handshake and any subsequent fatal alert. Partial output limits the conclusions you can draw. SunJSSE’s debug options depend on the TLS provider in use.</li>
+                            </ul>
+                            <h3 id="guide-outcomes" class="docs-subtitle">Outcomes, warnings and grouping</h3>
+                            <ul class="docs-list">
+                                <li><strong>Success</strong> means a local Finished exchange or explicit completion was observed. It does not certify peer acceptance or application health. A later fatal alert is still a failure.</li>
+                                <li><strong>Warnings</strong> are matched diagnostic keywords, including certificate-selection messages. They can occur in successful handshakes and do not independently prove failure. Unknown means the capture does not support a safe outcome.</li>
+                                <li>Modern interactions use JVM thread IDs and handshake boundaries; a pause does not start a new connection. Thread IDs are not connection IDs. Asynchronous engines, shared workers and combined process logs may require separate captures.</li>
+                                <li>Conflicting ServerHello or Finished observations produce an unknown outcome and a grouping warning. Original records remain accessible, while negotiated/certificate summaries are withheld. Other interleaving may be undetectable; consult the source evidence.</li>
+                            </ul>
+                            <h3 id="guide-sample" class="docs-subtitle">Full sample coverage</h3>
+                            <ul class="docs-list">
+                                <li>The comprehensive synthetic sample demonstrates TLS 1.2/1.3, inbound/outbound success, resumption, ALPN, clean closure and interleaved handshakes.</li>
+                                <li>It includes successful and failed mutual TLS, requested certificate authorities and selected client certificates.</li>
+                                <li>Failure cases include trust, hostname, protocol, SNI, ALPN, cipher/algorithm, timeout, reset, EOF, broken pipe, certificate and incomplete-capture symptoms. Use the named example library for smaller focused cases and controlled JVM captures.</li>
+                            </ul>
+                            <h3 id="guide-privacy" class="docs-subtitle">Privacy and performance</h3>
+                            <ul class="docs-list">
+                                <li>Logs are read and analyzed locally in a disposable browser worker. Captures are not uploaded and the tool sends no telemetry. Built-in examples are downloaded from this application’s server, then analyzed locally.</li>
+                                <li>Clear or a newer input cancels pending analysis. The table shows 200 interactions per page; filters, timeline and inspector navigation cover the full capture. Available browser memory limits large files.</li>
+                                <li>Reload or Clear removes the in-memory capture. Copy actions place the selected original evidence on your clipboard.</li>
+                            </ul>
+                            <h3 id="guide-keyboard" class="docs-subtitle">Using this guide</h3>
+                            <ul class="docs-list">
+                                <li>Search matches complete topics containing all entered terms and highlights literal matches. Clear search restores every topic; topic links jump within the guide.</li>
+                                <li><span class="kbd">Tab</span> moves between controls and links with a visible focus outline. <span class="kbd">Esc</span> closes the guide and returns focus to Help. The header, search and Close button stay visible while topics scroll.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer help-modal-footer">
+                    <button id="howToUseModalClose2" class="btn" type="button">Close</button>
+                </div>
+            </div>
+        </dialog>
+		<div class="tls-workspace" data-capture-only>
+		<div class="table-container drop-zone" id="tableContainer"
+			aria-live="polite">
+			<div class="tls-table-heading">
+				<h2>TLS interactions</h2>
+				<p>Select an interaction to follow its evidence.</p>
+			</div>
+			<div class="tls-table-toolbar">
+				<input id="searchInput" class="search-input" type="search"
+					placeholder="Search host, SNI, cipher, TLS version, outcome or reason…"
+					aria-label="Search" autocomplete="off" />
+				<div class="tls-column-controls segmented-filter" role="group" aria-label="Table columns">
+					<button id="tlsInvestigateColumns" type="button" class="active" aria-pressed="true">Investigate</button>
+					<button id="tlsOverviewColumns" type="button" aria-pressed="false">Overview</button>
+					<button id="tlsAllColumns" type="button" aria-pressed="false">All columns</button>
+				</div>
+				<button id="refreshBtn" class="btn btn-sm" type="button"
+					title="Re-apply filters + sort">Refresh</button>
+			</div>
+			<div class="footer-bar tls-table-status">
+				<span id="rowCount">0 / 0 interactions</span>
+                <nav id="tlsPagination" class="hidden tls-pagination" aria-label="TLS interaction pages">
+                    <button id="tlsPreviousPage" class="btn btn-sm" type="button" aria-label="Previous interaction page">←</button>
+                    <span id="tlsPageLabel">Page 1 of 1</span>
+                    <button id="tlsNextPage" class="btn btn-sm" type="button" aria-label="Next interaction page">→</button>
+                </nav>
+			</div>
+
+			<div id="dropOverlay" class="drop-overlay hidden">
+				<div class="drop-message">Drop TLS log file here</div>
+			</div>
+
+			<div class="tls-table-scroll" id="tlsTableScroll" role="region" aria-label="TLS interaction table" tabindex="0">
+			<table id="tlsTable" class="tls-investigation-columns">
+				<colgroup>
+					<col class="col-id">
+					<col class="col-outcome">
+					<col class="col-dir">
+					<col class="col-tid">
+					<col class="col-peer">
+					<col class="col-sni">
+					<col class="col-tls">
+					<col class="col-cert-authorities">
+					<col class="col-client-cert">
+					<col class="col-cipher">
+					<col class="col-start">
+					<col class="col-duration">
+					<col class="col-threads">
+					<col class="col-warn">
+					<col class="col-details">
+					<col class="col-diagnosis">
+				</colgroup>
+				<thead>
+					<tr>
+						<th data-key="id" class="sortable"># <span
+							class="sort-indicator"></span></th>
+						<th data-key="outcome" class="sortable">Outcome <span
+							class="sort-indicator"></span></th>
+						<th data-key="direction" class="sortable">Direction <span
+							class="sort-indicator"></span></th>
+						<th data-key="tidDisplay" class="sortable">TID <span
+							class="sort-indicator"></span></th>
+						<th data-key="peerHost" class="sortable">Peer host <span
+							class="sort-indicator"></span></th>
+						<th data-key="sni" class="sortable">SNI <span
+							class="sort-indicator"></span></th>
+						<th data-key="tlsVersion" class="sortable">TLS <span
+							class="sort-indicator"></span></th>
+						<th class="sortable" data-key="certificateAuthoritiesText">Cert
+							authorities <span class="sort-indicator"></span>
+						</th>
+						<th class="sortable" data-key="clientCertSubjectCn">Client
+							cert <span class="sort-indicator"></span>
+						</th>
+						<th data-key="cipherSuite" class="sortable">Cipher suite <span
+							class="sort-indicator"></span></th>
+						<th data-key="startTs" class="sortable">Start <span
+							class="sort-indicator"></span></th>
+						<th data-key="durationMs" class="sortable" title="Span of observed records, including closure; not handshake latency">Observed span <span
+							class="sort-indicator"></span></th>
+						<th data-key="threadCount" class="sortable">Threads <span
+							class="sort-indicator"></span></th>
+						<th data-key="warnCount" class="sortable">Warnings <span
+							class="sort-indicator"></span></th>
+						<th>Details</th>
+						<th class="tls-diagnosis-heading">Diagnostic reason / last observation</th>
+					</tr>
+				</thead>
+				<tbody id="tlsTableBody"></tbody>
+			</table>
+			</div>
+			<div id="emptyState" class="tls-empty-state">
+				<p>Load a TLS log to begin</p>
+				<span>Choose a file, drop it here, or try the full sample.</span>
+			</div>
+
+			<div class="hint-muted">
+				One row per detected interaction. Grouping uses JVM thread IDs and handshake markers; legacy captures have limited correlation.
+			</div>
+		</div>
+		<aside id="tlsInspector" class="tls-inspector" aria-label="Selected TLS interaction"></aside>
+		</div>
+
+		<dialog id="tlsModal" class="modal hidden" aria-hidden="true" aria-labelledby="tlsModalTitle">
+		<div class="modal-backdrop" data-close="tls"></div>
+		<div class="modal-dialog">
+			<div class="modal-header">
+				<div class="modal-title" id="tlsModalTitle">TLS interaction</div>
+				<button id="tlsModalClose" class="modal-close" type="button" aria-label="Close">✕</button>
+			</div>
+			<div class="modal-body" id="tlsModalBody"></div>
+			<div class="modal-footer">
+				<button id="tlsModalCopyBtn" class="btn" type="button">Copy raw</button>
+				<button id="tlsModalClose2" class="btn" type="button">Close</button>
+			</div>
+		</div>
+		</dialog>
+
+
+		<!-- Issue explanation modal -->
+		<dialog id="issueModal" class="modal hidden" aria-hidden="true" aria-labelledby="issueModalTitle">
+		<div class="modal-backdrop" data-close="issue"></div>
+		<div class="modal-dialog">
+			<div class="modal-header">
+				<div class="modal-title" id="issueModalTitle">Explain issues</div>
+				<button id="issueModalClose" class="modal-close" type="button" aria-label="Close">✕</button>
+			</div>
+			<div class="modal-body" id="issueModalBody"></div>
+			<div class="modal-footer">
+				<button id="issueModalClose2" class="btn" type="button">Close</button>
+			</div>
+		</div>
+		</dialog>
+	</main>
+
+	<script type="module" src="/assets/javautils/tls.js"></script>
+</body>
+</html>

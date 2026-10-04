@@ -1,0 +1,841 @@
+2026-08-28T19:33:20.2006756+02:00
+30160:
+2026-08-28 19:33:20
+Full thread dump OpenJDK 64-Bit Server VM (25.0.3+9-LTS mixed mode, sharing):
+
+Threads class SMR info:
+_java_thread_list=0x0000022aa7857560, length=55, elements={
+0x0000022a852fd490, 0x0000022aa6bb0a30, 0x0000022aa6bb1490, 0x0000022aa6bb6460,
+0x0000022aa6bb8890, 0x0000022aa6bb9fc0, 0x0000022aa6bbbad0, 0x0000022aa6bc8100,
+0x0000022aa6bcea60, 0x0000022aa72e5e60, 0x0000022aa72e7c10, 0x0000022aa730b6a0,
+0x0000022aa730be60, 0x0000022aa730ce40, 0x0000022aa730dd20, 0x0000022aa730e4e0,
+0x0000022aa7313d70, 0x0000022aa73293e0, 0x0000022aa7329ba0, 0x0000022aa6bc5830,
+0x0000022aa7359eb0, 0x0000022aa7356800, 0x0000022aa7356fd0, 0x0000022aa735ae50,
+0x0000022aa735b620, 0x0000022aa735bdf0, 0x0000022aa735c5c0, 0x0000022aa735d560,
+0x0000022aa7635780, 0x0000022aa7638660, 0x0000022aa7635f50, 0x0000022aa7636ef0,
+0x0000022aa763bd10, 0x0000022aa763a5a0, 0x0000022aa7638e30, 0x0000022aa763b540,
+0x0000022aa7974380, 0x0000022aa7976a90, 0x0000022aa7975af0, 0x0000022aa7974b50,
+0x0000022aa7973bb0, 0x0000022aa797a140, 0x0000022aa7978200, 0x0000022aa797a910,
+0x0000022aa7b089a0, 0x0000022aa7b05ac0, 0x0000022aa7b09940, 0x0000022aa7b07230,
+0x0000022aa7b06a60, 0x0000022aa7b0a8e0, 0x0000022aa7b0b0b0, 0x0000022aa7b07a00,
+0x0000022aa7b0c050, 0x0000022aa7b0cff0, 0x0000022aa7322000
+}
+
+"main" #3 [23188] prio=5 os_prio=0 cpu=78.12ms elapsed=1.52s allocated=2053K defined_classes=128 tid=0x0000022a852fd490 nid=23188 waiting on condition  [0x0000004c22cff000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407b10> (a com.robbanhoglund.threaddump.ThreadScenarioRunner)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@25.0.3/LockSupport.java:271)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.main(ThreadScenarioRunner.java:78)
+
+   Locked ownable synchronizers:
+	- None
+
+"Reference Handler" #14 [3336] daemon prio=10 os_prio=2 cpu=0.00ms elapsed=1.51s allocated=64B defined_classes=0 tid=0x0000022aa6bb0a30 nid=3336 waiting on condition  [0x0000004c234ff000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.ref.Reference.waitForReferencePendingList(java.base@25.0.3/Native Method)
+	at java.lang.ref.Reference.processPendingReferences(java.base@25.0.3/Reference.java:246)
+	at java.lang.ref.Reference$ReferenceHandler.run(java.base@25.0.3/Reference.java:208)
+
+   Locked ownable synchronizers:
+	- None
+
+"Finalizer" #15 [8384] daemon prio=8 os_prio=1 cpu=0.00ms elapsed=1.51s allocated=0B defined_classes=0 tid=0x0000022aa6bb1490 nid=8384 in Object.wait()  [0x0000004c235ff000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@25.0.3/Native Method)
+	- waiting on <0x0000000709405148> (a java.lang.ref.ReferenceQueue$Lock)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:389)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:351)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@25.0.3/ReferenceQueue.java:137)
+	at java.lang.ref.ReferenceQueue.remove(java.base@25.0.3/ReferenceQueue.java:215)
+	- locked <0x0000000709405148> (a java.lang.ref.ReferenceQueue$Lock)
+	at java.lang.ref.Finalizer$FinalizerThread.run(java.base@25.0.3/Finalizer.java:165)
+
+   Locked ownable synchronizers:
+	- None
+
+"Signal Dispatcher" #16 [27572] daemon prio=9 os_prio=2 cpu=0.00ms elapsed=1.51s allocated=0B defined_classes=0 tid=0x0000022aa6bb6460 nid=27572 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Attach Listener" #17 [22332] daemon prio=5 os_prio=2 cpu=0.00ms elapsed=1.51s allocated=128B defined_classes=0 tid=0x0000022aa6bb8890 nid=22332 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Service Thread" #18 [8764] daemon prio=9 os_prio=0 cpu=0.00ms elapsed=1.51s allocated=0B defined_classes=0 tid=0x0000022aa6bb9fc0 nid=8764 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Monitor Deflation Thread" #19 [2828] daemon prio=9 os_prio=0 cpu=0.00ms elapsed=1.51s allocated=0B defined_classes=0 tid=0x0000022aa6bbbad0 nid=2828 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"C2 CompilerThread0" #20 [26328] daemon prio=9 os_prio=2 cpu=0.00ms elapsed=1.51s allocated=0B defined_classes=0 tid=0x0000022aa6bc8100 nid=26328 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"C1 CompilerThread0" #23 [23388] daemon prio=9 os_prio=2 cpu=31.25ms elapsed=1.51s allocated=120B defined_classes=0 tid=0x0000022aa6bcea60 nid=23388 waiting on condition  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+   No compile task
+
+   Locked ownable synchronizers:
+	- None
+
+"Notification Thread" #24 [21388] daemon prio=9 os_prio=0 cpu=0.00ms elapsed=1.50s allocated=0B defined_classes=0 tid=0x0000022aa72e5e60 nid=21388 runnable  [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+   Locked ownable synchronizers:
+	- None
+
+"Common-Cleaner" #25 [32944] daemon prio=8 os_prio=1 cpu=0.00ms elapsed=1.50s allocated=0B defined_classes=0 tid=0x0000022aa72e7c10 nid=32944 in Object.wait()  [0x0000004c23dff000]
+   java.lang.Thread.State: TIMED_WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@25.0.3/Native Method)
+	- waiting on <0x000000070940a218> (a java.lang.ref.ReferenceQueue$Lock)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:389)
+	at java.lang.ref.ReferenceQueue.remove0(java.base@25.0.3/ReferenceQueue.java:123)
+	at java.lang.ref.ReferenceQueue.remove(java.base@25.0.3/ReferenceQueue.java:201)
+	- locked <0x000000070940a218> (a java.lang.ref.ReferenceQueue$Lock)
+	at jdk.internal.ref.CleanerImpl.run(java.base@25.0.3/CleanerImpl.java:146)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+	at jdk.internal.misc.InnocuousThread.run(java.base@25.0.3/InnocuousThread.java:148)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-deadlock-2-1" #26 [17648] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.49s allocated=1640B defined_classes=4 tid=0x0000022aa730b6a0 nid=17648 waiting for monitor entry  [0x0000004c23eff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094079a8> (a java.lang.Object)
+	- locked <0x00000007094079b8> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-deadlock-2-2" #27 [28856] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.49s allocated=80B defined_classes=0 tid=0x0000022aa730be60 nid=28856 waiting for monitor entry  [0x0000004c23fff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094079b8> (a java.lang.Object)
+	- locked <0x00000007094079a8> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-deadlock-3-1" #28 [25752] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.49s allocated=64B defined_classes=0 tid=0x0000022aa730ce40 nid=25752 waiting for monitor entry  [0x0000004c240fe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094000e0> (a java.lang.Object)
+	- locked <0x00000007094000f0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-deadlock-3-2" #29 [20568] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.49s allocated=32B defined_classes=0 tid=0x0000022aa730dd20 nid=20568 waiting for monitor entry  [0x0000004c241ff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094051e8> (a java.lang.Object)
+	- locked <0x00000007094000e0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-deadlock-3-3" #30 [30272] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.49s allocated=16B defined_classes=0 tid=0x0000022aa730e4e0 nid=30272 waiting for monitor entry  [0x0000004c242ff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094000f0> (a java.lang.Object)
+	- locked <0x00000007094051e8> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-lock-holder" #31 [7620] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.49s allocated=592B defined_classes=2 tid=0x0000022aa7313d70 nid=7620 waiting on condition  [0x0000004c243ff000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@25.0.3/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@25.0.3/Thread.java:509)
+	at java.lang.Thread.sleep(java.base@25.0.3/Thread.java:540)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.sleepQuietly(ThreadScenarioRunner.java:713)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLockHolderManyWaiters$0(ThreadScenarioRunner.java:471)
+	- locked <0x00000007094001f0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040cf8.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-lock-waiter-1" #32 [10112] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa73293e0 nid=10112 waiting for monitor entry  [0x0000004c244ff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLockHolderManyWaiters$1(ThreadScenarioRunner.java:480)
+	- waiting to lock <0x00000007094001f0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043000.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-lock-waiter-2" #33 [24292] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa7329ba0 nid=24292 waiting for monitor entry  [0x0000004c245fe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLockHolderManyWaiters$1(ThreadScenarioRunner.java:480)
+	- waiting to lock <0x00000007094001f0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043000.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-lock-waiter-3" #34 [3340] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa6bc5830 nid=3340 waiting for monitor entry  [0x0000004c246ff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLockHolderManyWaiters$1(ThreadScenarioRunner.java:480)
+	- waiting to lock <0x00000007094001f0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043000.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-synchronizer-holder" #35 [30020] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=200B defined_classes=0 tid=0x0000022aa7359eb0 nid=30020 waiting on condition  [0x0000004c247ff000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407b10> (a com.robbanhoglund.threaddump.ThreadScenarioRunner)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@25.0.3/LockSupport.java:271)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startSynchronizerContention$0(ThreadScenarioRunner.java:495)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043230.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- <0x0000000709407c58> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+
+"scenario-synchronizer-waiter-1" #36 [3916] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=64B defined_classes=0 tid=0x0000022aa7356800 nid=3916 waiting on condition  [0x0000004c248fe000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407c58> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@25.0.3/LockSupport.java:223)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@25.0.3/AbstractQueuedSynchronizer.java:790)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@25.0.3/AbstractQueuedSynchronizer.java:1030)
+	at java.util.concurrent.locks.ReentrantLock$Sync.lock(java.base@25.0.3/ReentrantLock.java:154)
+	at java.util.concurrent.locks.ReentrantLock.lock(java.base@25.0.3/ReentrantLock.java:323)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startSynchronizerContention$1(ThreadScenarioRunner.java:504)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043460.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-synchronizer-waiter-2" #37 [27596] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=32B defined_classes=0 tid=0x0000022aa7356fd0 nid=27596 waiting on condition  [0x0000004c249ff000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407c58> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@25.0.3/LockSupport.java:223)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@25.0.3/AbstractQueuedSynchronizer.java:790)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@25.0.3/AbstractQueuedSynchronizer.java:1030)
+	at java.util.concurrent.locks.ReentrantLock$Sync.lock(java.base@25.0.3/ReentrantLock.java:154)
+	at java.util.concurrent.locks.ReentrantLock.lock(java.base@25.0.3/ReentrantLock.java:323)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startSynchronizerContention$1(ThreadScenarioRunner.java:504)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043460.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-synchronizer-waiter-3" #38 [28912] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=32B defined_classes=0 tid=0x0000022aa735ae50 nid=28912 waiting on condition  [0x0000004c24aff000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407c58> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	at java.util.concurrent.locks.LockSupport.park(java.base@25.0.3/LockSupport.java:223)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@25.0.3/AbstractQueuedSynchronizer.java:790)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(java.base@25.0.3/AbstractQueuedSynchronizer.java:1030)
+	at java.util.concurrent.locks.ReentrantLock$Sync.lock(java.base@25.0.3/ReentrantLock.java:154)
+	at java.util.concurrent.locks.ReentrantLock.lock(java.base@25.0.3/ReentrantLock.java:323)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startSynchronizerContention$1(ThreadScenarioRunner.java:504)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043460.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-livelock-2-agent-1" #39 [18112] daemon prio=5 os_prio=0 cpu=1421.88ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa735b620 nid=18112 runnable  [0x0000004c24bfe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLivelock$0(ThreadScenarioRunner.java:532)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043c00.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-livelock-2-agent-2" #40 [11300] daemon prio=5 os_prio=0 cpu=1421.88ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa735bdf0 nid=11300 runnable  [0x0000004c24cfe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLivelock$0(ThreadScenarioRunner.java:532)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043c00.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-livelock-3-agent-1" #41 [33300] daemon prio=5 os_prio=0 cpu=1484.38ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa735c5c0 nid=33300 runnable  [0x0000004c24dfe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLivelock$0(ThreadScenarioRunner.java:532)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043c00.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-livelock-3-agent-2" #42 [26856] daemon prio=5 os_prio=0 cpu=1421.88ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa735d560 nid=26856 runnable  [0x0000004c24efe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLivelock$0(ThreadScenarioRunner.java:532)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043c00.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-livelock-3-agent-3" #43 [16260] daemon prio=5 os_prio=0 cpu=1421.88ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa7635780 nid=16260 runnable  [0x0000004c24ffe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startLivelock$0(ThreadScenarioRunner.java:532)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030043c00.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-waiting-1" #44 [16388] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa7638660 nid=16388 in Object.wait()  [0x0000004c250ff000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@25.0.3/Native Method)
+	- waiting on <0x0000000709407d38> (a java.lang.Object)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:389)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:351)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.waitQuietly(ThreadScenarioRunner.java:702)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startWaiting$0(ThreadScenarioRunner.java:544)
+	- locked <0x0000000709407d38> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046000.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-waiting-2" #45 [18280] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa7635f50 nid=18280 in Object.wait()  [0x0000004c251fe000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@25.0.3/Native Method)
+	- waiting on <0x0000000709407d38> (a java.lang.Object)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:389)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:351)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.waitQuietly(ThreadScenarioRunner.java:702)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startWaiting$0(ThreadScenarioRunner.java:544)
+	- locked <0x0000000709407d38> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046000.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-waiting-3" #46 [2332] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa7636ef0 nid=2332 in Object.wait()  [0x0000004c252ff000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait0(java.base@25.0.3/Native Method)
+	- waiting on <0x0000000709407d38> (a java.lang.Object)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:389)
+	at java.lang.Object.wait(java.base@25.0.3/Object.java:351)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.waitQuietly(ThreadScenarioRunner.java:702)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startWaiting$0(ThreadScenarioRunner.java:544)
+	- locked <0x0000000709407d38> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046000.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-parked-1" #47 [6376] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa763bd10 nid=6376 waiting on condition  [0x0000004c253fe000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407b10> (a com.robbanhoglund.threaddump.ThreadScenarioRunner)
+	at java.util.concurrent.locks.LockSupport.park(java.base@25.0.3/LockSupport.java:223)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startParked$0(ThreadScenarioRunner.java:556)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046230.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-parked-2" #48 [32916] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa763a5a0 nid=32916 waiting on condition  [0x0000004c254ff000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407b10> (a com.robbanhoglund.threaddump.ThreadScenarioRunner)
+	at java.util.concurrent.locks.LockSupport.park(java.base@25.0.3/LockSupport.java:223)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startParked$0(ThreadScenarioRunner.java:556)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046230.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-parked-3" #49 [8772] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=0B defined_classes=0 tid=0x0000022aa7638e30 nid=8772 waiting on condition  [0x0000004c255ff000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407b10> (a com.robbanhoglund.threaddump.ThreadScenarioRunner)
+	at java.util.concurrent.locks.LockSupport.park(java.base@25.0.3/LockSupport.java:223)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startParked$0(ThreadScenarioRunner.java:556)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046230.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-sleeping-1" #50 [28496] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=40B defined_classes=0 tid=0x0000022aa763b540 nid=28496 waiting on condition  [0x0000004c256ff000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@25.0.3/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@25.0.3/Thread.java:509)
+	at java.lang.Thread.sleep(java.base@25.0.3/Thread.java:540)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startSleeping$0(ThreadScenarioRunner.java:571)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046460.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-sleeping-2" #51 [37784] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=40B defined_classes=0 tid=0x0000022aa7974380 nid=37784 waiting on condition  [0x0000004c257fe000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@25.0.3/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@25.0.3/Thread.java:509)
+	at java.lang.Thread.sleep(java.base@25.0.3/Thread.java:540)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startSleeping$0(ThreadScenarioRunner.java:571)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046460.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-sleeping-3" #52 [16572] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=40B defined_classes=0 tid=0x0000022aa7976a90 nid=16572 waiting on condition  [0x0000004c258fe000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@25.0.3/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@25.0.3/Thread.java:509)
+	at java.lang.Thread.sleep(java.base@25.0.3/Thread.java:540)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startSleeping$0(ThreadScenarioRunner.java:571)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046460.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-cpu-hot-1" #53 [37104] daemon prio=5 os_prio=0 cpu=1375.00ms elapsed=1.48s allocated=1448B defined_classes=0 tid=0x0000022aa7975af0 nid=37104 runnable  [0x0000004c259fe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startCpuHot$0(ThreadScenarioRunner.java:589)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046690.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-cpu-hot-2" #54 [17060] daemon prio=5 os_prio=0 cpu=1375.00ms elapsed=1.48s allocated=48B defined_classes=0 tid=0x0000022aa7974b50 nid=17060 runnable  [0x0000004c25afe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startCpuHot$0(ThreadScenarioRunner.java:589)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046690.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-cpu-hot-3" #55 [30596] daemon prio=5 os_prio=0 cpu=1437.50ms elapsed=1.48s allocated=2792B defined_classes=0 tid=0x0000022aa7973bb0 nid=30596 runnable  [0x0000004c25bfe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startCpuHot$0(ThreadScenarioRunner.java:589)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046690.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-allocation-churn-1" #56 [23528] daemon prio=5 os_prio=0 cpu=31.25ms elapsed=1.48s allocated=61008K defined_classes=0 tid=0x0000022aa797a140 nid=23528 runnable  [0x0000004c25cff000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x0000000709407b10> (a com.robbanhoglund.threaddump.ThreadScenarioRunner)
+	at java.util.concurrent.locks.LockSupport.parkNanos(java.base@25.0.3/LockSupport.java:271)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startAllocationChurn$0(ThreadScenarioRunner.java:607)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x00000000300468c0.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-allocation-retained-growth" #57 [5708] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.48s allocated=15360K defined_classes=0 tid=0x0000022aa7978200 nid=5708 waiting on condition  [0x0000004c25dff000]
+   java.lang.Thread.State: TIMED_WAITING (sleeping)
+	at java.lang.Thread.sleepNanos0(java.base@25.0.3/Native Method)
+	at java.lang.Thread.sleepNanos(java.base@25.0.3/Thread.java:509)
+	at java.lang.Thread.sleep(java.base@25.0.3/Thread.java:540)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.sleepQuietly(ThreadScenarioRunner.java:713)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startRetainedAllocationGrowth$0(ThreadScenarioRunner.java:621)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046af0.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-cpu-and-allocation-hot" #58 [34488] daemon prio=5 os_prio=0 cpu=1343.75ms elapsed=1.48s allocated=429M defined_classes=0 tid=0x0000022aa797a910 nid=34488 runnable  [0x0000004c25efe000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startCpuAndAllocationHot$0(ThreadScenarioRunner.java:634)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030046d20.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-initializer" #59 [35956] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=3888B defined_classes=1 tid=0x0000022aa7b089a0 nid=35956 waiting on condition  [0x0000004c260fe000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.3/Native Method)
+	- parking to wait for  <0x00000007094056d0> (a java.util.concurrent.CompletableFuture$Signaller)
+	at java.util.concurrent.locks.LockSupport.park(java.base@25.0.3/LockSupport.java:223)
+	at java.util.concurrent.CompletableFuture$Signaller.block(java.base@25.0.3/CompletableFuture.java:1885)
+	at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@25.0.3/ForkJoinPool.java:4364)
+	at java.util.concurrent.ForkJoinPool.managedBlock(java.base@25.0.3/ForkJoinPool.java:4310)
+	at java.util.concurrent.CompletableFuture.waitingGet(java.base@25.0.3/CompletableFuture.java:1919)
+	at java.util.concurrent.CompletableFuture.join(java.base@25.0.3/CompletableFuture.java:2138)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget.initialize(ThreadScenarioRunner.java:878)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget.<clinit>(ThreadScenarioRunner.java:874)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047370.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-1" #60 [37300] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b05ac0 nid=37300 in Object.wait()  [0x0000004c261ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-2" #61 [32512] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b09940 nid=32512 in Object.wait()  [0x0000004c262ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-3" #62 [36508] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b07230 nid=36508 in Object.wait()  [0x0000004c263ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-4" #63 [15088] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b06a60 nid=15088 in Object.wait()  [0x0000004c264ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-5" #64 [33724] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b0a8e0 nid=33724 in Object.wait()  [0x0000004c265ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-6" #65 [21488] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b0b0b0 nid=21488 in Object.wait()  [0x0000004c266ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-7" #66 [16908] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b07a00 nid=16908 in Object.wait()  [0x0000004c267ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-8" #67 [5556] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b0c050 nid=5556 in Object.wait()  [0x0000004c268ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-9" #68 [32980] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7b0cff0 nid=32980 in Object.wait()  [0x0000004c269ff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"scenario-class-init-waiter-10" #69 [37344] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=1.47s allocated=0B defined_classes=0 tid=0x0000022aa7322000 nid=37344 in Object.wait()  [0x0000004c26aff000]
+   java.lang.Thread.State: RUNNABLE
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030047598.run(Unknown Source)
+	- waiting on the Class initialization monitor for com.robbanhoglund.threaddump.ThreadScenarioRunner$ClassInitializationTarget
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+   Locked ownable synchronizers:
+	- None
+
+"GC Thread#5" os_prio=2 cpu=0.00ms elapsed=1.37s tid=0x0000022aa6a5b860 nid=30092 runnable
+
+"GC Thread#3" os_prio=2 cpu=0.00ms elapsed=1.37s tid=0x0000022aa6a5c100 nid=33084 runnable
+
+"GC Thread#4" os_prio=2 cpu=0.00ms elapsed=1.37s tid=0x0000022aa6a5dae0 nid=34708 runnable
+
+"GC Thread#2" os_prio=2 cpu=0.00ms elapsed=1.37s tid=0x0000022aa6a5e7d0 nid=26920 runnable
+
+"GC Thread#1" os_prio=2 cpu=0.00ms elapsed=1.37s tid=0x0000022aa6a5df30 nid=10128 runnable
+
+"VM Thread" os_prio=2 cpu=15.62ms elapsed=1.52s tid=0x0000022aa6a5bcb0 nid=33840 runnable
+
+"VM Periodic Task Thread" os_prio=2 cpu=0.00ms elapsed=1.52s tid=0x0000022aa6b89c70 nid=27116 waiting on condition
+
+"G1 Service" os_prio=2 cpu=0.00ms elapsed=1.53s tid=0x0000022aa6a51950 nid=24472 runnable
+
+"G1 Refine#0" os_prio=2 cpu=0.00ms elapsed=1.53s tid=0x0000022a876ce740 nid=12176 runnable
+
+"G1 Conc#0" os_prio=2 cpu=0.00ms elapsed=1.53s tid=0x0000022a876ad980 nid=16684 runnable
+
+"G1 Main Marker" os_prio=2 cpu=0.00ms elapsed=1.53s tid=0x0000022a876abef0 nid=7388 runnable
+
+"GC Thread#0" os_prio=2 cpu=0.00ms elapsed=1.53s tid=0x0000022a87693280 nid=37640 runnable
+
+JNI global refs: 14, weak refs: 0
+
+
+Found one Java-level deadlock:
+=============================
+"scenario-deadlock-2-1":
+  waiting to lock monitor 0x0000022aa7311250 (object 0x00000007094079a8, a java.lang.Object),
+  which is held by "scenario-deadlock-2-2"
+
+"scenario-deadlock-2-2":
+  waiting to lock monitor 0x0000022aa7311180 (object 0x00000007094079b8, a java.lang.Object),
+  which is held by "scenario-deadlock-2-1"
+
+Java stack information for the threads listed above:
+===================================================
+"scenario-deadlock-2-1":
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094079a8> (a java.lang.Object)
+	- locked <0x00000007094079b8> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+"scenario-deadlock-2-2":
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094079b8> (a java.lang.Object)
+	- locked <0x00000007094079a8> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+Found one Java-level deadlock:
+=============================
+"scenario-deadlock-3-1":
+  waiting to lock monitor 0x0000022aa73113f0 (object 0x00000007094000e0, a java.lang.Object),
+  which is held by "scenario-deadlock-3-2"
+
+"scenario-deadlock-3-2":
+  waiting to lock monitor 0x0000022aa73114c0 (object 0x00000007094051e8, a java.lang.Object),
+  which is held by "scenario-deadlock-3-3"
+
+"scenario-deadlock-3-3":
+  waiting to lock monitor 0x0000022aa7311320 (object 0x00000007094000f0, a java.lang.Object),
+  which is held by "scenario-deadlock-3-1"
+
+Java stack information for the threads listed above:
+===================================================
+"scenario-deadlock-3-1":
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094000e0> (a java.lang.Object)
+	- locked <0x00000007094000f0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+"scenario-deadlock-3-2":
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094051e8> (a java.lang.Object)
+	- locked <0x00000007094000e0> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+"scenario-deadlock-3-3":
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0(ThreadScenarioRunner.java:458)
+	- waiting to lock <0x00000007094000f0> (a java.lang.Object)
+	- locked <0x00000007094051e8> (a java.lang.Object)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040898.run(Unknown Source)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$daemon$0(ThreadScenarioRunner.java:656)
+	at com.robbanhoglund.threaddump.ThreadScenarioRunner$$Lambda/0x0000000030040ac8.run(Unknown Source)
+	at java.lang.Thread.runWith(java.base@25.0.3/Thread.java:1487)
+	at java.lang.Thread.run(java.base@25.0.3/Thread.java:1474)
+
+Found 2 deadlocks.
