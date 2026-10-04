@@ -21,6 +21,18 @@ test('opens the linked investigation workspace by default with usable desktop pa
     await page.getByRole('button', { name: /Full sample/ }).click();
     await expect(inspector(page)).toHaveAttribute('data-selected-id', '35');
     await expect(page.locator('#tlsTable th:visible')).toHaveCount(5);
+    // Match the larger badge text seen with a browser minimum font size.
+    await page.addStyleTag({ content: '#tlsTable .status-badge { font-size: 14px; }' });
+    for (const mode of ['tlsInvestigateColumns', 'tlsOverviewColumns', 'tlsAllColumns', 'tlsInvestigateColumns']) {
+        await page.locator(`#${mode}`).click();
+        const badges = await page.locator('#tlsTableBody .status-badge').evaluateAll(elements => elements.map(badge => {
+            const cell = badge.closest('td');
+            return { outcome: badge.textContent, right: badge.getBoundingClientRect().right,
+                availableRight: cell.getBoundingClientRect().right - parseFloat(getComputedStyle(cell).paddingRight) };
+        }));
+        expect(new Set(badges.map(badge => badge.outcome))).toEqual(new Set(['success', 'failure', 'unknown']));
+        for (const badge of badges) expect(badge.right, `${mode}: ${badge.outcome} fits with cell padding`).toBeLessThanOrEqual(badge.availableRight);
+    }
     await select(page, 7);
     await expect(page.locator('tr[data-id="7"]')).toHaveClass(/tls-selected-row/);
     await expect(page.getByRole('button', { name: 'Select interaction 7', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -36,6 +48,8 @@ test('opens the linked investigation workspace by default with usable desktop pa
     expect(geometry.inspector.x).toBeGreaterThan(geometry.table.x + geometry.table.width);
     expect(geometry.inspector.height).toBeGreaterThanOrEqual(340);
     expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewport);
+    await select(page, 29);
+    await expect(inspector(page)).toHaveAttribute('data-selected-id', '29');
     await page.screenshot({ path: `../.run/tls-investigation/default-${test.info().project.name}.png`, fullPage: true });
 });
 
