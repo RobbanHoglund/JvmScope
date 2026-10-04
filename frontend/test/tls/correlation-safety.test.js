@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import { analyzeTlsLog } from '../../assets/javautils/tls-parser.js';
 import { tlsObservedSequence, tlsDiagnosis, tlsCaptureCoverage } from '../../assets/javautils/tls-sequence-model.js';
 import { createTlsFilters, prepareTlsAnalysis, selectTlsEntries } from '../../assets/javautils/tls-analysis-model.js';
@@ -106,4 +107,55 @@ test('post-completion reset stays transport evidence, and explicit fatal client-
     const full = messages.map(m => line(m));
     assert.equal(parse([...full,line('java.net.SocketException: Connection reset')]).interactions[0].outcome,'success');
     assert.equal(parse([...full,line('Received fatal alert: certificate_required')]).interactions[0].outcome,'failure');
+});
+
+const legacyHello = ['*** ClientHello, TLSv1.2', 'worker, WRITE: TLSv1.2 Handshake, length = 123'];
+const legacyEnd = ['worker, READ: TLSv1.2 Handshake, length = 456', '*** ServerHello, TLSv1.2',
+    'worker, WRITE: TLSv1.2 Change Cipher Spec, length = 1', '*** Finished',
+    'worker, READ: TLSv1.2 Handshake, length = 42', '*** Finished'];
+
+test('legacy unfinished boundaries stay unknown with one thread name or missing record markers', () => {
+    for (const tail of [legacyEnd, legacyEnd.filter(m => !m.includes('ServerHello')), legacyEnd.slice(0, -1)]) {
+        for (const markers of ['all', 'none', 'no-write', 'no-read']) {
+            const lines = [...legacyHello, ...legacyHello, ...tail, ...legacyHello, ...legacyEnd]
+                .filter(m => markers === 'all' || (markers === 'none' ? !m.includes('worker,')
+                    : !m.includes(markers === 'no-write' ? 'WRITE:' : 'READ:')));
+            const result = parse(lines);
+            assert.equal(result.status, 'partial');
+            assert.deepEqual(result.interactions.map(it => it.outcome), ['unknown', 'unknown', 'unknown']);
+            assert.match(result.warnings.join(' '), /legacy.*cannot be assigned reliably/);
+            const source = lines.join('\n');
+            for (const it of result.interactions) {
+                assert.equal(it.correlationQuality, 'ambiguous-legacy');
+                assert.equal(it.sawHandshakeFinished, false);
+                assert.equal(it.direction, 'unknown');
+                assert.equal(it.tlsVersion, null);
+                assert.equal(tlsDiagnosis(it), 'Grouping uncertain');
+                assert.deepEqual(tlsObservedSequence(it), []);
+                assert.ok(source.includes(it.rawLines.join('\n')));
+                for (const record of it.observedRecords) {
+                    assert.deepEqual(it.rawLines.slice(record.rawStart, record.rawEnd), lines.slice(record.sourceStart - 1, record.sourceStart - 1 + record.rawEnd - record.rawStart));
+                }
+            }
+            assert.equal(selectTlsEntries(prepareTlsAnalysis(result.interactions), { ...createTlsFilters(), outcome: 'success' }).length, 0);
+        }
+    }
+});
+
+test('legacy complete and fatally ended handshakes permit a new attributable handshake', () => {
+    const full = [...legacyHello, ...legacyEnd];
+    assert.deepEqual(parse(full).interactions.map(it => it.outcome), ['success']);
+    assert.deepEqual(parse([...full, ...full]).interactions.map(it => it.outcome), ['success', 'success']);
+    assert.deepEqual(parse([...legacyHello, 'worker, RECV TLSv1.2 ALERT: fatal, description = certificate_unknown', ...full]).interactions.map(it => it.outcome), ['failure', 'success']);
+    assert.deepEqual(parse([...legacyHello, ...legacyHello, 'worker, RECV TLSv1.2 ALERT: fatal, description = certificate_unknown', ...full]).interactions.map(it => it.outcome), ['unknown', 'unknown', 'unknown']);
+});
+
+test('a duplicated ClientHello block in a real Java 7 capture cannot borrow completion', () => {
+    const lines = readFileSync(new URL('../../../testdata/jvm-samples/gh-37178210582-1-zulu-7-all/tlsv1.2-success-client.txt', import.meta.url), 'utf8').replaceAll('\r\n', '\n').split('\n');
+    assert.equal(parse(lines).interactions[0].outcome, 'success');
+    const start = lines.findIndex(line => line.startsWith('*** ClientHello,'));
+    const end = lines.findIndex((line, index) => index > start && line.includes('WRITE: TLSv1.2 Handshake')) + 1;
+    const result = parse([...lines.slice(0, end), ...lines.slice(start, end), ...lines.slice(end)]);
+    assert.deepEqual(result.interactions.map(it => it.outcome), ['unknown', 'unknown']);
+    assert.ok(result.interactions[1].rawLines.some(line => line === '*** Finished'));
 });

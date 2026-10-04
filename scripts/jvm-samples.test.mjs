@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
-import { ROOT, sha256, saveJson, safeFile, selection, validateCase, checkReport, importBundle, render, renderMatrix, renderResults } from './jvm-samples/model.mjs';
+import { ROOT, sha256, saveJson, safeFile, selection, validateCase, checkReport, importBundle, render, renderMatrix, renderResults, readLedger } from './jvm-samples/model.mjs';
 import { choosePackage, boundMatrix, discover, aggregate, download } from './jvm-samples/discovery.mjs';
 import { analyzeThreadDump } from '../frontend/assets/javautils/tda/parser.js';
 import { readReadyPort } from './jvm-samples/port-file.mjs';
@@ -99,7 +99,7 @@ test('valid hashes cannot turn protocol errors or generic alerts into trust-vali
     ] };
     const record = m => `javax.net.ssl|DEBUG|A|worker|2026-10-04 12:00:00.000 UTC|Test.java:1|${m}`;
     const validate = (reason, side = 'client') => {
-        const raw = Buffer.from([record('Produced ClientHello handshake message'), record(reason)].join('\n'));
+        const raw = Buffer.from([record(`${side === 'client' ? 'Produced' : 'Consuming'} ClientHello handshake message`), record(reason)].join('\n'));
         writeFileSync(join(directory, 'test.log'), raw);
         return validateCase({ analyzer: 'tls', file: 'test.log', bytes: raw.length, sha256: sha256(raw), expected: { ...expected, side } }, directory);
     };
@@ -129,6 +129,97 @@ test('client authentication scenarios require captured requests and the expected
     const altered = temporary(t);
     writeFileSync(join(altered, 'missing-body.log'), raw);
     assert.throws(() => validateCase({ ...empty, file: 'missing-body.log', sha256: sha256(raw), bytes: raw.length }, altered), /explicit empty client certificate list/);
+});
+
+test('TLS failure evidence must agree with endpoint direction, origin and certificate role', t => {
+    const directory = temporary(t);
+    const record = message => `javax.net.ssl|DEBUG|A|worker|2026-10-04 12:00:00.000 UTC|Test.java:1|${message}`;
+    const validate = (scenario, side, reasons, observedSide = side) => {
+        const raw = Buffer.from([record(`${observedSide === 'client' ? 'Produced' : 'Consuming'} ClientHello handshake message`),
+            ...(scenario === 'required-client-auth' ? [record(`${observedSide === 'client' ? 'Consuming' : 'Produced'} CertificateRequest handshake message`),
+                record(`${observedSide === 'client' ? 'Produced' : 'Consuming'} client Certificate handshake message (`), '"certificate_list": []', ')'] : []),
+            ...reasons.map(record)].join('\n'));
+        writeFileSync(join(directory, 'test.log'), raw);
+        const item = { analyzer: 'tls', file: 'test.log', bytes: raw.length, sha256: sha256(raw), expected: {
+            protocol: 'TLSv1.3', scenario, side, results: [{ outcome: 'failure', exception: 'javax.net.ssl.SSLHandshakeException',
+                message: scenario === 'untrusted' ? 'PKIX path building failed' : 'Empty client certificate chain' }],
+        } };
+        return validateCase(item, directory);
+    };
+    const localTrust = 'Fatal (CERTIFICATE_UNKNOWN): PKIX path building failed';
+    const localClientAuth = 'Fatal (CERTIFICATE_REQUIRED): Empty client certificate chain';
+    const remoteTrust = 'Received fatal alert: certificate_unknown';
+    const remoteClientAuth = 'Received fatal alert: certificate_required';
+    assert.equal(validate('untrusted', 'client', [localTrust]).outcome, 'failure');
+    assert.equal(validate('untrusted', 'server', [remoteTrust]).outcome, 'failure');
+    assert.equal(validate('required-client-auth', 'server', [localClientAuth]).outcome, 'failure');
+    assert.equal(validate('required-client-auth', 'client', [remoteClientAuth]).outcome, 'failure');
+    for (const [scenario, side, reason] of [['untrusted', 'client', remoteTrust], ['untrusted', 'server', localTrust],
+        ['required-client-auth', 'server', remoteClientAuth], ['required-client-auth', 'server', 'Received fatal alert: bad_certificate'],
+        ['required-client-auth', 'client', localClientAuth], ['required-client-auth', 'client', 'Sent fatal alert: certificate_required']]) {
+        assert.throws(() => validate(scenario, side, [reason]), /failure origin/);
+    }
+    assert.throws(() => validate('required-client-auth', 'server', ['Fatal (BAD_CERTIFICATE): Empty server certificate chain']), /certificate role/);
+    for (const [scenario, side, reason] of [['untrusted', 'client', localTrust], ['untrusted', 'server', remoteTrust],
+        ['required-client-auth', 'server', localClientAuth], ['required-client-auth', 'client', remoteClientAuth]]) {
+        assert.throws(() => validate(scenario, side, [reason], side === 'client' ? 'server' : 'client'), /endpoint side/);
+    }
+    // The strongest reason must not conceal incompatible lower-priority evidence.
+    assert.throws(() => validate('untrusted', 'server', [remoteTrust, 'PKIX path building failed']), /failure origin/);
+    assert.throws(() => validate('required-client-auth', 'client', [remoteClientAuth, 'Sent fatal alert: bad_certificate']), /failure origin/);
+    assert.throws(() => validate('untrusted', 'client', [localTrust, 'Sent fatal alert: protocol_version']), /Contradictory TLS failure alert/);
+});
+
+test('older SunJSSE TLS 1.2 client-chain wording requires matching runtime and independent oracle', t => {
+    const directory = join(ROOT, 'testdata/jvm-samples');
+    for (const major of [8, 18, 22]) {
+        const { report } = readLedger().find(({ report }) => report.major === major && report.cases.some(c =>
+            c.status === 'verified' && c.expected?.scenario === 'required-client-auth' && c.expected.side === 'server'
+            && c.expected.protocol === 'TLSv1.2' && c.expected.results[0].message === 'Empty server certificate chain'));
+        const item = report.cases.find(c => c.status === 'verified' && c.expected?.scenario === 'required-client-auth'
+            && c.expected.side === 'server' && c.expected.protocol === 'TLSv1.2');
+        assert.equal(validateCase(item, directory, report.runtime).outcome, 'failure');
+        assert.throws(() => validateCase(item, directory), /certificate role/);
+        assert.throws(() => validateCase(item, directory, { ...report.runtime, provider: 'OtherJSSE' }), /certificate role/);
+        assert.throws(() => validateCase(item, directory, { ...report.runtime, 'java.runtime.version': '23+37' }), /certificate role/);
+        const wrongOracle = structuredClone(item);
+        wrongOracle.expected.results[0].message = 'Empty client certificate chain';
+        assert.throws(() => validateCase(wrongOracle, directory, report.runtime), /certificate role/);
+        const wrongProtocol = structuredClone(item);
+        wrongProtocol.expected.protocol = 'TLSv1.3';
+        assert.throws(() => validateCase(wrongProtocol, directory, report.runtime), /certificate role/);
+        const mutated = temporary(t);
+        const source = readFileSync(safeFile(directory, item.file), 'utf8');
+        for (const text of [source.replaceAll('"Certificates": <empty list>', '"Certificates": [ ]'),
+            source.replaceAll('Produced CertificateRequest', 'Consuming CertificateRequest'),
+            source.replaceAll('Consuming client Certificate', 'Produced client Certificate'),
+            source.replaceAll('TLSv1.2', 'TLSv1.3')]) {
+            const raw = Buffer.from(text);
+            writeFileSync(join(mutated, 'altered.log'), raw);
+            assert.throws(() => validateCase({ ...item, file: 'altered.log', bytes: raw.length, sha256: sha256(raw) }, mutated, report.runtime), /certificate role/);
+        }
+    }
+});
+
+test('a valid-hash wrong-origin capture aborts bundle import before evidence and matrix writes', t => {
+    const root = scaffold(t), before = readFileSync(join(root, 'README.md'), 'utf8');
+    const record = message => `javax.net.ssl|DEBUG|A|worker|2026-10-04 12:00:00.000 UTC|Test.java:1|${message}`;
+    const raw = Buffer.from([record('Consuming ClientHello handshake message'), record('Received fatal alert: certificate_unknown')].join('\n'));
+    const item = { analyzer: 'tls', id: 'wrong-origin', file: 'wrong.log', status: 'verified', bytes: raw.length, sha256: sha256(raw),
+        expected: { protocol: 'TLSv1.3', scenario: 'untrusted', side: 'server', results: [
+            { outcome: 'failure', exception: 'javax.net.ssl.SSLHandshakeException', message: 'Received fatal alert: certificate_unknown' },
+        ] } };
+    const b = bundle(t, [item]);
+    b.report.runtime = { 'java.runtime.version': '25+36', 'java.vm.name': 'OpenJDK 64-Bit Server VM', provider: 'SunJSSE 25.0' };
+    writeFileSync(join(b.path, 'temurin-25/wrong.log'), raw);
+    checkReport(b.report, join(b.path, 'temurin-25'));
+    const changed = Buffer.from(raw.toString().replace('Received fatal alert: certificate_unknown', 'Fatal (CERTIFICATE_UNKNOWN): PKIX path building failed'));
+    item.bytes = changed.length; item.sha256 = sha256(changed);
+    writeFileSync(join(b.path, 'temurin-25/wrong.log'), changed);
+    saveJson(join(b.path, 'temurin-25/report.json'), b.report);
+    assert.throws(() => importBundle(b.path, root), /failure origin/);
+    assert.equal(existsSync(join(root, 'testdata/jvm-samples')), false);
+    assert.equal(readFileSync(join(root, 'README.md'), 'utf8'), before);
 });
 test('imports are idempotent, conflicting IDs fail, partial reports retain old evidence and docs drift fails CI', t => {
     const root = scaffold(t), b = bundle(t, [{ id: 'failed', analyzer: 'tda', status: 'capture-error', error: 'timeout' }]);

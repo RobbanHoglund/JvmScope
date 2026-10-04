@@ -94,7 +94,7 @@ export function createTlsInspector({ root, onDetails, onStep, copy }) {
             : it.correlationQuality === 'ambiguous-thread'
                 ? `Conflicting records share JVM thread ${it.tidDisplay}. This is an observation group, not a verified connection. ${it.correlationWarnings.join(' ')}`
             : it.correlationQuality === 'ambiguous-legacy'
-                ? 'Interleaved legacy logging: connection identity is uncertain. No single-connection sequence is inferred.'
+                ? 'Unresolved or interleaved legacy logging: connection identity is uncertain. No single-connection sequence is inferred.'
                 : 'Legacy logging: handshake bodies have no reliable connection ID or timestamps.';
         const events = sequence.map((item, index) => {
             const flow = ['Produced', 'Sent'].includes(item.action) ? 'Local JVM → peer' : ['Consumed', 'Received'].includes(item.action) ? 'Peer → local JVM' : 'Local observation';

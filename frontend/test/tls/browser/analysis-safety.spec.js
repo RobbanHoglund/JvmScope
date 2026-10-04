@@ -79,6 +79,32 @@ test('TDA coarse CPU estimates never enter the measured chart or its peak rankin
     await expect(page.locator('#appTooltip')).toContainText('Time uncertainty');
 });
 
+test('TLS legacy unfinished boundary stays unknown in the worker, success filter and raw inspector', async ({page}) => {
+    await page.locator('#tlsInvestigateColumns').dispatchEvent('click');
+    const hello = ['*** ClientHello, TLSv1.2', 'worker, WRITE: TLSv1.2 Handshake, length = 123'];
+    const end = ['worker, READ: TLSv1.2 Handshake, length = 456', '*** ServerHello, TLSv1.2',
+        'worker, WRITE: TLSv1.2 Change Cipher Spec, length = 1', '*** Finished',
+        'worker, READ: TLSv1.2 Handshake, length = 42', '*** Finished'];
+    await upload(page,[...hello,...hello,...end].join('\n'),'legacy-overlap.log');
+    await expect(page.locator('#rowCount')).toHaveText('2 / 2 interactions');
+    await expect(page.locator('#errorState')).toContainText('legacy handshake bodies cannot be assigned reliably');
+    await page.getByRole('button',{name:'Select interaction 2',exact:true}).click();
+    await expect(page.locator('#tlsInspector')).toContainText('Grouping uncertain');
+    await expect(page.locator('#tlsInspector')).toContainText('No single-connection sequence is inferred');
+    await page.locator('#onlySuccessToggle').check();
+    await expect(page.locator('#tlsTableBody tr')).toHaveCount(0);
+    await page.locator('#onlySuccessToggle').uncheck();
+    await page.getByRole('button',{name:'Select interaction 2',exact:true}).click();
+    await page.locator('#tlsRawTab').click();
+    await expect(page.locator('#tlsRawPanel')).toContainText('*** Finished');
+    await expect(page.locator('#tlsRawPanel')).toContainText('worker, READ: TLSv1.2 Handshake');
+    await upload(page,[...hello,...end,...hello,...end].join('\n'),'legacy-sequential.log');
+    await expect(page.locator('#rowCount')).toHaveText('2 / 2 interactions');
+    await expect(page.locator('#errorState')).not.toBeVisible();
+    await page.locator('#onlySuccessToggle').check();
+    await expect(page.locator('#tlsTableBody tr')).toHaveCount(2);
+});
+
 test('TDA real short captures use elapsed timing and show the interval qualification', async ({page,appUrl}) => {
     await page.goto(`${appUrl}/jvmscope/tda.html`);
     await upload(page,readFileSync(new URL('../../tda/fixtures/cpu-precision-sequence.txt',import.meta.url),'utf8'),'cpu-precision.txt');

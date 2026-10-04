@@ -74,7 +74,7 @@ export async function capture({ home, compiler = home, output, entry, material =
         const item = { analyzer, id, file, bytes: bytes.length, sha256: sha256(bytes), expected, status: 'validation-error' };
         try {
             if (!supported) { item.status = 'unsupported-format'; item.error = 'Provider/VM format is outside the declared HotSpot/SunJSSE parser scope'; }
-            else { item.validation = validateCase(item, directory); item.status = 'verified'; }
+            else { item.validation = validateCase(item, directory, report.runtime); item.status = 'verified'; }
         } catch (e) { item.error = e.message; }
         report.cases.push(item);
         console.log(`${entry.key} ${id}: ${item.status}${item.error ? ` (${item.error.split('\n')[0]})` : ''}`);

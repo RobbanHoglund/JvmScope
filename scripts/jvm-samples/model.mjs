@@ -47,7 +47,50 @@ function tlsDiagnosticFamily(interaction, oracle) {
     if (/^Received fatal alert: handshake_failure$/i.test(reason)) return 'remote-rejection';
     return 'other';
 }
-export function validateCase(item, directory) {
+function validateTlsFailureRole(interaction, expected, oracle, runtime) {
+    const expectedDirection = expected.side === 'client' ? 'outbound' : 'inbound';
+    assert.equal(interaction.direction, expectedDirection, 'TLS endpoint side contradicts the observed ClientHello direction');
+    const rejectingLocally = expected.scenario === 'untrusted' ? expected.side === 'client' : expected.side === 'server';
+    const expectedOrigin = rejectingLocally ? 'local' : 'remote';
+    const evidence = [...new Set([interaction.failureReason,
+        ...interaction.failureEvidence.filter(item => item.promotesHandshakeFailure).map(item => item.text)].filter(Boolean))];
+    let matchingOrigin = false;
+    for (const text of evidence) {
+        const family = tlsDiagnosticFamily({ failureReason: text }, oracle);
+        // A receiver can record a local OS/socket abort while the rejecting peer
+        // reports the certificate cause. Keep the independent transport oracle.
+        if (family === 'remote-abort') continue;
+        const received = /\bReceived fatal alert:/i.test(text);
+        const sent = /\bSent fatal alert:/i.test(text);
+        const fatal = /\bFatal\s*\(([A-Z_]+)\)/i.test(text);
+        const alert = text.match(/Fatal\s*\(([A-Z_]+)\)|(?:Received|Sent) fatal alert:\s*([a-z_]+)/i);
+        if (alert) assert.ok(['certificate_unknown', 'unknown_ca', 'certificate_required', 'bad_certificate', 'handshake_failure']
+            .includes((alert[1] || alert[2]).toLowerCase()), 'Contradictory TLS failure alert');
+        const localCause = /PKIX path building failed|unable to find valid certification path|empty (?:client |server )?certificate chain|null cert chain/i.test(text);
+        const origin = received ? 'remote' : sent || fatal || localCause ? 'local' : null;
+        if (origin) {
+            assert.equal(origin, expectedOrigin, `Wrong TLS failure origin for ${expected.scenario}/${expected.side}: ${text}`);
+            matchingOrigin = true;
+        }
+        if (/empty server certificate chain/i.test(text)) {
+            // Older OpenJDK T12CertificateConsumer server overloads use this
+            // misleading wording for an absent *client* chain. Limit the
+            // accommodation to runtime-attested SunJSSE 8–22 / TLS 1.2 evidence.
+            const major = Number((runtime?.['java.runtime.version'] || '').replace(/^1\./, '').match(/^\d+/)?.[0]);
+            const legacyClientAuthWording = expected.scenario === 'required-client-auth' && expected.side === 'server'
+                && expected.protocol === 'TLSv1.2' && interaction.tlsVersion === 'TLSv1.2' && major >= 8 && major <= 22
+                && /^SunJSSE(?:\s|$)/.test(runtime?.provider || '')
+                && oracle.message === 'Empty server certificate chain'
+                && interaction.observedRecords.some(record => /^Produced CertificateRequest\b/.test(record.message))
+                && interaction.observedRecords.some(record => /^Consuming client Certificate\b/.test(record.message)
+                    && /"Certificates"\s*:\s*<empty list>/.test(interaction.rawLines.slice(record.rawStart, record.rawEnd).join('\n')))
+                && evidence.some(message => /^Fatal \(BAD_CERTIFICATE\): Empty server certificate chain\b/i.test(message));
+            assert.ok(legacyClientAuthWording, 'Wrong TLS certificate role: server certificate absence is not client-authentication evidence');
+        }
+    }
+    assert.ok(matchingOrigin || tlsDiagnosticFamily(interaction, oracle) === 'remote-abort', 'Missing TLS failure origin evidence');
+}
+export function validateCase(item, directory, runtime) {
     assert.ok(['tda', 'tls'].includes(item.analyzer));
     assert.ok(item.expected && typeof item.expected === 'object', 'Missing independent workload oracle');
     const raw = readFileSync(safeFile(directory, item.file));
@@ -75,6 +118,7 @@ export function validateCase(item, directory) {
                     ? (e.side === 'client' ? ['trust'] : ['trust', 'remote-abort', 'remote-rejection'])
                     : (e.side === 'server' ? ['client-auth'] : ['client-auth', 'remote-abort', 'remote-rejection']);
                 assert.ok(allowed.includes(family), `Wrong TLS diagnostic family for ${e.scenario}/${e.side}: ${it.failureReason || 'missing'}`);
+                validateTlsFailureRole(it, e, e.results[index], runtime);
             } else {
                 assert.equal(it.tlsVersion, e.protocol);
                 assert.equal(it.cipherSuite, e.results[index].cipher);
@@ -157,7 +201,7 @@ export function checkReport(report, directory) {
             }
             if (item.analyzer === 'tls') assert.match(report.runtime.provider, /^SunJSSE(?:\s|$)/, 'TLS evidence must identify the supported provider');
             else assert.ok(!/openj9|j9 vm/i.test(report.runtime['java.vm.name']), 'Javacore is outside the TDA parser scope');
-            validateCase(item, directory);
+            validateCase(item, directory, report.runtime);
         }
     }
     if (report.status === 'complete') assert.ok(report.cases.length && report.cases.every(c => ['verified', 'unavailable', 'unsupported-format'].includes(c.status)));

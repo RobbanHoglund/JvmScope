@@ -280,7 +280,7 @@ class Interaction {
             this._captureProducedClientCertificate = false;
             this._captureCertificateRequest = false;
             this._captureCertificateAuthorities = false;
-            if (pl.format === 'legacy') this.correlationQuality = pl.ambiguous ? 'ambiguous-legacy' : 'unscoped-legacy';
+            if (pl.format === 'legacy' && !isTlsCorrelationAmbiguous(this)) this.correlationQuality = pl.ambiguous ? 'ambiguous-legacy' : 'unscoped-legacy';
         }
         const negotiatedVersion = pl && text.match(/^Negotiated (?:protocol version|TLS version):?\s*(TLSv1(?:\.[0-3])?)/i);
         const selectedVersion = this._messageKind === 'server-hello' && text.match(/"selected version"\s*:\s*\[?(TLSv1(?:\.[0-3])?)/);
@@ -383,9 +383,8 @@ class Interaction {
 		captureFailureReason(this, msg);
     }
 
-    markCorrelationAmbiguous(reason) {
-        if (this._legacyRecord) return;
-        this.correlationQuality = 'ambiguous-thread';
+    markCorrelationAmbiguous(reason, quality = this._legacyRecord ? 'ambiguous-legacy' : 'ambiguous-thread') {
+        this.correlationQuality = quality;
         if (!this.correlationWarnings.includes(reason)) this.correlationWarnings.push(reason);
     }
 
@@ -454,7 +453,7 @@ class Interaction {
             this.sawHandshakeFinished = false;
             this.outcomeDetail = this.correlationQuality === 'ambiguous-thread'
                 ? 'Conflicting handshake observations on one JVM thread cannot be attributed to a single connection. Inspect the raw records; outcome and negotiated/certificate facts remain unknown.'
-                : 'Interleaved legacy logging has no reliable connection or thread identity for handshake bodies.';
+                : 'Unresolved or interleaved legacy handshakes have no reliable connection identity for their bodies. Inspect the raw records; outcomes remain unknown.';
         }
         this.timeQuality = this._missingClock ? 'unavailable' : this._reversedClock ? 'reversed' : 'reliable';
         this.durationMs =
@@ -484,9 +483,11 @@ export function splitIntoInteractionsFromLines(lines) {
             else {
                 // A JVM thread is not a connection ID. A new ClientHello cannot
                 // retire an unfinished handshake or make its later records attributable.
-                if (pl.tid && current.isRealHandshakeInteraction()
+                if (current.isRealHandshakeInteraction()
                     && (isTlsCorrelationAmbiguous(current) || (!current.sawHandshakeFinished && !current.failureReason))) {
-                    boundaryWarning = 'A new ClientHello shares a JVM thread with an unresolved handshake; subsequent records have no reliable connection identity.';
+                    boundaryWarning = pl.format === 'legacy'
+                        ? 'A new legacy ClientHello follows an unresolved handshake; subsequent records have no reliable connection identity.'
+                        : 'A new ClientHello shares a JVM thread with an unresolved handshake; subsequent records have no reliable connection identity.';
                     current.markCorrelationAmbiguous(boundaryWarning);
                 }
                 finish(key);
@@ -494,7 +495,7 @@ export function splitIntoInteractionsFromLines(lines) {
             }
         }
         if (!current) { current = new Interaction(); currentByThread.set(key, current); }
-        if (boundaryWarning) current.markCorrelationAmbiguous(boundaryWarning);
+        if (boundaryWarning) current.markCorrelationAmbiguous(boundaryWarning, pl.format === 'legacy' ? 'ambiguous-legacy' : 'ambiguous-thread');
         current.observedRecords.push({
             message: pl.msg, epochMillis: pl.epochMillis, tsRaw: pl.tsRaw,
             format: pl.format, prefixLength: record.prefixLength,
@@ -527,7 +528,7 @@ export function analyzeTlsLog(text) {
     const interactions = splitIntoInteractionsFromLines(String(text ?? '').replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n'));
     const warnings = [];
     if (!interactions.length) warnings.push('No recognizable SunJSSE handshake or TLS failure was found. Use javax.net.debug=ssl,handshake; custom logging formats may need conversion.');
-    if (interactions.some(item => item.correlationQuality === 'ambiguous-legacy')) warnings.push('Interleaved legacy handshake bodies cannot be assigned reliably. Results remain unknown; capture each connection separately.');
+    if (interactions.some(item => item.correlationQuality === 'ambiguous-legacy')) warnings.push('Unresolved or interleaved legacy handshake bodies cannot be assigned reliably. Results remain unknown; capture each connection separately.');
     if (interactions.some(item => item.correlationQuality === 'ambiguous-thread')) warnings.push('Conflicting handshake records share a JVM thread. Their connection identity is ambiguous; outcomes remain unknown. Capture the connections separately.');
     return { interactions, warnings, status: !interactions.length ? 'unsupported' : warnings.length ? 'partial' : 'success' };
 }

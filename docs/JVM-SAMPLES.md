@@ -106,7 +106,9 @@ extend the target manifest and rerun that version and relevant vendors. This che
 input compatibility, not whether JvmScope's Java 25 server can run on that old JDK.
 
 TLS replay checks diagnostic families against the controlled scenario and endpoint
-role. An untrusted client must report trust evidence; the other endpoint may only
+role, observed ClientHello direction, and local versus received failure evidence.
+Lower-priority contradictory alerts are checked too. An untrusted client must
+report local trust evidence; the other endpoint may only
 observe a remote rejection or socket abort. A protocol-version error cannot stand
 in for a trust failure. Client-authentication cases also require CertificateRequest
 and a client Certificate message, a presented subject for mutual authentication,
@@ -114,6 +116,17 @@ and an explicit empty certificate list for TLS 1.3 cases without a client certif
 Incomplete or contradictory evidence fails validation instead of being counted as
 verified. Capture jobs retain per-case validation errors; imports validate the
 entire bundle before writing any evidence or updating the generated matrix.
+
+One narrow wording accommodation is retained: runtime-attested SunJSSE Java 8–22
+TLS 1.2 servers can report `Empty server certificate chain` when rejecting an
+absent **client** certificate. The independent endpoint oracle must confirm that
+exact message and the capture must contain a local `BAD_CERTIFICATE`, an inbound
+ClientHello, observed TLS 1.2, a produced CertificateRequest and a consumed client
+Certificate with an explicit empty list. This wording
+comes from the server overload of older OpenJDK's
+[T12CertificateConsumer](https://github.com/openjdk/jdk/blob/jdk-18-ga/src/java.base/share/classes/sun/security/ssl/CertificateMessage.java).
+It is not accepted as client-authentication evidence outside this version range,
+TLS protocols or endpoint roles. Raw evidence is never rewritten.
 
 ## Local pilot
 
