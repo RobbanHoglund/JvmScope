@@ -21,8 +21,17 @@ test('knowledge metadata distinguishes introduction, preview, product and changi
     assert.match(state('string-dedup',8).status,/update\/GC dependent/);
     assert.match(state('compact-strings',9).detail,/not UTF-8/);
     assert.deepEqual(compareVersions(27,27),[]);
-    assert.equal(compareVersions(26,27).length,1);
-    assert.match(compareVersions(27,26)[0].to.status,/disabled/);
+    assert.match(state('g1-default',8).status,/Not introduced/);
+    for(const v of [9,17,26]) assert.match(state('g1-default',v).status,/specified server configurations/);
+    assert.match(state('g1-default',27).status,/all environments/);
+    assert.match(state('g1-default',27).detail,/Explicit collector flags still override/);
+    assert.match(state('g1-default',28).status,/Outside verified/);
+    assert.ok(FEATURES.find(f=>f.id==='g1-default').sources.includes('https://openjdk.org/jeps/523'));
+    const changes=compareVersions(26,27);
+    assert.deepEqual(changes.map(row=>row.feature.id),['compact-headers','g1-default']);
+    assert.match(compareVersions(27,26).find(row=>row.feature.id==='compact-headers').to.status,/disabled/);
+    assert.match(compareVersions(27,26).find(row=>row.feature.id==='g1-default').to.status,/specified server/);
+    assert.match(ARTICLES.find(a=>a.id==='gc-memory').versions,/JEP 523/);
 });
 
 test('eight knowledge articles are complete, scoped and source-backed, with intersecting local filters', () => {

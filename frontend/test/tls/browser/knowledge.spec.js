@@ -45,3 +45,46 @@ test('knowledge home, local filters, version comparison and direct articles work
     expect(JSON.stringify(requests)).not.toContain('PRIVATE_SEARCH_SENTINEL');
     expect(await page.evaluate(()=>JSON.stringify({local:Object.entries(localStorage),session:Object.entries(sessionStorage)}))).not.toContain('PRIVATE_SEARCH_SENTINEL');
 });
+
+test('knowledge compares the G1 default transition in 26 to 27 with its source and qualifications',async({page,appUrl})=>{
+    await page.goto(`${appUrl}/knowledge/index.html`);
+    await page.locator('#compareFrom').selectOption('26');
+    await page.locator('#compareTo').selectOption('27');
+    const row=page.locator('#knowledgeComparison tbody tr').filter({hasText:'G1 default collector'});
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText('Default on specified server configurations');
+    await expect(row).toContainText('Default in all environments');
+    await expect(row).toContainText('Explicit collector flags still override');
+    await expect(row.locator('a[href="https://openjdk.org/jeps/523"]')).toHaveCount(1);
+    await page.goto(`${appUrl}/knowledge/gc-memory.html?java=27`);
+    await expect(page.locator('#articleCapabilities')).toContainText('Default in all environments');
+    await expect(page.locator('#knowledgeRoot')).toContainText('JEP 523 makes G1 the upstream HotSpot default');
+});
+
+test('knowledge retains the selected Java version in article navigation, reload and return without sharing search text',async({page,appUrl})=>{
+    await page.goto(`${appUrl}/knowledge/index.html`);
+    await page.locator('#knowledgeVersion').selectOption('17');
+    await page.locator('#knowledgeSearch').fill('PRIVATE_NAVIGATION_SENTINEL');
+    expect(page.url()).not.toContain('PRIVATE_NAVIGATION_SENTINEL');
+    await page.locator('#knowledgeSearch').fill('');
+    const link=page.getByRole('link',{name:/Collect the right thread dump/});
+    await expect(link).toHaveAttribute('href','./thread-dumps.html?java=17');
+    await link.click();
+    await expect(page.locator('#articleVersion')).toHaveValue('17');
+    await page.reload();
+    await expect(page.locator('#articleVersion')).toHaveValue('17');
+    await page.locator('#articleVersion').selectOption('7');
+    await expect(page).toHaveURL(`${appUrl}/knowledge/thread-dumps.html?java=7`);
+    await page.reload();
+    await expect(page.locator('#articleVersion')).toHaveValue('7');
+    await page.getByRole('link',{name:'← Knowledge base',exact:true}).click();
+    await expect(page.locator('#knowledgeVersion')).toHaveValue('7');
+    await page.reload();
+    await expect(page.locator('#knowledgeVersion')).toHaveValue('7');
+    await page.locator('#knowledgeVersion').selectOption('');
+    await expect(page).toHaveURL(`${appUrl}/knowledge/index.html`);
+    await expect(page.getByRole('link',{name:/Collect the right thread dump/})).toHaveAttribute('href','./thread-dumps.html');
+    await page.goto(`${appUrl}/knowledge/thread-dumps.html?java=${encodeURIComponent('<script>bad</script>')}`);
+    await expect(page.locator('#articleVersion')).toHaveValue('27');
+    await expect(page.locator('#knowledgeBack')).toHaveAttribute('href','./index.html');
+});

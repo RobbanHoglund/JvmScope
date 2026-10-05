@@ -190,3 +190,54 @@ The direction is appropriate, with these necessary scope qualifications:
 The user's running local package was preserved. Tests used isolated ports and a
 new JAR with the existing linked runtime. The currently running app therefore
 needs a normal rebuild/restart before showing this branch's changes.
+
+## HO004 corrections
+
+All three supplied review findings were independently confirmed at revision
+`822bc71c2c83857e0b897bde48a22bb2d2db4788` before implementation. This follow-up
+keeps the existing branch, architecture, local analysis and publication policy.
+
+- **HO004-01:** Preview captures detached HTML and Markdown payloads for a report
+  revision; export uses those exact payloads rather than regenerating from live
+  findings. Add, notes, reorder, removal and clear invalidate approval centrally.
+  An open preview updates and explicitly requests another review. Export also
+  checks approval/revision/nonempty selection in its handler, independently of
+  button state. The report owns copies of incoming findings so a caller cannot
+  later alter them without a report mutation. Previous downloaded reports cannot
+  be retroactively corrected.
+- **HO004-02:** G1's modeled transition now distinguishes JDK 9–26 server-class
+  selection from JDK 27's upstream HotSpot default in all environments. JEP 523
+  was checked as Delivered / Release 27 on 2026-10-05. Explicit collector flags
+  still override the default; vendor/build scope and workload measurement remain
+  qualified. Metadata, article text, sources and both comparison directions were
+  checked; generated capture counts were not manually changed.
+- **HO004-03:** Valid Java choices travel in article/back links and survive
+  reloads, including changes made inside an article. All versions removes the
+  version parameter. Invalid values fall back to the existing default. Search
+  text and topic input are not serialized or stored; only the validated Java
+  version is added to the URL. Relative links retain the Pages base prefix.
+
+The separate system/adversarial pass traced the asynchronous SHA/PNG producer,
+all report mutation paths, preview approval and both download consumers. It
+challenged late real finding completion, stale button state, externally mutated
+caller objects, empty selections, hostile text, reversed version comparisons,
+invalid Java parameters and article/index reloads. The existing source evidence,
+parser/worker/correlation models, backend routes and legal notices are unchanged.
+No user-diagnostic persistence, external analysis requests or repair job was added.
+
+Verification for these corrections:
+
+- `npm test`: 688 Node tests passed and 441 runtime reports replayed with matching
+  generated documentation.
+- Pages build: 73-file artifact verified. 24 focused desktop/laptop browser cases
+  passed (22 together, then the 2 new empty-selection controls).
+- Java slim build/JAR: 1320 real HTTP/configuration assertions passed. The same
+  24 focused browser cases passed against the new JAR and isolated loopback ports.
+- Mutation-controller cases load unchanged source modules in an isolated browser
+  harness. The late SHA completion cases use the actual built application, worker,
+  graph capture, preview and HTML/Markdown download paths.
+- Frontend builds used installed dependencies; the final Java rebuild excluded
+  redundant npm install/build tasks after running Vite's slim build directly.
+- Docker execution remains environment-blocked because Docker is absent. No
+  remote workflow, merge, deployment or publication of these corrections was run.
+  The user's running package was left intact.
