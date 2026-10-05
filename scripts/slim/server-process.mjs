@@ -7,14 +7,16 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const packageDirectory = fileURLToPath(new URL('../../slim/build/package/', import.meta.url));
 
-export async function startSlimServer({ useEnvironment = false } = {}) {
+// A newly built JAR can be tested with the existing linked runtime while the
+// user's running package remains untouched.
+export async function startSlimServer({ useEnvironment = false, jarPath = join(packageDirectory, 'app.jar') } = {}) {
     const reservation = net.createServer();
     await new Promise((accept, reject) => { reservation.once('error', reject); reservation.listen(0, '127.0.0.1', accept); });
     const port = reservation.address().port;
     await new Promise(accept => reservation.close(accept));
     const started = performance.now();
     const child = spawn(join(packageDirectory, 'runtime', 'bin', process.platform === 'win32' ? 'java.exe' : 'java'),
-        ['-Xms8m', '-Xmx64m', '-XX:+UseSerialGC', '-Xss256k', '--add-modules', 'jdk.httpserver', '-jar', join(packageDirectory, 'app.jar'), ...(useEnvironment ? [] : ['--host=127.0.0.1', `--port=${port}`]), '--stdin-control'],
+        ['-Xms8m', '-Xmx64m', '-XX:+UseSerialGC', '-Xss256k', '--add-modules', 'jdk.httpserver', '-jar', jarPath, ...(useEnvironment ? [] : ['--host=127.0.0.1', `--port=${port}`]), '--stdin-control'],
         { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, ...(useEnvironment ? { HOST: '127.0.0.1', PORT: String(port) } : {}) } });
     let output = '', failure;
     child.stdout.on('data', chunk => { output += chunk; });

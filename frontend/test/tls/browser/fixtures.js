@@ -30,7 +30,7 @@ export const test = base.extend({
                 await use(url.origin);
                 return;
             }
-            const slim = await startSlimServer();
+            const slim = await startSlimServer({jarPath:process.env.SLIM_TEST_JAR || undefined});
             try { await use(slim.url); } finally { await slim.stop(); }
             return;
         }

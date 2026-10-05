@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures.js';
 import { ARTICLES } from '../../../assets/javautils/knowledge/data.js';
 
-test('knowledge home, local filters, version comparison and direct articles work without sending search data',async({page,context,appUrl})=>{
+test('knowledge home, local filters, version comparison and direct articles work without sending search data',async({page,context,appUrl},info)=>{
     const requests=[];
     context.on('request',r=>{if(/^https?:/.test(r.url()))requests.push({url:r.url(),body:r.postData(),method:r.method()});});
     await page.goto(appUrl+'/');
@@ -9,6 +9,7 @@ test('knowledge home, local filters, version comparison and direct articles work
     await page.getByRole('link',{name:/Explore eight Java knowledge articles/}).click();
     await expect(page).toHaveURL(appUrl+'/knowledge/index.html');
     await expect(page.locator('#knowledgeCount')).toHaveText('8 articles');
+    await page.screenshot({path:info.outputPath('knowledge-index.png'),fullPage:true});
     await page.locator('#knowledgeSearch').fill('PRIVATE_SEARCH_SENTINEL');
     await expect(page.locator('#knowledgeCount')).toHaveText('0 articles');
     await page.locator('#knowledgeSearch').fill('pinning');

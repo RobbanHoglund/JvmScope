@@ -1,5 +1,6 @@
 // DOM-free TDA analysis shared by the worker and focused regression tests.
-import { buildBlockingPatterns } from './blocking-patterns.js';
+import { buildBlockingPatternAnalysis } from './blocking-patterns.js';
+import { relationshipThreadReference } from './relationship-reference.js';
 import { analyzeThreadDump, extractNormalizedFrames, parseDeadlocks, parseThreadDump } from './parser.js';
 import { annotateDeadlocks } from './deadlocks.js';
 import { observedVirtualThreadIds } from './dump-to-file.js';
@@ -1353,9 +1354,12 @@ function annotateThreadsWithContention(threads, chains) {
     for (const chain of chains || []) {
         const ownerNames = (chain.owners || []).map((t) => t.threadName).filter(Boolean);
         const waiterNames = (chain.waiters || []).map((t) => t.threadName).filter(Boolean);
+        const evidence = { lockId:chain.lockId, lockType:chain.lockType,
+            owners:(chain.owners || []).map(relationshipThreadReference),
+            waiters:(chain.waiters || []).map(relationshipThreadReference) };
 
         for (const owner of chain.owners || []) {
-            owner.contentionChains.push(chain);
+            owner.contentionChains.push(evidence);
             owner.blockedWaiterCount += waiterNames.length;
             owner.waitingOnThreadNames = owner.waitingOnThreadNames || [];
             owner.blockingThreadNames = Array.from(new Set([
@@ -1365,7 +1369,7 @@ function annotateThreadsWithContention(threads, chains) {
         }
 
         for (const waiter of chain.waiters || []) {
-            waiter.contentionChains.push(chain);
+            waiter.contentionChains.push(evidence);
             waiter.waitingOnThreadNames = Array.from(new Set([
                 ...(waiter.waitingOnThreadNames || []),
                 ...ownerNames,
@@ -1400,6 +1404,7 @@ export function analyzeThreadDumpData(text, cpuThresholds = getRunnableCpuThresh
         }),
     }));
     const parsedDumps = annotateDumpDeltas(smartAnalysisDumps);
+    const blocking = buildBlockingPatternAnalysis(parsedDumps);
     return { ...sourceMetadata, parserResult, parsedDumps, threadSeries: seriesAnalysis.series,
-        runnableStackClusters: buildRunnableStackClusters(parsedDumps), blockingPatterns: buildBlockingPatterns(parsedDumps) };
+        runnableStackClusters: buildRunnableStackClusters(parsedDumps), blockingPatterns: blocking.patterns, blockingPatternSummary: blocking.summary };
 }

@@ -121,13 +121,13 @@ test('pending first input can be cancelled from the start view without a late ca
 
 test('all shipped pages expose consistent navigation and correct home/active links', async ({ page, appUrl }) => {
     const slim = test.info().project.metadata.slim;
-    const paths = slim ? ['/jvmscope/tda.html', '/jvmscope/tls.html'] : ['/', '/utils.html', '/jvmscope/tda.html', '/jvmscope/tls.html'];
+    const paths = ['/', ...(!slim ? ['/utils.html'] : []), '/jvmscope/tda.html', '/jvmscope/tls.html', '/knowledge/index.html', '/knowledge/thread-dumps.html'];
     for (const path of paths) {
         await page.goto(`${appUrl}${path}`);
         const nav = page.getByRole('navigation', { name: 'Analysis tools' });
         await expect(nav).toBeVisible();
         await expect(nav.locator('a[aria-current="page"]')).toHaveCount(1);
-        await expect(nav.getByRole('link')).toHaveCount(slim ? 2 : 3);
+        await expect(nav.getByRole('link')).toHaveCount(4);
         await expect(page.locator('a[href*="dockerutils"]')).toHaveCount(0);
         const bounds = await nav.boundingBox();
         expect(bounds.x + bounds.width).toBeLessThanOrEqual(page.viewportSize().width);

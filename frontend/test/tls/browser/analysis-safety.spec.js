@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { test, expect } from './fixtures.js';
 import { elapsedSnapshot, elapsedRegressionSnapshots } from '../../tda/elapsed-regression-fixture.js';
-import { blockingSequence } from '../../tda/blocking-fixture.js';
+import { blockingDump, blockingSequence, longClassInitializationDump } from '../../tda/blocking-fixture.js';
 
 test('TDA blocking progression preserves focus and snapshot-local evidence through navigation', async ({page, appUrl}) => {
     await page.goto(`${appUrl}/jvmscope/tda.html`);
@@ -24,8 +24,41 @@ test('TDA blocking progression preserves focus and snapshot-local evidence throu
     await expect(select).toHaveValue(selected);
     await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread')).toHaveCount(0);
     await expect(page.locator('#blockingPatternView')).toContainText('does not establish that the problem was resolved');
+    await expect(page.locator('#addBlockingReport')).toBeDisabled();
     await select.selectOption('');
     await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread')).not.toHaveCount(0);
+});
+
+test('TDA blocking budget warnings survive the worker boundary without discarding the snapshot',async({page,appUrl})=>{
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    const entries=Array.from({length:400},(_,i)=>({id:i+1,held:[`0x${(i+1).toString(16)}`],...(i?{wait:`0x${i.toString(16)}`}:{})}));
+    await upload(page,blockingDump(0,entries),'long-chain.txt');
+    await expect(page.locator('#rowCount')).toContainText('400 threads');
+    await page.locator('#dependencyGraphDetails > summary').click();
+    await expect(page.locator('#blockingPatternView')).toContainText('exceeded its bounded traversal/evidence budget');
+    await expect(page.locator('#blockingPatternView')).not.toContainText('No identified blocker');
+    await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread').first()).toBeVisible();
+    await page.locator('#clearBtn').click();
+    await upload(page,longClassInitializationDump(),'long-class-chain.txt');
+    await expect(page.locator('#rowCount')).toContainText('400 threads');
+    await expect(page.locator('#blockingPatternView')).toContainText('exceeded');
+    await page.locator('#clearBtn').click();
+    await upload(page,blockingSequence.join('\n'),'small-incident.txt');
+    await page.locator('#dependencyGraphDetails > summary').click();
+    await expect(page.locator('#blockingPatternSelect option')).toHaveCount(3);
+    await expect(page.locator('#blockingPatternView')).not.toContainText('exceeded');
+});
+
+test('TDA blocking ambiguity cannot inflate comparable recurrence when an owner becomes definite',async({page,appUrl})=>{
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    const text=[blockingDump(0,[{id:1,held:['0xa']},{id:2,held:['0xa']},{id:3,wait:'0xa'}]),
+        blockingDump(1,[{id:1,held:['0xa']},{id:2},{id:3,wait:'0xa'}])].join('\n');
+    await upload(page,text,'ambiguous-owners.txt');
+    await page.locator('#dependencyGraphDetails > summary').click();
+    await page.locator('#blockingPatternSelect').selectOption({label:'Dependencies on worker-1 · peak 1 · recurrence 0'});
+    await page.locator('[data-blocking-snapshot="1"]').click();
+    await expect(page.locator('#blockingPatternView')).toContainText('uncertain');
+    await expect(page.locator('#blockingPatternView')).not.toContainText('observed again');
 });
 
 test('TDA selected findings export locally with immutable origin, notes and safe preview',async({page,appUrl})=>{

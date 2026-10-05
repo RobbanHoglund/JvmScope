@@ -37,6 +37,7 @@ const findingsReport = createFindingsReportView(document.getElementById('finding
 let reportDatasetRevision = 0;
 
 let blockingPatterns = [];
+let blockingPatternSummary = null;
 let selectedBlockingPatternKey = '';
 
 
@@ -2141,7 +2142,7 @@ function renderDependencyGraph() {
 
     const pattern = blockingPatterns.find(p => p.key === selectedBlockingPatternKey);
     renderBlockingPatternView(document.getElementById('blockingPatternView'), {
-        patterns: blockingPatterns, selectedKey: selectedBlockingPatternKey, dumps: parsedDumps,
+        patterns: blockingPatterns, summary: blockingPatternSummary, selectedKey: selectedBlockingPatternKey, dumps: parsedDumps,
         snapshotIndex: selected?.index, onSelect: key => { selectedBlockingPatternKey = key; renderDependencyGraph(); },
         onSnapshot: index => navigateToDump('direct', index),
         onThread: (key, element) => { const thread = allThreads.find(t => t.sourceKey === key); if (thread) openThreadModal(thread, element); },
@@ -4146,6 +4147,7 @@ function beginInputRequest() {
 function applySessionAnalysis(result) {
     reportDatasetRevision++;
     blockingPatterns = result.blockingPatterns || [];
+    blockingPatternSummary = result.blockingPatternSummary || null;
     ({ parserResult, parsedDumps, threadSeries, runnableStackClusters } = result);
     cpuTimelineModelCache = null;
     UI.fileName.textContent = sessionSources.length === 1
@@ -4164,7 +4166,7 @@ async function addBlockingFinding(pattern, allObservations) {
         const finding = createBlockingFinding({pattern, snapshotIndex: selectedDumpIndex, allObservations,
             context:{datasetRevision:reportDatasetRevision, sources:capturedSources.map(({text,...source})=>source),
                 snapshotCount:parsedDumps.length, tableSearch:UI.searchInput.value, cpuProfile:cpuThresholdProfileId,
-                chartFilter:chartFilterState, tableFocus:runnableClusterTableFocusState,
+                chartFilter:chartFilterState, tableFocus:runnableClusterTableFocusState, graphPresentation:dependencyGraphView.exportContext(),
                 tableFilters:{daemon:UI.onlyDaemonToggle.checked,blocked:UI.onlyBlockedToggle.checked,waiting:UI.onlyWaitingToggle.checked,deadlocked:UI.onlyDeadlockedToggle.checked,carrier:UI.onlyCarrierToggle.checked},
                 evidenceScope:'Full parsed snapshots for this pattern; table/search/chart filters do not restrict dependency evidence.'}});
         // Clone the graph before any await, while it still represents this selection.
@@ -4617,6 +4619,7 @@ UI.clearBtn?.addEventListener('click', () => {
 
     parsedDumps = [];
     blockingPatterns = [];
+    blockingPatternSummary = null;
     threadSeries = [];
     selectedDumpIndex = 0;
     parserResult = null;

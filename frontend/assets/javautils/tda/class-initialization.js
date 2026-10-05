@@ -7,6 +7,8 @@
  * relationship, not a duration, deadlock, or application-level root cause.
  */
 
+import { relationshipThreadReference } from './relationship-reference.js';
+
 function text(value) {
     return String(value ?? '').trim();
 }
@@ -110,15 +112,21 @@ export function annotateThreadsWithClassInitialization(threads = [], chains = []
     }
 
     for (const chain of Array.isArray(chains) ? chains : []) {
+        // The snapshot's chains still point to its actual threads. Per-thread
+        // annotations retain evidence without a chain -> thread -> chain cycle.
+        const evidence = { ...chain,
+            waiters:(chain.waiters || []).map(relationshipThreadReference),
+            initializers:(chain.initializers || []).map(relationshipThreadReference),
+            initializer:relationshipThreadReference(chain.initializer) };
         for (const waiter of chain.waiters || []) {
             waiter.classInitializationChains ||= [];
-            waiter.classInitializationChains.push({ chain, role: 'waiter' });
+            waiter.classInitializationChains.push({ chain:evidence, role: 'waiter' });
         }
         for (const initializer of chain.initializers || []) {
             initializer.classInitializationChains ||= [];
             initializer.classInitializationBlockedWaiterCount =
                 Number(initializer.classInitializationBlockedWaiterCount || 0) + chain.waiterCount;
-            initializer.classInitializationChains.push({ chain, role: 'initializer' });
+            initializer.classInitializationChains.push({ chain:evidence, role: 'initializer' });
         }
     }
 

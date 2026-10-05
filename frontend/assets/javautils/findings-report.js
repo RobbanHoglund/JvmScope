@@ -1,6 +1,6 @@
 import { escapeHtml } from './tda/ui-safety.js';
 
-export const REPORT_VERSION = 'JvmScope findings/1; blocking-patterns/1';
+export const REPORT_VERSION = 'JvmScope findings/1; blocking-patterns/2';
 export const EXPORT_WARNING = 'Reports may contain sensitive thread names, classes, filenames, lock evidence and your notes. Preview and review before sharing. No automatic anonymization is performed. Full raw dumps are not included. Nothing is uploaded or automatically saved.';
 const clean = value => String(value ?? '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
 const html = value => escapeHtml(clean(value));
@@ -24,6 +24,8 @@ function fields(finding) {
         ['Input origin', JSON.stringify(finding.context)], ['Analysis version', finding.version],
         ['Observation', finding.observations.map(o => `Snapshot #${o.snapshotIndex + 1}: ${o.dependentCount} unique observed dependents (${o.directCount} direct, ${o.indirectCount} indirect); ${o.uncertainDependentCount} uncertain. ${o.complete ? 'Parsed collection' : 'Partial collection; lower bound'}.`).join('\n')],
         ['Derivation', `${finding.derivation} Ranking uses the candidate's full observed history, even when this report selects one snapshot.`], ['Uncertainty / conflicting evidence', `${finding.uncertainty}\n${finding.observations.flatMap(o => o.relations.filter(r => r.ambiguous).map(r => `Ambiguous owner: ${r.waiter.name} → ${r.owner.name}`)).join('\n')}`],
+        ['Collection/time qualifications', finding.observations.map(o=>`Snapshot #${o.snapshotIndex+1}: scope ${o.blocker.collectionScope || 'not supplied'}; time metadata ${JSON.stringify(o.blocker.timeQuality || {status:'unavailable'})}`).join('; ')],
+        ['Relation comparison uncertainty', finding.observations.flatMap(o=>o.relations.filter(r=>r.change==='uncertain').map(r=>`Snapshot #${o.snapshotIndex+1}: ${r.waiter.name} → ${r.owner.name}; continuity/comparison not established${r.ambiguous ? '; ambiguous owner' : ''}`)).join('; ') || '(none in selected observations)'],
         ['Next check', finding.nextCheck], ['User notes', finding.notes || '(none)'] ];
 }
 function refs(finding) {

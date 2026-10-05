@@ -7,3 +7,12 @@ export const blockingSequence = [
     blockingDump(1, [{id:1,held:['0xc']},{id:2,held:['0xd'],wait:'0xc'},{id:3,wait:'0xd'},{id:4,wait:'0xc'}]),
     blockingDump(2, [{id:1},{id:2,held:['0xe']},{id:3,wait:'0xe'},{id:4}]),
 ];
+
+export function longClassInitializationDump(count=400) {
+    let index=0;
+    return blockingDump(0,Array.from({length:count},(_,i)=>({id:i+1})))
+        .replaceAll('    at example.Work.run(Work.java:10)',()=>{
+            const id=++index;
+            return `    at example.Class${id}.<clinit>(Class.java:10)${id>1 ? `\n    - waiting on the Class initialization monitor for example.Class${id-1}` : ''}`;
+        });
+}

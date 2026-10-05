@@ -97,3 +97,96 @@ Verified full Node suite (685 tests), 441 capture reports/documentation replay,
 artifact validation and 1320 real Java HTTP/configuration assertions, including
 every new page/resource, gzip, HEAD, ETag and graceful shutdown. Docker is absent
 from this machine; a Linux container run is environment-blocked, not passed.
+
+## Separate adversarial/system review
+
+The PID contract was checked at session splitting, identity/counter annotation,
+series/history, lock precedence/change summaries, worker transfer and UI charts.
+It prevents future conflicting-process correlation; it does not establish a
+global PID identity or repair evidence someone previously exported.
+
+The new progression projection was challenged with ambiguous prior owners,
+ambiguous identities, duplicate/reversed/missing times, partial gaps and long
+chains. Prior ambiguous ownership does not become a definite recurring edge.
+Temporal comparisons require ordered source timestamps and exact adjacent
+matches; counts within a snapshot remain usable when temporal comparison is
+unavailable. A traversal/evidence budget (100000 visits / 25000 retained
+relations) contains the additional quadratic reachability work. When exceeded,
+the worker returns an explicit unavailable-pattern status, without a misleading
+partial ranking; existing snapshot/table analysis remains available. Correlation
+lookup maps avoid a second quadratic scan during relation comparisons.
+
+Report evidence now retains source-time/collection qualifiers and graph
+presentation context. SVG export dimensions are captured before async rendering,
+and Blob URLs are released on failure as well as success. The saved evidence,
+selection and hash are copied before awaits; changing a session does not resolve
+saved findings against new threads. No automatic repair, storage, anonymization,
+telemetry or network analysis was introduced. Missing observation cannot be added
+as a one-snapshot finding; the pattern's existing observations can still be chosen.
+
+The full preview browser sweep initially passed 248 cases (8 Pages-only cases
+skipped) and exposed two old navigation expectations: they assumed three links
+before the knowledge link existed. The assertions were updated to check all four
+destinations, including direct article pages; their rerun and final boundary
+results are recorded below. This evidence does not constitute blanket GA approval.
+
+The real browser chain test also found an existing worker-transfer failure:
+per-thread contention/class-initialization annotations linked back through full
+participants, creating deep recursive relationship graphs. Chromium postMessage
+could fail with maximum stack depth even when Node cloning passed. Per-thread
+annotations now carry shallow source-key/name/state/raw-coordinate participant
+references. Snapshot-level chains still point to the actual snapshot threads;
+table, graph, smart analysis, classification, raw view and thread-details
+consumers were checked. Long monitor and class-init chains now cross the real
+worker boundary, retain all 400 threads and show the bounded-projection warning.
+Source captures, counters, root relationship evidence and classifications are
+not dropped. This corrects future analysis; already exported reports are unchanged.
+
+## Critical reading of the handover
+
+The direction is appropriate, with these necessary scope qualifications:
+
+- A recurring identified blocker is an observational candidate, not a proven
+  root cause. Similar stacks or repeated identifiers cannot fill missing process,
+  timestamp, ownership or collection evidence. Ambiguous ownership in the previous
+  snapshot cannot inflate the count of comparable blocking recurrences.
+- Major Java versions do not specify a vendor, update, platform or collection
+  format. The generated capture evidence must remain distinct from documented
+  runtime capabilities; neither is certification of every Java 7–27 JVM.
+- Pattern ranking uses full observed pattern history. A finding can select just
+  one snapshot. Table/search/chart presentation filters do not filter dependency
+  evidence; the report discloses this rather than suggesting the scopes coincide.
+- The first knowledge release is a maintained, source-backed subset, not an
+  exhaustive flag/default migration checker. Capturing a new JDK does not verify
+  editorial facts automatically. No flags or speed improvements are recommended
+  solely from a thread dump.
+- Large incident projections need explicit resource limits even though the
+  original prompt did not specify them. Exhausting the additional traversal
+  budget leaves the ordinary snapshot available and reports pattern analysis as
+  unavailable. It must not silently return a complete-looking partial ranking.
+
+## Final verification
+
+- `npm test`: 688 Node tests passed, plus 441 generated capture/report replays.
+  After the final recurrence qualification, the 375 TDA unit tests passed again.
+- Pages: the full configured suite passed 64 desktop/laptop cases. The final
+  ambiguity regression and the progression/budget/report controls passed all
+  8 cases against the rebuilt Pages artifact. Article routes, legal files,
+  workers and the 73-file static artifact were validated.
+- Java: 22 focused desktop/laptop browser cases passed against the new JAR and
+  existing linked runtime. After the final change, the same 8 progression,
+  ambiguity, budget and report controls passed against the rebuilt JAR.
+- `:slim:serverTest :slim:jar`: the final build passed 1320 real HTTP/configuration
+  assertions. Dependency installation and frontend build tasks were excluded
+  only on this final rebuild: dependencies were already installed, the Node suite
+  had passed and Vite's slim build was run immediately beforehand.
+- The earlier preview sweep passed 248 cases and skipped 8 Pages-only cases;
+  two outdated navigation assertions were fixed and passed on rerun. This is
+  recorded separately rather than claiming an unperformed clean full rerun.
+- Docker is not installed; Linux container execution remains environment-blocked.
+  No Railway deployment, remote workflow or push was attempted. These results
+  do not confer blanket GA approval.
+
+The user's running local package was preserved. Tests used isolated ports and a
+new JAR with the existing linked runtime. The currently running app therefore
+needs a normal rebuild/restart before showing this branch's changes.

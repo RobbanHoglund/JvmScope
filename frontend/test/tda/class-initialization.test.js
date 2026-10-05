@@ -101,9 +101,11 @@ test('annotates chain participants that are disjoint from the reset thread list'
     assert.equal(result, threads);
     assert.deepEqual(unrelated.classInitializationChains, []);
     assert.equal(unrelated.classInitializationBlockedWaiterCount, 0);
-    assert.equal(waiter.classInitializationChains[0].chain, chain);
+    assert.deepEqual(waiter.classInitializationChains[0].chain.waiters.map(t=>t.sourceKey),['waiter']);
+    assert.notEqual(waiter.classInitializationChains[0].chain.waiters[0],waiter);
     assert.equal(waiter.classInitializationChains[0].role, 'waiter');
-    assert.equal(initializer.classInitializationChains[0].chain, chain);
+    assert.deepEqual(initializer.classInitializationChains[0].chain.initializers.map(t=>t.sourceKey),['initializer']);
+    assert.doesNotThrow(()=>JSON.stringify(threads));
     assert.equal(initializer.classInitializationChains[0].role, 'initializer');
     assert.equal(initializer.classInitializationBlockedWaiterCount, 3);
 });

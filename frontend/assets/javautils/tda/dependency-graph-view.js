@@ -2584,6 +2584,13 @@ class ThreadDependencyGraphView {
         });
     }
 
+    exportContext() {
+        return { options: { ...this.options }, searchHighlight: this.searchTerm,
+            patternFocus: this.incidentSourceKeys != null, visibleNodes: this.visibleNodes.length,
+            visibleEdges: this.visibleEdges.length,
+            scopeNote: 'Pattern focus overrides normal scope/density/relation filters; presentation highlights may fade nodes. Counts in the finding use the complete snapshot dependency evidence.' };
+    }
+
     async exportPng({ download = true } = {}) {
         if (!this.elements.svg || !this.visibleNodes.length) return;
         const button = this.elements.export;
@@ -2592,6 +2599,8 @@ class ThreadDependencyGraphView {
             button.disabled = true;
             button.textContent = 'Rendering…';
         }
+        let svgUrl;
+        const width = this.width, height = this.height;
         try {
             const clone = this.elements.svg.cloneNode(true);
             clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -2628,7 +2637,7 @@ class ThreadDependencyGraphView {
 
             const serialized = new XMLSerializer().serializeToString(clone);
             const blob = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
+            const url = svgUrl = URL.createObjectURL(blob);
             const image = new Image();
             await new Promise((resolve, reject) => {
                 image.onload = resolve;
@@ -2636,13 +2645,12 @@ class ThreadDependencyGraphView {
                 image.src = url;
             });
             const canvas = document.createElement('canvas');
-            canvas.width = Math.round(this.width * 2);
-            canvas.height = Math.round(this.height * 2);
+            canvas.width = Math.round(width * 2);
+            canvas.height = Math.round(height * 2);
             const context = canvas.getContext('2d');
             context.fillStyle = '#070c16';
             context.fillRect(0, 0, canvas.width, canvas.height);
             context.drawImage(image, 0, 0, canvas.width, canvas.height);
-            URL.revokeObjectURL(url);
             if (!download) return canvas.toDataURL('image/png');
             const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
             if (!pngBlob) throw new Error('Could not encode PNG.');
@@ -2657,6 +2665,7 @@ class ThreadDependencyGraphView {
         } catch (error) {
             console.error('Dependency graph PNG export failed:', error);
         } finally {
+            if (svgUrl) URL.revokeObjectURL(svgUrl);
             if (button) {
                 button.disabled = false;
                 button.textContent = previousLabel || '⇩ PNG';
