@@ -31,6 +31,10 @@ import { escapeAttr, escapeHtml } from './tda/ui-safety.js';
 import { renderBlockingPatternView } from './tda/blocking-pattern-view.js';
 import './tda/blocking-patterns.css';
 import { patternSnapshot } from './tda/blocking-patterns.js';
+import { createBlockingFinding, inputDigest } from './findings-report.js';
+import { createFindingsReportView } from './findings-report-view.js';
+const findingsReport = createFindingsReportView(document.getElementById('findingReportHost'));
+let reportDatasetRevision = 0;
 
 let blockingPatterns = [];
 let selectedBlockingPatternKey = '';
@@ -2141,6 +2145,7 @@ function renderDependencyGraph() {
         snapshotIndex: selected?.index, onSelect: key => { selectedBlockingPatternKey = key; renderDependencyGraph(); },
         onSnapshot: index => navigateToDump('direct', index),
         onThread: (key, element) => { const thread = allThreads.find(t => t.sourceKey === key); if (thread) openThreadModal(thread, element); },
+        onReport: addBlockingFinding,
     });
     dependencyGraphView.setData({
         threads: allThreads,
@@ -4139,6 +4144,7 @@ function beginInputRequest() {
 }
 
 function applySessionAnalysis(result) {
+    reportDatasetRevision++;
     blockingPatterns = result.blockingPatterns || [];
     ({ parserResult, parsedDumps, threadSeries, runnableStackClusters } = result);
     cpuTimelineModelCache = null;
@@ -4150,6 +4156,23 @@ function applySessionAnalysis(result) {
     activateSelectedDump();
     renderDumpNavigator();
     render();
+}
+
+async function addBlockingFinding(pattern, allObservations) {
+    try {
+        const capturedSources = sessionSources.map(s => ({name:s.name,kind:s.kind,id:s.id,text:s.text}));
+        const finding = createBlockingFinding({pattern, snapshotIndex: selectedDumpIndex, allObservations,
+            context:{datasetRevision:reportDatasetRevision, sources:capturedSources.map(({text,...source})=>source),
+                snapshotCount:parsedDumps.length, tableSearch:UI.searchInput.value, cpuProfile:cpuThresholdProfileId,
+                chartFilter:chartFilterState, tableFocus:runnableClusterTableFocusState,
+                tableFilters:{daemon:UI.onlyDaemonToggle.checked,blocked:UI.onlyBlockedToggle.checked,waiting:UI.onlyWaitingToggle.checked,deadlocked:UI.onlyDeadlockedToggle.checked,carrier:UI.onlyCarrierToggle.checked},
+                evidenceScope:'Full parsed snapshots for this pattern; table/search/chart filters do not restrict dependency evidence.'}});
+        // Clone the graph before any await, while it still represents this selection.
+        const graphic = dependencyGraphView.exportPng({download:false});
+        finding.context.inputSha256 = await inputDigest(capturedSources);
+        finding.graphic = await graphic || null;
+        findingsReport.add(finding);
+    } catch(error) {showSessionInputStatus(`Could not add finding: ${error.message}`);}
 }
 
 function setInputBusy(isBusy, message = 'Analyzing thread dump…') {

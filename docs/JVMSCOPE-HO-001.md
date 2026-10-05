@@ -43,3 +43,28 @@ Verified 367 TDA unit tests and desktop/laptop worker/UI progression tests:
 growing waiters, indirect chains, cycles, ownership changes, per-snapshot raw
 references, different PIDs, partial data, ambiguous owners and empty patterns.
 No new backend or graph dashboard was introduced.
+
+## Stage 3 — selected findings report
+
+Add one snapshot or the observed snapshots of one selected pattern. Findings are
+detached copies, with source/snapshot-local raw references, SHA-256 of input,
+analysis/schema version, selection, time labels, recorded table/chart context,
+observation, derivation, caveats, next checks and explicitly labelled user notes.
+Ranking is explicitly based on the candidate's full history, even for a one-
+snapshot report. Search/table filters do not restrict dependency evidence and are
+not misrepresented as analysis scope. Dataset replacement leaves saved evidence
+unchanged. Nothing is stored across page reloads.
+
+Reuses the existing graph PNG renderer without downloading a separate image;
+HTML embeds the captured snapshot's PNG, labelled with its snapshot. Markdown
+keeps textual evidence and points to the separate graph export. No full raw
+dump is included. Preview, sensitivity warning and explicit review checkbox
+precede export. Remove/reorder/notes are local UI operations. All dynamic HTML is
+escaped; Markdown metacharacters/HTML are escaped to avoid active markup or
+external image links. HTML has restrictive CSP, no scripts or external resources,
+and the preview is sandboxed.
+
+Verified 369 TDA unit tests and desktop/laptop browser tests covering capture,
+ordering/removal, notes, PNG, dataset replacement, preview, local download and
+absence of external requests. Hostile filenames/text/notes and unsafe graphic
+URIs are tested. Existing local graph export continues to work.

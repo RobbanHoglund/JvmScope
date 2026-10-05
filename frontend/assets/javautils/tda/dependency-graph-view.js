@@ -2584,7 +2584,7 @@ class ThreadDependencyGraphView {
         });
     }
 
-    async exportPng() {
+    async exportPng({ download = true } = {}) {
         if (!this.elements.svg || !this.visibleNodes.length) return;
         const button = this.elements.export;
         const previousLabel = button?.textContent;
@@ -2643,6 +2643,7 @@ class ThreadDependencyGraphView {
             context.fillRect(0, 0, canvas.width, canvas.height);
             context.drawImage(image, 0, 0, canvas.width, canvas.height);
             URL.revokeObjectURL(url);
+            if (!download) return canvas.toDataURL('image/png');
             const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
             if (!pngBlob) throw new Error('Could not encode PNG.');
             const pngUrl = URL.createObjectURL(pngBlob);

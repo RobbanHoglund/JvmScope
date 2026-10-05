@@ -27,6 +27,39 @@ test('TDA blocking progression preserves focus and snapshot-local evidence throu
     await select.selectOption('');
     await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread')).not.toHaveCount(0);
 });
+
+test('TDA selected findings export locally with immutable origin, notes and safe preview',async({page,appUrl})=>{
+    const external=[];
+    page.on('request',r=>{if(/^https?:/.test(r.url())&&!r.url().startsWith(new URL(appUrl).origin))external.push(r.url());});
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    await upload(page,blockingSequence.join('\n'),'original-incident.txt');
+    await page.locator('#dependencyGraphDetails > summary').click();
+    await page.locator('#blockingPatternSelect').selectOption({label:'Dependencies on worker-1 · peak 3 · recurrence 1'});
+    await page.locator('#addBlockingReport').click();
+    await expect(page.locator('#reportFindings article')).toHaveCount(1);
+    await page.getByRole('textbox',{name:'Notes for finding 1'}).fill('<img src="https://evil.invalid/leak" onerror="alert(1)"> ![x](https://evil.invalid)');
+    await page.locator('[data-blocking-snapshot="1"]').click();
+    await page.locator('#addBlockingReport').click();
+    await expect(page.locator('#reportFindings article')).toHaveCount(2);
+    await page.locator('#reportFindings article').last().getByRole('button',{name:'Move up',exact:true}).click();
+    await page.locator('#sessionInputMode').selectOption('replace');
+    await upload(page,elapsedSnapshot(0,100,'100.000'),'replacement.txt');
+    await page.getByRole('button',{name:'Preview report',exact:true}).click();
+    await expect(page.locator('#reportPreview')).toBeVisible();
+    const frame=page.frameLocator('#reportPreview iframe');
+    await expect(frame.locator('body')).toContainText('original-incident.txt');
+    await expect(frame.locator('body')).not.toContainText('replacement.txt');
+    await expect(frame.locator('body')).toContainText('<img src=');
+    await expect(frame.locator('img')).toHaveCount(2);
+    await expect(page.getByRole('button',{name:'Export HTML',exact:true})).toBeDisabled();
+    await page.locator('#reportPreview input[type=checkbox]').check();
+    const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:'Export HTML',exact:true}).click();
+    const download=await downloaded;expect(download.suggestedFilename()).toBe('jvmscope-findings.html');
+    expect(external).toEqual([]);
+    await page.getByRole('button',{name:'Close preview',exact:true}).click();
+    await page.locator('#reportFindings article').first().getByRole('button',{name:'Remove',exact:true}).click();
+    await expect(page.locator('#reportFindings article')).toHaveCount(1);
+});
 test.use({ trace: 'off' });
 
 const record = message => `javax.net.ssl|DEBUG|A|worker|2026-10-04 12:00:00.000 UTC|Handshake.java:1|${message}`;

@@ -10,11 +10,11 @@ export function renderBlockingPatternView(root, { patterns, selectedKey, dumps, 
             const view = patternSnapshot(pattern, dumps, d.index), o = view.observation;
             return `<button class="btn btn-sm" data-blocking-snapshot="${d.index}" aria-pressed="${d.index === snapshotIndex}">#${d.index + 1}: ${o ? `${o.dependentCount} unique (${o.directCount} direct, ${o.indirectCount} indirect)${o.complete ? '' : ' · partial/lower bound'}${o.uncertainDependentCount ? ` + ${o.uncertainDependentCount} uncertain` : ''}` : h(view.status)}</button>`;
         }).join(' ')}</div>${renderObservation(patternSnapshot(pattern, dumps, snapshotIndex).observation)}<p class="muted">${h(pattern.limitations)}</p>
-        ${onReport ? '<button class="btn btn-sm" id="addBlockingReport">Add to report</button>' : ''}` : ''}`;
+        ${onReport ? '<label>Report scope <select id="blockingReportScope"><option value="snapshot">Selected snapshot only</option><option value="pattern">All observed snapshots of this pattern</option></select></label> <button class="btn btn-sm" id="addBlockingReport">Add to report</button>' : ''}` : ''}`;
     root.querySelector('select').addEventListener('change', e => onSelect(e.target.value));
     root.querySelectorAll('[data-blocking-snapshot]').forEach(el => el.addEventListener('click', () => onSnapshot(Number(el.dataset.blockingSnapshot))));
     root.querySelectorAll('[data-blocking-thread]').forEach(el => el.addEventListener('click', () => onThread(el.dataset.blockingThread, el)));
-    root.querySelector('#addBlockingReport')?.addEventListener('click', () => onReport(pattern));
+    root.querySelector('#addBlockingReport')?.addEventListener('click', () => onReport(pattern, root.querySelector('#blockingReportScope').value === 'pattern'));
 }
 function threadLink(thread) {
     return `<button class="btn btn-sm" data-blocking-thread="${a(thread.sourceKey)}">${h(thread.name)} · snapshot raw L${thread.startLine ?? '?'}–${thread.endLine ?? '?'}</button>`;
