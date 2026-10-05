@@ -100,6 +100,22 @@ test('TDA elapsed regression across files cannot enter measured charts or thread
     await expect(page.locator('#cpuTimelineChart .cpu-timeline-point')).toHaveCount(1);
 });
 
+test('TDA jcmd process prefixes prevent CPU correlation across known and unknown PID boundaries', async ({page, appUrl}) => {
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    const snapshots = ['1234', null, '5678'].map((pid, index) => `${pid ? `${pid}:\n` : ''}${elapsedSnapshot(index, 100 + 700 * index, `${100 + index}.000`, 1000 + 999000 * index)}`);
+    await page.locator('#fileInput').setInputFiles(snapshots.map((text, i) => ({ name: `process-${i}.txt`, mimeType: 'text/plain', buffer: Buffer.from(text) })));
+    await expect(page.locator('#dumpSelect option')).toHaveCount(3);
+    await page.locator('#dumpSelect').selectOption('2');
+    await page.locator('#threadTableBody tr').getByRole('button', { name: 'Details', exact: true }).click();
+    await expect(page.locator('#threadModal')).not.toContainText('70.0%');
+    await page.locator('#threadModal').getByRole('button', { name: 'Close', exact: true }).click();
+    await page.locator('#sessionInputMode').selectOption('replace');
+    await upload(page, `${snapshots[0]}\n${snapshots[2]}`, 'different-processes.txt');
+    await expect(page.locator('#dumpSelect option')).toHaveCount(2);
+    await page.locator('#threadStateChartPanel details > summary').first().click();
+    await expect(page.locator('.cpu-timeline-card')).not.toBeVisible();
+});
+
 test('TDA coarse CPU estimates never enter the measured chart or its peak ranking', async ({page,appUrl}) => {
     const dump = (second,cpu,elapsed='') => `2026-10-04 12:00:0${second}\nFull thread dump OpenJDK 64-Bit Server VM:\n\n"mixed-clock-worker" #11 prio=5 os_prio=0 cpu=${cpu}ms ${elapsed ? `elapsed=${elapsed}s ` : ''}tid=0x11 nid=0x65 runnable [0x1100]\n   java.lang.Thread.State: RUNNABLE\n    at example.Work.run(Work.java:1)\n\nJNI global refs: 1\n`;
     await page.goto(`${appUrl}/jvmscope/tda.html`);

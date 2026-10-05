@@ -587,22 +587,28 @@ export function splitThreadDumpSnapshots(text) {
         if (!FULL_THREAD_DUMP_HEADER_LINE.test(lines[headerIndex])) continue;
 
         const adjacentTimestamp = parseTimestampLine(lines[headerIndex - 1]);
+        // jcmd Thread.print emits PID:, timestamp, then the HotSpot header.
+        // A numeric preamble alone is not process evidence. Retain this exact
+        // triple in the correct snapshot, including optional collector time.
+        const pidPrefix = adjacentTimestamp && /^[1-9]\d*:$/.test(String(lines[headerIndex - 2] || '').trim())
+            ? String(lines[headerIndex - 2]).trim().slice(0, -1) : null;
         // ThreadDumpCollector prepends an ISO timestamp to jcmd's PID/date/header
         // triple. Keep it for chronology, but also retain the actual JVM clock:
         // a collector clock does not measure the atomic thread sampling time.
         // Require the exact prefix shape so unrelated preamble dates stay unused.
         const collectorTimestamp = adjacentTimestamp
-            && /^\d+:$/.test(String(lines[headerIndex - 2] || '').trim())
+            && pidPrefix
             && ISO_TIMESTAMP_LINE.test(String(lines[headerIndex - 3] || '').trim())
             ? parseTimestampLine(lines[headerIndex - 3]) : null;
         const timestamp = collectorTimestamp || adjacentTimestamp;
         boundaries.push({
             headerIndex,
-            startIndex: collectorTimestamp ? headerIndex - 3 : timestamp ? headerIndex - 1 : headerIndex,
+            startIndex: collectorTimestamp ? headerIndex - 3 : pidPrefix ? headerIndex - 2 : timestamp ? headerIndex - 1 : headerIndex,
             timestamp,
             timestampSource: collectorTimestamp ? 'collector' : 'jvm',
             jvmTimestampRaw: adjacentTimestamp?.timestampRaw ?? null,
             boundaryStrategy: timestamp ? 'timestamp-header' : 'header',
+            processId: pidPrefix,
             collectionScope: 'platform-threads',
         });
     }
