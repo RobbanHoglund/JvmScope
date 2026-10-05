@@ -55,7 +55,7 @@ tasks.register('prepareAssets') {
         def entries = []
         fileTree(source).files.sort { it.path }.each { asset ->
             def path = source.relativize(asset.toPath()).toString().replace('\\', '/')
-            if (!(path in ['jvmscope/tls.html', 'jvmscope/tda.html']) && !path.startsWith('assets/')) {
+            if (!(path in ['index.html', 'jvmscope/tls.html', 'jvmscope/tda.html']) && !path.startsWith('assets/') && !path.matches('knowledge/[a-z-]+\\.html')) {
                 throw new GradleException("Unexpected slim asset: $path")
             }
             if (path.toLowerCase().contains('dockerutils')) throw new GradleException("Docker asset in slim build: $path")

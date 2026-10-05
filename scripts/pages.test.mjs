@@ -7,6 +7,7 @@ import { dirname, resolve, sep } from 'node:path';
 import { validatePagesBase, verifyOutputLocation, renderPagesIndex, scanPagesArtifact, verifyPagesArtifact, pagesOutput } from './build-pages.mjs';
 import { startPagesServer } from './preview-pages.mjs';
 import { THREAD_EXAMPLES, TLS_EXAMPLES } from '../frontend/assets/javautils/example-catalog.js';
+import { ARTICLES } from '../frontend/assets/javautils/knowledge/data.js';
 import { projectLegalFiles, verifyProjectLegal } from './project-legal.mjs';
 
 const commit = 'a'.repeat(40), base = '/JvmScope/';
@@ -27,7 +28,7 @@ function put(dir, path, content) {
 function payload(t) {
     const dir = temporary(t);
     const html = `<html><a href="${base}jvmscope/tda.html">Threads</a><script src="${base}assets/js/worker-analysis-worker-12345678.js"></script></html>`;
-    for (const path of ['jvmscope/tda.html','jvmscope/tls.html']) put(dir, path, html);
+    for (const path of ['index.html','jvmscope/tda.html','jvmscope/tls.html','knowledge/index.html',...ARTICLES.map(a => `knowledge/${a.id}.html`)]) put(dir, path, html);
     for (const path of ['assets/js/d3.min.js','assets/img/java-thread-mark.svg','assets/img/java-tls-mark.svg',
         'assets/legal/d3-LICENSE.txt','assets/legal/Apache-2.0.txt',
         'assets/js/worker-analysis-worker-12345678.js','assets/tls-analysis-worker-12345678.js']) put(dir, path, 'fixture');
@@ -66,9 +67,10 @@ test('Pages output cannot be changed to a live runtime or another build director
 test('Pages and Railway keep independent output paths and base-aware tool navigation', async () => {
     const { default:config, toolNavigation } = await import('../frontend/vite.config.js');
     const pages = config({mode:'pages'}), slim = config({mode:'slim'}), preview = config({mode:'production'});
-    assert.deepEqual(Object.keys(pages.build.rollupOptions.input),['tda','tls']);
-    assert.deepEqual(Object.keys(slim.build.rollupOptions.input),['tda','tls']);
-    assert.deepEqual(Object.keys(preview.build.rollupOptions.input),['main','utils','tda','tls']);
+    const knowledge = ['knowledge-index', ...ARTICLES.map(a => `knowledge-${a.id}`)];
+    assert.deepEqual(Object.keys(pages.build.rollupOptions.input),['main',...knowledge,'tda','tls']);
+    assert.deepEqual(Object.keys(slim.build.rollupOptions.input),['main',...knowledge,'tda','tls']);
+    assert.deepEqual(Object.keys(preview.build.rollupOptions.input),[...knowledge,'main','utils','tda','tls']);
     assert.notEqual(pages.build.outDir,slim.build.outDir);
     assert.notEqual(pages.build.outDir,preview.build.outDir);
     assert.equal(pages.build.outDir,pagesOutput);
@@ -78,7 +80,8 @@ test('Pages and Railway keep independent output paths and base-aware tool naviga
         const html = plugin.transformIndexHtml.handler('<head></head><body></body>',{filename:'tda.html'});
         assert.ok(html.includes(`href="${prefix}jvmscope/tda.html" aria-current="page"`));
         assert.ok(html.includes(`href="${prefix}jvmscope/tls.html"`));
-        assert.ok(!html.includes('JvmScope home'));
+        assert.ok(html.includes(`href="${prefix}"`));
+        assert.ok(html.includes(`href="${prefix}knowledge/index.html"`));
     }
 });
 
@@ -161,7 +164,7 @@ test('Strict Pages delivery exercises real HTTP with exact case, MIME, HEAD and 
     assert.equal(root.status,200);
     assert.match(root.headers.get('content-type'),/^text\/html/);
     assert.match(await root.text(),/Thread Dump Analyzer/);
-    for (const path of ['jvmscope/tda.html','jvmscope/tls.html','assets/js/d3.min.js','manifest.json']) {
+    for (const path of ['jvmscope/tda.html','jvmscope/tls.html','knowledge/index.html',...ARTICLES.map(a=>`knowledge/${a.id}.html`),'assets/js/d3.min.js','manifest.json']) {
         const response = await fetch(url+path+'?cache=1');
         assert.equal(response.status,200);
         assert.equal(hash(Buffer.from(await response.arrayBuffer())),hash(readFileSync(resolve(dir,path))));

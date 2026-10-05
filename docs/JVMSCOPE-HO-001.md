@@ -68,3 +68,32 @@ Verified 369 TDA unit tests and desktop/laptop browser tests covering capture,
 ordering/removal, notes, PNG, dataset replacement, preview, local download and
 absence of external requests. Hostile filenames/text/notes and unsafe graphic
 URIs are tested. Existing local graph export continues to work.
+
+## Stage 4 — Java Knowledge Base
+
+Eight separate static articles sit below the analyzer links on home. Local search
+and version/topic filters, capability tables and an upgrade comparison reuse one
+metadata source. Article URLs and reloads work on preview, Java and Pages. The
+Java root now opens home instead of redirecting to TLS; analyzer URLs, aliases,
+health checks and request rejection contracts remain intact. No database or
+analysis API was added. Search text is not sent, persisted or put into URLs.
+
+Sources were checked against OpenJDK JEPs, the JDK 27 file-dump schema and official
+JDK APIs/command/migration guides on 2026-10-05. In particular, compact headers
+are experimental/off in 24, product/off in 25–26 and default on in 27; monitor
+unpinning changes in 24 and older tracePinnedThreads advice is obsolete. G1
+string deduplication requires 8u20+, while major-only tables retain that update
+qualification. Vendor/collector/architecture restrictions are explicit. This
+is a bounded metadata subset, not an exhaustive migration or removed-flag list.
+
+Documented runtime capability, collection evidence and analyzer verification
+are separate sections. Coverage counts are imported from the existing generated
+README evidence at build time, with links to exact build/VM/provider reports.
+Editorial claims are not automatically verified by a capture workflow.
+Maintenance instructions are in `JAVA-KNOWLEDGE-BASE.md`.
+
+Verified full Node suite (685 tests), 441 capture reports/documentation replay,
+12 Pages browser controls on desktop/laptop (all four stages), 73-file Pages
+artifact validation and 1320 real Java HTTP/configuration assertions, including
+every new page/resource, gzip, HEAD, ETag and graceful shutdown. Docker is absent
+from this machine; a Linux container run is environment-blocked, not passed.

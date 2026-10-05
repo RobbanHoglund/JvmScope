@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import { FRONTEND_PORT, HOST, SLIM_PORT, SLIM_URL } from './local-dev-config.mjs';
 import { assertPortsAvailable, waitForServiceReady } from './local-dev.mjs';
 import viteConfig from '../frontend/vite.config.js';
+import { ARTICLES } from '../frontend/assets/javautils/knowledge/data.js';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { withFrontendInstallLock } from './frontend-install.mjs';
@@ -36,24 +37,26 @@ test('the app and optional Vite preview use fixed high ports without an analysis
     assert.equal(server.proxy, undefined);
 });
 
-test('the application excludes portal entry points supplied by the optional frontend preview', () => {
+test('the application includes home and knowledge pages but excludes the optional preview utilities page', () => {
     assert.ok(SLIM_PORT > 20_000 && SLIM_PORT <= 65_535);
     assert.equal(SLIM_URL, `http://${HOST}:${SLIM_PORT}`);
     const full = viteConfig({ mode: 'production' });
     const slim = viteConfig({ mode: 'slim' });
-    assert.deepEqual(Object.keys(full.build.rollupOptions.input).sort(), ['main', 'tda', 'tls', 'utils']);
-    assert.deepEqual(Object.keys(slim.build.rollupOptions.input).sort(), ['tda', 'tls']);
+    const knowledge = ['knowledge-index', ...ARTICLES.map(a=>`knowledge-${a.id}`)];
+    assert.deepEqual(Object.keys(full.build.rollupOptions.input).sort(), [...knowledge, 'main', 'tda', 'tls', 'utils'].sort());
+    assert.deepEqual(Object.keys(slim.build.rollupOptions.input).sort(), [...knowledge, 'main', 'tda', 'tls'].sort());
     assert.notEqual(full.build.outDir, slim.build.outDir);
     const navigation = config => config.plugins.find(plugin => plugin.name === 'tool-navigation')
         .transformIndexHtml.handler('<head></head><body></body>', { filename: '/jvmscope/tls.html' });
     const fullNavigation = navigation(full);
     const slimNavigation = navigation(slim);
     assert.match(fullNavigation, /href="\/">JvmScope home/);
-    assert.doesNotMatch(slimNavigation, /JvmScope home/);
+    assert.match(slimNavigation, /JvmScope home/);
     for (const html of [fullNavigation, slimNavigation]) {
         assert.doesNotMatch(html, /dockerutils|Docker images/);
         assert.match(html, /href="\/jvmscope\/tls.html" aria-current="page"/);
         assert.match(html, /href="\/jvmscope\/tda.html"/);
+        assert.match(html, /href="\/knowledge\/index.html"/);
     }
 });
 

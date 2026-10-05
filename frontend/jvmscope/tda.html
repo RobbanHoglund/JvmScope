@@ -199,7 +199,7 @@
                             <ul class="docs-list">
                                 <li>Choose dumps, drop files onto the page, or use <strong>Paste</strong>. The analysis workspace appears after input is accepted.</li>
                                 <li><strong>Sample</strong> opens the built-in overview. <strong>Browse examples</strong>, or the arrow beside Sample, opens named symptom cases and Java 25/26/27 captures. Cards label controlled JVM captures and synthetic scenarios. Selecting an example starts a new session; browsing keeps your current data.</li>
-                                <li><strong>Clear</strong> cancels pending input, removes the session and resets all filters. Reloading the page also clears the in-memory session. See <strong>Sessions and input errors</strong> to combine captures.</li>
+                                <li><strong>Clear</strong> cancels pending input, removes the session and resets all filters. Selected report findings keep their captured evidence until individually removed or the page is reloaded. Reloading clears all in-memory data. See <strong>Sessions and input errors</strong> to combine captures.</li>
                             </ul>
                             <h3 id="guide-session" class="docs-subtitle">Sessions and input errors</h3>
                             <ul class="docs-list">
@@ -209,7 +209,7 @@
                                 <li><strong>Replace session</strong> starts a new capture. Invalid input keeps the valid session; valid files in a mixed batch are still accepted. Sample and library examples always start a new session.</li>
                                 <li>Empty, invalid or unreadable input opens an error dialog. Partial acceptance opens a warning with source details and the number of snapshots loaded. The message says whether the existing session was kept. You can retry the same file after correcting it.</li>
                                 <li>The input status shows the source being analyzed. Additions are queued in submission order; Clear cancels the queue and its analysis.</li>
-                                <li>Use sources from the same JVM for thread history. Different reported process IDs split histories. Missing process identity cannot prove that sources came from one JVM; matching uses reported thread IDs, not names alone.</li>
+                                <li>Use sources from the same JVM for thread history. Different reported process IDs split histories, including strict classical jcmd PID/date/header prefixes. Missing process identity cannot prove that sources came from one JVM; matching uses reported thread IDs, not names alone. Equal PIDs do not prove process identity across hosts, namespaces or restarts.</li>
                             </ul>
                             <h3 id="guide-input-formats" class="docs-subtitle">Formats and Java versions</h3>
                             <ul class="docs-list">
@@ -287,6 +287,10 @@
                                 <li>Scope selects connected threads, active contention or confirmed deadlock members. Search accepts names, thread IDs, lock types/IDs and top frames.</li>
                                 <li>Wheel to zoom; drag the background to pan or a node to pin it. Use the minimap, Fit, Reflow, fullscreen, neighborhood focus and PNG export for navigation.</li>
                                 <li>A graph cycle is a diagnostic signal. It becomes a <strong>confirmed deadlock</strong> only with the JVM’s explicit deadlock evidence.</li>
+                                <li><strong>Follow a blocking pattern</strong> ranks candidates by peak unique observed dependents, then exact recurrence in adjacent comparable snapshots. Direct and indirect dependents are counted once, including cyclic graphs. Ambiguous owners are counted separately. Selecting a pattern focuses the existing graph and keeps that selection while you change snapshots.</li>
+                                <li>Relation labels distinguish <strong>observed again</strong>, <strong>newly observed</strong>, <strong>not observed</strong> and <strong>uncertain</strong>. Each graph comes from one snapshot. Partial captures cannot establish that waits decreased or a problem disappeared. Repeated waits do not prove continuous blocking; matching lock addresses do not establish object identity across snapshots.</li>
+                                <li><strong>Add to report</strong> captures the selected snapshot or the pattern’s observed snapshots. The report panel supports ordering, removal and user notes. Captured findings keep their original source references and graph after a session is cleared or replaced. Reload removes them. Table/search filters are recorded context; dependency evidence uses full parsed snapshots.</li>
+                                <li>Preview the selected findings and review sensitive names, classes, filenames and notes before local Markdown or print-friendly HTML export. Raw dumps are not included, and no anonymization guarantee is made. HTML includes the captured graph; use the existing PNG export for a separate image.</li>
                             </ul>
                             <h3 id="guide-runnable" class="docs-subtitle">Recurring RUNNABLE stack shapes</h3>
                             <ul class="docs-list">

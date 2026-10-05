@@ -15,6 +15,23 @@ original evidence instead of treating a missing diagnostic as proof of health.
 | Explore monitor deadlocks, contention and dependency graphs | Inspect certificate facts and failure explanations |
 | Inspect virtual threads and reported carrier relationships | Filter by time period, host, SNI, direction and outcome |
 | Read highlighted stacks beside thread details | Navigate from the inspector to original log lines |
+| Follow snapshot-local blocking patterns and export selected findings | Keep partial or contradictory outcomes qualified |
+
+The home page also links to a **Java Knowledge Base** with eight source-backed
+articles, local search/version/topic filters and a scoped upgrade comparison.
+It distinguishes documented JVM capabilities, actual collection fields and the
+generated analyzer evidence below. It does not certify every vendor/update or
+recommend tuning flags from a thread dump.
+
+Within TDA's existing dependency map, choose **Follow a blocking pattern** to
+inspect unique direct/indirect dependents per snapshot. Priority is explained
+by observed dependent count and comparable recurrence; no relations from
+different snapshots are combined into a deadlock. **Add to report** captures
+one snapshot or the pattern's observed snapshots, with raw references and
+editable user notes. Preview and review sensitive content before local Markdown
+or HTML export. Findings retain their original evidence when inputs change;
+reload removes them. Table filters are recorded context, not exclusions from
+blocking evidence. [Implementation and verification](docs/JVMSCOPE-HO-001.md).
 
 Both tools include searchable Help and a **Browse examples** library: 15 thread
 examples and 20 TLS examples. Try the four-snapshot CPU-hot program, virtual

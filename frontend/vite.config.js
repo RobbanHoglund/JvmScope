@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import { resolve } from "node:path";
 import { FRONTEND_PORT, HOST } from "../scripts/local-dev-config.mjs";
 import { projectLegalFiles } from "../scripts/project-legal.mjs";
+import { ARTICLES } from './assets/javautils/knowledge/data.js';
+const knowledgeInputs = Object.fromEntries(['index', ...ARTICLES.map(a => a.id)].map(id => [`knowledge-${id}`, resolve(import.meta.dirname, `knowledge/${id}.html`)]));
 
 const rootDir = import.meta.dirname;
 
@@ -34,7 +36,7 @@ function analyzerRedirects() {
   return { name: 'analyzer-route-redirects', configureServer: install, configurePreviewServer: install };
 }
 
-// Optional frontend-only preview includes the portal; the Java app ships TLS/TDA.
+// Home, analyzers and knowledge pages ship together on Java and static Pages.
 // Separate output directories keep preview and application assets independent.
 export function toolNavigation({ slim = false } = {}) {
   let base = '/';
@@ -44,10 +46,10 @@ export function toolNavigation({ slim = false } = {}) {
     transformIndexHtml: {
       order: 'pre',
       handler(html, context) {
-        const active = context.filename.endsWith('tls.html') ? 'tls'
+        const active = context.filename.includes('knowledge') ? 'knowledge' : context.filename.endsWith('tls.html') ? 'tls'
           : context.filename.endsWith('tda.html') ? 'tda' : 'home';
         const link = (name, path, label) => `<a href="${path}"${active === name ? ' aria-current="page"' : ''}>${label}</a>`;
-        const navigation = `<nav class="tool-nav" aria-label="Analysis tools">${slim ? '' : `<a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>`}${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}</nav>`;
+        const navigation = `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
         return html.replace('</head>', '<link rel="stylesheet" href="/assets/tool-navigation.css" />\n</head>')
           .replace(/(<body\b[^>]*>)/, `$1\n${navigation}`);
       },
@@ -88,9 +90,12 @@ export default defineConfig(({ mode }) => ({
 
     rollupOptions: {
       input: ['slim', 'pages'].includes(mode) ? {
+        main: resolve(rootDir, 'index.html'),
+        ...knowledgeInputs,
         tda: resolve(rootDir, "jvmscope/tda.html"),
         tls: resolve(rootDir, "jvmscope/tls.html"),
       } : {
+        ...knowledgeInputs,
         main: resolve(rootDir, "index.html"),
         utils: resolve(rootDir, "utils.html"),
         tda: resolve(rootDir, "jvmscope/tda.html"),

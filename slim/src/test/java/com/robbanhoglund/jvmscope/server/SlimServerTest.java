@@ -75,8 +75,8 @@ public final class SlimServerTest {
             check(new String(health.body(), StandardCharsets.UTF_8).contains("\"application\":\"JvmScope\""), "JvmScope health identity");
             check(header(health, "Cache-Control").equals("no-store"), "health never cached");
             for (String path : List.of("/", "/index.html")) {
-                var redirect = request("GET", path);
-                check(redirect.statusCode() == 302 && header(redirect, "Location").equals("/jvmscope/tls.html"), "TLS landing redirect");
+                var landing = request("GET", path);
+                check(landing.statusCode() == 200 && new String(landing.body(), StandardCharsets.UTF_8).contains("Java Knowledge Base"), "toolbox and knowledge landing page");
             }
             var assets = SlimServer.loadAssets();
             for (var notice : Map.of("LICENSE", "JvmScope-LICENSE.txt", "NOTICE", "JvmScope-NOTICE.txt",

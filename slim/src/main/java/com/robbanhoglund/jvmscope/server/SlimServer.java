@@ -24,7 +24,10 @@ import java.util.regex.Pattern;
 /** Static TLS/TDA delivery only. No file uploads, registry API or filesystem routes. */
 public final class SlimServer implements AutoCloseable {
     private static final byte[] HEALTH = "{\"status\":\"UP\",\"application\":\"JvmScope\"}\n".getBytes(StandardCharsets.UTF_8);
-    private static final Set<String> PAGES = Set.of("/jvmscope/tls.html", "/jvmscope/tda.html");
+    private static final Set<String> PAGES = Set.of("/index.html", "/jvmscope/tls.html", "/jvmscope/tda.html",
+        "/knowledge/index.html", "/knowledge/thread-dumps.html", "/knowledge/thread-counters.html",
+        "/knowledge/virtual-threads.html", "/knowledge/string-interning.html", "/knowledge/string-memory.html",
+        "/knowledge/object-headers.html", "/knowledge/gc-memory.html", "/knowledge/upgrade-checklist.html");
     private static final Pattern HASHED_ASSET = Pattern.compile("/assets/(?:js|css)/[^/]+-[A-Za-z0-9_-]{8,}\\.(?:js|css)");
     private final HttpServer server;
     private final ThreadPoolExecutor workers;
@@ -153,12 +156,7 @@ public final class SlimServer implements AutoCloseable {
                 write(exchange, HEALTH);
                 return;
             }
-            if (path.equals("/") || path.equals("/index.html")) {
-                exchange.getResponseHeaders().set("Location", "/jvmscope/tls.html");
-                exchange.getResponseHeaders().set("Cache-Control", "no-store");
-                exchange.sendResponseHeaders(302, -1);
-                return;
-            }
+            if (path.equals("/")) path = "/index.html";
             if (path.equals("/javautils/tls.html") || path.equals("/javautils/tda.html")) {
                 String query = exchange.getRequestURI().getRawQuery();
                 exchange.getResponseHeaders().set("Location", path.replace("/javautils/", "/jvmscope/")

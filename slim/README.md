@@ -6,8 +6,10 @@ delivers their static files and `/health`; it never receives trace contents.
 
 The application includes TLS and TDA and has no external Java libraries. Spring
 Boot delivery and Docker/OCI image analysis have been removed. The optional Vite
-frontend preview also includes portal pages, but the Java package serves only
-the analyzers. Links at the top switch between TLS and TDA.
+frontend preview also includes a utilities page. The Java package serves the
+home page, both analyzers and the static Java Knowledge Base. Navigation links
+switch between them. The root now opens home instead of redirecting to TLS;
+direct analyzer links are unchanged.
 Both analyzer pages use `analyzer-shell.css` for their UI font and header layout,
 with a teal handshake symbol for TLS and a blue thread symbol for TDA.
 
@@ -148,7 +150,8 @@ runtime/JAR. `check` includes real socket tests for every packaged resource,
 gzip/ETag/HEAD behavior, unsupported routes/methods/bodies, traversal rejection,
 concurrent requests and graceful shutdown. The same desktop/laptop TLS/TDA
 browser cases run against the frontend preview and the packaged application.
-Application navigation contains only TLS/TDA; the preview also links to the portal.
+Application navigation includes home, TLS/TDA and the knowledge base. The
+optional preview utilities page is excluded from the Java package.
 
 ```bash
 node scripts/slim/lifecycle.mjs

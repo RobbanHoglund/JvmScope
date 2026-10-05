@@ -5,6 +5,7 @@ import { lstatSync, readdirSync, readFileSync, realpathSync, writeFileSync, exis
 import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { THREAD_EXAMPLES, TLS_EXAMPLES } from '../frontend/assets/javautils/example-catalog.js';
+import { ARTICLES } from '../frontend/assets/javautils/knowledge/data.js';
 import { projectLegalAssets, verifyProjectLegal } from './project-legal.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -37,7 +38,8 @@ export function verifyOutputLocation(output = pagesOutput) {
 
 export function scanPagesArtifact(directory, { completed = false } = {}) {
     const allowed = new Set([
-        'jvmscope/tda.html', 'jvmscope/tls.html',
+        'index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html',
+        ...ARTICLES.map(a => `knowledge/${a.id}.html`),
         'assets/js/d3.min.js', 'assets/img/java-thread-mark.svg', 'assets/img/java-tls-mark.svg',
         'assets/legal/d3-LICENSE.txt', 'assets/legal/Apache-2.0.txt',
         ...Object.keys(projectLegalAssets),
@@ -98,7 +100,7 @@ footer a{color:#b5cfe8}footer a:focus-visible{outline:2px solid #72e0d1;outline-
 <section class="tools" aria-label="Analysis tools">
 <a class="tool" href="${base}jvmscope/tda.html"><img src="${base}assets/img/java-thread-mark.svg" alt=""><h2>Thread Dump Analyzer</h2><p>Compare snapshots, inspect stacks and explore thread dependencies, deadlocks and measured CPU activity.</p><span class="open">Open thread analyzer →</span></a>
 <a class="tool tls" href="${base}jvmscope/tls.html"><img src="${base}assets/img/java-tls-mark.svg" alt=""><h2>TLS Log Analyzer</h2><p>Follow handshake messages, inspect certificates and narrow a capture by time, host or diagnostic evidence.</p><span class="open">Open TLS analyzer →</span></a>
-</section><p class="privacy">Your files are analyzed locally in your browser. Nothing is uploaded. Both tools include examples to explore without a private capture.</p>
+</section><section aria-label="Java Knowledge Base"><h2>Java Knowledge Base</h2><p>Choose diagnostic evidence, check version-dependent capabilities and compare potential upgrade changes.</p><a href="${base}knowledge/index.html">Explore eight Java knowledge articles →</a></section><p class="privacy">Your files are analyzed locally in your browser. Nothing is uploaded. Both tools include examples to explore without a private capture.</p>
 <footer><span>Version ${version}</span><a href="${base}assets/legal/JvmScope-LICENSE.txt">Apache-2.0 license</a><a href="${base}THIRD-PARTY-NOTICES.md">Third-party notices</a></footer>
 </main></body></html>\n`;
 }
@@ -115,7 +117,7 @@ export async function buildPages(base = defaultPagesBase) {
     const require = createRequire(resolve(root, 'frontend/package.json'));
     const { build } = await import(pathToFileURL(require.resolve('vite')).href);
     await build({ configFile: resolve(root, 'frontend/vite.config.js'), mode: 'pages', base });
-    const files = scanPagesArtifact(pagesOutput);
+    const files = scanPagesArtifact(pagesOutput).filter(file => file.path !== 'index.html');
     const commit = revision();
     writeFileSync(resolve(pagesOutput, 'index.html'), renderPagesIndex(base, commit));
     writeFileSync(resolve(pagesOutput, '.nojekyll'), '');
@@ -141,13 +143,14 @@ export function verifyPagesArtifact(directory = pagesOutput) {
         || info.base !== manifest.base || info.target !== 'pages') throw new Error('Pages build metadata does not match.');
     const payload = files.filter(file => file.path !== 'manifest.json').sort(byPath);
     if (JSON.stringify(payload) !== JSON.stringify(manifest.files)) throw new Error('Pages manifest does not match the payload.');
-    for (const name of ['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html']) {
+    for (const name of ['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html', ...ARTICLES.map(a => `knowledge/${a.id}.html`)]) {
         const html = readFileSync(resolve(directory, name), 'utf8');
         for (const match of html.matchAll(/(?:href|src)\s*=\s*(['"])(.*?)\1/g)) {
             const url = match[2];
             if (url.startsWith('#') || url.startsWith('data:') || /^https:\/\//.test(url)) continue;
             if (!url.startsWith(manifest.base)) throw new Error(`URL outside Pages base in ${name}`);
-            if (!files.some(file => file.path === url.slice(manifest.base.length))) throw new Error(`Missing linked asset in ${name}`);
+            const path = url.slice(manifest.base.length) || 'index.html';
+            if (!files.some(file => file.path === path)) throw new Error(`Missing linked asset in ${name}: ${url}`);
         }
     }
     return files;
