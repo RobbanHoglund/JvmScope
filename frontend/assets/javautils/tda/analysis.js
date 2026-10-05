@@ -1,4 +1,5 @@
 // DOM-free TDA analysis shared by the worker and focused regression tests.
+import { buildBlockingPatterns } from './blocking-patterns.js';
 import { analyzeThreadDump, extractNormalizedFrames, parseDeadlocks, parseThreadDump } from './parser.js';
 import { annotateDeadlocks } from './deadlocks.js';
 import { observedVirtualThreadIds } from './dump-to-file.js';
@@ -1400,5 +1401,5 @@ export function analyzeThreadDumpData(text, cpuThresholds = getRunnableCpuThresh
     }));
     const parsedDumps = annotateDumpDeltas(smartAnalysisDumps);
     return { ...sourceMetadata, parserResult, parsedDumps, threadSeries: seriesAnalysis.series,
-        runnableStackClusters: buildRunnableStackClusters(parsedDumps) };
+        runnableStackClusters: buildRunnableStackClusters(parsedDumps), blockingPatterns: buildBlockingPatterns(parsedDumps) };
 }

@@ -2,6 +2,31 @@ import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { test, expect } from './fixtures.js';
 import { elapsedSnapshot, elapsedRegressionSnapshots } from '../../tda/elapsed-regression-fixture.js';
+import { blockingSequence } from '../../tda/blocking-fixture.js';
+
+test('TDA blocking progression preserves focus and snapshot-local evidence through navigation', async ({page, appUrl}) => {
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    await upload(page, blockingSequence.join('\n'), 'incident.txt');
+    await expect(page.locator('#dumpSelect option')).toHaveCount(3);
+    await page.locator('#dependencyGraphDetails > summary').click();
+    const select = page.locator('#blockingPatternSelect');
+    await select.selectOption({label: 'Dependencies on worker-1 · peak 3 · recurrence 1'});
+    const selected = await select.inputValue();
+    await expect(page.locator('#blockingPatternView')).toContainText('#1: 1 unique');
+    await page.locator('[data-blocking-snapshot="1"]').click();
+    await expect(select).toHaveValue(selected);
+    await expect(page.locator('#blockingPatternView')).toContainText('newly observed');
+    await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread')).toHaveCount(4);
+    await page.locator('[data-blocking-thread]').first().click();
+    await expect(page.locator('#threadModal')).toContainText('worker-1');
+    await page.locator('#threadModal').getByRole('button', {name:'Close',exact:true}).click();
+    await page.locator('[data-blocking-snapshot="2"]').click();
+    await expect(select).toHaveValue(selected);
+    await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread')).toHaveCount(0);
+    await expect(page.locator('#blockingPatternView')).toContainText('does not establish that the problem was resolved');
+    await select.selectOption('');
+    await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread')).not.toHaveCount(0);
+});
 test.use({ trace: 'off' });
 
 const record = message => `javax.net.ssl|DEBUG|A|worker|2026-10-04 12:00:00.000 UTC|Handshake.java:1|${message}`;

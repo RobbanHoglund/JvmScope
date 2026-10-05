@@ -544,7 +544,11 @@ class ThreadDependencyGraphView {
         this.resizeObserver.observe(this.elements.stage);
     }
 
-    setData({ threads = [], deadlocks = [], snapshotLabel = '' } = {}) {
+    setData({ threads = [], deadlocks = [], snapshotLabel = '', incidentSourceKeys = null } = {}) {
+        const incidentKey = incidentSourceKeys == null ? null : [...incidentSourceKeys].sort().join('|');
+        const incidentChanged = incidentKey !== this.incidentKey;
+        this.incidentKey = incidentKey;
+        this.incidentSourceKeys = incidentSourceKeys;
         if (!this.root) return;
         const hasThreads = Array.isArray(threads) && threads.length > 0;
         this.root.classList.toggle('hidden', !hasThreads);
@@ -563,7 +567,7 @@ class ThreadDependencyGraphView {
             return;
         }
 
-        const dataChanged = this.threadsReference !== threads || this.deadlocksReference !== deadlocks;
+        const dataChanged = incidentChanged || this.threadsReference !== threads || this.deadlocksReference !== deadlocks;
         this.threadsReference = threads;
         this.deadlocksReference = deadlocks;
         if (!dataChanged) {
@@ -709,7 +713,18 @@ class ThreadDependencyGraphView {
         }
 
         let meta = this.emptyProjectionMeta();
-        if (this.focusNodeId) {
+        if (this.incidentSourceKeys != null) {
+            // Use the existing renderer for this snapshot's complete dependency
+            // neighborhood, including chains longer than the manual two hops.
+            const keep = new Set(this.incidentSourceKeys.map(key => `thread:${key}`));
+            for (const edge of this.model.resourceEdges) {
+                if (keep.has(edge.source) || keep.has(edge.target)) {
+                    for (const id of [edge.source, edge.target]) if (this.fullNodeById.get(id)?.type === 'lock') keep.add(id);
+                }
+            }
+            candidates = this.model.nodes.filter(node => keep.has(node.id));
+            edges = this.model.resourceEdges.filter(edge => keep.has(edge.source) && keep.has(edge.target));
+        } else if (this.focusNodeId) {
             // Neighborhood focus intentionally overrides the selected scope and
             // density profile. The full model remains available, but only two
             // relationship hops around the selected node are rendered.

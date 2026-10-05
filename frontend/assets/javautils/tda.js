@@ -28,6 +28,12 @@ import { formatSnapshotTime } from './tda/time-quality.js';
 import { buildThreadDetailsViewModel, getThreadDetailsTabOrder } from './tda/thread-modal.js';
 import { bindThreadStackControls } from './tda/thread-stack-view.js';
 import { escapeAttr, escapeHtml } from './tda/ui-safety.js';
+import { renderBlockingPatternView } from './tda/blocking-pattern-view.js';
+import './tda/blocking-patterns.css';
+import { patternSnapshot } from './tda/blocking-patterns.js';
+
+let blockingPatterns = [];
+let selectedBlockingPatternKey = '';
 
 
 const UI = {
@@ -2129,10 +2135,18 @@ function renderDependencyGraph() {
         ? `Snapshot ${selectedDumpIndex + 1}/${parsedDumps.length}${selected.timestamp ? ` · ${selected.timestamp}` : ''}`
         : '';
 
+    const pattern = blockingPatterns.find(p => p.key === selectedBlockingPatternKey);
+    renderBlockingPatternView(document.getElementById('blockingPatternView'), {
+        patterns: blockingPatterns, selectedKey: selectedBlockingPatternKey, dumps: parsedDumps,
+        snapshotIndex: selected?.index, onSelect: key => { selectedBlockingPatternKey = key; renderDependencyGraph(); },
+        onSnapshot: index => navigateToDump('direct', index),
+        onThread: (key, element) => { const thread = allThreads.find(t => t.sourceKey === key); if (thread) openThreadModal(thread, element); },
+    });
     dependencyGraphView.setData({
         threads: allThreads,
         deadlocks,
         snapshotLabel,
+        incidentSourceKeys: pattern ? patternSnapshot(pattern, parsedDumps, selected?.index).observation?.sourceKeys ?? [] : null,
     });
 }
 
@@ -4125,6 +4139,7 @@ function beginInputRequest() {
 }
 
 function applySessionAnalysis(result) {
+    blockingPatterns = result.blockingPatterns || [];
     ({ parserResult, parsedDumps, threadSeries, runnableStackClusters } = result);
     cpuTimelineModelCache = null;
     UI.fileName.textContent = sessionSources.length === 1
@@ -4155,6 +4170,7 @@ function showInputFailure(summary, guidance) {
 }
 
 function resetSessionView() {
+    selectedBlockingPatternKey = '';
     invalidateRawDumpWorkspace();
     if (UI.modal?.open) closeThreadModal();
     resetDatasetScopedUi(UI);
@@ -4577,6 +4593,7 @@ UI.clearBtn?.addEventListener('click', () => {
     showSessionInputStatus('');
 
     parsedDumps = [];
+    blockingPatterns = [];
     threadSeries = [];
     selectedDumpIndex = 0;
     parserResult = null;

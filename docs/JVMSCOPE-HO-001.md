@@ -21,3 +21,25 @@ and real worker browser tests on desktop/laptop. Unit controls cover joined and
 separate input, collector time, same/different/missing PID and known–unknown–other
 known PID, temporal values, raw boundaries, history/change state and measured
 charts. No captures, compatibility reports or persistent diagnostic data changed.
+
+## Stage 2 — blocking progression
+
+The worker reuses the snapshot dependency builder (including class-init and
+explicit lock ownership). Incoming paths are traversed with visited sets; the
+blocker is excluded from its own dependent count, even in cycles. Ambiguous
+owners are separate from definite counts. Prioritization is peak unique observed
+dependents, then exact adjacent comparable recurrence; it is not an impact score.
+Only endpoint thread series cross snapshots. Lock addresses never do.
+
+Selection lives inside the existing dependency map, reusing its renderer and
+thread inspector. It survives snapshot navigation and resets on dataset replace.
+Full reachable neighborhoods are shown rather than the manual two-hop focus.
+Partial/process-incompatible snapshots cannot prove disappearance or decreases;
+counts remain observations/lower bounds. Changed stacks and repeated waits do not
+establish progress or continuous blocking. Unresolved owners remain in the full
+map and do not become identified-blocker candidates.
+
+Verified 367 TDA unit tests and desktop/laptop worker/UI progression tests:
+growing waiters, indirect chains, cycles, ownership changes, per-snapshot raw
+references, different PIDs, partial data, ambiguous owners and empty patterns.
+No new backend or graph dashboard was introduced.
