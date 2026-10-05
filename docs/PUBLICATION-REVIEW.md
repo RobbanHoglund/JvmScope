@@ -147,3 +147,30 @@ or every vendor build. Already open tabs and deployed artifacts receive the new
 behavior only after rebuilding/redeployment and reload. User captures remain local
 and are not rewritten or uploaded. Use the exact pushed revision's Actions results
 for the final publication decision.
+
+## Launch-review corrections — 2026-10-05
+
+The independent review of `2bd876d` reproduced two remaining interpretation gaps:
+
+- **LAUNCH-01:** A thread elapsed counter that decreases beyond its printed
+  resolution now starts an uncertain, separate series even when JVM identifiers
+  and process identity match. CPU/allocation deltas and rates, lock transitions,
+  history continuity and reliable ended-thread counts do not cross this boundary.
+  The temporal model also rejects the comparison if a caller supplies a stale
+  exact match. Missing/equal counters retain the normal timestamp fallback, and
+  later adjacent observations can measure the new series independently.
+- **LAUNCH-02:** Modern produced/consumed role-bearing handshake records must
+  agree on one local endpoint role, including Finished without ClientHello,
+  Certificate/CertificateRequest and retry ClientHello. Contradictory groups stay
+  unknown in filters, statistics, timeline and inspector with raw records/source
+  positions preserved. Compatible partial Finished exchanges, normal client/server
+  retries, sequential connections and other threads remain independent.
+
+Negative and positive cases exercise the parser, shared models and browser worker
+paths in both preview and strict-static Pages hosting. Both in-app guides explain
+the qualifications. Controlled JVM fixture replay rejects contradictory endpoint
+roles before accepting a sample; existing captures and generated coverage are
+not rewritten. These are interpretation changes, with no new backend endpoints,
+uploads, persistent user data or schema migration. Existing deployed bundles and
+open tabs need redeployment/reload to receive them; the exact pushed revision's
+CI remains the release evidence.

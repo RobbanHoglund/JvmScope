@@ -1,6 +1,6 @@
 /** Pure cross-snapshot metric analysis. This module has no DOM or D3 dependencies. */
 
-import { threadComparisonInterval } from './time-quality.js';
+import { ELAPSED_REGRESSION_REASON, threadComparisonInterval } from './time-quality.js';
 
 function finiteNumber(value) {
     if (value == null || value === '') return null;
@@ -20,16 +20,16 @@ function initializeThread(thread, status = 'first-occurrence') {
     thread.cpuRatePercent = null;
     thread.cpuRateBasis = 'unavailable';
     thread.cpuDeltaStatus = status;
-    thread.cpuIntervalQuality = 'unavailable';
+    thread.cpuIntervalQuality = status === 'elapsed-counter-regressed' ? 'conflicting' : 'unavailable';
     thread.cpuIntervalUncertaintyMs = null;
-    thread.cpuIntervalReason = null;
+    thread.cpuIntervalReason = status === 'elapsed-counter-regressed' ? ELAPSED_REGRESSION_REASON : null;
     thread.allocatedDeltaBytes = null;
     thread.allocationIntervalMs = null;
     thread.allocationRateBytesPerSecond = null;
     thread.allocationRateBasis = 'unavailable';
     thread.allocationDeltaStatus = status;
-    thread.allocationIntervalQuality = 'unavailable';
-    thread.allocationIntervalReason = null;
+    thread.allocationIntervalQuality = status === 'elapsed-counter-regressed' ? 'conflicting' : 'unavailable';
+    thread.allocationIntervalReason = status === 'elapsed-counter-regressed' ? ELAPSED_REGRESSION_REASON : null;
 }
 
 /**
@@ -46,7 +46,8 @@ export function annotateCpuRates(dumps, series) {
         dumpsByIndex.set(dump?.index ?? position, dump);
         (dump?.threads || []).forEach((thread) => initializeThread(
             thread,
-            thread?.seriesMatchStatus === 'ambiguous' ? 'identity-ambiguous' : 'first-occurrence',
+            thread?.seriesMatchReason === 'elapsed-counter-regressed' ? 'elapsed-counter-regressed'
+                : thread?.seriesMatchStatus === 'ambiguous' ? 'identity-ambiguous' : 'first-occurrence',
         ));
     });
 
@@ -91,6 +92,13 @@ export function annotateCpuRates(dumps, series) {
             }
 
             const interval = intervalBetween(previous, current, dumpsByIndex);
+            // Also defend this shared model when called with externally correlated data.
+            if (interval.continuity === 'conflicting') {
+                initializeThread(thread, 'elapsed-counter-regressed');
+                diagnostics.intervalsUnavailable += 1;
+                diagnostics.allocationIntervalsUnavailable += 1;
+                continue;
+            }
 
             const previousCpuMs = finiteNumber(previous.thread?.cpuMs);
             const currentCpuMs = finiteNumber(thread?.cpuMs);

@@ -1,5 +1,7 @@
 /** Pure within-snapshot identity helpers. This module has no DOM or D3 dependencies. */
 
+import { threadElapsedComparison } from './time-quality.js';
+
 function normalizedIdentityValue(value) {
     return String(value ?? '').trim().toLowerCase();
 }
@@ -35,6 +37,9 @@ function compareSeriesIdentity(current, previous) {
     const strongest = equal.find((field) =>
         !field.requiresName || String(current?.threadName || '') === String(previous?.threadName || ''),
     );
+    if (strongest && threadElapsedComparison(previous, current).status === 'regressed') {
+        return { matched: false, hasElapsedConflict: true, reason: null };
+    }
     return {
         matched: Boolean(strongest),
         hasPartialConflict: false,
@@ -136,13 +141,15 @@ export function correlateThreadsAcrossSnapshots(dumps) {
         const proposals = threads.map((thread) => {
             const candidates = [];
             let hasPartialConflict = false;
+            let hasElapsedConflict = false;
             for (const previous of identityCandidates(thread, previousIdentityIndexes)) {
                 identityComparisons += 1;
                 const comparison = compareSeriesIdentity(thread, previous);
                 if (comparison.hasPartialConflict) hasPartialConflict = true;
+                if (comparison.hasElapsedConflict) hasElapsedConflict = true;
                 if (comparison.matched) candidates.push({ thread: previous, reason: comparison.reason });
             }
-            return { candidates, hasPartialConflict };
+            return { candidates, hasPartialConflict, hasElapsedConflict };
         });
 
         const claimCounts = new Map();
@@ -156,6 +163,12 @@ export function correlateThreadsAcrossSnapshots(dumps) {
             const proposal = proposals[threadIndex];
             const uniqueCandidate = proposal.candidates.length === 1 ? proposal.candidates[0] : null;
             const isOneToOne = uniqueCandidate && claimCounts.get(uniqueCandidate.thread) === 1;
+
+            if (proposal.hasElapsedConflict) {
+                startThreadSeries(thread, dump.index ?? dumpPosition, threadIndex, usedSeriesKeys, 'ambiguous', 'elapsed-counter-regressed');
+                ambiguousThreads += 1;
+                return;
+            }
 
             if (isOneToOne) {
                 thread.seriesKey = uniqueCandidate.thread.seriesKey;

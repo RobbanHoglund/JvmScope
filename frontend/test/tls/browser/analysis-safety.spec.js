@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { test, expect } from './fixtures.js';
+import { elapsedSnapshot, elapsedRegressionSnapshots } from '../../tda/elapsed-regression-fixture.js';
 test.use({ trace: 'off' });
 
 const record = message => `javax.net.ssl|DEBUG|A|worker|2026-10-04 12:00:00.000 UTC|Handshake.java:1|${message}`;
@@ -46,6 +47,59 @@ test('TLS an unfinished boundary stays unknown even when a ServerHello record is
     await expect(page.locator('#tlsTableBody tr')).toHaveCount(1);
 });
 
+test('TLS conflicting endpoint roles stay unknown in the worker, statistics, filter and inspector', async ({page}) => {
+    await page.locator('#tlsInvestigateColumns').dispatchEvent('click');
+    for (const messages of [
+        ['Produced client Finished handshake message', 'Consuming client Finished handshake message'],
+        ['Produced ClientHello handshake message', 'Consuming HelloRetryRequest handshake message',
+            'Consuming ClientHello handshake message', 'Produced client Finished handshake message', 'Consuming server Finished handshake message'],
+    ]) {
+        const name = `roles-${messages.length}.log`;
+        await upload(page, messages.map(record).join('\n'), name);
+        // Counts are identical in both negative cases; wait for this capture's
+        // committed worker result rather than observing the previous capture.
+        await expect(page.locator('#fileName')).toHaveText(name);
+        await expect(page.locator('#rowCount')).toHaveText('1 / 1 interactions');
+        await expect(page.locator('#statsSummary .metric-success .value')).toHaveText('0');
+        await expect(page.locator('#statsSummary')).toContainText('Unknown 1');
+        await page.getByRole('button', { name: 'Select interaction 1', exact: true }).click();
+        await expect(page.locator('#tlsInspector')).toContainText('Grouping uncertain');
+        await expect(page.locator('#tlsInspector')).toContainText('endpoint roles conflict');
+        await page.locator('#onlySuccessToggle').check();
+        await expect(page.locator('#tlsTableBody tr')).toHaveCount(0);
+        await page.locator('#onlySuccessToggle').uncheck();
+        await page.getByRole('button', { name: 'Select interaction 1', exact: true }).click();
+        await page.locator('#tlsRawTab').click();
+        await expect(page.locator('#tlsRawPanel')).toContainText(messages[0]);
+        await expect(page.locator('#tlsRawPanel')).toContainText(messages.at(-1));
+    }
+    await upload(page, [produced, consumed].join('\n'), 'compatible-partial.log');
+    await expect(page.locator('#fileName')).toHaveText('compatible-partial.log');
+    await expect(page.locator('#statsSummary .metric-success .value')).toHaveText('1');
+    await page.locator('#onlySuccessToggle').check();
+    await expect(page.locator('#tlsTableBody tr')).toHaveCount(1);
+});
+
+test('TDA elapsed regression across files cannot enter measured charts or thread comparisons', async ({page, appUrl}) => {
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    await page.locator('#fileInput').setInputFiles(elapsedRegressionSnapshots.map((text, i) => ({
+        name: `elapsed-${i}.txt`, mimeType: 'text/plain', buffer: Buffer.from(text),
+    })));
+    await expect(page.locator('#dumpSelect option')).toHaveCount(2);
+    await page.locator('#threadStateChartPanel details > summary').first().click();
+    await expect(page.locator('.cpu-timeline-card')).not.toBeVisible();
+    await page.locator('#dumpSelect').selectOption('1');
+    await page.locator('#threadTableBody tr').getByRole('button', { name: 'Details', exact: true }).click();
+    await expect(page.locator('#threadModal')).toContainText('Thread elapsed counter decreased');
+    await expect(page.locator('#threadModal')).toContainText('continuity is uncertain');
+    await expect(page.locator('#threadModal')).not.toContainText('70.0%');
+    await page.locator('#threadModal').getByRole('button', { name: 'Close', exact: true }).click();
+    await page.locator('#sessionInputMode').selectOption('replace');
+    await upload(page, [elapsedSnapshot(0, 100, '100.000'), elapsedSnapshot(1, 800, '101.000', 1000000)].join('\n'), 'valid-elapsed.txt');
+    await expect(page.locator('#cpuTimelineLegend')).toContainText('Peak 70.0%');
+    await expect(page.locator('#cpuTimelineChart .cpu-timeline-point')).toHaveCount(1);
+});
+
 test('TDA coarse CPU estimates never enter the measured chart or its peak ranking', async ({page,appUrl}) => {
     const dump = (second,cpu,elapsed='') => `2026-10-04 12:00:0${second}\nFull thread dump OpenJDK 64-Bit Server VM:\n\n"mixed-clock-worker" #11 prio=5 os_prio=0 cpu=${cpu}ms ${elapsed ? `elapsed=${elapsed}s ` : ''}tid=0x11 nid=0x65 runnable [0x1100]\n   java.lang.Thread.State: RUNNABLE\n    at example.Work.run(Work.java:1)\n\nJNI global refs: 1\n`;
     await page.goto(`${appUrl}/jvmscope/tda.html`);
@@ -64,7 +118,9 @@ test('TDA coarse CPU estimates never enter the measured chart or its peak rankin
     const point = page.locator('#cpuTimelineChart .cpu-timeline-point');
     await expect(point).toHaveCount(1);
     await expect(point).toHaveAttribute('data-timeline-dump-index','3');
-    await point.scrollIntoViewIfNeeded();
+    // Scrolling can trigger a resize/redraw of the SVG. Scroll its stable
+    // container, then resolve the current point for the keyboard assertion.
+    await page.locator('#cpuTimelineChart').scrollIntoViewIfNeeded();
     await expect(point).toBeInViewport();
     // Scroll deliberately dismisses tooltips. Finish that viewport transition
     // before focusing the endpoint, as a keyboard user does after navigation.

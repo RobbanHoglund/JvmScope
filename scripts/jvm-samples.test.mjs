@@ -190,13 +190,13 @@ test('older SunJSSE TLS 1.2 client-chain wording requires matching runtime and i
         assert.throws(() => validateCase(wrongProtocol, directory, report.runtime), /certificate role/);
         const mutated = temporary(t);
         const source = readFileSync(safeFile(directory, item.file), 'utf8');
-        for (const text of [source.replaceAll('"Certificates": <empty list>', '"Certificates": [ ]'),
-            source.replaceAll('Produced CertificateRequest', 'Consuming CertificateRequest'),
-            source.replaceAll('Consuming client Certificate', 'Produced client Certificate'),
-            source.replaceAll('TLSv1.2', 'TLSv1.3')]) {
+        for (const [text, rejection] of [[source.replaceAll('"Certificates": <empty list>', '"Certificates": [ ]'), /certificate role/],
+            [source.replaceAll('Produced CertificateRequest', 'Consuming CertificateRequest'), /endpoint roles conflict/],
+            [source.replaceAll('Consuming client Certificate', 'Produced client Certificate'), /endpoint roles conflict/],
+            [source.replaceAll('TLSv1.2', 'TLSv1.3'), /certificate role/]]) {
             const raw = Buffer.from(text);
             writeFileSync(join(mutated, 'altered.log'), raw);
-            assert.throws(() => validateCase({ ...item, file: 'altered.log', bytes: raw.length, sha256: sha256(raw) }, mutated, report.runtime), /certificate role/);
+            assert.throws(() => validateCase({ ...item, file: 'altered.log', bytes: raw.length, sha256: sha256(raw) }, mutated, report.runtime), rejection);
         }
     }
 });

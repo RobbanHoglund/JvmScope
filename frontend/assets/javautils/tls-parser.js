@@ -93,6 +93,7 @@ class Interaction {
         this.correlationWarnings = [];
         this._serverHelloCount = 0;
         this._finishedMessages = new Set();
+        this._localEndpointRole = null;
         this._messageKind = null;
         this._protocolExplicit = false;
 
@@ -338,6 +339,21 @@ class Interaction {
 
         const msg = pl.msg;
 
+        if (!this._legacyRecord) {
+            const hello = msg.match(/^(Produced|Consuming) (ClientHello|ServerHello|HelloRetryRequest)\b/);
+            const explicit = msg.match(/^(Produced|Consuming) (client|server) (?:Finished|Certificate(?:Verify)?)(?: handshake)? message\b/);
+            const certificateRequest = msg.match(/^(Produced|Consuming) CertificateRequest\b/);
+            const observation = hello || explicit || certificateRequest;
+            if (observation) {
+                const senderRole = hello ? hello[2] === 'ClientHello' ? 'client' : 'server'
+                    : explicit ? explicit[2] : 'server';
+                const localRole = observation[1] === 'Produced' ? senderRole : senderRole === 'client' ? 'server' : 'client';
+                if (this._localEndpointRole && this._localEndpointRole !== localRole) {
+                    this.markCorrelationAmbiguous('Handshake endpoint roles conflict across produced/consumed observations. Records may belong to different connections.');
+                } else this._localEndpointRole = localRole;
+            }
+        }
+
         if (/^(?:Produced|Consuming) ServerHello\b/.test(msg) && ++this._serverHelloCount > 1) {
             this.markCorrelationAmbiguous('Multiple ServerHello observations in one thread group. Records may belong to different connections.');
         }
@@ -346,11 +362,6 @@ class Interaction {
             const key = `${finished[1]}:${finished[2] || ''}`;
             if (this._finishedMessages.has(key)) this.markCorrelationAmbiguous('Repeated Finished observations cannot establish a single connection exchange.');
             this._finishedMessages.add(key);
-            const localRole = this.initiatedByLocal ? 'client' : this.initiatedByPeer ? 'server' : null;
-            const expectedRole = finished[1] === 'Produced' ? localRole : localRole === 'client' ? 'server' : localRole === 'server' ? 'client' : null;
-            if (finished[2] && expectedRole && finished[2] !== expectedRole) {
-                this.markCorrelationAmbiguous('Finished roles conflict with the observed ClientHello direction.');
-            }
         }
 
         if (msg.includes('Produced ClientHello')) this.initiatedByLocal = true;

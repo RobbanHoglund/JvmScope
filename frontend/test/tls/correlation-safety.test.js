@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { analyzeTlsLog } from '../../assets/javautils/tls-parser.js';
 import { tlsObservedSequence, tlsDiagnosis, tlsCaptureCoverage } from '../../assets/javautils/tls-sequence-model.js';
-import { createTlsFilters, prepareTlsAnalysis, selectTlsEntries } from '../../assets/javautils/tls-analysis-model.js';
+import { createTlsFilters, prepareTlsAnalysis, selectTlsEntries, tlsTimelineBins } from '../../assets/javautils/tls-analysis-model.js';
 import { explainIssueText } from '../../assets/javautils/tls-explanations.js';
 
 const line = (msg, tid = 'A', expanded = false) => expanded
@@ -85,6 +85,52 @@ test('contradicting Finished roles, duplicates and extra ServerHello cannot esta
         assert.equal(result.interactions[0].outcome, 'unknown');
         assert.equal(result.interactions[0].correlationQuality, 'ambiguous-thread');
     }
+});
+
+test('endpoint contradictions without ClientHello and during retries remain unknown in all projections', () => {
+    const cases = [
+        ['Produced client Finished handshake message', 'Consuming client Finished handshake message'],
+        ['Produced server Finished handshake message', 'Consuming server Finished handshake message'],
+        ['Consuming client Finished handshake message', 'Produced client Finished handshake message'],
+        ['Produced ClientHello handshake message', 'Consuming HelloRetryRequest handshake message',
+            'Consuming ClientHello handshake message', ...messages.slice(2)],
+        ['Consuming ClientHello handshake message', 'Produced HelloRetryRequest handshake message',
+            'Produced ClientHello handshake message', 'Consuming client Finished handshake message', 'Produced server Finished handshake message'],
+        ['Consuming ServerHello handshake message', 'Produced server Finished handshake message', 'Consuming client Finished handshake message'],
+        ['Produced client Certificate handshake message', 'Consuming client Certificate handshake message', ...messages.slice(2)],
+    ];
+    for (const expanded of [false, true]) for (const observations of cases) {
+        const records = observations.map(m => line(m, 'A', expanded));
+        const result = parse(records);
+        const it = result.interactions[0];
+        assert.equal(result.status, 'partial');
+        assert.equal(it.outcome, 'unknown');
+        assert.equal(it.correlationQuality, 'ambiguous-thread');
+        assert.match(it.correlationWarnings.join(' '), /endpoint roles conflict/);
+        assert.equal(tlsDiagnosis(it), 'Grouping uncertain');
+        assert.equal(it.rawLines.join('\n'), records.join('\n'));
+        const sequence = tlsObservedSequence(it);
+        assert.equal(sequence.length, observations.length);
+        assert.deepEqual(sequence.map(event => event.sourceLine), observations.map((_, i) => i * (expanded ? 7 : 1) + (expanded ? 6 : 1)));
+        const entries = prepareTlsAnalysis(result.interactions);
+        assert.equal(selectTlsEntries(entries, { ...createTlsFilters(), outcome: 'success' }).length, 0);
+        const bins = tlsTimelineBins(entries, { start: Date.parse('2026-10-04T11:59:59Z'), end: Date.parse('2026-10-04T12:00:01Z') });
+        assert.equal(bins.reduce((n, b) => n + b.success, 0), 0);
+        assert.equal(bins.reduce((n, b) => n + b.unknown, 0), 1);
+    }
+});
+
+test('compatible partial Finished exchanges and client/server retries retain success without contaminating other threads', () => {
+    const partials = [['Produced client Finished handshake message', 'Consuming server Finished handshake message'],
+        ['Produced server Finished handshake message', 'Consuming client Finished handshake message']];
+    const retries = [[messages[0], 'Consuming HelloRetryRequest handshake message', ...messages],
+        ['Consuming ClientHello handshake message', 'Produced HelloRetryRequest handshake message',
+            'Consuming ClientHello handshake message', 'Produced ServerHello handshake message', ...partials[1]]];
+    for (const observations of [...partials, ...retries]) for (const expanded of [false, true]) {
+        assert.equal(parse(observations.map(m => line(m, 'A', expanded))).interactions[0].outcome, 'success');
+    }
+    const bad = ['Produced client Finished handshake message', 'Consuming client Finished handshake message'].map(m => line(m));
+    assert.deepEqual(parse([...bad, ...messages.map(m => line(m, 'B'))]).interactions.map(it => it.outcome), ['unknown', 'success']);
 });
 
 test('removing a ServerHello block never proves that reset happened before it', () => {

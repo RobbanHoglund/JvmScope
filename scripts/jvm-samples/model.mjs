@@ -108,7 +108,7 @@ export function validateCase(item, directory, runtime) {
         if (failure) assert.ok(e.results.every(r => /(?:SSL(?:Handshake)?Exception|SocketException)/.test(r.exception)), 'Unexpected failure kind');
         if (e.scenario === 'untrusted' && e.side === 'client') assert.ok(e.results.every(r => /cert|PKIX|trust/i.test(r.message)), 'Expected a trust-validation failure');
         const parsed = analyzeTlsLog(text);
-        assert.equal(parsed.status, 'success');
+        assert.equal(parsed.status, 'success', `TLS sample requires unambiguous parsed interactions: ${parsed.interactions.flatMap(it => it.correlationWarnings || []).join(' ')}`);
         assert.equal(parsed.interactions.length, expectedCount, 'Handshake correlation changed');
         for (const [index, it] of parsed.interactions.entries()) {
             assert.equal(it.outcome, failure ? 'failure' : 'success');

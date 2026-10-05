@@ -138,15 +138,33 @@ export function snapshotWallClockInterval(previousDump, currentDump) {
     return { intervalMs: null, status: intervalMs === 0 ? 'duplicate' : 'reversed' };
 }
 
+export const ELAPSED_REGRESSION_REASON = 'Thread elapsed counter decreased beyond its printed resolution. Thread continuity is uncertain; CPU and allocation comparisons are unavailable.';
+
+/** Missing/rounded counters are different from evidence against thread continuity. */
+export function threadElapsedComparison(previousThread, currentThread) {
+    const previous = previousThread?.elapsedS;
+    const current = currentThread?.elapsedS;
+    const resolution = thread => Number.isFinite(thread?.elapsedResolutionMs) && thread.elapsedResolutionMs > 0
+        ? thread.elapsedResolutionMs : 10;
+    const uncertaintyMs = Math.max(resolution(previousThread), resolution(currentThread));
+    if (!Number.isFinite(previous) || previous < 0 || !Number.isFinite(current) || current < 0) {
+        return { status: 'unavailable', deltaMs: null, uncertaintyMs };
+    }
+    const deltaMs = (current - previous) * 1000;
+    return { status: deltaMs < -uncertaintyMs - 0.001 ? 'regressed' : deltaMs > 0 ? 'ordered' : 'rounded',
+        deltaMs, uncertaintyMs };
+}
+
 /** Only call for an exact, adjacent thread continuation in the same JVM. */
 export function threadComparisonInterval(previousDump, currentDump, previousThread, currentThread) {
     const wall = snapshotWallClockInterval(previousDump, currentDump);
-    const previousElapsed = previousThread?.elapsedS;
-    const currentElapsed = currentThread?.elapsedS;
-    const elapsedMs = Number.isFinite(previousElapsed) && previousElapsed >= 0
-        && Number.isFinite(currentElapsed) && currentElapsed > previousElapsed
-        ? (currentElapsed - previousElapsed) * 1000 : null;
-    const elapsedUncertainty = Math.max(previousThread?.elapsedResolutionMs ?? 10, currentThread?.elapsedResolutionMs ?? 10);
+    const elapsed = threadElapsedComparison(previousThread, currentThread);
+    if (elapsed.status === 'regressed') {
+        return { intervalMs: null, basis: 'unavailable', quality: 'conflicting', uncertaintyMs: null,
+            continuity: 'conflicting', reason: ELAPSED_REGRESSION_REASON };
+    }
+    const elapsedMs = elapsed.status === 'ordered' ? elapsed.deltaMs : null;
+    const elapsedUncertainty = elapsed.uncertaintyMs;
     const wallMs = wall.intervalMs;
     if (wallMs != null && elapsedMs != null
         && Math.abs(wallMs - elapsedMs) > wall.uncertaintyMs + elapsedUncertainty + 0.001) {
