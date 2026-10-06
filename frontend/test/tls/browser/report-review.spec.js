@@ -3,6 +3,34 @@ import { readFile } from 'node:fs/promises';
 import { test, expect } from './fixtures.js';
 import { blockingSequence } from '../../tda/blocking-fixture.js';
 
+test('TDA selected findings export presents readable evidence and preserves closed metadata in print', async ({ page, appUrl }, info) => {
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    await page.locator('#fileInput').setInputFiles({ name:'readable-report.txt', mimeType:'text/plain', buffer:Buffer.from(blockingSequence.join('\n')) });
+    await expect(page.locator('#dumpSelect option')).toHaveCount(3);
+    await page.locator('#dependencyGraphDetails > summary').click();
+    await page.locator('#blockingPatternSelect').selectOption({label:'Dependencies on worker-1 · peak 3 · recurrence 1'});
+    await page.locator('#addBlockingReport').click();
+    await expect(page.locator('#reportFindings article')).toHaveCount(1);
+    await page.getByRole('button',{name:'Preview report',exact:true}).click();
+    const frame=page.frameLocator('#reportPreview iframe');
+    await expect(frame.getByRole('heading',{name:'Observation',exact:true})).toBeVisible();
+    await expect(frame.getByRole('heading',{name:'Uncertainty / conflicting evidence',exact:true})).toBeVisible();
+    await expect(frame.locator('.field').first()).toContainText('readable-report.txt');
+    await expect(frame.getByRole('heading',{name:'Raw references (snapshot-local lines)',exact:true})).toBeVisible();
+    await expect(frame.locator('.metadata')).not.toHaveAttribute('open');
+    await expect(frame.locator('.metadata pre').first()).not.toBeVisible();
+    await frame.locator('.metadata > summary').click();
+    await expect(frame.locator('.metadata pre').first()).toContainText('readable-report.txt');
+    await expect(frame.locator('.metadata pre').first()).toContainText('inputSha256');
+    await frame.locator('.metadata > summary').click();
+    await page.emulateMedia({media:'print'});
+    await expect(frame.locator('.metadata pre').first()).toBeVisible();
+    await page.emulateMedia({media:'screen'});
+    await expect(frame.locator('.metadata pre').first()).not.toBeVisible();
+    await frame.locator('body').evaluate(body=>body.ownerDocument.defaultView.scrollTo(0,0));
+    await page.screenshot({path:info.outputPath('report-readable-preview.png')});
+});
+
 for (const [extension, label] of [['html', 'HTML'], ['md', 'Markdown']]) {
     test(`TDA report review rejects a late real finding until the updated ${label} selection is reviewed`, async ({ page, appUrl }) => {
         await page.addInitScript(() => {
