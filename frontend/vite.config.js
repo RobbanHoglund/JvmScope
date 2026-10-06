@@ -50,7 +50,11 @@ export function toolNavigation({ slim = false } = {}) {
           : context.filename.endsWith('tda.html') ? 'tda' : 'home';
         const link = (name, path, label) => `<a href="${path}"${active === name ? ' aria-current="page"' : ''}>${label}</a>`;
         const navigation = `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
-        return html.replace('</head>', '<link rel="stylesheet" href="/assets/tool-navigation.css" />\n</head>')
+        // Reuse the brand asset and let Vite apply the delivery target's base.
+        // Keep each analyzer's own icon; home/knowledge pages need a default.
+        const icon = /<link\b[^>]*\brel=["']icon["']/i.test(html) ? ''
+          : '<link rel="icon" type="image/svg+xml" href="/assets/javautils/java-thread-mark.svg" />\n';
+        return html.replace('</head>', `${icon}<link rel="stylesheet" href="/assets/tool-navigation.css" />\n</head>`)
           .replace(/(<body\b[^>]*>)/, `$1\n${navigation}`);
       },
     },

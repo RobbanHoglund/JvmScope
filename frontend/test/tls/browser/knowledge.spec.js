@@ -32,6 +32,12 @@ test('knowledge home, local filters, version comparison and direct articles work
     for(const article of ARTICLES) {
         await page.goto(`${appUrl}/knowledge/${article.id}.html`);
         await expect(page.locator('#knowledgeRoot h1')).toHaveText(article.title);
+        const icon=await page.locator('link[rel="icon"]').getAttribute('href');
+        const iconUrl=new URL(icon,page.url());
+        expect(iconUrl.href.startsWith(`${appUrl}/assets/`)).toBe(true);
+        const iconResponse=await page.request.get(iconUrl.href);
+        expect(iconResponse.status()).toBe(200);
+        expect(iconResponse.headers()['content-type']).toContain('image/svg+xml');
         await expect(page.locator('#knowledgeRoot')).toContainText('A. Documented JVM capabilities');
         await expect(page.locator('#knowledgeRoot')).toContainText('B. What the selected collection actually contains');
         await expect(page.locator('#knowledgeRoot')).toContainText('C. What JvmScope has verified');

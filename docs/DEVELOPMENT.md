@@ -20,8 +20,9 @@ Node.js 24 are the tested build baseline; Gradle is supplied by the wrapper in
 | `docs/` | Current guides, roadmap and dated verification records |
 
 Both analyzers use `/jvmscope/`. Legacy `/javautils/tda.html` and `/javautils/tls.html`
-redirect with their query strings retained. The Java server's root redirects to
-TLS. Docker/OCI image analysis is not part of JvmScope; container packaging remains.
+redirect with their query strings retained. The Java server serves the
+tool-selection home page at `/` (HTTP 200). Docker/OCI image analysis is not part
+of JvmScope; container packaging remains.
 
 ## Launchers and ports
 
@@ -51,8 +52,9 @@ npm run dev --prefix frontend
 
 Vite supplies its own static files without a Java backend or analysis API proxy.
 The optional frontend preview includes portal pages; the Java package includes
-only TLS/TDA. Browser preferences and permissions belong to each origin; changing
-from 23872 to 23873 does not migrate them. Reload discards an in-memory session.
+the home page, TLS/TDA and the Java Knowledge Base. Browser preferences and
+permissions belong to each origin; changing from 23872 to 23873 does not migrate
+them. Reload discards an in-memory session.
 
 ## Build and test
 

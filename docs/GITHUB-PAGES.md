@@ -85,9 +85,10 @@ worker paths and PNG export at desktop and laptop sizes. Hosting tests verify
 every payload file via real HTTP GET/HEAD and assert that synthetic private
 content is absent from request URLs, headers, bodies and browser storage.
 
-Pages has no `/health` or legacy `/javautils/` redirects. Its project root opens
-the tool chooser; Railway's root still redirects to TLS. The Java host's gzip,
-ETag and security headers are not reproduced by the local static test server;
+Pages has no `/health` or legacy `/javautils/` redirects. The project root opens
+the tool chooser on both Pages and Railway; the Java host serves it with HTTP 200.
+The Java host's gzip, ETag and security headers are not reproduced by the local
+static test server;
 GitHub controls production static headers and caching. Analysis does not require
 cross-origin isolation. The apps use system fonts and bundled D3, without a CDN.
 

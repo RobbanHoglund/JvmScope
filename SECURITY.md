@@ -12,8 +12,7 @@ reloaded.
 
 Use GitHub's **Report a vulnerability** form in this repository's Security tab:
 [private vulnerability report](https://github.com/RobbanHoglund/JvmScope/security/advisories/new).
-The maintainer must enable private vulnerability reporting when the repository
-becomes public. Until the form is available, do not put vulnerability details in
+If the form is unavailable, do not put vulnerability details in
 a public issue. An ordinary issue may ask the maintainer to enable private
 reporting, without exposing the vulnerability or any private data.
 
