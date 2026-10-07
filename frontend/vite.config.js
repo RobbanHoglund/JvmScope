@@ -1,11 +1,17 @@
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
+import { execFileSync } from 'node:child_process';
 import { FRONTEND_PORT, HOST } from "../scripts/local-dev-config.mjs";
 import { projectLegalFiles } from "../scripts/project-legal.mjs";
 import { ARTICLES } from './assets/javautils/knowledge/data.js';
 const knowledgeInputs = Object.fromEntries(['index', ...ARTICLES.map(a => a.id)].map(id => [`knowledge-${id}`, resolve(import.meta.dirname, `knowledge/${id}.html`)]));
 
 const rootDir = import.meta.dirname;
+function buildRevision() {
+  if (/^[a-f0-9]{40}$/.test(process.env.GITHUB_SHA || '')) return process.env.GITHUB_SHA;
+  try { return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: resolve(rootDir, '..'), encoding: 'utf8' }).trim(); }
+  catch { return null; }
+}
 
 // Use the root license/notice sources in every frontend delivery target.
 export function projectLegalNotices() {
@@ -62,6 +68,7 @@ export function toolNavigation({ slim = false } = {}) {
 }
 
 export default defineConfig(({ mode }) => ({
+  define: { __JVMSCOPE_REVISION__: JSON.stringify(buildRevision()) },
   plugins: [analyzerRedirects(), toolNavigation({ slim: ['slim', 'pages'].includes(mode) }), projectLegalNotices()],
   root: rootDir,
   base: "/",
