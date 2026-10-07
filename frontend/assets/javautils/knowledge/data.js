@@ -1,4 +1,5 @@
 import { GUIDES } from './guides.js';
+import { queryTokens } from './search.js';
 
 export const VERIFIED_DATE = '2026-10-05';
 export const JAVA_VERSIONS = Array.from({length:21},(_,i)=>i+7);
@@ -68,7 +69,7 @@ export function compareVersions(from,to) {
 export function filterArticles({query='',version='',topic=''}={}) {
     const needle=String(query).toLowerCase().trim();
     if(needle.length>512) return [];
-    const tokens=needle.replace(/(^|[^\p{L}\p{N}_])-xx:[+-]?/gu,'$1').match(/[\p{L}\p{N}_]+/gu)||[];
+    const tokens=queryTokens(query);
     if(needle && !tokens.length) return [];
     const textTokens=text=>String(text).toLowerCase().match(/[\p{L}\p{N}_]+/gu)||[];
     const blockText=blocks=>Object.values(blocks||{}).flat().flatMap(b=>[b.text,b.title,b.caption,...(b.items||[]),...(b.headers||[]),...(b.rows||[]).flat()]).filter(Boolean).join(' ');

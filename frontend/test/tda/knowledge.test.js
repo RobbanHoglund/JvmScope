@@ -4,6 +4,47 @@ import { readFileSync } from 'node:fs';
 import { ARTICLES, FEATURES, JAVA_VERSIONS, VERIFIED_DATE, featureState, compareVersions, filterArticles, collectionEvidence } from '../../assets/javautils/knowledge/data.js';
 import { parseGeneratedCoverage } from '../../assets/javautils/knowledge/coverage.js';
 import { articleSections, renderBlock, sourceLinks, coverageEvidenceUrl } from '../../assets/javautils/knowledge/view.js';
+import { articleExcerpt, highlightText, queryTokens, matchRanges, searchFragment, readSearchFragment } from '../../assets/javautils/knowledge/search.js';
+
+test('knowledge content excerpts find practical body text and preserve exact safe text with real section targets',()=>{
+    const article=ARTICLES.find(a=>a.id==='thread-dumps');
+    const excerpt=articleExcerpt(article,'overwrite');
+    assert.equal(excerpt.section,'check');
+    assert.match(excerpt.text,/overwrite/);
+    assert.ok(excerpt.text.length<=242);
+    assert.match(highlightText(excerpt.text,queryTokens('overwrite')),/<mark>overwrite<\/mark>/);
+    assert.equal(articleExcerpt(article,'').text,article.summary);
+    for(const a of ARTICLES)for(const term of ['memory','CPU','Java']){
+        const result=articleExcerpt(a,term);
+        assert.ok(['articleIntro','does','versions','benefits','limits','check','measure'].includes(result.section));
+    }
+});
+
+test('knowledge matching handles numeric boundaries, Unicode and overlapping literal terms without executable markup',()=>{
+    assert.deepEqual(queryTokens('"-XX:+UseCompactObjectHeaders" VT'),['usecompactobjectheaders','virtual']);
+    assert.deepEqual(queryTokens('x'.repeat(513)),[]);
+    assert.deepEqual(matchRanges('Java 27, 127, 27.0',queryTokens('27')).map(r=>r.start),[5,14]);
+    assert.deepEqual(matchRanges('éclair ÉCLAIR',queryTokens('éclair')).map(r=>r.start),[0,7]);
+    assert.equal(highlightText('CPU cpu',queryTokens('CPU cpu')),'<mark>CPU</mark> <mark>cpu</mark>');
+    assert.equal(highlightText('allocation',queryTokens('alloc allocation')),'<mark>allocation</mark>');
+    const hostile='<img src="https://evil.invalid/x" onerror="alert(1)">';
+    const html=highlightText(hostile,queryTokens('img alert'));
+    assert.doesNotMatch(html,/<img|onerror="/);
+    assert.match(html,/&lt;/);
+    assert.match(html,/<mark>img<\/mark>/);
+    assert.match(html,/<mark>alert<\/mark>/);
+});
+
+test('knowledge result links use bounded non-executable fragments and never put queries in an HTTP path',()=>{
+    const query='CPU allocation & "<script>"';
+    const link=new URL('./thread-counters.html?java=17'+searchFragment(query,'limits'),'https://example.test/JvmScope/knowledge/index.html');
+    assert.equal(link.pathname,'/JvmScope/knowledge/thread-counters.html');
+    assert.equal(link.search,'?java=17');
+    assert.deepEqual(readSearchFragment(link.hash),{query,section:'limits'});
+    assert.equal(readSearchFragment(searchFragment('cpu','<img>')).section,'articleIntro');
+    for(const hash of ['#check','#find='+encodeURIComponent('x'.repeat(513)),'#find=---'])assert.equal(readSearchFragment(hash).query,'');
+    assert.equal(searchFragment(''),'');
+});
 
 const state = (id, v) => featureState(FEATURES.find(f => f.id === id), v);
 test('knowledge metadata distinguishes introduction, preview, product and changing defaults without extrapolation', () => {

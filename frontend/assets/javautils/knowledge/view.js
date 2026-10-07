@@ -1,11 +1,7 @@
 import { escapeHtml as h, escapeAttr as a } from '../tda/ui-safety.js';
 import { SOURCE_TITLES, VERIFIED_DATE } from './data.js';
-
-export const SECTION_TITLES = {
-    does:'What it does — and does not do', versions:'Versions, status and defaults',
-    benefits:'When it can help', limits:'Costs, limits and when to avoid it',
-    check:'Check your actual configuration', measure:'Measure before recommending a change',
-};
+import { SECTION_TITLES } from './search.js';
+export { SECTION_TITLES } from './search.js';
 
 function primarySource(url) {
     try {

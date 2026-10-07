@@ -18,7 +18,10 @@ original evidence instead of treating a missing diagnostic as proof of health.
 | Follow snapshot-local blocking patterns and export selected findings | Keep partial or contradictory outcomes qualified |
 
 The home page also links to a **Java Knowledge Base** with eight source-backed
-articles, local search/version/topic filters and a scoped upgrade comparison.
+articles, full-content search with highlighted excerpts, version/topic filters
+and a scoped upgrade comparison. Result links open the matching section; each
+article has its own search field, highlighted word matches and next/previous
+navigation.
 It distinguishes documented JVM capabilities, actual collection fields and the
 generated analyzer evidence below. It does not certify every vendor/update or
 recommend tuning flags from a thread dump.

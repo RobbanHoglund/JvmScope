@@ -1,5 +1,39 @@
 # Java Knowledge Base maintenance
 
+## Content search
+
+The existing local article filter searches editorial text, practical blocks and
+release metadata. Result cards add escaped, highlighted text excerpts and link
+to the corresponding article section. `knowledge/search.js` shares literal word
+matching with article finding, handles JVM-option punctuation and the VT alias,
+and bounds queries at 512 characters. Article finding highlights individual word
+matches, has next/previous controls and Enter/Shift+Enter navigation, and refreshes
+after version/format changes. Ctrl+F focuses the field; Esc or Clear removes its
+highlights without changing the article text or code. Highlighting is capped at
+500 marks, with the complete match count still reported.
+
+Following a result puts the search terms and section in the URL fragment, which
+is not sent in HTTP requests. This allows direct navigation and reload with
+highlighting. The fragment is visible in the address and browser history: review
+the URL before sharing it. Queries are not written to localStorage/sessionStorage,
+sent to a service or included in a new search index/database. Both Java and Pages
+deliver the same frontend implementation. Native section anchors still work.
+Editing or clearing an imported search removes its old find fragment, so reload
+does not silently restore stale terms. The return link retains the original
+result query. Search is literal and case-insensitive, not fuzzy or semantic;
+multiword result filtering requires every term, while excerpts and article marks
+show individual word matches. Version/topic filters remain independent.
+
+Local verification, 2026-10-07: 699 Node tests, 102 strict Pages browser cases,
+20 Knowledge Base cases against the rebuilt Java JAR, and 1,320 real Java
+server/configuration assertions passed. Browser cases cover desktop/laptop,
+fragment navigation and clearing, Java/format updates, hostile search strings,
+unchanged code text and absence of search data in HTTP or browser storage.
+This change only affects knowledge search/rendering and shared frontend delivery;
+TDA/TLS engines, workers and diagnostic handling are unchanged. No new JVM
+captures or Linux/container run were performed. Published sites are unchanged
+until a separate release of these local edits.
+
 The eight articles and their upstream release transitions live in
 `frontend/assets/javautils/knowledge/data.js`. The two practical guides use text
 blocks in `knowledge/guides.js` and the escaped renderer in `knowledge/view.js`.
