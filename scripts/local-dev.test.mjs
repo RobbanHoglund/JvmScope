@@ -22,7 +22,20 @@ test('Railway detects a root Dockerfile that preserves the explicit slim build',
     const directives = recipe => recipe.split(/\r?\n/)
         .filter(line => !line.trim().startsWith('#')).join('\n').trim();
     assert.equal(directives(rootRecipe), directives(legacyRecipe), 'default and legacy entry points must build the same image');
-    assert.match(workflow, /run: docker build -t jvmscope-slim:ga \./, 'CI builds the automatically detected recipe');
+    assert.match(workflow, /run: docker build --build-arg GITHUB_SHA="\$GITHUB_SHA" -t jvmscope-slim:ga \./, 'CI passes its exact revision to the automatically detected recipe');
+    assert.match(rootRecipe, /ARG GITHUB_SHA\r?\nRUN npm run build:slim --prefix frontend/, 'revision reaches the frontend build without copying Git metadata into the image');
+});
+
+test('frontend evidence links use an explicit build revision and reject malformed revision input', () => {
+    const saved = process.env.GITHUB_SHA;
+    try {
+        delete process.env.GITHUB_SHA;
+        const fallback=JSON.parse(viteConfig({mode:'slim'}).define.__JVMSCOPE_REVISION__);
+        process.env.GITHUB_SHA = 'b'.repeat(40);
+        assert.equal(JSON.parse(viteConfig({mode:'slim'}).define.__JVMSCOPE_REVISION__), 'b'.repeat(40));
+        process.env.GITHUB_SHA = '<script>invalid</script>';
+        assert.equal(JSON.parse(viteConfig({mode:'slim'}).define.__JVMSCOPE_REVISION__), fallback);
+    } finally { if (saved===undefined) delete process.env.GITHUB_SHA; else process.env.GITHUB_SHA=saved; }
 });
 
 test('the app and optional Vite preview use fixed high ports without an analysis API proxy', () => {

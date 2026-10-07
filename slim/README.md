@@ -86,6 +86,13 @@ docker build -t jvmscope-slim .
 docker run --rm -p 23873:23873 --memory=128m --cpus=0.5 jvmscope-slim
 ```
 
+For revision-pinned Knowledge Base evidence links, pass the exact source commit:
+`docker build --build-arg GITHUB_SHA="$(git rev-parse HEAD)" -t jvmscope-slim .`.
+Both Dockerfiles accept this build-only argument; `.git` stays outside the image.
+CI supplies its `GITHUB_SHA`. Without a valid revision and without Git metadata,
+the frontend explicitly reports that the build revision is unavailable instead
+of linking to moving `main` evidence.
+
 The root `Dockerfile` builds Slim and is detected by Railway without Railpack
 language detection. This also works after the Gradle wrapper has moved to
 `scripts/`. Configure the slim Railway service as follows:
@@ -131,7 +138,8 @@ the image tags track JDK/OS security updates and are not immutable digests.
 job builds the real Linux image and verifies 128 MiB without swap and 0.5 CPU,
 three cold starts, non-root/read-only operation, 60 seconds of concurrent checked
 asset requests, both analyzer browser suites and SIGTERM shutdown. Run it locally
-on a Linux Docker host with `docker build -t jvmscope-slim:ga .`
+on a Linux Docker host with
+`docker build --build-arg GITHUB_SHA="$(git rev-parse HEAD)" -t jvmscope-slim:ga .`
 then `node scripts/slim/container-ga.mjs` after installing the frontend browser-test
 dependencies. The host requires Docker, Node, Chromium's dependencies and unzip.
 Evidence is retained in the `constrained-container-evidence` CI artifact. See

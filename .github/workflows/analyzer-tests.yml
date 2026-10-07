@@ -70,7 +70,7 @@ jobs:
           cd frontend
           npx --no-install playwright install --with-deps chromium
       - name: Build the actual Linux delivery image
-        run: docker build -t jvmscope-slim:ga .
+        run: docker build --build-arg GITHUB_SHA="$GITHUB_SHA" -t jvmscope-slim:ga .
       - name: Verify constrained container, both analyzers and SIGTERM
         run: node scripts/slim/container-ga.mjs
       - uses: actions/upload-artifact@v4

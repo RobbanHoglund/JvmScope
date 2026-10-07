@@ -6,6 +6,7 @@ WORKDIR /workspace
 COPY frontend/package.json frontend/package-lock.json ./frontend/
 RUN npm ci --prefix frontend
 COPY . .
+ARG GITHUB_SHA
 RUN npm run build:slim --prefix frontend
 
 # Jammy's glibc baseline is compatible with the Bookworm runtime below.
