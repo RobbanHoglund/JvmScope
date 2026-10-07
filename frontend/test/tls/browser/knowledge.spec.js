@@ -77,8 +77,15 @@ test('knowledge home, local filters, version comparison and direct articles work
     const requests=[];
     context.on('request',r=>{if(/^https?:/.test(r.url()))requests.push({url:r.url(),body:r.postData(),method:r.method()});});
     await page.goto(appUrl+'/');
+    await expect(page.getByRole('heading',{name:'Analyze Java thread dumps and TLS logs.',exact:true})).toBeVisible();
+    await expect(page.locator('.privacy')).toContainText('Analyzed locally in your browser. Nothing uploaded.');
     await expect(page.locator('a[href$="jvmscope/tda.html"]').last()).toBeVisible();
-    await page.getByRole('link',{name:/Explore eight Java knowledge articles/}).click();
+    const privacy=await page.locator('.privacy').boundingBox(),tool=await page.locator('a[href$="jvmscope/tda.html"]').last().boundingBox();
+    expect(privacy.y+privacy.height).toBeLessThan(tool.y);
+    const knowledgeCard=page.locator('section[aria-label="Java Knowledge Base"] a');
+    await expect(knowledgeCard).toHaveCount(1);
+    await knowledgeCard.focus();
+    await page.keyboard.press('Enter');
     await expect(page).toHaveURL(appUrl+'/knowledge/index.html');
     await expect(page.locator('#knowledgeCount')).toHaveText('8 articles');
     await page.screenshot({path:info.outputPath('knowledge-index.png'),fullPage:true});

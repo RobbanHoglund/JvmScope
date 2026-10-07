@@ -90,9 +90,9 @@
 
     h1 {
       margin: 0;
-      font-size: clamp(2rem, 5vw, 4.2rem);
-      line-height: 0.95;
-      letter-spacing: -0.06em;
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      line-height: 1.15;
+      letter-spacing: -0.03em;
     }
 
     .subtitle {
@@ -114,6 +114,16 @@
       font-weight: 800;
       white-space: nowrap;
     }
+
+    .privacy { margin: 20px 0 0; color: #72e0d1; font-size: 16px; line-height: 1.6; }
+    .privacy span { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; }
+    .knowledge { margin-top: 24px; }
+    .knowledge a { display: block; padding: 22px; border: 1px solid var(--border); border-radius: 16px; background: var(--panel); color: var(--text); text-decoration: none; }
+    .knowledge a:visited { color: var(--text); }
+    .knowledge a:hover { border-color: var(--border-hot); background: var(--panel-strong); }
+    .knowledge a:focus-visible { outline: 3px solid #72e0d1; outline-offset: 4px; }
+    .knowledge h2 { margin: 0 0 8px; font-size: 20px; }
+    .knowledge .open { display: block; margin-top: 14px; color: var(--blue); font-size: 14px; font-weight: 650; }
 
     .utility-grid {
       display: grid;
@@ -242,12 +252,12 @@
   <main class="page-shell">
     <section class="hero" aria-labelledby="pageTitle">
       <div>
-        <div class="eyebrow">Diagnostics toolbox</div>
-        <h1 id="pageTitle">JvmScope</h1>
+        <div class="eyebrow">JvmScope</div>
+        <h1 id="pageTitle">Analyze Java thread dumps and TLS logs.</h1>
         <p class="subtitle">
-          Browser-based tools for investigating Java thread dumps and TLS logs.
-          Choose a utility below to start analyzing captured data.
+          Follow a handshake, explore blocked threads and compare what changed between JVM snapshots.
         </p>
+        <p class="privacy"><strong>Analyzed locally in your browser. Nothing uploaded.</strong><span>Both tools include examples to explore without a private capture.</span></p>
       </div>
       <div class="hero-badge">2 tools available</div>
     </section>
@@ -272,9 +282,9 @@
       </li>
 
     </ul>
-    <section aria-label="Java Knowledge Base" style="margin-top:24px;padding:22px;border:1px solid var(--border);border-radius:16px;background:var(--panel)">
-      <h2>Java Knowledge Base</h2><p class="card-desc">Choose collection evidence, inspect version-dependent capabilities and compare potential upgrade changes.</p>
-      <p><a href="/knowledge/index.html" style="color:var(--blue)">Explore eight Java knowledge articles →</a></p>
+    <section class="knowledge" aria-label="Java Knowledge Base">
+      <a href="/knowledge/index.html"><h2>Java Knowledge Base</h2><p class="card-desc">Choose diagnostic evidence, check version-dependent capabilities and compare potential upgrade changes.</p>
+      <span class="open">Explore eight Java knowledge articles →</span></a>
     </section>
   </main>
 </body>

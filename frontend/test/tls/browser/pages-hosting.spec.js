@@ -10,7 +10,7 @@ const dump = n => `2026-10-04 12:00:0${n}\nFull thread dump OpenJDK 64-Bit Serve
 
 test('Pages root, direct links, navigation, reload and module workers use the project prefix', async ({ page, appUrl }) => {
     await page.goto(appUrl+'/');
-    await expect(page.getByRole('heading', {name:'Follow the evidence.'})).toBeVisible();
+    await expect(page.getByRole('heading', {name:'Analyze Java thread dumps and TLS logs.'})).toBeVisible();
     await page.locator('a.tool:not(.tls)').click();
     await expect(page).toHaveURL(appUrl+'/jvmscope/tda.html');
     await page.locator('#loadSampleBtn').click();
