@@ -61,6 +61,14 @@ test('TDA raw evidence opens a reusable tab with exact text, copy, search and fi
     await raw.getByRole('searchbox', { name: 'Search raw dump evidence' }).fill('Waiter.java:20');
     await expect(raw.locator('.raw-workspace-match')).toHaveCount(1);
     await expect(raw.locator('.raw-workspace-match')).toBeVisible();
+    const filteredPrint = await raw.evaluate(() => {
+        window.dispatchEvent(new Event('beforeprint'));
+        const text = document.querySelector('.raw-workspace-print-source').textContent;
+        window.dispatchEvent(new Event('afterprint'));
+        return text;
+    });
+    expect(filteredPrint).toContain('Waiter.java:20');
+    expect(filteredPrint).not.toContain('Holder.java:10');
     await raw.getByRole('button', { name: 'Show the canonical raw dump', exact: true }).click();
     await expect(raw.locator('.raw-workspace-exact .raw-workspace-line')).toHaveCount(source.split('\n').length);
     await raw.getByRole('button', { name: 'Copy complete canonical raw dump', exact: true }).click();
@@ -74,6 +82,64 @@ test('TDA raw evidence opens a reusable tab with exact text, copy, search and fi
     });
     await expect.poll(() => raw.isClosed()).toBe(true);
     await expect(page.locator('#openRawDumpBtn')).toBeFocused();
+});
+
+test('TDA large raw captures build visible lines while searching, copying and printing the full source', async ({ page }) => {
+    const lines = ['2026-10-07 12:00:00', 'Full thread dump OpenJDK 64-Bit Server VM (27+35 mixed mode, sharing):', ''];
+    for (let index = 0; index < 300; index++) {
+        lines.push(`"worker-${String(index).padStart(3, '0')}" #${index + 1} prio=5 os_prio=0 tid=0x${(index + 1).toString(16)} nid=0x${(index + 1).toString(16)} runnable`,
+            '   java.lang.Thread.State: RUNNABLE');
+        for (let frame = 0; frame < 24; frame++) lines.push(`        at example.Work.run(Work.java:${frame})`);
+        if (index === 299) lines.push('        at example.UniqueTail.run(UniqueTail.java:9999)');
+        lines.push('');
+    }
+    lines.pop(); // The snapshot's canonical source excludes trailing separator lines.
+    const largeSource = lines.join('\n');
+    await load(page, largeSource);
+    const raw = await openRaw(page);
+    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(300);
+    await expect(raw.locator('.raw-workspace-line')).toHaveCount(0);
+    await raw.getByRole('button', { name: 'Expand worker-000', exact: true }).click();
+    await expect(raw.locator('.raw-workspace-line').first()).toBeVisible();
+    await raw.getByRole('button', { name: 'Collapse worker-000', exact: true }).click();
+    await expect(raw.locator('.raw-workspace-line')).toHaveCount(0);
+
+    const search = raw.getByRole('searchbox', { name: 'Search raw dump evidence' });
+    await search.fill('UniqueTail.java:9999');
+    await expect(raw.locator('.raw-workspace-match.is-active')).toBeVisible();
+    await expect(raw.getByRole('button', { name: 'Collapse worker-299', exact: true })).toHaveAttribute('aria-expanded', 'true');
+    await raw.getByRole('button', { name: 'Show the canonical raw dump', exact: true }).click();
+    await raw.getByRole('button', { name: 'Next search match', exact: true }).click();
+    await expect(raw.locator('.raw-workspace-match.is-active')).toBeVisible();
+    await expect.poll(() => raw.locator('.raw-workspace-line').count()).toBeLessThan(1000);
+
+    await search.fill('example.Work.run');
+    await expect(raw.locator('.raw-workspace-search-count')).toHaveText('1 / 7200');
+    await raw.getByRole('button', { name: 'Previous search match', exact: true }).click();
+    await expect(raw.locator('.raw-workspace-search-count')).toHaveText('7200 / 7200');
+    await expect(raw.locator('.raw-workspace-match.is-active')).toBeVisible();
+    await expect.poll(() => raw.locator('.raw-workspace-match').count()).toBeLessThan(502);
+    await search.fill('');
+    await expect(raw.locator('.raw-workspace-match')).toHaveCount(0);
+    await raw.locator('.raw-workspace-evidence').evaluate(node => { node.scrollTop = node.scrollHeight; });
+    await expect(raw.locator(`.raw-workspace-line[data-line-number="${lines.length}"]`)).toBeVisible();
+
+    await raw.getByRole('button', { name: 'Display settings', exact: true }).click();
+    await raw.getByRole('checkbox', { name: 'Wrap long lines', exact: true }).check();
+    await search.fill('UniqueTail.java:9999');
+    await expect(raw.locator('.raw-workspace-match.is-active')).toBeVisible();
+    await raw.getByRole('button', { name: 'Copy complete canonical raw dump', exact: true }).click();
+    await expect(raw.getByRole('button', { name: 'Copy complete canonical raw dump', exact: true })).toHaveText('Copied');
+    expect((await raw.evaluate(() => navigator.clipboard.readText())).replaceAll('\r\n', '\n')).toBe(largeSource);
+    const printed = await raw.evaluate(() => {
+        window.dispatchEvent(new Event('beforeprint'));
+        const text = document.querySelector('.raw-workspace-print-source').textContent;
+        window.dispatchEvent(new Event('afterprint'));
+        return text;
+    });
+    expect(printed).toBe(largeSource);
+    await expect(raw.locator('.raw-workspace-print-source')).toHaveCount(0);
+    await raw.close();
 });
 
 test('TDA raw-tab details and thread/lock graph links return to the same evidence tab', async ({ page }) => {

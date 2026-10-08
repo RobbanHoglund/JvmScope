@@ -154,8 +154,7 @@ function buildLockIndex(threads, occurrences) {
     return locks;
 }
 
-function buildThreadBlock(thread, sourceLines, occurrences, lockIndex) {
-    const threadOccurrences = occurrences.filter((occurrence) => occurrence.sourceKey === thread.sourceKey);
+function buildThreadBlock(thread, sourceLines, threadOccurrences, lockIndex) {
     const heldMonitors = threadOccurrences.filter((item) => item.kind === 'monitor');
     const heldSynchronizers = threadOccurrences.filter((item) => item.kind === 'ownable-synchronizer');
     const monitorEntryWaits = threadOccurrences.filter((item) => item.kind === 'monitor-enter');
@@ -298,7 +297,14 @@ export function buildRawDumpModel({ rawText = '', threads = [] } = {}) {
         .flatMap((thread) => classInitializationOccurrencesForThread(thread, sourceLines));
     const occurrences = [...lockOccurrences, ...classInitializationOccurrences];
     const lockIndex = buildLockIndex(validThreads, lockOccurrences);
-    const threadBlocks = validThreads.map((thread) => buildThreadBlock(thread, sourceLines, occurrences, lockIndex));
+    const occurrencesBySourceKey = new Map();
+    for (const occurrence of occurrences) {
+        if (!occurrencesBySourceKey.has(occurrence.sourceKey)) occurrencesBySourceKey.set(occurrence.sourceKey, []);
+        occurrencesBySourceKey.get(occurrence.sourceKey).push(occurrence);
+    }
+    const threadBlocks = validThreads.map((thread) => buildThreadBlock(
+        thread, sourceLines, occurrencesBySourceKey.get(thread.sourceKey) || [], lockIndex,
+    ));
     const blockBySourceKey = new Map(threadBlocks.map((block) => [block.sourceKey, block]));
     const counts = {
         all: threadBlocks.length,
@@ -334,4 +340,25 @@ export function buildRawDumpModel({ rawText = '', threads = [] } = {}) {
 
 export function evidenceLabelForKind(kind) {
     return EVIDENCE_LABELS[kind] || '';
+}
+
+// Search the source, including collapsed/unmounted evidence, in display order.
+// Matching original strings keeps offsets correct when case folding changes length.
+export function findRawDumpMatches(sourceLines, query, ranges = [{ startLine: 1, endLine: sourceLines.length }]) {
+    query = String(query ?? '');
+    if (!query || query.length > 512) return [];
+    const expression = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
+    const matches = [];
+    for (const range of ranges) {
+        for (let lineNumber = range.startLine; lineNumber <= range.endLine; lineNumber++) {
+            const line = sourceLines[lineNumber - 1] ?? '';
+            expression.lastIndex = 0;
+            let match;
+            while ((match = expression.exec(line))) {
+                matches.push({ lineNumber, start: match.index, end: match.index + match[0].length,
+                    sourceKey: range.sourceKey ?? null });
+            }
+        }
+    }
+    return matches;
 }

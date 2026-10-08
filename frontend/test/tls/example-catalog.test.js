@@ -128,7 +128,7 @@ test('example fetch failures are rejected without accepting empty or unknown fil
     const controller = new AbortController();
     const log = await readExample(sample, { signal: controller.signal, fetchImpl: async (url, options) => {
         assert.equal(url, sample.url);
-        assert.equal(options.credentials, 'omit');
+        assert.equal(options.credentials, 'same-origin');
         assert.equal(options.signal, controller.signal);
         return new Response(text(sample));
     } });
