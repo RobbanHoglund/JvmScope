@@ -118,7 +118,8 @@ export const TLS_EXAMPLES = Object.freeze([
 
 export async function readExample(sample, { signal, fetchImpl = fetch } = {}) {
     if (![...THREAD_EXAMPLES, ...TLS_EXAMPLES].includes(sample)) throw new Error('Unknown example.');
-    const response = await fetchImpl(sample.url, { signal, credentials: 'omit' });
+    // Private static hosts require the same site session as the analyzer page.
+    const response = await fetchImpl(sample.url, { signal, credentials: 'same-origin' });
     if (!response.ok) throw new Error(`The example file could not be fetched (HTTP ${response.status}).`);
     if (/text\/html/i.test(response.headers.get('content-type') || '')) throw new Error('The server returned a web page instead of an example file.');
     if (Number(response.headers.get('content-length')) > 200_000) throw new Error('The example file exceeded the size limit.');

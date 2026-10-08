@@ -50,6 +50,31 @@ test('TDA real virtual workers retain their carrier and unavailable CPU facts', 
 
 for (const analyzer of ['tda', 'tls']) {
     const samples = analyzer === 'tda' ? THREAD_EXAMPLES : TLS_EXAMPLES;
+    test(`${analyzer.toUpperCase()} loads examples on private hosting with the current site session`, async ({ page, context, appUrl }) => {
+        await page.route(/\.(txt|json)(\?|$)/, async route => {
+            const headers = await route.request().allHeaders();
+            if (headers.cookie?.includes('jvmscope_preview_session=example-access')) return route.continue();
+            return route.fulfill({ status: 401, contentType: 'text/plain', body: 'Authentication required' });
+        });
+        await page.goto(`${appUrl}/jvmscope/${analyzer}.html`);
+        await page.locator('#loadSampleBtn').click();
+        const feedback = page.locator(analyzer === 'tda' ? '#inputFeedbackModal' : '#errorState');
+        await expect(feedback).toContainText('HTTP 401');
+        if (analyzer === 'tda') await feedback.getByRole('button', { name: 'Close', exact: true }).click();
+
+        await context.addCookies([{ name: 'jvmscope_preview_session', value: 'example-access', url: new URL(appUrl).origin }]);
+        const response = page.waitForResponse(response => /\.(txt|json)(\?|$)/.test(response.url()));
+        await page.locator('#loadSampleBtn').click();
+        expect((await response).status()).toBe(200);
+        await expect(page.locator('#rowCount')).toHaveText(analyzer === 'tda' ? '1–50 of 67 threads' : '35 / 35 interactions');
+        await expect(page.locator('#analyzerStart')).toBeHidden();
+
+        const namedExample = samples.find(sample => sample.id === (analyzer === 'tda' ? 'tda-deadlock' : 'tls-timeout'));
+        await page.locator('#chooseExampleBtn').click();
+        await page.locator(`[data-example-id="${namedExample.id}"]`).click();
+        await expect(page.locator('#fileName')).toHaveText(analyzer === 'tda' ? namedExample.title : namedExample.filename);
+    });
+
     test(`${analyzer.toUpperCase()} example library searches and filters without replacing the capture`, async ({ page, appUrl }) => {
         await page.goto(`${appUrl}/jvmscope/${analyzer}.html`);
         const requests = [];
