@@ -1,10 +1,13 @@
 import {
     RAW_DUMP_FILTERS,
     buildRawDumpModel,
+    findRawDumpMatches,
     filterRawDumpThreadBlocks,
-    sortRawDumpThreadBlocks,
 } from './raw-dump-model.js';
 import { classifyStackTraceLine } from './thread-modal.js';
+import { createRawDumpLineRenderer } from './raw-dump-lines.js';
+
+const MAX_RENDERED_MATCHES = 500;
 
 const PREFERENCE_KEY = 'tda.rawDumpWorkspace.v1';
 const DEFAULT_PREFERENCES = Object.freeze({
@@ -71,7 +74,10 @@ export function createRawDumpWorkspace({
     let destroyed = false;
     let copyResetTimer = null;
     const documentRef = popup.document;
-    const model = buildRawDumpModel({ rawText: dump.rawText, threads: dump.threads || [] });
+    const rawText = String(dump.rawText);
+    const sourceLines = rawText.split('\n');
+    let model = null;
+    const getModel = () => model ||= buildRawDumpModel({ rawText, threads: dump.threads || [] });
     const preferences = loadPreferences(popup.localStorage);
     if (!['annotated', 'exact'].includes(preferences.mode)) preferences.mode = 'annotated';
     if (!Object.hasOwn(RAW_DUMP_FILTERS, preferences.filter)) preferences.filter = 'everything';
@@ -80,10 +86,18 @@ export function createRawDumpWorkspace({
         selectedSourceKey: null,
         selectedLockId: '',
         matches: [],
+        matchesByLine: new Map(),
+        renderedMatches: new Map(),
         activeMatchIndex: -1,
-        expandedSourceKeys: new Set(model.threadBlocks.filter((block) => block.initiallyExpanded).map((block) => block.sourceKey)),
+        expandedSourceKeys: new Set(),
         preferences,
     };
+    let visibleBlocks = [];
+    let lineRenderer = null;
+    const threadViews = new Map();
+    let sourceContext = null;
+    let populateSourceContext = () => {};
+    let printSource = null;
 
     // Only a constant doctype enters the HTML parser; dump contents are always
     // inserted through textContent. A blank tab otherwise starts in quirks mode.
@@ -101,6 +115,7 @@ export function createRawDumpWorkspace({
     const stylesheet = element(documentRef, 'link');
     stylesheet.rel = 'stylesheet';
     stylesheet.href = stylesheetUrl;
+    stylesheet.addEventListener('load', () => lineRenderer?.activate());
     head.append(title, viewport, stylesheet);
 
     const body = element(documentRef, 'body', 'raw-workspace-page');
@@ -110,7 +125,7 @@ export function createRawDumpWorkspace({
     identityText.append(
         element(documentRef, 'span', 'raw-workspace-kicker', 'Raw dump evidence'),
         element(documentRef, 'h1', '', dump.timestamp || `Snapshot ${snapshotIndex + 1}`),
-        element(documentRef, 'p', 'raw-workspace-meta', `Snapshot ${snapshotIndex + 1} of ${snapshotCount} · ${model.counts.all} threads · ${model.sourceLines.length} lines${dump.sourceLabel ? ` · Source: ${dump.sourceLabel}` : ''}`),
+        element(documentRef, 'p', 'raw-workspace-meta', `Snapshot ${snapshotIndex + 1} of ${snapshotCount} · ${(dump.threads || []).length} threads · ${sourceLines.length} lines${dump.sourceLabel ? ` · Source: ${dump.sourceLabel}` : ''}`),
     );
     const modeControl = element(documentRef, 'div', 'raw-workspace-segmented');
     modeControl.setAttribute('role', 'group');
@@ -128,6 +143,7 @@ export function createRawDumpWorkspace({
     searchInput.placeholder = 'Search visible evidence';
     searchInput.autocomplete = 'off';
     searchInput.spellcheck = false;
+    searchInput.maxLength = 512;
     searchInput.setAttribute('aria-label', 'Search raw dump evidence');
     const searchCount = element(documentRef, 'span', 'raw-workspace-search-count', 'Type to search');
     searchGroup.append(searchInput, searchCount);
@@ -182,7 +198,7 @@ export function createRawDumpWorkspace({
         input.addEventListener('change', () => {
             preferences[key] = input.checked;
             applyPreferences();
-            render();
+            lineRenderer?.resetHeights();
         });
         wrapper.append(input, element(documentRef, 'span', '', label));
         return wrapper;
@@ -250,7 +266,6 @@ export function createRawDumpWorkspace({
         );
         outline.append(filterHeading, filterList, element(documentRef, 'h3', '', 'Threads'), expansionControls);
 
-        const visibleBlocks = sortRawDumpThreadBlocks(filterRawDumpThreadBlocks(model, preferences.filter, state.selectedLockId));
         const threadList = element(documentRef, 'div', 'raw-workspace-thread-list');
         for (const block of visibleBlocks) {
             const item = button(documentRef, '', `Go to ${block.thread.threadName}`, () => selectThread(block.sourceKey), 'raw-workspace-thread-link');
@@ -266,11 +281,43 @@ export function createRawDumpWorkspace({
         outline.appendChild(threadList);
     }
 
-    function appendLine(container, text, lineNumber, occurrence = null) {
-        const row = element(documentRef, 'div', `raw-workspace-line is-${classifyStackTraceLine(text)}`);
+    function removeMatches(container) {
+        for (const mark of container.querySelectorAll('.raw-workspace-match')) {
+            state.renderedMatches.delete(Number(mark.dataset.matchIndex));
+        }
+    }
+
+    function paintLineContent(content, text, lineNumber) {
+        removeMatches(content);
+        const indices = state.matchesByLine.get(lineNumber) || [];
+        const available = Math.max(0, MAX_RENDERED_MATCHES - state.renderedMatches.size);
+        const selected = indices.slice(0, available);
+        if (state.matches[state.activeMatchIndex]?.lineNumber === lineNumber && !selected.includes(state.activeMatchIndex)) {
+            selected.push(state.activeMatchIndex);
+            selected.sort((a, b) => a - b);
+        }
+        if (!selected.length) { content.textContent = text || ' '; return; }
+        content.replaceChildren();
+        let cursor = 0;
+        for (const index of selected) {
+            const match = state.matches[index];
+            content.append(text.slice(cursor, match.start));
+            const mark = element(documentRef, 'mark', 'raw-workspace-match', text.slice(match.start, match.end));
+            mark.dataset.matchIndex = String(index);
+            mark.classList.toggle('is-active', index === state.activeMatchIndex);
+            content.appendChild(mark);
+            state.renderedMatches.set(index, mark);
+            cursor = match.end;
+        }
+        content.append(text.slice(cursor));
+    }
+
+    function appendLine(container, text, lineNumber, occurrence = null, decorate = true) {
+        const row = element(documentRef, 'div', `raw-workspace-line is-${decorate ? classifyStackTraceLine(text) : 'detail'}`);
         row.dataset.lineNumber = String(lineNumber);
         const number = element(documentRef, 'span', 'raw-workspace-line-number', String(lineNumber));
         const content = element(documentRef, 'span', 'raw-workspace-line-content', text || ' ');
+        if (state.matches.length) paintLineContent(content, text, lineNumber);
         row.append(number, content);
         if (occurrence) {
             const isClassInitialization = occurrence.kind === 'class-initialization-wait';
@@ -291,12 +338,11 @@ export function createRawDumpWorkspace({
 
     function renderExact() {
         const exact = element(documentRef, 'section', 'raw-workspace-exact');
-        model.sourceLines.forEach((line, index) => appendLine(exact, line, index + 1));
+        lineRenderer.append(exact, { startLine: 1, endLine: sourceLines.length, decorate: false });
         evidence.appendChild(exact);
     }
 
     function renderAnnotated() {
-        const visibleBlocks = sortRawDumpThreadBlocks(filterRawDumpThreadBlocks(model, preferences.filter, state.selectedLockId));
         const summary = element(documentRef, 'div', 'raw-workspace-results-summary');
         summary.append(
             element(documentRef, 'strong', '', RAW_DUMP_FILTERS[preferences.filter] || RAW_DUMP_FILTERS.everything),
@@ -307,9 +353,16 @@ export function createRawDumpWorkspace({
             const context = element(documentRef, 'details', 'raw-workspace-source-context');
             const contextSummary = element(documentRef, 'summary', '', `Source context · ${model.rawSections.reduce((total, section) => total + section.lines.length, 0)} lines`);
             const contextLines = element(documentRef, 'div', 'raw-workspace-thread-lines');
-            for (const section of model.rawSections) {
-                section.lines.forEach((line, index) => appendLine(contextLines, line, section.startLine + index));
-            }
+            sourceContext = context;
+            populateSourceContext = () => {
+                if (contextLines.childNodes.length || destroyed) return;
+                for (const section of model.rawSections) lineRenderer.append(contextLines, section);
+            };
+            context.addEventListener('toggle', () => {
+                if (!context.isConnected || destroyed) return;
+                if (context.open) populateSourceContext();
+                else lineRenderer.remove(contextLines);
+            });
             context.append(contextSummary, contextLines);
             evidence.appendChild(context);
         }
@@ -334,6 +387,8 @@ export function createRawDumpWorkspace({
             disclosure.setAttribute('aria-label', `${collapsed ? 'Expand' : 'Collapse'} ${block.thread.threadName}`);
             if (collapsed) state.expandedSourceKeys.delete(block.sourceKey);
             else state.expandedSourceKeys.add(block.sourceKey);
+            if (collapsed) lineRenderer.remove(lines);
+            else populate();
         }, 'raw-workspace-disclosure');
         disclosure.setAttribute('aria-expanded', String(isExpanded));
         const titleGroup = element(documentRef, 'div', 'raw-workspace-thread-title');
@@ -366,8 +421,13 @@ export function createRawDumpWorkspace({
         );
         headerRow.append(disclosure, titleGroup, roles, actions);
         const lines = element(documentRef, 'div', 'raw-workspace-thread-lines');
-        const occurrenceByLine = new Map(block.occurrences.map((item) => [item.lineNumber, item]));
-        block.lines.forEach((line, index) => appendLine(lines, line, block.startLine + index, occurrenceByLine.get(block.startLine + index)));
+        const populate = () => {
+            if (lines.childNodes.length || destroyed) return;
+            lineRenderer.append(lines, { startLine: block.startLine, endLine: block.endLine,
+                occurrences: new Map(block.occurrences.map(item => [item.lineNumber, item])) });
+        };
+        threadViews.set(block.sourceKey, { article, populate });
+        if (isExpanded) populate();
         article.append(headerRow, lines);
         if (!isExpanded) article.classList.add('is-collapsed');
         // Only the header selects the inspector; stack text must remain copyable.
@@ -392,6 +452,7 @@ export function createRawDumpWorkspace({
     }
 
     function selectThread(sourceKey) {
+        getModel();
         state.selectedSourceKey = sourceKey;
         state.selectedLockId = '';
         if (!filterRawDumpThreadBlocks(model, preferences.filter, state.selectedLockId).some(block => block.sourceKey === sourceKey)) {
@@ -404,6 +465,7 @@ export function createRawDumpWorkspace({
     }
 
     function selectLock(lockId) {
+        getModel();
         state.selectedLockId = lockId;
         state.selectedSourceKey = null;
         updateSelection();
@@ -507,28 +569,24 @@ export function createRawDumpWorkspace({
     }
 
     function updateSearch({ navigate = true } = {}) {
-        const query = searchInput.value.toLocaleLowerCase();
-        state.matches = [];
+        const query = searchInput.value;
+        const hadHighlights = state.renderedMatches.size > 0;
+        const ranges = preferences.mode === 'exact' ? undefined : [
+            ...(preferences.filter === 'everything' ? model.rawSections : []),
+            ...visibleBlocks.map(block => ({ startLine: block.startLine, endLine: block.endLine, sourceKey: block.sourceKey })),
+        ];
+        state.matches = findRawDumpMatches(sourceLines, query, ranges);
+        state.matchesByLine = new Map();
+        state.matches.forEach((match, index) => {
+            if (!state.matchesByLine.has(match.lineNumber)) state.matchesByLine.set(match.lineNumber, []);
+            state.matchesByLine.get(match.lineNumber).push(index);
+        });
         state.activeMatchIndex = -1;
-        for (const content of evidence.querySelectorAll('.raw-workspace-line-content')) {
-            const line = content.textContent;
-            content.replaceChildren();
-            if (!query) {
-                content.textContent = line;
-                continue;
+        if (query || hadHighlights) {
+            for (const row of evidence.querySelectorAll('.raw-workspace-line')) {
+                const lineNumber = Number(row.dataset.lineNumber);
+                paintLineContent(row.querySelector('.raw-workspace-line-content'), sourceLines[lineNumber - 1], lineNumber);
             }
-            const normalizedLine = line.toLocaleLowerCase();
-            let cursor = 0;
-            let index = normalizedLine.indexOf(query);
-            while (index >= 0) {
-                content.append(line.slice(cursor, index));
-                const mark = element(documentRef, 'mark', 'raw-workspace-match', line.slice(index, index + query.length));
-                content.appendChild(mark);
-                state.matches.push(mark);
-                cursor = index + query.length;
-                index = normalizedLine.indexOf(query, cursor);
-            }
-            content.append(line.slice(cursor));
         }
         searchGroup.classList.toggle('has-no-results', Boolean(query) && !state.matches.length);
         previousButton.disabled = !state.matches.length;
@@ -539,19 +597,31 @@ export function createRawDumpWorkspace({
 
     function selectMatch(offset) {
         if (!state.matches.length) return;
-        state.matches[state.activeMatchIndex]?.classList.remove('is-active');
+        state.renderedMatches.get(state.activeMatchIndex)?.classList.remove('is-active');
         state.activeMatchIndex = rawDumpMatchIndex(state.activeMatchIndex, state.matches.length, offset);
-        const active = state.matches[state.activeMatchIndex];
-        active.classList.add('is-active');
-        revealRawDumpMatch(active, state.expandedSourceKeys);
-        active.scrollIntoView({ block: 'center', inline: 'nearest' });
+        const match = state.matches[state.activeMatchIndex];
+        if (preferences.mode === 'annotated') {
+            const view = threadViews.get(match.sourceKey);
+            if (view) {
+                view.populate();
+                revealRawDumpMatch({ closest: selector => selector === '.raw-workspace-thread-block' ? view.article : null }, state.expandedSourceKeys);
+            } else if (sourceContext) {
+                sourceContext.open = true;
+                populateSourceContext();
+            }
+        }
+        const row = lineRenderer.reveal(match.lineNumber);
+        if (row) {
+            paintLineContent(row.querySelector('.raw-workspace-line-content'), sourceLines[match.lineNumber - 1], match.lineNumber);
+            state.renderedMatches.get(state.activeMatchIndex)?.scrollIntoView({ block: 'center', inline: 'nearest' });
+        }
         searchCount.textContent = `${state.activeMatchIndex + 1} / ${state.matches.length}`;
     }
 
     async function copyRawDump() {
         let copied = false;
         try {
-            await popup.navigator.clipboard.writeText(model.rawText);
+            await popup.navigator.clipboard.writeText(rawText);
             copied = true;
         } catch {}
         if (destroyed || popup.closed) return;
@@ -561,6 +631,7 @@ export function createRawDumpWorkspace({
     }
 
     function render() {
+        if (destroyed) return;
         const focused = documentRef.activeElement;
         const focusKey = focused?.dataset?.focusKey;
         const sourceKey = focused?.closest('[data-source-key]')?.dataset.sourceKey;
@@ -570,11 +641,26 @@ export function createRawDumpWorkspace({
         annotatedButton.setAttribute('aria-pressed', String(preferences.mode === 'annotated'));
         exactButton.setAttribute('aria-pressed', String(preferences.mode === 'exact'));
         applyPreferences();
+        lineRenderer?.destroy();
+        state.renderedMatches.clear();
+        threadViews.clear();
+        sourceContext = null;
+        populateSourceContext = () => {};
+        lineRenderer = createRawDumpLineRenderer({ popup, root: evidence, sourceLines, appendLine, removeMatches,
+            ready: Boolean(stylesheet.sheet) });
         evidence.replaceChildren();
-        if (preferences.mode === 'exact') renderExact();
-        else renderAnnotated();
-        renderOutline();
-        updateSelection();
+        if (preferences.mode === 'exact') {
+            renderExact();
+            outline.replaceChildren();
+            inspector.replaceChildren();
+        } else {
+            getModel();
+            const included = new Set(filterRawDumpThreadBlocks(model, preferences.filter, state.selectedLockId).map(block => block.sourceKey));
+            visibleBlocks = model.sortedThreadBlocks.filter(block => included.has(block.sourceKey));
+            renderAnnotated();
+            renderOutline();
+            updateSelection();
+        }
         updateSearch({ navigate: false });
         [outline, evidence, inspector].forEach((node, index) => {
             [node.scrollLeft, node.scrollTop] = scrollPositions[index];
@@ -621,16 +707,45 @@ export function createRawDumpWorkspace({
     };
     documentRef.addEventListener('click', onOutsideClick);
 
+    // Print from the source instead of materializing decorated rows. Exact mode
+    // includes the complete capture; annotated mode retains filters/expansion.
+    const onBeforePrint = () => {
+        if (destroyed || printSource) return;
+        printSource = element(documentRef, 'section', 'raw-workspace-print-source');
+        if (preferences.mode === 'exact') {
+            printSource.appendChild(element(documentRef, 'pre', '', rawText));
+        } else {
+            printSource.appendChild(element(documentRef, 'p', '', `${RAW_DUMP_FILTERS[preferences.filter]} · ${visibleBlocks.length} threads`));
+            if (sourceContext?.open) printSource.appendChild(element(documentRef, 'pre', '',
+                model.rawSections.map(section => section.lines.join('\n')).join('\n')));
+            for (const block of visibleBlocks) {
+                printSource.appendChild(element(documentRef, 'h2', '', `${block.thread.threadName} · ${block.thread.javaState || 'UNKNOWN'}`));
+                if (state.expandedSourceKeys.has(block.sourceKey)) {
+                    printSource.appendChild(element(documentRef, 'pre', '', block.lines.join('\n')));
+                }
+            }
+        }
+        body.appendChild(printSource);
+    };
+    const onAfterPrint = () => { printSource?.remove(); printSource = null; };
+    popup.addEventListener('beforeprint', onBeforePrint);
+    popup.addEventListener('afterprint', onAfterPrint);
+
     render();
     searchInput.focus();
     return {
-        model, render, selectThread, selectLock,
+        get model() { return getModel(); }, render, selectThread, selectLock,
         focus: () => searchInput.focus({ preventScroll: true }),
         destroy: () => {
             destroyed = true;
+            lineRenderer?.destroy();
+            state.renderedMatches.clear();
+            onAfterPrint();
             if (!popup.closed) popup.clearTimeout(copyResetTimer);
             documentRef.removeEventListener('keydown', onKeyDown);
             documentRef.removeEventListener('click', onOutsideClick);
+            popup.removeEventListener('beforeprint', onBeforePrint);
+            popup.removeEventListener('afterprint', onAfterPrint);
         },
     };
 }

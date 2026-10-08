@@ -2380,6 +2380,22 @@ button:hover {
   }
 }
 
+.raw-workspace-print-source {
+  display: none;
+}
+
+@media screen {
+  .raw-workspace-thread-block {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 54px;
+  }
+
+  .raw-workspace-thread-link {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 30px;
+  }
+}
+
 @media print {
   .raw-workspace-page {
     min-width: 0;
@@ -2428,6 +2444,26 @@ button:hover {
   .raw-workspace-line {
     grid-template-columns: 1fr;
     color: #111;
+  }
+
+  .raw-workspace-page .raw-workspace-layout {
+    display: none;
+  }
+
+  .raw-workspace-print-source {
+    display: block;
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: 12px/1.55 Consolas, monospace;
+    color: #111;
+  }
+
+  .raw-workspace-print-source pre {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: inherit;
   }
 }
 

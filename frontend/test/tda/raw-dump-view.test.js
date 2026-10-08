@@ -1,6 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { rawDumpMatchIndex, revealRawDumpMatch } from '../../assets/javautils/tda/raw-dump-view.js';
+import { findRawDumpMatches } from '../../assets/javautils/tda/raw-dump-model.js';
+
+test('raw search includes unmounted source ranges in display order and keeps literal Unicode offsets', () => {
+    const lines = ['İ ABC <script>x</script>', 'not searched', 'tail [a] [a]'];
+    assert.deepEqual(findRawDumpMatches(lines, 'abc'), [{ lineNumber: 1, start: 2, end: 5, sourceKey: null }]);
+    assert.deepEqual(findRawDumpMatches(lines, '[a]', [{ startLine: 3, endLine: 3, sourceKey: 'last' }]), [
+        { lineNumber: 3, start: 5, end: 8, sourceKey: 'last' },
+        { lineNumber: 3, start: 9, end: 12, sourceKey: 'last' },
+    ]);
+    assert.deepEqual(findRawDumpMatches(lines, 'searched', [{ startLine: 3, endLine: 3 }]), []);
+    assert.deepEqual(findRawDumpMatches(lines, '', []), []);
+    assert.deepEqual(findRawDumpMatches(lines, 'x'.repeat(513)), []);
+    assert.equal(findRawDumpMatches(lines, '<script>')[0].start, 6);
+});
 
 test('search reveals a collapsed thread and synchronizes its accessible disclosure state', () => {
     const classes = new Set(['is-collapsed']);
