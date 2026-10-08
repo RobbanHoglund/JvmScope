@@ -132,7 +132,7 @@ function badgeOutcome(it) {
     const outcome = it.outcome;
     const cls =
         outcome === 'success' ? 'status-badge status-ok' : outcome === 'failure' ? 'status-badge status-bad' : 'status-badge status-warn';
-    return `<span class="${cls}" title="${escapeHtml(tlsUncertaintyExplanation(it))}"><span>${escapeHtml(tlsOutcomeDisplay(it))}</span></span>`;
+    return `<span class="${cls}" title="${escapeHtml(tlsUncertaintyExplanation(it))}"><span>${escapeHtml(tlsOutcomeDisplay(it, { compact: true }))}</span></span>`;
 }
 
 function badgeDirection(it) {

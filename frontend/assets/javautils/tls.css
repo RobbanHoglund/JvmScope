@@ -592,3 +592,10 @@ body.tls-page.tls-investigating { height: calc(100dvh - 28px); margin-bottom: 14
 .tls-page .tls-source-row:focus { outline-color: var(--tls-accent); }
 .tls-page .tls-evidence-link:hover { background: #21434a; border-color: var(--tls-accent); }
 .tls-page .tls-name-filter { color: #9adcd6; }
+
+@media (max-width: 1200px) {
+  body.tls-page.tls-investigating { height: auto; min-height: calc(100dvh - 28px); }
+  .tls-investigating .tls-workspace { grid-template-columns: minmax(0, 1fr); flex: none; }
+  .tls-page.tls-investigating .tls-table-scroll { flex: none; max-height: 360px; }
+  .tls-investigating .tls-inspector { min-height: 400px; max-height: 600px; }
+}

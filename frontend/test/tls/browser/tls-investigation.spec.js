@@ -30,7 +30,7 @@ test('opens the linked investigation workspace by default with usable desktop pa
             return { outcome: badge.textContent, right: badge.getBoundingClientRect().right,
                 availableRight: cell.getBoundingClientRect().right - parseFloat(getComputedStyle(cell).paddingRight) };
         }));
-        expect(new Set(badges.map(badge => badge.outcome))).toEqual(new Set(['success', 'failure', 'Outcome not captured']));
+        expect(new Set(badges.map(badge => badge.outcome))).toEqual(new Set(['success', 'failure', 'Not captured']));
         for (const badge of badges) expect(badge.right, `${mode}: ${badge.outcome} fits with cell padding`).toBeLessThanOrEqual(badge.availableRight);
     }
     await select(page, 7);
@@ -51,6 +51,37 @@ test('opens the linked investigation workspace by default with usable desktop pa
     await select(page, 29);
     await expect(inspector(page)).toHaveAttribute('data-selected-id', '29');
     await page.screenshot({ path: `../.run/tls-investigation/default-${test.info().project.name}.png`, fullPage: true });
+});
+
+test('narrow previews keep both TLS panes reachable without horizontal page scrolling', async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 900 });
+    await page.reload();
+    await page.getByRole('button', { name: /Full sample/ }).click();
+    await expect(page.locator('#rowCount')).toHaveText('35 / 35 interactions');
+    await select(page, 29);
+    await expect(page.locator('tr[data-id="29"] .status-badge')).toHaveText('Not captured');
+    await expect(inspector(page).locator('.tls-inspector-facts')).toContainText('Outcome not captured');
+    const geometry = await page.evaluate(() => {
+        const box = id => document.getElementById(id).getBoundingClientRect().toJSON();
+        return { table: box('tableContainer'), inspector: box('tlsInspector'),
+            pageWidth: document.documentElement.scrollWidth, viewport: innerWidth,
+            badgeHeight: document.querySelector('tr[data-id="29"] .status-badge').getBoundingClientRect().height };
+    });
+    expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewport);
+    expect(geometry.inspector.right).toBeLessThanOrEqual(geometry.viewport);
+    expect(geometry.inspector.y).toBeGreaterThanOrEqual(geometry.table.bottom);
+    expect(geometry.badgeHeight).toBeLessThan(45);
+    await page.locator('#tlsRawTab').click();
+    await expect(inspector(page).locator('.rawline')).toHaveCount(4);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(inspector(page)).toHaveAttribute('data-selected-id', '29');
+    const wide = await page.evaluate(() => ({
+        inspector: document.getElementById('tlsInspector').getBoundingClientRect().toJSON(),
+        table: document.getElementById('tableContainer').getBoundingClientRect().toJSON(),
+    }));
+    expect(wide.inspector.x).toBeGreaterThanOrEqual(wide.table.right);
+    await inspector(page).getByRole('button', { name: 'Full details', exact: true }).click();
+    await expect(page.locator('#tlsModalBody')).toContainText('no final success or failure was captured');
 });
 
 test('row selection, keyboard navigation and table modes preserve the same interaction', async ({ page }) => {
@@ -166,7 +197,7 @@ for (const format of ['compact', 'expanded']) test(`${format} unresolved TLS gro
     await expect(inspector(page).locator('.tls-verdict p')).toContainText('rest of this log');
     await page.locator('#tlsAllColumns').click();
     const row = page.locator('tr[data-id="3"]');
-    await expect(row.locator('.status-badge')).toHaveText('Grouping uncertain');
+    await expect(row.locator('.status-badge')).toHaveText('Uncertain');
     await expect(row.locator('.tls-direction-badge')).toContainText('Direction uncertain');
     await expect(row.locator('.warning-count')).toHaveAttribute('data-tooltip-body', /new ClientHello/);
     // Missing-host filters retain their null identity despite the explanatory label.

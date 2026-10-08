@@ -1,7 +1,8 @@
 import { certificateCommonName, isTlsCorrelationAmbiguous } from './tls-core.js';
 
-export function tlsOutcomeDisplay(it) {
+export function tlsOutcomeDisplay(it, { compact = false } = {}) {
     if (it.outcome === 'success' || it.outcome === 'failure') return it.outcome;
+    if (compact) return isTlsCorrelationAmbiguous(it) ? 'Uncertain' : 'Not captured';
     return isTlsCorrelationAmbiguous(it) ? 'Grouping uncertain' : 'Outcome not captured';
 }
 
