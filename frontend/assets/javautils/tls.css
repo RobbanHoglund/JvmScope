@@ -370,9 +370,13 @@ html:has(> body.tls-page),
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
-  white-space: nowrap;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
 }
-.tls-page .status-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.tls-page .status-badge > span { min-width: 0; overflow-wrap: anywhere; }
+.tls-page .status-badge::before { content: ''; width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
+.tls-page .tls-direction-badge { white-space: normal; overflow-wrap: anywhere; }
 .tls-page .status-ok { color: #79d6ad; border-color: #325e4e; background: #183c32; }
 .tls-page .status-bad { color: #f0a6a6; border-color: #744047; background: #43272c; }
 .tls-page .status-warn { color: #e8cb80; border-color: #6e6038; background: #3b3320; }

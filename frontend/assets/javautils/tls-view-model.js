@@ -1,6 +1,35 @@
-import { certificateCommonName } from './tls-core.js';
+import { certificateCommonName, isTlsCorrelationAmbiguous } from './tls-core.js';
+
+export function tlsOutcomeDisplay(it) {
+    if (it.outcome === 'success' || it.outcome === 'failure') return it.outcome;
+    return isTlsCorrelationAmbiguous(it) ? 'Grouping uncertain' : 'Outcome not captured';
+}
+
+export function tlsDirectionDisplay(it) {
+    if (it.direction && it.direction !== 'unknown') return it.direction;
+    return isTlsCorrelationAmbiguous(it) ? 'Direction uncertain' : 'Direction not captured';
+}
+
+export function tlsMissingFactDisplay(it) {
+    return isTlsCorrelationAmbiguous(it) ? 'Not attributable' : 'Not captured';
+}
+
+export function tlsUncertaintyExplanation(it) {
+    if (isTlsCorrelationAmbiguous(it)) {
+        const reason = (it.correlationWarnings || []).join(' ');
+        const context = it.correlationQuality === 'ambiguous-thread'
+            ? 'A JVM thread can serve multiple connections. Unresolved handshake boundaries keep subsequent groups on this thread uncertain for the rest of this log.'
+            : 'Legacy handshake bodies lack connection IDs, so mixed or unresolved exchanges cannot be assigned reliably.';
+        return [reason || 'Log records cannot be linked reliably to one connection.', context,
+            'Result, direction and connection facts are withheld. Inspect the raw records or capture each connection separately.'].join(' ');
+    }
+    if (it.outcome === 'unknown') return it.outcomeDetail
+        || 'No final handshake completion or fatal handshake error was captured. Capture the complete handshake to establish its outcome.';
+    return '';
+}
 
 export function clientCertDisplay(it) {
+    if (isTlsCorrelationAmbiguous(it)) return tlsMissingFactDisplay(it);
     if (it.clientCertSubjectCn) return it.clientCertSubjectCn;
     if (it.clientCertSubject) {
         const subject = String(it.clientCertSubject).trim();
@@ -20,6 +49,7 @@ export function certificateAuthorityShortName(authority) {
 }
 
 export function certificateAuthoritiesDisplay(it) {
+    if (isTlsCorrelationAmbiguous(it)) return tlsMissingFactDisplay(it);
     const authorities = it.certificateAuthorities || [];
     if (authorities.length) {
         const first = certificateAuthorityShortName(authorities[0]);
@@ -31,6 +61,7 @@ export function certificateAuthoritiesDisplay(it) {
 }
 
 export function certificateAuthoritiesTooltip(it) {
+    if (isTlsCorrelationAmbiguous(it)) return tlsUncertaintyExplanation(it);
     const authorities = it.certificateAuthorities || [];
     if (authorities.length) return authorities.join('\n');
     if (it.certificateAuthoritiesComplete) return 'Explicitly empty acceptable CA list';
@@ -39,6 +70,7 @@ export function certificateAuthoritiesTooltip(it) {
 }
 
 export function certificateAuthoritiesDetailsText(it) {
+    if (isTlsCorrelationAmbiguous(it)) return tlsMissingFactDisplay(it);
     const authorities = it.certificateAuthorities || [];
     if (authorities.length) return authorities.join('\n');
     if (it.certificateAuthoritiesComplete) return 'Empty list';
@@ -47,6 +79,7 @@ export function certificateAuthoritiesDetailsText(it) {
 }
 
 export function certificateAuthoritiesTooltipBody(it) {
+    if (isTlsCorrelationAmbiguous(it)) return tlsUncertaintyExplanation(it);
     const authorities = it.certificateAuthorities || [];
     if (authorities.length) {
         return [
@@ -74,6 +107,7 @@ export function certificateAuthoritiesTooltipBody(it) {
 }
 
 export function clientCertTooltipBody(it) {
+    if (isTlsCorrelationAmbiguous(it)) return tlsUncertaintyExplanation(it);
     if (it.clientCertSubject) {
         const lines = [
             'Subject:',
@@ -105,18 +139,20 @@ export function clientCertTooltipBody(it) {
 export function cipherTooltipBody(it) {
     return [
         'TLS version:',
-        it.tlsVersion || 'unknown',
+        it.tlsVersion || tlsMissingFactDisplay(it),
         '',
         'Cipher suite:',
-        it.cipherSuite || 'unknown'
+        it.cipherSuite || tlsMissingFactDisplay(it)
     ].join('\n');
 }
 
 export function peerHostTooltipBody(it) {
+    if (isTlsCorrelationAmbiguous(it)) return 'Peer host cannot be attributed reliably to one connection. ' + tlsUncertaintyExplanation(it);
     if (it.peerHostSource === 'outbound-sni') return `${it.peerHost}\nDerived from outbound SNI; not a captured network address.`;
     return it.peerHost || 'No peer host value was captured for this interaction.';
 }
 
 export function sniTooltipBody(it) {
+    if (isTlsCorrelationAmbiguous(it)) return 'SNI cannot be attributed reliably to one connection. ' + tlsUncertaintyExplanation(it);
     return it.sni || 'No SNI value was captured for this interaction.';
 }

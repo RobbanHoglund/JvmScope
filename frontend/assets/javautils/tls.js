@@ -6,7 +6,10 @@ import { createHelpSearch } from './help-search.js';
 import { TLS_EXAMPLES, readExample } from './example-catalog.js';
 import { createExamplePicker } from './example-picker.js';
 import { createTlsAnalysisClient } from './tls-analysis-client.js';
-import { clientCertDisplay, clientCertificateDetailsText, certificateAuthoritiesDisplay, certificateAuthoritiesTooltip, certificateAuthoritiesDetailsText, certificateAuthoritiesTooltipBody, clientCertTooltipBody, cipherTooltipBody, peerHostTooltipBody, sniTooltipBody } from './tls-view-model.js';
+import { clientCertDisplay, clientCertificateDetailsText, certificateAuthoritiesDisplay, certificateAuthoritiesTooltip,
+    certificateAuthoritiesDetailsText, certificateAuthoritiesTooltipBody, clientCertTooltipBody, cipherTooltipBody,
+    peerHostTooltipBody, sniTooltipBody, tlsOutcomeDisplay, tlsDirectionDisplay, tlsMissingFactDisplay,
+    tlsUncertaintyExplanation } from './tls-view-model.js';
 import { explainIssueText } from './tls-explanations.js';
 import { createLatestInputRequestGate } from './tda/input-request.js';
 import { createTlsFilters, selectTlsEntries, facetKey, interactionTime, failureLabel } from './tls-analysis-model.js';
@@ -125,15 +128,19 @@ function fmtStart(tsRaw) {
     return tsRaw.replace(' GMT', '');
 }
 
-function badgeOutcome(outcome) {
+function badgeOutcome(it) {
+    const outcome = it.outcome;
     const cls =
         outcome === 'success' ? 'status-badge status-ok' : outcome === 'failure' ? 'status-badge status-bad' : 'status-badge status-warn';
-    return `<span class="${cls}">${escapeHtml(outcome)}</span>`;
+    return `<span class="${cls}" title="${escapeHtml(tlsUncertaintyExplanation(it))}"><span>${escapeHtml(tlsOutcomeDisplay(it))}</span></span>`;
 }
 
-function badgeDirection(dir) {
+function badgeDirection(it) {
+    const dir = it.direction;
     const icon = dir === 'outbound' ? '↗' : dir === 'inbound' ? '↘' : dir === 'both' ? '↔' : '?';
-    return `<span class="pill">${icon} ${escapeHtml(dir)}</span>`;
+    const detail = dir === 'unknown' ? tlsUncertaintyExplanation(it)
+        || 'No attributable ClientHello was captured; inbound or outbound direction cannot be established.' : '';
+    return `<span class="pill tls-direction-badge" title="${escapeHtml(detail)}">${icon} ${escapeHtml(tlsDirectionDisplay(it))}</span>`;
 }
 
 function setLoading(on) {
@@ -328,14 +335,15 @@ function renderTable(items) {
     const offset = tablePage * PAGE_SIZE;
     const pageItems = items.slice(offset, offset + PAGE_SIZE);
     const rows = pageItems.map((it) => {
-        const peerHost = it.peerHost || 'unknown';
+        const missingFact = tlsMissingFactDisplay(it);
+        const peerHost = it.peerHost || missingFact;
         const sni = it.sni || '—';
-        const tls = it.tlsVersion || '—';
-        const cipher = it.cipherSuite || '—';
+        const tls = it.tlsVersion || missingFact;
+        const cipher = it.cipherSuite || missingFact;
 
         const warn = it.warnCount || 0;
         const warnCell = warn > 0
-            ? `<span class="pill warning-count" data-tooltip-title="Warnings" data-tooltip-body="Matched ${warn} failure keyword highlight${warn === 1 ? '' : 's'} in this interaction.">△ ${warn}</span>`
+            ? `<span class="pill warning-count" data-tooltip-title="Warnings" data-tooltip-body="${escapeAttr([`${(it.warningHighlights || []).length} diagnostic keyword highlight(s).`, ...(it.correlationWarnings || [])].join('\n'))}">△ ${warn}</span>`
             : `<span class="muted">0</span>`;
 
         const threadCount = it.threadCount ?? '—';
@@ -353,10 +361,10 @@ function renderTable(items) {
 		  return `
 		<tr class="${hotClass} ${selectedClass}" data-id="${it.id}">
 		  <td class="mono-small"><button class="tls-select-btn" type="button" data-select-id="${it.id}" aria-label="Select interaction ${it.id}" aria-pressed="${it === selectedInteraction}">${it.id}</button></td>
-		  <td>${badgeOutcome(it.outcome)}</td>
-		  <td>${badgeDirection(it.direction)}</td>
+		  <td>${badgeOutcome(it)}</td>
+		  <td>${badgeDirection(it)}</td>
                 <td class="mono-small" title="${escapeHtml(it.tidDisplay || '—')}">${escapeHtml(it.tidDisplay || '—')}</td>
-              <td class="cell-host cell-truncate" data-tooltip-title="Peer host" data-tooltip-body="${escapeAttr(peerHostTooltipBody(it))}"><button class="tls-name-filter" type="button" data-name-field="hosts" data-name-key="${escapeAttr(facetKey(it.peerHost))}" aria-label="Filter host: ${escapeAttr(peerHost)}">${escapeHtml(peerHost)}</button>${UI.table.classList.contains('tls-investigation-columns') ? `<span class="tls-row-context" title="${escapeAttr(it.direction)} · ${escapeAttr(tls)}">${escapeHtml(start)} ${it.direction === 'outbound' ? '↗' : it.direction === 'inbound' ? '↙' : ''}</span>` : ''}</td>
+              <td class="cell-host cell-truncate" data-tooltip-title="Peer host" data-tooltip-body="${escapeAttr(peerHostTooltipBody(it))}"><button class="tls-name-filter" type="button" data-name-field="hosts" data-name-key="${escapeAttr(facetKey(it.peerHost))}" aria-label="Filter host: ${escapeAttr(peerHost)}">${escapeHtml(peerHost)}</button>${UI.table.classList.contains('tls-investigation-columns') ? `<span class="tls-row-context" title="${escapeAttr(tlsDirectionDisplay(it))} · ${escapeAttr(tls)}">${escapeHtml(start)} ${it.direction === 'outbound' ? '↗' : it.direction === 'inbound' ? '↙' : ''}</span>` : ''}</td>
               <td class="cell-host cell-truncate" data-tooltip-title="Server Name Indication" data-tooltip-body="${escapeAttr(sniTooltipBody(it))}"><button class="tls-name-filter" type="button" data-name-field="snis" data-name-key="${escapeAttr(facetKey(it.sni))}" aria-label="Filter SNI: ${escapeAttr(sni)}">${diagnosticCellHtml(sni)}</button></td>
 		  <td class="mono-small">${escapeHtml(tls)}</td>
               <td class="mono-small cell-cert" data-tooltip-title="Certificate authorities requested by server" data-tooltip-body="${escapeAttr(certificateAuthoritiesTooltipBody(it))}">
@@ -498,10 +506,10 @@ function openModalForInteraction(id) {
 
     const titleBits = [
         `#${it.id}`,
-        it.outcome.toUpperCase(),
-        it.direction,
-        it.peerHost || 'unknownHost',
-        it.tlsVersion || 'TLS ?',
+        tlsOutcomeDisplay(it).toUpperCase(),
+        tlsDirectionDisplay(it),
+        it.peerHost || `Host: ${tlsMissingFactDisplay(it).toLowerCase()}`,
+        it.tlsVersion || `TLS: ${tlsMissingFactDisplay(it).toLowerCase()}`,
     ];
 
     UI.modalTitle.textContent = titleBits.join(' · ');
@@ -526,12 +534,13 @@ function openModalForInteraction(id) {
       `
         : '';
 
-    const outcomeDetailBlock = it.outcomeDetail
+    const outcomeDetail = tlsUncertaintyExplanation(it) || it.outcomeDetail;
+    const outcomeDetailBlock = outcomeDetail
         ? `
         <div class="block">
           <h3>Explanation</h3>
           <div class="pr-card" style="margin:0;">
-            <div>${escapeHtml(it.outcomeDetail)}</div>
+            <div>${escapeHtml(outcomeDetail)}</div>
           </div>
         </div>
       `
@@ -583,15 +592,15 @@ function openModalForInteraction(id) {
 
         <dl class="kv">
           <dt>Grouping</dt><dd>${escapeHtml(it.correlationQuality)}</dd>
-          <dt>Outcome</dt><dd>${badgeOutcome(it.outcome)}</dd>
-		  <dt>Direction</dt><dd>${badgeDirection(it.direction)}</dd>
+          <dt>Outcome</dt><dd>${badgeOutcome(it)}</dd>
+		  <dt>Direction</dt><dd>${badgeDirection(it)}</dd>
 		  <dt>TID</dt><dd class="mono">${escapeHtml(it.tidDisplay || '—')}</dd>
-		  <dt>Peer host</dt><dd class="mono">${escapeHtml(it.peerHost || 'unknown')}</dd>
-          <dt>SNI</dt><dd class="mono">${escapeHtml(it.sni || 'unknown')}</dd>
-          <dt>TLS</dt><dd class="mono">${escapeHtml(it.tlsVersion || 'unknown')}</dd>
+		  <dt>Peer host</dt><dd class="mono">${escapeHtml(it.peerHost || tlsMissingFactDisplay(it))}</dd>
+          <dt>SNI</dt><dd class="mono">${escapeHtml(it.sni || tlsMissingFactDisplay(it))}</dd>
+          <dt>TLS</dt><dd class="mono">${escapeHtml(it.tlsVersion || tlsMissingFactDisplay(it))}</dd>
           <dt>Certificate authorities</dt>
 		  <dd class="mono"><pre class="body-pre" style="margin:0; white-space:pre-wrap;">${escapeHtml(certificateAuthoritiesDetails)}</pre></dd>
-          <dt>Cipher</dt><dd class="mono">${escapeHtml(it.cipherSuite || 'unknown')}</dd>
+          <dt>Cipher</dt><dd class="mono">${escapeHtml(it.cipherSuite || tlsMissingFactDisplay(it))}</dd>
 		  <dt>Client cert</dt>
 		  <dd class="mono">${escapeHtml(clientCertificateDetailsText(it))}</dd>
         </dl>
@@ -657,12 +666,14 @@ function buildSummaryText(it) {
     out += '=== TLS Interaction Summary ===\n';
     out += 'Analyzer: JvmScope · Java TLS Log Analyzer\n';
     out += `Outcome: ${String(it.outcome).toUpperCase()}\n`;
+    const uncertainty = tlsUncertaintyExplanation(it);
+    if (uncertainty) out += `Outcome explanation: ${uncertainty}\n`;
     out += `Start: ${it.startTsRaw || 'unknown'}\n`;
     out += `End:   ${it.endTsRaw || 'unknown'}\n`;
     out += `Clock quality: ${it.timeQuality || 'unknown'}\n`;
     out += `Observed span: ${fmtDuration(it.durationMs)}\n`;
     out += `Threads: ${it.threads && it.threads.size ? Array.from(it.threads).join(', ') : 'unknown'}\n`;
-    out += `TLS version: ${it.tlsVersion || 'unknown'}\n`;
+    out += `TLS version: ${it.tlsVersion || tlsMissingFactDisplay(it)}\n`;
 	if ((it.certificateAuthorities || []).length) {
 	    out += 'Certificate authorities:\n';
 	    for (const authority of it.certificateAuthorities) out += `  - ${authority}\n`;
@@ -672,10 +683,10 @@ function buildSummaryText(it) {
 	    out += 'Certificate authorities: not requested / not seen\n';
 	}
 	out += `Client certificate: ${clientCertificateDetailsText(it)}\n`;
-    out += `Cipher suite: ${it.cipherSuite || 'unknown'}\n`;
-    out += `SNI: ${it.sni || 'unknown'}\n`;
-    out += `Peer host: ${it.peerHost || 'unknown'}\n`;
-	out += `Direction: ${it.direction || 'unknown'}\n`;
+    out += `Cipher suite: ${it.cipherSuite || tlsMissingFactDisplay(it)}\n`;
+    out += `SNI: ${it.sni || tlsMissingFactDisplay(it)}\n`;
+    out += `Peer host: ${it.peerHost || tlsMissingFactDisplay(it)}\n`;
+	out += `Direction: ${tlsDirectionDisplay(it)}\n`;
 	out += `TID: ${it.tidDisplay || 'unknown'}\n`;
 	out += `Events: ${events.length ? events.join(', ') : 'none detected'}\n`;
     if (it.failureReason) out += `Failure reason: ${it.failureReason}\n`;

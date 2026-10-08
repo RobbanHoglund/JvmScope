@@ -30,7 +30,7 @@ test('opens the linked investigation workspace by default with usable desktop pa
             return { outcome: badge.textContent, right: badge.getBoundingClientRect().right,
                 availableRight: cell.getBoundingClientRect().right - parseFloat(getComputedStyle(cell).paddingRight) };
         }));
-        expect(new Set(badges.map(badge => badge.outcome))).toEqual(new Set(['success', 'failure', 'unknown']));
+        expect(new Set(badges.map(badge => badge.outcome))).toEqual(new Set(['success', 'failure', 'Outcome not captured']));
         for (const badge of badges) expect(badge.right, `${mode}: ${badge.outcome} fits with cell padding`).toBeLessThanOrEqual(badge.availableRight);
     }
     await select(page, 7);
@@ -132,16 +132,63 @@ test('unknown and ambiguous captures stay explicit, and hostile diagnostics rema
     const log = 'javax.net.ssl|DEBUG|A|worker|2026-09-08 12:00:00.000 CST|X.java:1|Produced ClientHello handshake message';
     await upload(page, log);
     await expect(inspector(page)).toContainText('No final outcome captured');
+    await expect(inspector(page).locator('.tls-inspector-facts')).toContainText('Outcome not captured');
+    await expect(inspector(page).locator('.tls-verdict p')).toContainText('no final success or failure was captured');
     await expect(inspector(page)).toContainText('Finished exchange: not captured');
     await expect(inspector(page)).toContainText('No clock');
     await upload(page, 'a, WRITE: TLSv1.2 Handshake, length = 1\n*** ClientHello, TLSv1.2\nb, READ: TLSv1.2 Handshake, length = 1\n*** ServerHello, TLSv1.2\n*** Finished');
     await expect(inspector(page)).toContainText('Grouping uncertain');
+    await expect(inspector(page).locator('.tls-inspector-facts')).toContainText('Direction uncertain');
+    await expect(inspector(page).locator('.tls-verdict p')).toContainText('Legacy handshake bodies lack connection IDs');
     await expect(inspector(page).locator('.tls-event')).toHaveCount(0);
     await upload(page, 'javax.net.ssl|ERROR|A|worker|2026-09-08 12:00:00.000 UTC|X.java:1|Fatal (INTERNAL_ERROR): <img src=x onerror="window.tlsUnsafe=true">');
     await expect(inspector(page)).toContainText('<img');
     await page.locator('#tlsRawTab').click();
     await expect(inspector(page).locator('img')).toHaveCount(0);
     expect(await page.evaluate(() => window.tlsUnsafe)).toBeUndefined();
+});
+
+for (const format of ['compact', 'expanded']) test(`${format} unresolved TLS grouping explains persistent uncertainty and preserves evidence`, async ({ page }) => {
+    const record = (message, tid = 'A') => format === 'compact'
+        ? `javax.net.ssl|DEBUG|${tid}|worker|2026-10-04 12:00:00.000 UTC|Handshake.java:1|${message}`
+        : `{\n"logger": "javax.net.ssl",\n"thread id": "${tid}",\n"thread name": "worker",\n"time": "2026-10-04 12:00:00.000 UTC",\n"message": "${message}"\n}`;
+    const exchange = ['Produced ClientHello handshake message', 'Consuming ServerHello handshake message',
+        'Produced client Finished handshake message', 'Consuming server Finished handshake message'];
+    const text = [record(exchange[0]), ...exchange.map(message => record(message)),
+        ...exchange.map(message => record(message)), ...exchange.map(message => record(message, 'B'))].join('\n');
+    await page.locator('#tlsInvestigateColumns').dispatchEvent('click');
+    await upload(page, text);
+    await expect(page.locator('#rowCount')).toHaveText('4 / 4 interactions');
+    await select(page, 3);
+    await expect(inspector(page).locator('.tls-inspector-facts')).toContainText('Grouping uncertain');
+    await expect(inspector(page).locator('.tls-inspector-facts')).toContainText('Direction uncertain');
+    await expect(inspector(page).locator('.tls-verdict p')).toContainText('new ClientHello');
+    await expect(inspector(page).locator('.tls-verdict p')).toContainText('rest of this log');
+    await page.locator('#tlsAllColumns').click();
+    const row = page.locator('tr[data-id="3"]');
+    await expect(row.locator('.status-badge')).toHaveText('Grouping uncertain');
+    await expect(row.locator('.tls-direction-badge')).toContainText('Direction uncertain');
+    await expect(row.locator('.warning-count')).toHaveAttribute('data-tooltip-body', /new ClientHello/);
+    // Missing-host filters retain their null identity despite the explanatory label.
+    await row.locator('[data-name-field="hosts"]').click();
+    await expect(page.locator('#rowCount')).toHaveText('4 / 4 interactions');
+    await select(page, 3);
+    await row.getByRole('button', { name: 'Details', exact: true }).click();
+    await expect(page.locator('#tlsModalBody')).toContainText('rest of this log');
+    await expect(page.locator('#tlsModalBody')).toContainText('Not attributable');
+    await page.locator('#copySummaryBtn').click();
+    await expect(page.locator('#copySummaryBtn')).toContainText('Copied');
+    const summary = await page.evaluate(() => navigator.clipboard.readText());
+    expect(summary).toContain('Outcome: UNKNOWN\n');
+    expect(summary).toContain('Outcome explanation:');
+    expect(summary).toContain('rest of this log');
+    const parsed = analyzeTlsLog(text).interactions[2];
+    expect(summary).toContain(parsed.rawLines.join('\n'));
+    await page.keyboard.press('Escape');
+    await page.locator('#onlySuccessToggle').check();
+    await expect(page.locator('#rowCount')).toHaveText('1 / 4 interactions');
+    await expect(page.locator('#tlsTableBody tr')).toHaveAttribute('data-id', '4');
+    await expect(page.locator('#tlsTableBody .status-badge')).toHaveText('success');
 });
 
 test('inspector clipboard fallback is truthful and delayed copy cannot affect a new selection', async ({ page }) => {

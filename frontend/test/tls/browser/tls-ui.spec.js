@@ -423,7 +423,7 @@ test('loads a dropped file and reports unsupported input without stale rows', as
 
 test('distinguishes incomplete evidence and later transport errors in details', async ({ page }) => {
     await page.locator('#fileInput').setInputFiles(fixturePath('truncated-server-finished.txt'));
-    await expect(row(page, 1)).toContainText('unknown');
+    await expect(row(page, 1)).toContainText('Outcome not captured');
     await expect(row(page, 1).locator('.explain-btn')).toBeDisabled();
     await row(page, 1).getByRole('button', { name: 'Details', exact: true }).click();
     await expect(details(page)).toContainText('no final outcome was captured');
