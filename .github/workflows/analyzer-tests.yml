@@ -43,6 +43,11 @@ jobs:
           npx --no-install playwright test --config test/tls/playwright.config.js
       - name: Application package and real HTTP server checks
         run: bash ./scripts/gradlew build -x npmInstall --no-daemon --console=plain
+      - name: Rebuild an existing portable package with read-only JDK files
+        run: >-
+          bash ./scripts/gradlew :slim:stageSlim --rerun-tasks
+          -x :slim:jar -x :slim:check -x :slim:linkRuntime
+          --no-daemon --console=plain
       - name: Verify portable package licensing
         run: node scripts/project-legal.mjs --check-package slim/build/package
       - name: Slim browser regressions

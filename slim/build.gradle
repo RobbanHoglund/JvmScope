@@ -120,6 +120,12 @@ tasks.register('stageSlim', Sync) {
     from('..') { include('LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.md') }
     from('../scripts/package') { into('scripts') }
     filesMatching(['runtime/bin/*', 'scripts/run.sh']) { permissions { unix('rwxr-xr-x') } }
-    doFirst { verifyBuildTarget(layout.buildDirectory.dir('package').get().asFile) }
+    doFirst {
+        def target = layout.buildDirectory.dir('package').get().asFile
+        verifyBuildTarget(target)
+        // Linked JDK legal files can be read-only. A rerun must not overwrite
+        // those files in place; this directory contains generated output only.
+        delete(target)
+    }
 }
 tasks.register('assembleSlim') { dependsOn('stageSlim') }
