@@ -58,6 +58,7 @@ const UI = {
     sessionInputStatus: document.getElementById('sessionInputStatus'),
     fileName: document.getElementById('fileName'),
     searchInput: document.getElementById('searchInput'),
+    jumpToThreads: document.getElementById('jumpToThreads'),
     refreshBtn: document.getElementById('refreshBtn'),
     loadSampleBtn: document.getElementById('loadSampleBtn'),
     pasteClipboardBtn: document.getElementById('pasteClipboardBtn'),
@@ -4757,6 +4758,12 @@ document.addEventListener('click', (e) => {
         resetRunnableClusterTableFocusAndRender();
     }
 });
+UI.jumpToThreads?.addEventListener('click', (event) => {
+    event.preventDefault();
+    UI.dropZone?.scrollIntoView({ block: 'start' });
+    UI.searchInput?.focus({ preventScroll: true });
+});
+
 UI.searchInput?.addEventListener(
     'input',
     debounce(() => {
