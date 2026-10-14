@@ -102,3 +102,27 @@ test('VS Code bundled examples, navigation and native picker remain usable at na
     const width=await host.page.evaluate(()=>document.documentElement.scrollWidth);
     expect(width).toBeLessThanOrEqual(900);
 });
+
+test('VS Code previews findings and exports Markdown, HTML and graph PNG through the native save bridge',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:'carrier.txt',text:await capture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt')}]);
+    await host.page.locator('#dependencyGraphDetails > summary').click();
+    await host.page.locator('#blockingPatternSelect').selectOption({label:'Dependencies on Virtual thread #26 · peak 1 · recurrence 0'});
+    await host.page.locator('#dependencyGraphExport').click();
+    await expect.poll(()=>host.messages.find(m=>m.action==='save'&&m.name.endsWith('.png'))).toBeTruthy();
+    const png=Buffer.from(host.messages.find(m=>m.action==='save'&&m.name.endsWith('.png')).base64,'base64');
+    expect(png.subarray(0,8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(png.readUInt32BE(16)).toBeGreaterThan(0);
+    expect(png.readUInt32BE(20)).toBeGreaterThan(0);
+    await host.page.locator('#addBlockingReport').click();
+    await host.page.getByRole('button',{name:'Preview report',exact:true}).click();
+    await expect(host.page.frameLocator('#reportPreview iframe').locator('body')).toContainText('Dependencies on Virtual thread #26');
+    await host.page.locator('#reportPreview input[type=checkbox]').check();
+    for(const [format,extension] of [['Markdown','.md'],['HTML','.html']]) {
+        await host.page.getByRole('button',{name:'Export '+format,exact:true}).click();
+        await expect.poll(()=>host.messages.find(m=>m.action==='save'&&m.name.endsWith(extension))).toBeTruthy();
+        const report=Buffer.from(host.messages.find(m=>m.action==='save'&&m.name.endsWith(extension)).base64,'base64').toString('utf8');
+        expect(report).toContain('Dependencies on Virtual thread');
+        expect(report).not.toContain('Dependencies on ForkJoinPool-1-worker-1');
+    }
+});
