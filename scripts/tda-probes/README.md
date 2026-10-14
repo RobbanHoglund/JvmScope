@@ -42,3 +42,12 @@ ThreadMXBean/state facts and captures JSON, classic default and classic `-l`.
 The saved `coverage.json` has two BLOCKED virtual participants. No platform-only
 JVM deadlock confirmation must be interpreted as proof that they are safe.
 See Java 25 `ThreadMXBean.findDeadlockedThreads()` documentation.
+
+## Condition.awaitUninterruptibly
+
+Compile `ConditionProbe.java` with JDK 25; run `java ConditionProbe /new/output/dir`.
+The probe checks that the waiter reached WAITING and released its associated
+ReentrantLock. Both output formats should classify it as Condition await.
+The regression suite reuses the real `audit-uninterruptible-condition` records
+in the earlier carrier captures. Application methods with a similar name are
+not sufficient evidence for this classification.
