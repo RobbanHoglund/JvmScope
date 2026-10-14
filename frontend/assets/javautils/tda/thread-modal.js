@@ -98,7 +98,9 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
         { label: 'Native ID', value: hasValue(thread.nid) ? String(thread.nid) : '—' },
         { label: 'Locks held', value: locksHeldValue },
         ...(thread.isVirtualThread != null ? [{ label: 'Thread kind', value: thread.isVirtualThread ? 'Virtual' : 'Platform' }] : []),
-        { label: 'Deadlock', value: thread.isDeadlocked ? 'Confirmed' : 'No' },
+        { label: 'Deadlock', value: thread.isDeadlocked ? 'Confirmed' : 'Not confirmed by source',
+            description: thread.isDeadlocked ? 'The JVM explicitly reported this thread in a deadlock cycle.'
+                : 'No JVM-reported deadlock was linked to this thread. This does not rule out deadlock; the JVM detector does not cover cycles involving virtual threads.' },
         { label: 'Carrier', value: carrierValue },
         ...(classInitialization.length ? [{
             label: 'Class init',

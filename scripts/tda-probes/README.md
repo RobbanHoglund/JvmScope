@@ -32,3 +32,13 @@ classic and JSON captures must identify the virtual JVM ID as the owner, with
 no CPU/allocation counters copied from its carrier. The saved review captures
 were produced by the equivalent carrier branch of the original `AuditProbe`;
 these standalone probes preserve the scenario while separating the bugs.
+
+## Deadlock and lock-data coverage
+
+Compile `CoverageProbe.java` with JDK 25; run `java CoverageProbe /new/path/coverage`.
+It creates two virtual threads that each retain one monitor and wait for the
+other, plus a platform thread retaining a ReentrantLock. It prints independent
+ThreadMXBean/state facts and captures JSON, classic default and classic `-l`.
+The saved `coverage.json` has two BLOCKED virtual participants. No platform-only
+JVM deadlock confirmation must be interpreted as proof that they are safe.
+See Java 25 `ThreadMXBean.findDeadlockedThreads()` documentation.

@@ -1404,7 +1404,7 @@ function renderTableRows() {
 
                   <td${tooltipAttr(t.javaState || '—')}>${stateBadge(t.javaState)}</td>
                   <td${tooltipAttr(Array.isArray(t.heldLocks) ? t.heldLocks.map((l) => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`).join('\n') : '—')}>${locksHeldBadge(t)}</td>
-                  <td${tooltipAttr(t.isDeadlocked ? 'Confirmed Java deadlock' : '—')}>${deadlockBadge(t.isDeadlocked)}</td>
+                  <td${tooltipAttr(t.isDeadlocked ? 'Confirmed Java deadlock' : 'Not confirmed by source; absence is not established')}>${deadlockBadge(t.isDeadlocked)}</td>
                   <td${tooltipAttr(t.daemon == null ? 'Daemon status not provided by this dump format' : t.daemon ? 'Daemon thread' : 'Not daemon')}>${t.daemon == null ? '—' : badgeYesNo(t.daemon)}</td>
 
                   <td class="right thread-metadata"${tooltipAttr(prio)}>${escapeHtml(prio)}</td>
@@ -4046,7 +4046,7 @@ function openThreadModal(thread, sourceElement = document.activeElement) {
         snapshotCount: parsedDumps.length,
     });
     const summaryMetaHtml = model.summaryMeta.map((item) => `
-        <span${item.label === 'Java state' ? ` data-java-state="${escapeAttr(String(thread.javaState || 'UNKNOWN').trim().toUpperCase())}"` : ''} class="thread-details-chip ${['JVM ID', 'Native ID', 'Java state', 'Locks held'].includes(item.label) || ['No', 'Not reported', '—', '0'].includes(String(item.value)) ? 'thread-details-chip-neutral' : ''}"><span class="thread-details-chip-label">${escapeHtml(item.label)}</span> <span>${escapeHtml(String(item.value ?? '—'))}</span></span>
+        <span${item.label === 'Java state' ? ` data-java-state="${escapeAttr(String(thread.javaState || 'UNKNOWN').trim().toUpperCase())}"` : ''} class="thread-details-chip ${['JVM ID', 'Native ID', 'Java state', 'Locks held'].includes(item.label) || ['No', 'Not confirmed by source', 'Not reported', '—', '0'].includes(String(item.value)) ? 'thread-details-chip-neutral' : ''}"><span class="thread-details-chip-label"${item.description ? tooltipAttr(item.description) : ''}>${escapeHtml(item.label)}</span> <span>${escapeHtml(String(item.value ?? '—'))}</span></span>
     `).join('');
 
     UI.modalTitle.textContent = model.title;
