@@ -680,7 +680,7 @@ export function buildThreadDependencyGraph(threads, deadlocks = []) {
         });
     }
     for (const carrierNode of threadNodes) {
-        if (carrierNode.rawThread?.format === 'hotspot-file-json') continue;
+        if (carrierNode.rawThread?.format === 'hotspot-file-json' || carrierNode.rawThread?.mountedVirtualRange) continue;
         if (!carrierNode.carrier || !carrierNode.virtualThreadId) continue;
         const virtualNode = {
             id: `virtual:${carrierNode.sourceKey}:${carrierNode.virtualThreadId}`,

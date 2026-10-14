@@ -139,7 +139,7 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
         ...(hasValue(thread.javaState) ? [`   java.lang.Thread.State: ${stateValue}${detailValue ? ` (${detailValue})` : ''}`] : []),
         ...(Array.isArray(thread.stackLines) ? thread.stackLines : []).filter(hasValue).map(line => `    ${String(line).trim()}`),
     ];
-    const stackText = isFileDump ? readableFileLines.join('\n') : rawBlockText.trim() || fallbackStackLines.join('\n');
+    const stackText = isFileDump ? readableFileLines.join('\n') : (thread.analysisBlock ? thread.analysisBlock.filter(Boolean).join('\n') : rawBlockText).trim() || fallbackStackLines.join('\n');
     const rawText = rawBlockText || (hasValue(thread.rawHeaderLine) ? String(thread.rawHeaderLine) : '');
 
     const coreFacts = [

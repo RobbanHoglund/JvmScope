@@ -23,3 +23,12 @@ The checked-in counters differ by 131072 bytes; they must not imply an exact
 
 References: OpenJDK 25 `src/hotspot/share/runtime/thread.cpp` and
 `src/hotspot/share/utilities/globalDefinitions.hpp` (`byte_size_in_proper_unit`).
+
+## Mounted virtual monitor owner
+
+Compile `CarrierProbe.java` with JDK 25; run `java CarrierProbe /new/output/dir`.
+A virtual thread holds a monitor while a platform thread waits for it. The
+classic and JSON captures must identify the virtual JVM ID as the owner, with
+no CPU/allocation counters copied from its carrier. The saved review captures
+were produced by the equivalent carrier branch of the original `AuditProbe`;
+these standalone probes preserve the scenario while separating the bugs.

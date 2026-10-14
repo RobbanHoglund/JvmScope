@@ -833,7 +833,7 @@ function annotateDumpDeltas(dumps) {
 }
 
 function getThreadStackText(thread) {
-    return (thread?.rawBlock || []).join('\n');
+    return (thread?.analysisBlock || thread?.rawBlock || []).join('\n');
 }
 
 function getThreadFrameText(thread) {
