@@ -89,6 +89,26 @@ test('VS Code TLS analyzes real JSSE input and uses native copy without network 
     expect(host.messages.filter(m=>m.type==='request').every(m=>['copy'].includes(m.action))).toBe(true);
 });
 
+test('VS Code rejects invalid input once and preserves a valid session on an invalid replacement',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    const invalid={name:'unsupported.log',text:'This file is not a thread dump.'};
+    expect((await host.load([invalid])).snapshots).toBe(0);
+    await host.page.locator('#inputFeedbackModal').getByRole('button',{name:'Close',exact:true}).click();
+    await expect(host.page.locator('#errorState')).toContainText('No supported thread headers');
+    await expect(host.page.locator('#errorState')).toContainText('unsupported.log');
+    await expect(host.page.locator('#sessionInputStatus')).toBeHidden();
+    await expect(host.page.locator('#threadTableBody tr')).toHaveCount(0);
+    const valid={name:'carrier.txt',text:await capture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt')};
+    const loaded=await host.load([valid]);expect(loaded.snapshots).toBe(1);
+    await expect(host.page.locator('#errorState')).toBeHidden();
+    expect((await host.load([invalid])).threads).toBe(loaded.threads);
+    await host.page.locator('#inputFeedbackModal').getByRole('button',{name:'Close',exact:true}).click();
+    await expect(host.page.locator('#fileName')).toHaveText(valid.name);
+    await expect(host.page.locator('#sessionInputStatus')).toContainText('The current session was kept');
+    await expect(host.page.locator('#sessionInputStatus')).toContainText('No supported thread headers');
+    await expect(host.page.locator('#errorState')).toBeHidden();
+});
+
 test('VS Code bundled examples, navigation and native picker remain usable at narrow editor widths',async({host})=>{
     await host.page.setViewportSize({width:900,height:800});
     await host.open('/jvmscope/tda.html');

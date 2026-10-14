@@ -4268,8 +4268,15 @@ function queueSessionImport(read, mode = UI.inputMode?.value || 'append') {
             const rejected = submittedResults.filter(source => !source.accepted)
                 .map(source => `${source.label}: ${getInputFeedback(source)?.summary || 'No supported thread dump was found.'}`);
             if (!additions.length) {
-                if (!sessionSources.length) renderParserState(result.parserResult);
-                showSessionInputStatus([...failures, ...rejected, sessionSources.length ? 'The current session was kept.' : ''].filter(Boolean).join(' '));
+                if (!sessionSources.length) {
+                    // The parser banner already explains the rejected sources.
+                    // Keep a single persistent error after the dialog closes.
+                    renderParserState(result.parserResult);
+                    if (failures.length && UI.errorState) UI.errorState.textContent += ` ${failures.join(' ')}`;
+                    showSessionInputStatus('');
+                } else {
+                    showSessionInputStatus([...failures, ...rejected, 'The current session was kept.'].join(' '));
+                }
                 inputFeedbackDialog.show(feedback);
                 return;
             }

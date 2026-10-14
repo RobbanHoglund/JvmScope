@@ -20,6 +20,18 @@ test.beforeEach(async ({ page, appUrl }) => {
     await page.locator('#sessionInputMode').selectOption('replace', { force: true });
 });
 
+test('TDA shows one persistent error for an unsupported first capture and clears it after recovery', async ({ page }) => {
+    await page.locator('#fileInput').setInputFiles({ name: 'unsupported.log', mimeType: 'text/plain', buffer: Buffer.from('This file is not a thread dump.') });
+    await page.locator('#inputFeedbackModal').getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(page.locator('#errorState')).toContainText('No supported thread headers');
+    await expect(page.locator('#errorState')).toContainText('unsupported.log');
+    await expect(page.locator('#sessionInputStatus')).toBeHidden();
+    await expect(page.locator('#threadTableBody tr')).toHaveCount(0);
+    await sample(page);
+    await expect(page.locator('#errorState')).toBeHidden();
+    await expect(page.locator('#sessionInputStatus')).toContainText('loaded');
+});
+
 test('TDA partial snapshots cannot claim fading, growth or exact missing counts', async ({ page }) => {
     await load(page, 'partial-thread-snapshot.txt');
     await expect(page.locator('#errorState')).toContainText('could not be parsed');
