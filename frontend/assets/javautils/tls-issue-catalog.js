@@ -2,6 +2,20 @@
 // Keep matching priorities and endpoint resolution in tls-explanations.js.
 export const TLS_ISSUE_CATALOG = [
     {
+        id: 'bad-certificate-status-response',
+        matchKey: 'bad_certificate_status_response',
+        sections: [
+            { id: 'meaning', title: 'Meaning', paragraphs: [
+                '{AlertEndpoint} rejected an invalid or unacceptable OCSP response supplied by the server through status_request.',
+            ] },
+            { id: 'checks', title: 'What to check', bullets: [
+                'Inspect the stapled OCSP response, its signature, validity period and certificate identity.',
+                'Check the server or TLS terminator OCSP-stapling configuration and responder availability.',
+                'This alert does not by itself establish that the certificate is revoked or that a client certificate is missing.',
+            ] },
+        ],
+    },
+    {
         "id": "certificate-unknown",
         "matchKey": "certificate_unknown",
         "sections": [
@@ -871,7 +885,7 @@ export const TLS_ISSUE_CATALOG = [
                 "id": "meaning",
                 "title": "Meaning",
                 "paragraphs": [
-                    "{AlertEndpoint} rejected a TLS extension it did not support or did not allow in that context."
+                    "{AlertEndpoint} rejected a TLS extension prohibited in that handshake message or not offered in the corresponding request."
                 ]
             },
             {
@@ -879,7 +893,8 @@ export const TLS_ISSUE_CATALOG = [
                 "title": "Common causes",
                 "bullets": [
                     "Extension sent in the wrong handshake context",
-                    "Old TLS stack receiving a newer extension set",
+                    "A ServerHello or Certificate contains an extension not offered in the corresponding ClientHello or CertificateRequest",
+                    "An unknown ClientHello extension alone does not justify this alert; unknown extensions there are ignored",
                     "Proxy or gateway interference"
                 ]
             },

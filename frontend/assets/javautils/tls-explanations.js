@@ -16,7 +16,7 @@ const ALERT_KEYS = new Set([
     'unsupported_certificate', 'certificate_expired', 'certificate_revoked',
     'certificate_required', 'protocol_version', 'unrecognized_name', 'access_denied',
     'illegal_parameter', 'insufficient_security', 'decrypt_error',
-    'unsupported_extension', 'no_application_protocol',
+    'unsupported_extension', 'no_application_protocol', 'bad_certificate_status_response',
 ]);
 const LOCAL_FATAL_KEY = 'local-fatal';
 
@@ -38,9 +38,13 @@ function explanationKeysBySpecificity() {
 }
 
 function findExplanationKey(candidates) {
+    candidates = candidates.map(candidate => candidate.replace(/\bcipher suite in common\b/g, 'cipher suites in common'));
     for (const keys of explanationKeysBySpecificity()) {
         for (const key of keys) {
-            if (candidates.some(candidate => candidate.includes(key.toLowerCase()))) return key;
+            const matches = ALERT_KEYS.has(key)
+                ? candidate => new RegExp(`\\b${key}\\b`, 'i').test(candidate)
+                : candidate => candidate.includes(key.toLowerCase());
+            if (candidates.some(matches)) return key;
         }
     }
     return null;
@@ -50,8 +54,8 @@ export function explainIssueText(issueText) {
     const text = String(issueText || '').trim().toLowerCase();
     if (!text) return null;
     // Alert origin is independent of the specific reason accompanying the alert.
-    const receivedAlert = text.includes('received fatal alert:');
-    const locallyRaised = (/^fatal\s*\(/.test(text) || /^sent fatal alert:/.test(text))
+    const receivedAlert = /received (?:fatal|tls 1\.3 error) alert:/.test(text);
+    const locallyRaised = (/^fatal\s*\(/.test(text) || /^sent (?:fatal|tls 1\.3 error) alert:/.test(text))
         && !receivedAlert;
     // A bare catalogue key does not establish which endpoint sent an alert.
     const endpoint = locallyRaised ? 'the local JVM'

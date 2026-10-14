@@ -100,7 +100,7 @@ export const TLS_EXAMPLES = Object.freeze([
         'An older JSSE trace for format exploration. The obsolete protocol was enabled only in the isolated test harness.',
         new URL('../../test/tls/fixtures/runtime/jdk8u252-tlsv1-success-client.txt', import.meta.url)),
     entry('tls-timeout', 'Read timeout during handshake', 'Modern JSSE', synthetic,
-        'A small timeout case. Inspect the observed span and the last handshake event before failure.',
+        'A read timeout without a captured final outcome. Inspect subsequent evidence before concluding that TLS failed.',
         new URL('./samples/tls-timeout.txt', import.meta.url)),
     entry('tls-hostname', 'Certificate hostname mismatch', 'Modern JSSE', synthetic,
         'The requested host and the certificate name do not match. Inspect SNI, peer name and diagnostic evidence.',

@@ -84,7 +84,7 @@ class Interaction {
         this.sawClientHello = false;
         this.sawServerHello = false;
         this.sawCertRequest = false;
-        this.sawClientCertSelectionFailure = false;
+        this.sawCertificateSelectionHint = false;
         this.sawHandshakeFinished = false;
         this.producedFinished = false;
         this.consumedFinished = false;
@@ -136,7 +136,7 @@ class Interaction {
             this.initiatedByPeer ||
             this.sawHandshakeFinished ||
             this.sawCertRequest ||
-            this.failureReason
+            this.failureReason || this.failureEvidence.some(evidence => evidence.key === 'socket_timeout')
         );
     }
 	
@@ -371,7 +371,7 @@ class Interaction {
         if (/^(?:Produced|Consuming|Legacy) ClientHello\b/.test(msg)) this.sawClientHello = true;
         if (/^(?:Produced|Consuming) ServerHello\b/.test(msg)) this.sawServerHello = true;
         if (msg.toLowerCase().includes('certificaterequest')) this.sawCertRequest = true;
-        if (msg.includes('No X.509 cert selected')) this.sawClientCertSelectionFailure = true;
+        if (msg.includes('No X.509 cert selected')) this.sawCertificateSelectionHint = true;
 
         if (/^Produced (?:client |server )?Finished handshake message/.test(msg)) this.producedFinished = true;
         if (/^Consuming (?:client |server )?Finished handshake message/.test(msg)) this.consumedFinished = true;
@@ -416,7 +416,9 @@ class Interaction {
 
 
         if (this.outcome === 'unknown') {
-            if (this.sawClientHello && this.tlsVersion && !this.failureReason && !this.sawHandshakeFinished) {
+            if (this.failureEvidence.some(evidence => evidence.key === 'socket_timeout')) {
+                this.outcomeDetail = 'A socket timeout was observed, but no final TLS outcome was captured. A read timeout can be retried; inspect subsequent records for completion or a terminal error.';
+            } else if (this.sawClientHello && this.tlsVersion && !this.failureReason && !this.sawHandshakeFinished) {
 				this.outcomeDetail =
 				    `Handshake started, but no final outcome was captured. ClientHello and ${this.tlsVersion} were observed, but the log does not show handshake completion or a fatal error.`;
             } else if (this.sawClientHello && !this.failureReason) {
@@ -527,7 +529,7 @@ export function splitIntoInteractionsFromLines(lines) {
         }
         if (PRODUCED_CLIENT_CERTIFICATE.test(pl.msg)
             && /"certificate_list"\s*:\s*\[\s*\]/.test(record.rawLines.join('\n'))) current.clientCertificateEmpty = true;
-        const alert = readTlsAlert(pl.msg, record.rawLines);
+        const alert = readTlsAlert(pl.msg, record.rawLines, { tlsVersion: current.tlsVersion });
         if (alert?.reason) captureFailureReason(current, alert.reason);
     }
     for (const key of currentByThread.keys()) finish(key);

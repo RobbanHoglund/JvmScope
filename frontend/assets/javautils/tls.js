@@ -89,6 +89,16 @@ const analysisView = createTlsAnalysisView({ filters, onChange: () => {
 const inputRequestGate = createLatestInputRequestGate();
 const analysisClient = createTlsAnalysisClient();
 const PAGE_SIZE = 200;
+const analysisPanel = document.getElementById('tlsAnalysis');
+const analysisLayoutKey = 'jvmscope.tls.analysis-expanded';
+let savedAnalysisLayout = null;
+try { savedAnalysisLayout = globalThis.localStorage?.getItem(analysisLayoutKey); } catch { /* Storage may be disabled. */ }
+analysisPanel.open = savedAnalysisLayout === 'true' || (savedAnalysisLayout !== 'false'
+    && !globalThis.matchMedia?.('(max-height: 820px) and (min-width: 1100px)').matches);
+analysisPanel.querySelector('summary')?.addEventListener('click', () => {
+    // The native disclosure toggles after click, including keyboard activation.
+    try { globalThis.localStorage?.setItem(analysisLayoutKey, String(!analysisPanel.open)); } catch { /* Keep the control usable without storage. */ }
+});
 let tablePage = 0;
 let exampleReadController = null;
 function beginInputRequest() {
@@ -343,7 +353,7 @@ function renderTable(items) {
 
         const warn = it.warnCount || 0;
         const warnCell = warn > 0
-            ? `<span class="pill warning-count" data-tooltip-title="Warnings" data-tooltip-body="${escapeAttr([`${(it.warningHighlights || []).length} diagnostic keyword highlight(s).`, ...(it.correlationWarnings || [])].join('\n'))}">△ ${warn}</span>`
+            ? `<span class="pill warning-count" data-tooltip-title="Diagnostic highlights" data-tooltip-body="${escapeAttr([`${(it.warningHighlights || []).length} diagnostic keyword highlight(s).`, ...(it.correlationWarnings || [])].join('\n'))}">△ ${warn}</span>`
             : `<span class="muted">0</span>`;
 
         const threadCount = it.threadCount ?? '—';
@@ -660,7 +670,7 @@ function buildSummaryText(it) {
     if (it.sawCertRequest) events.push('CertificateRequest');
     if (it.sawCertificateAuthoritiesBlock) events.push('CertificateAuthorities');
     if (it.sawHandshakeFinished) events.push('HandshakeFinished');
-    if (it.sawClientCertSelectionFailure) events.push('ClientCertSelectionFailed');
+    if (it.sawCertificateSelectionHint) events.push('CertificateSelectionHint');
 
     let out = '';
     out += '=== TLS Interaction Summary ===\n';

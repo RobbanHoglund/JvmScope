@@ -32,6 +32,30 @@ Browser coverage includes combined search/outcome/warning/direction filters, sor
 
 GA cases also cover keyboard sorting with `aria-sort`, product identity, structured fatal alerts without a following exception, clock reliability, a dense 2,000-interaction capture, and the absence of network requests when investigating an uploaded file. Separate TDA regressions load real dumps, filter the paginated table, check the Overview/Locks/History sidebar alongside the central thread block, and exercise the raw-evidence browser tab.
 
+## Review regression cases
+
+`review-regressions.test.js` and `browser/tls-review.spec.js` cover recovered socket
+timeouts, exact OCSP alert categories, TLS 1.3 error alerts whose reported level is
+warning, preserved timeout messages, and neutral certificate-selection hints in
+copied summaries. The real Java 17 timeout/recovery fixture and its provenance are
+in `fixtures/review/`; it supplements the existing runtime matrix.
+
+A socket timeout is a nonterminal observation: without completion or another
+terminal error the outcome remains unknown. Later Finished observations can
+establish success; an explicit fatal alert still establishes failure. A new
+ClientHello after a timeout cannot safely resolve an unfinished same-thread group.
+TLS 1.3 error alerts use their protocol semantics regardless of reported level,
+while close_notify/user_canceled and TLS 1.2 retain their own behavior.
+
+The laptop layout initially collapses Capture analysis on short desktop screens
+and remembers explicit disclosure choices when local storage is available. The
+Highlights filter/count refers to diagnostic matches and correlation warnings,
+not TLS warning-level alerts.
+
+The release workflow now runs on pull requests as well as main. Its mixed-JSON
+TDA regression opens the lazily rendered thread before checking the stack and
+then verifies the exact original JSON; this preserves the lazy rendering contract.
+
 ## Capture analysis and selection contract
 
 **Investigate** is the default desktop workspace: a compact start histogram, an interaction list showing diagnostic reasons and observed spans, and a persistent inspector. **Overview** and **All columns** retain the table projections. Exact UTC fields are available in a keyboard-accessible menu in Investigate and remain visible in table modes. Row selection survives sorting and view changes; removing its interaction with a filter clears the inspector. A new capture selects its first visible interaction and never reuses a selection solely because its numeric ID matches a previous capture.
@@ -60,11 +84,11 @@ The issue dialog is named for assistive technology and updates `aria-hidden` thr
 
 ## Explanation content contract
 
-`assets/javautils/tls-issue-catalog.js` owns the 31 authored explanations with stable IDs and ordered sections. Each section has a stable ID, an existing heading and either `paragraphs` or `bullets`. Content is plain text; endpoint placeholders are resolved by `tls-explanations.js`. The local-fatal fallback text also lives in the catalogue module.
+`assets/javautils/tls-issue-catalog.js` owns the 32 authored explanations with stable IDs and ordered sections. Each section has a stable ID, an existing heading and either `paragraphs` or `bullets`. Content is plain text; endpoint placeholders are resolved by `tls-explanations.js`. The local-fatal fallback text also lives in the catalogue module.
 
 `tls-explanations.js` keeps the matching tiers, normalization, endpoint resolution and the existing `ISSUE_EXPLANATIONS`/`explainIssueText` exports. It projects structured sections into the existing newline-delimited format. File loading, drop, demonstration, filters, table, details and copied summaries retain their existing paths; no parser, API, shared CSS or persisted data is changed by extraction. The unmatched-issue UI hint now directs users to Details instead of referring to the old catalogue implementation location.
 
-`catalog.test.js` checks catalogue identities/section completeness and uses `fixtures/explanation-contract.json` to verify all complete templates and 159 resolver results. The baseline was captured before extraction; three explanation templates were deliberately corrected during the [GA review](GA-REVIEW.md), covering hostname validity/SAN precedence, RSA/ECDHE authentication and configurable algorithm constraints. Content and matching changes must deliberately update this contract after reviewing the changed output; it should not be regenerated merely to silence a failed refactor test.
+`catalog.test.js` checks catalogue identities/section completeness and uses `fixtures/explanation-contract.json` to verify all complete templates and 164 resolver results. The baseline was captured before extraction; three explanation templates were deliberately corrected during the [GA review](GA-REVIEW.md), covering hostname validity/SAN precedence, RSA/ECDHE authentication and configurable algorithm constraints. Content and matching changes must deliberately update this contract after reviewing the changed output; it should not be regenerated merely to silence a failed refactor test.
 
 The integration catalog enumerates expected runtime filenames and fails on missing or untested additions. Tests assert outcome, protocol, selected cipher, direction, SNI/peer semantics, client certificates, requested CAs, time availability, raw text and repeated handshakes. CI needs Node and the regular project JDK; it does not need the other historical JVMs or a live TLS service.
 
