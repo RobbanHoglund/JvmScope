@@ -1,5 +1,11 @@
 const FAILURE_REASON_RULES = Object.freeze([
     {
+        key: 'tls13_fatal_alert',
+        priority: 94,
+        regex: /(?:Received|Sent) TLS 1\.3 error alert:\s*[a-z0-9_]+ \(reported level: [^)]+\)/i,
+        normalize: match => match[0],
+    },
+    {
         key: 'local_fatal_alert',
         priority: 93,
         regex: /Fatal\s+\(([A-Z0-9_]+)\):\s*([^\r\n]*)|(SEND|RECV) TLSv?[\d.]+ ALERT:\s*fatal,\s*description\s*=\s*([a-z0-9_]+)/i,
@@ -86,8 +92,8 @@ const FAILURE_REASON_RULES = Object.freeze([
     {
         key: 'socket_timeout',
         priority: 40,
-        regex: /SocketTimeoutException:\s*Read timed out|java\.net\.SocketTimeoutException/i,
-        normalize: () => 'SocketTimeoutException: Read timed out',
+        regex: /(?:java\.net\.)?SocketTimeoutException\b(?::[^\r\n]*)?/i,
+        normalize: match => match[0].replace(/^java\.net\./i, '').trim(),
     },
     {
         key: 'no_x509_cert_selected',
@@ -99,7 +105,7 @@ const FAILURE_REASON_RULES = Object.freeze([
 
 // Read only the structured payload of an actual JSSE alert record. A fatal
 // alert is evidence even when the capture ends before the following exception.
-export function readTlsAlert(message, rawLines) {
+export function readTlsAlert(message, rawLines, { tlsVersion = null } = {}) {
     const verb = String(message).match(/^(Received|Consuming|Produced|Sent)\s+alert message\b/i)?.[1]?.toLowerCase();
     if (!verb) return null;
     const end = rawLines.findIndex((line, index) => index > 0 && /^\)\s*$/.test(line));
@@ -109,7 +115,14 @@ export function readTlsAlert(message, rawLines) {
     const description = payload.match(/"description"\s*:\s*"([a-z0-9_]+)"/i)?.[1]?.toLowerCase() || null;
     const action = { received: 'Received', consuming: 'Consumed', produced: 'Produced', sent: 'Sent' }[verb];
     const origin = ['received', 'consuming'].includes(verb) ? 'Received' : 'Sent';
-    return { level, description, action, reason: level === 'fatal' ? `${origin} fatal alert: ${description || 'unspecified'}` : null };
+    // RFC 8446 section 6: error/unknown alerts are fatal regardless of the
+    // received level. Keep the actual level distinct from that interpretation.
+    const tls13Error = tlsVersion === 'TLSv1.3' && description != null
+        && !['close_notify', 'user_canceled'].includes(description);
+    const isFailure = level === 'fatal' || tls13Error;
+    const reason = level === 'fatal' ? `${origin} fatal alert: ${description || 'unspecified'}`
+        : tls13Error ? `${origin} TLS 1.3 error alert: ${description} (reported level: ${level || 'not captured'})` : null;
+    return { level, description, action, isFailure, reason };
 }
 
 export const TLS_FAILURE_HIGHLIGHT =
@@ -152,7 +165,9 @@ export function classifyTlsFailureEvidence(text, {
         // Algorithm/key selection misses are diagnostic candidates, not a
         // failed handshake. TLS 1.3 peers can also reject client auth after the
         // local Finished exchange; an explicit fatal alert remains a failure.
-        promotesHandshakeFailure: !['no_available_auth_scheme', 'keymgr_no_matching_key', 'issuers_do_not_match', 'no_x509_cert_selected'].includes(evidence.key)
+        // Socket timeouts can be retried on the same SSLSocket. They are not
+        // terminal evidence, including when the capture ends before recovery.
+        promotesHandshakeFailure: !['socket_timeout', 'no_available_auth_scheme', 'keymgr_no_matching_key', 'issuers_do_not_match', 'no_x509_cert_selected'].includes(evidence.key)
             && (phase === 'handshake' || evidence.key.includes('fatal')),
     };
 }

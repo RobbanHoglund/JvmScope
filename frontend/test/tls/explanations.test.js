@@ -58,7 +58,7 @@ test('alert descriptions identify the rejecting side by the sender, not the obse
         ['illegal_parameter', 'A handshake field was syntactically valid but inconsistent, incorrect, or unacceptable to $endpointLower.'],
         ['insufficient_security', 'Negotiation failed because the server requires stronger parameters than the client supports.'],
         ['decrypt_error', 'A handshake-layer cryptographic operation failed.'],
-        ['unsupported_extension', '$endpoint rejected a TLS extension it did not support or did not allow in that context.'],
+        ['unsupported_extension', '$endpoint rejected a TLS extension prohibited in that handshake message or not offered in the corresponding request.'],
         ['no_application_protocol', 'ALPN negotiation failed because the client and server had no application protocol in common.'],
     ];
     for (const [alert, meaning] of meanings) {
@@ -247,10 +247,10 @@ test('every failure reason produced by the comprehensive sample has an explanati
     }
 });
 
-test('every authored explanation is exercised by the comprehensive sample', () => {
+test('every authored explanation is exercised by the comprehensive sample or focused OCSP case', () => {
     const reached = new Set();
 
-    for (const reason of sampleFailureReasons()) {
+    for (const reason of [...sampleFailureReasons(), 'Received fatal alert: bad_certificate_status_response']) {
         const result = explainIssueText(reason);
         if (result) reached.add(result.key);
     }

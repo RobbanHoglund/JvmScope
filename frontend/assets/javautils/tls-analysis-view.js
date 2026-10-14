@@ -177,7 +177,7 @@ export function createTlsAnalysisView({ filters, onChange, onClear }) {
             aria-label="Remove ${escape(label)}">${escape(label)} <span aria-hidden="true">×</span></button>`);
         if (filters.search) chip('search', `Search: ${filters.search}`);
         if (filters.outcome !== 'all') chip('outcome', `Outcome: ${filters.outcome}`);
-        if (filters.warnings) chip('warnings', 'Warnings only');
+        if (filters.warnings) chip('warnings', 'Highlights only');
         if (filters.direction !== 'all') chip('direction', `Direction: ${filters.direction}`);
         filters.hosts.forEach(key => chip('hosts', `Host: ${facetLabel(key)}`, key));
         filters.snis.forEach(key => chip('snis', `SNI: ${facetLabel(key)}`, key));

@@ -114,12 +114,13 @@ test('resets table scrolling on a new capture and distinguishes no matches from 
     await expect(page.locator('#errorState')).toBeHidden();
 });
 
-test('combines search, outcome, warnings and direction filters and resets them on Clear', async ({ page }) => {
+test('combines search, outcome, highlights and direction filters and resets them on Clear', async ({ page }) => {
     await sample(page);
     await expect(page.locator('#rowCount')).toHaveText('35 / 35 interactions');
     await setFilter(page, 'onlyFailuresToggle', true);
-    await expect(rows(page)).toHaveCount(24);
-    await expect(cells(page, 2)).toHaveText(Array(24).fill('failure'));
+    // A timeout without a captured final outcome is unknown, not a failure.
+    await expect(rows(page)).toHaveCount(23);
+    await expect(cells(page, 2)).toHaveText(Array(23).fill('failure'));
     await page.getByRole('button', { name: 'Inbound', exact: true }).click();
     await expect(rows(page)).toHaveCount(1);
     await expect(row(page, 19)).toBeVisible();
@@ -132,7 +133,7 @@ test('combines search, outcome, warnings and direction filters and resets them o
     await page.getByRole('searchbox', { name: 'Search' }).fill('');
     await setFilter(page, 'onlySuccessToggle', true);
     await expect(page.locator('#onlyFailuresToggle')).not.toBeChecked();
-    await expect(rows(page)).toHaveCount(0); // Successful inbound rows have no warnings.
+    await expect(rows(page)).toHaveCount(0); // Successful inbound rows have no highlights.
     await setFilter(page, 'onlyWarningsToggle', false);
     await expect(rows(page)).toHaveCount(2);
     await page.getByRole('button', { name: 'All', exact: true }).click();

@@ -53,6 +53,9 @@ export const test = base.extend({
         // Choose the suite's preferred table mode before its first capture.
         // The actual controls remain hidden in the new start view.
         await page.locator('#tlsOverviewColumns').dispatchEvent('click');
+        // These suites exercise the expanded controls. Default compact layout
+        // and persisted user preferences are covered separately after reload.
+        await page.locator('#tlsAnalysis').evaluate(panel => { panel.open = true; });
         await use(page);
         expect(errors, 'No unhandled browser errors').toEqual([]);
     },

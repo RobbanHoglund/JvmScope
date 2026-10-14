@@ -33,10 +33,12 @@ export function tlsObservedSequence(interaction) {
             add('Handshake completion', 'Observed', 'handshake');
             completed = !ambiguous;
         } else if (/^(Produced|Consuming|Received|Sent)\s+alert\b/i.test(record.message)) {
-            const alert = readTlsAlert(record.message, interaction.rawLines.slice(record.rawStart, record.rawEnd));
+            const alert = readTlsAlert(record.message, interaction.rawLines.slice(record.rawStart, record.rawEnd), { tlsVersion: interaction.tlsVersion });
             const verb = record.message.split(/\s/)[0].toLowerCase();
-            add(alert?.description ? `${alert.level === 'fatal' ? 'Fatal alert' : 'Alert'}: ${alert.description}` : 'Alert (description not captured)',
-                ({ produced: 'Produced', consuming: 'Consumed', received: 'Received', sent: 'Sent' })[verb], alert?.level === 'fatal' ? 'failure' : 'alert');
+            const title = alert?.level === 'fatal' ? 'Fatal alert'
+                : alert?.isFailure ? `TLS 1.3 error alert (reported level: ${alert.level || 'not captured'})` : 'Alert';
+            add(alert?.description ? `${title}: ${alert.description}` : 'Alert (description not captured)',
+                ({ produced: 'Produced', consuming: 'Consumed', received: 'Received', sent: 'Sent' })[verb], alert?.isFailure ? 'failure' : 'alert');
         } else if (record.format === 'legacy' && /^\*\*\*\s/.test(interaction.rawLines[record.rawStart])) {
             add(interaction.rawLines[record.rawStart].replace(/^\*\*\*\s*/, ''), 'Observed', 'handshake');
         }

@@ -111,10 +111,10 @@ for (const sample of TLS_EXAMPLES) test(`${sample.title} produces the intended T
         assert.equal(text(sample), buildComprehensiveTlsSampleLog(), 'Regenerate the shipped teaching log when its source changes');
     } else {
         assert.equal(result.interactions.length, sample.id.includes('resumption') ? 2 : 1);
-        const failure = /untrusted|required-auth|^tls-(timeout|hostname|expired|alpn)$/.test(sample.id);
-        assert.ok(result.interactions.every(item => item.outcome === (sample.id === 'tls-incomplete' ? 'unknown' : failure ? 'failure' : 'success')));
+        const failure = /untrusted|required-auth|^tls-(hostname|expired|alpn)$/.test(sample.id);
+        assert.ok(result.interactions.every(item => item.outcome === (['tls-incomplete', 'tls-timeout'].includes(sample.id) ? 'unknown' : failure ? 'failure' : 'success')));
     }
-    const reasons = { 'tls-timeout': /Read timed out/, 'tls-hostname': /name mismatch/, 'tls-expired': /certificate_expired/, 'tls-alpn': /no_application_protocol/, 'tls-java27-required-auth': /CERTIFICATE_REQUIRED/ };
+    const reasons = { 'tls-hostname': /name mismatch/, 'tls-expired': /certificate_expired/, 'tls-alpn': /no_application_protocol/, 'tls-java27-required-auth': /CERTIFICATE_REQUIRED/ };
     if (reasons[sample.id]) assert.match(result.interactions[0].failureReason, reasons[sample.id]);
 });
 
