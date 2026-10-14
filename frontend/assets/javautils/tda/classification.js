@@ -1,3 +1,4 @@
+import { allocationRateFloor } from './allocation-metrics.js';
 /** Pure evidence rules for thread classifications. This module has no DOM or D3 dependencies. */
 
 export function isPossibleStarvationCandidate(thread) {
@@ -272,16 +273,16 @@ function unavailableAllocation(status) {
 }
 
 /**
- * Evaluates current heap-allocation activity from exact adjacent counter
- * deltas. This intentionally says nothing about retained/live heap or leaks.
+ * Evaluates allocation activity from adjacent counters; rounded counters
+ * must exceed thresholds even at their conservative lower rate bound. This intentionally says nothing about retained/live heap or leaks.
  */
 export function evaluateAllocationRate(thread, {
     thresholds = ALLOCATION_RATE_THRESHOLDS,
 } = {}) {
-    if (thread?.allocationDeltaStatus !== 'computed') {
+    if (!['computed', 'bounded'].includes(thread?.allocationDeltaStatus)) {
         return unavailableAllocation(thread?.allocationDeltaStatus || 'rate-unavailable');
     }
-    const rateBytesPerSecond = finiteNumber(thread?.allocationRateBytesPerSecond);
+    const rateBytesPerSecond = finiteNumber(allocationRateFloor(thread));
     const intervalMs = finiteNumber(thread?.allocationIntervalMs);
     if (rateBytesPerSecond == null || intervalMs == null || intervalMs <= 0) {
         return unavailableAllocation('rate-unavailable');
@@ -304,7 +305,7 @@ export function evaluateAllocationRate(thread, {
         hotScenario,
         confidence: hotScenario ? (high ? 'high' : 'medium') : null,
         severity: hotScenario ? (high ? 'high' : 'medium') : null,
-        reason: `Measured ${mibPerSecond.toFixed(2)} MiB/s heap allocation over ${(intervalMs / 1000).toFixed(2)}s since the previous snapshot using ${basisLabel(thread.allocationRateBasis)}; cumulative allocation does not measure retained/live heap`,
+        reason: `${thread.allocationRateBounds ? 'At least' : 'Measured'} ${mibPerSecond.toFixed(2)} MiB/s heap allocation over ${(intervalMs / 1000).toFixed(2)}s since the previous snapshot using ${basisLabel(thread.allocationRateBasis)}${thread.allocationRateBounds ? '; lower bound from rounded JVM counters' : ''}; cumulative allocation does not measure retained/live heap`,
     };
 }
 

@@ -1,3 +1,4 @@
+import { allocationCounterBounds } from './allocation-metrics.js';
 /**
  * Pure parsing utilities for the JvmScope · Java Thread Dump Analyzer.
  *
@@ -442,6 +443,7 @@ export function parseThreadDump(text, { snapshotIndex = 0, diagnostics = null } 
                 stackFrames: 0,
                 allocated,
                 allocatedBytes: allocated ? parseBytes(allocated) : null,
+                allocationCounterBounds: allocationCounterBounds(allocated, parseBytes(allocated)),
                 definedClasses: definedClasses != null ? Number(definedClasses) : null,
                 carrierVirtualThreadId: null,
                 mountedVirtualThreadId: null,

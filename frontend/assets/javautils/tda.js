@@ -1,3 +1,4 @@
+import { formatAllocationMetric } from './tda/allocation-metrics.js';
 import { scoreRunnableStackSimilarityDetailed, normalizeRunnableCompareLine } from './tda/analysis.js';
 import { createAnalysisClient } from './tda/analysis-client.js';
 import { bindAnalyzerStart, renderAnalyzerStart, bindAnalyzerDropZones } from './analyzer-start.js';
@@ -272,6 +273,7 @@ function cpuRateBasisLabel(basis) {
 function cpuDeltaStatusLabel(status) {
     const labels = {
         computed: 'Computed from previous snapshot',
+        bounded: 'Range from rounded JVM counters; no exact measurement',
         'first-occurrence': 'No previous correlated occurrence',
         'identity-ambiguous': 'Thread identity is ambiguous',
         'identity-unavailable': 'No exact thread match in previous snapshot',
@@ -287,6 +289,7 @@ function cpuDeltaStatusLabel(status) {
 function allocationDeltaStatusLabel(status) {
     const labels = {
         computed: 'Computed from previous snapshot',
+        bounded: 'Range from rounded JVM counters; no exact measurement',
         'first-occurrence': 'No previous correlated occurrence',
         'identity-ambiguous': 'Thread identity is ambiguous',
         'identity-unavailable': 'No exact thread match in previous snapshot',
@@ -1342,7 +1345,7 @@ function renderTableRows() {
             const topFrameText = t.topFrame || '—';
             const stackFrames = t.stackFrames ?? 0;
             const allocated = t.allocated ?? '—';
-            const allocationRate = `${t.allocationIntervalQuality === 'estimated' ? '≈ ' : ''}${fmtAllocationRate(t.allocationRateBytesPerSecond)}`;
+            const allocationRate = `${t.allocationIntervalQuality === 'estimated' ? '≈ ' : ''}${formatAllocationMetric(t, 'rate', fmtAllocationRate)}`;
             const definedClasses = t.definedClasses ?? '—';
             const nativeIdDec = t.nativeIdDec ?? '—';
             const prio = t.prio ?? '—';
@@ -1366,7 +1369,7 @@ function renderTableRows() {
             ].join('\n');
             const allocationTooltip = [
                 `Cumulative allocated: ${allocated}`,
-                `Allocation delta: ${fmtBytes(t.allocatedDeltaBytes)}`,
+                `Allocation delta: ${formatAllocationMetric(t, 'delta', fmtBytes)}`,
                 `Allocation rate: ${allocationRate}`,
                 `Rate basis: ${cpuRateBasisLabel(t.allocationRateBasis)}`,
                 `Delta status: ${allocationDeltaStatusLabel(t.allocationDeltaStatus)}`,

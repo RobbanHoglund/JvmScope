@@ -1,3 +1,4 @@
+import { formatAllocationMetric } from './allocation-metrics.js';
 import { formatSnapshotTime } from './time-quality.js';
 
 export const THREAD_DETAILS_TAB_ORDER = ['overview', 'locks', 'history'];
@@ -154,13 +155,15 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
                 : '—',
         },
         { label: 'Allocated total', value: hasValue(thread.allocated) ? String(thread.allocated) : formatBytes(thread.allocatedBytes) },
-        { label: 'Allocation delta', value: formatBytes(thread.allocatedDeltaBytes) },
+        { label: 'Allocation delta', value: formatAllocationMetric(thread, 'delta', formatBytes) },
         {
             label: 'Allocation rate',
-            value: Number.isFinite(thread.allocationRateBytesPerSecond)
+            value: thread.allocationRateBounds ? `${formatAllocationMetric(thread, 'rate', formatBytes)}/s`
+                : Number.isFinite(thread.allocationRateBytesPerSecond)
                 ? `${thread.allocationIntervalQuality === 'estimated' ? '≈ ' : ''}${formatBytes(thread.allocationRateBytesPerSecond)}/s`
                 : '—',
         },
+        ...(thread.allocationDeltaBounds ? [{ label: 'Allocation precision', value: 'Rounded JVM counters; range only, not an exact measurement.' }] : []),
         { label: 'Elapsed', value: formatMetric(thread.elapsedS, 's') },
         { label: 'Stack frames', value: Number.isFinite(thread.stackFrames) ? String(thread.stackFrames) : '—' },
     ];
