@@ -41,6 +41,9 @@ export function showHostError(error) {
 export function initializeHostNavigation() {
     if (!vscode) return;
     document.body.dataset.jvmscopeHost = 'vscode';
+    for (const notice of document.querySelectorAll('.analyzer-start-privacy')) {
+        notice.textContent = 'Analyzed locally in VS Code. Nothing is uploaded.';
+    }
     window.addEventListener('message', ({ data }) => {
         if (data?.channel === channel && data.version === 1 && data.type === 'revealHash' && typeof data.hash === 'string') {
             try { document.getElementById(decodeURIComponent(data.hash.replace(/^#/, '')))?.scrollIntoView(); } catch { /* Ignore malformed anchors. */ }

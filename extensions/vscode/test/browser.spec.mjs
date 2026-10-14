@@ -62,6 +62,7 @@ const test=base.extend({
 
 test('VS Code TDA uses inline workers, keeps allocation qualifications and opens exact native evidence',async({host})=>{
     await host.open('/jvmscope/tda.html');
+    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
     const sources=await Promise.all(['allocation-before.txt','allocation-after.txt'].map(async name=>({name,text:await capture('frontend/test/tda/fixtures/ga-regressions/'+name)})));
     const result=await host.load(sources);expect(result.snapshots).toBe(2);
     await host.page.locator('#dumpSelect').selectOption('1');
@@ -80,6 +81,7 @@ test('VS Code TDA uses inline workers, keeps allocation qualifications and opens
 
 test('VS Code TLS analyzes real JSSE input and uses native copy without network upload',async({host})=>{
     await host.open('/jvmscope/tls.html');
+    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
     const source={name:'TLS sample.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt')};
     const result=await host.load([source]);expect(result.interactions).toBeGreaterThan(0);
     await expect(host.page.locator('#fileName')).toHaveText(source.name);
