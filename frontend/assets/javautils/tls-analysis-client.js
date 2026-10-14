@@ -1,7 +1,6 @@
+import { createTlsWorker } from './host/workers.js';
 /** One disposable worker per capture. A replacement or Clear releases pending data. */
-export function createTlsAnalysisClient(createWorker = () => new Worker(
-    new URL('./tls-analysis-worker.js', import.meta.url), { type: 'module' },
-)) {
+export function createTlsAnalysisClient(createWorker = createTlsWorker) {
     let pending = null;
     function cancel() {
         const job = pending;

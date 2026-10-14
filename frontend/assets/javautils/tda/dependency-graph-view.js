@@ -1,4 +1,5 @@
 import { describeLockCoverage } from './lock-coverage.js';
+import { saveBlob } from '../host/platform.js';
 import { buildThreadDependencyGraph } from './dependency-graph.js';
 import {
     DEFAULT_DEPENDENCY_GRAPH_OPTIONS,
@@ -2656,14 +2657,7 @@ class ThreadDependencyGraphView {
             if (!download) return canvas.toDataURL('image/png');
             const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
             if (!pngBlob) throw new Error('Could not encode PNG.');
-            const pngUrl = URL.createObjectURL(pngBlob);
-            const anchor = document.createElement('a');
-            anchor.href = pngUrl;
-            anchor.download = `thread-dependency-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
-            document.body.appendChild(anchor);
-            anchor.click();
-            anchor.remove();
-            setTimeout(() => URL.revokeObjectURL(pngUrl), 1000);
+            await saveBlob(pngBlob, `thread-dependency-${new Date().toISOString().replace(/[:.]/g, '-')}.png`);
         } catch (error) {
             console.error('Dependency graph PNG export failed:', error);
         } finally {

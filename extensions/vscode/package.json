@@ -1,0 +1,101 @@
+{
+  "name": "jvmscope",
+  "displayName": "JvmScope \u2014 Thread Dumps & TLS Logs",
+  "description": "Investigate Java thread dumps and JSSE TLS logs locally inside VS Code.",
+  "version": "0.1.0",
+  "publisher": "RobbanHoglund",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RobbanHoglund/JvmScope.git",
+    "directory": "extensions/vscode"
+  },
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "java",
+    "jvm",
+    "thread dump",
+    "deadlock",
+    "tls",
+    "ssl",
+    "jsse"
+  ],
+  "main": "./src/extension.cjs",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": {
+      "supported": true
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "jvmscope.openTda",
+        "title": "Open Thread Dump Analyzer",
+        "category": "JvmScope"
+      },
+      {
+        "command": "jvmscope.openTls",
+        "title": "Open TLS Log Analyzer",
+        "category": "JvmScope"
+      },
+      {
+        "command": "jvmscope.analyzeThreadDump",
+        "title": "Analyze as Java Thread Dump",
+        "category": "JvmScope"
+      },
+      {
+        "command": "jvmscope.analyzeTlsLog",
+        "title": "Analyze as Java TLS Log",
+        "category": "JvmScope"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "jvmscope.analyzeThreadDump",
+          "when": "!explorerResourceIsFolder",
+          "group": "jvmscope@1"
+        },
+        {
+          "command": "jvmscope.analyzeTlsLog",
+          "when": "!explorerResourceIsFolder",
+          "group": "jvmscope@2"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "jvmscope.analyzeThreadDump",
+          "group": "jvmscope@1"
+        },
+        {
+          "command": "jvmscope.analyzeTlsLog",
+          "group": "jvmscope@2"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node ../../scripts/build-vscode.mjs",
+    "test": "node --test test/*.test.cjs",
+    "test:integration": "node test/run-integration.cjs",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package --no-dependencies --out ../../build/vscode/jvmscope-0.1.0.vsix"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.0.0"
+  },
+  "preview": true
+}

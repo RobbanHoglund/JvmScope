@@ -1,9 +1,9 @@
 import { EXPORT_WARNING, reportHtml, reportMarkdown } from './findings-report.js';
+import { saveText, showHostError } from './host/platform.js';
 
 function element(tag, text, parent) { const node = document.createElement(tag); if(text != null) node.textContent = text; parent.append(node); return node; }
 function download(text, extension) {
-    const url = URL.createObjectURL(new Blob([text], {type:extension==='html'?'text/html;charset=utf-8':'text/markdown;charset=utf-8'}));
-    const a = document.createElement('a'); a.href=url; a.download=`jvmscope-findings.${extension}`; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    saveText(text, `jvmscope-findings.${extension}`, extension==='html'?'text/html;charset=utf-8':'text/markdown;charset=utf-8').catch(showHostError);
 }
 /** In-memory report only; editing and exporting require explicit UI actions. */
 export function createFindingsReportView(root) {

@@ -1,4 +1,5 @@
 // Java TLS Log Analyzer 
+import { bindHostInputs, writeClipboard } from './host/platform.js';
 
 import { TLS_FAILURE_HIGHLIGHT } from './tls-core.js';
 import { bindAnalyzerStart, renderAnalyzerStart, bindAnalyzerDropZones } from './analyzer-start.js';
@@ -767,7 +768,7 @@ UI.issueModal?.addEventListener("click", (e) => {
 
 async function copyToClipboard(text) {
     try {
-        await navigator.clipboard.writeText(text);
+        await writeClipboard(text);
         return true;
     } catch {
         // Both copy controls belong to TLS details. Native modal dialogs make
@@ -1071,4 +1072,12 @@ document.getElementById("tlsTableBody").addEventListener("click", (e) => {
 
     const issue = btn.getAttribute("data-issue") || "";
     openIssueModal(issue);
+});
+bindHostInputs({
+    fileInput: UI.fileInput,
+    onSources: async sources => {
+        if (sources.length !== 1) throw new Error('Choose one TLS log at a time.');
+        await loadFile({ name: sources[0].name, text: async () => sources[0].text });
+        return { interactions: allInteractions.length };
+    },
 });
