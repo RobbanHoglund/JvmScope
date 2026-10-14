@@ -24,6 +24,8 @@ function initializeThread(thread, status = 'first-occurrence') {
     thread.cpuIntervalUncertaintyMs = null;
     thread.cpuIntervalReason = status === 'elapsed-counter-regressed' ? ELAPSED_REGRESSION_REASON : null;
     thread.allocatedDeltaBytes = null;
+    thread.allocationDeltaBounds = null;
+    thread.allocationRateBounds = null;
     thread.allocationIntervalMs = null;
     thread.allocationRateBytesPerSecond = null;
     thread.allocationRateBasis = 'unavailable';
@@ -141,29 +143,53 @@ export function annotateCpuRates(dumps, series) {
             if (previousAllocatedBytes == null || currentAllocatedBytes == null) {
                 thread.allocationDeltaStatus = 'counter-missing';
                 diagnostics.allocationCountersMissing += 1;
-            } else if (currentAllocatedBytes < previousAllocatedBytes) {
-                thread.allocationDeltaStatus = 'counter-reset';
-                diagnostics.allocationCountersReset += 1;
             } else {
-                const allocatedDeltaBytes = currentAllocatedBytes - previousAllocatedBytes;
-                thread.allocatedDeltaBytes = allocatedDeltaBytes;
-                thread.allocationDeltaStatus = 'computed';
-                diagnostics.allocationDeltasComputed += 1;
-                allocationDeltaSamples += 1;
-                totalAllocatedDeltaBytes += allocatedDeltaBytes;
+                const before = previous.thread.allocationCounterBounds ?? { minimum: previousAllocatedBytes, maximum: previousAllocatedBytes };
+                const after = thread.allocationCounterBounds ?? { minimum: currentAllocatedBytes, maximum: currentAllocatedBytes };
+                if (after.maximum < before.minimum) {
+                    thread.allocationDeltaStatus = 'counter-reset';
+                    diagnostics.allocationCountersReset += 1;
+                    continue;
+                }
+                if (!Number.isSafeInteger(before.maximum) || !Number.isSafeInteger(after.maximum)) {
+                    thread.allocationDeltaStatus = 'counter-missing';
+                    diagnostics.allocationCountersMissing += 1;
+                    continue;
+                }
+                const rounded = before.minimum !== before.maximum || after.minimum !== after.maximum;
+                const delta = {
+                    minimum: Math.max(0, after.minimum - before.maximum),
+                    maximum: Math.max(0, after.maximum - before.minimum),
+                };
+                thread.allocationDeltaStatus = rounded ? 'bounded' : 'computed';
                 thread.allocationIntervalMs = interval.intervalMs;
                 thread.allocationRateBasis = interval.basis;
                 thread.allocationIntervalQuality = interval.quality;
                 thread.allocationIntervalReason = interval.reason;
+                if (rounded) {
+                    thread.allocationDeltaBounds = delta;
+                } else {
+                    thread.allocatedDeltaBytes = delta.minimum;
+                    diagnostics.allocationDeltasComputed += 1;
+                    allocationDeltaSamples += 1;
+                    totalAllocatedDeltaBytes += delta.minimum;
+                }
                 if (interval.intervalMs == null) {
                     thread.allocationDeltaStatus = interval.quality === 'conflicting' ? 'interval-conflict' : 'interval-unavailable';
                     diagnostics.allocationIntervalsUnavailable += 1;
+                } else if (rounded) {
+                    // Widen the rate bounds for printed-clock resolution too.
+                    const uncertainty = interval.uncertaintyMs || 0;
+                    if (interval.intervalMs > uncertainty) {
+                        thread.allocationRateBounds = {
+                            minimum: delta.minimum * 1000 / (interval.intervalMs + uncertainty),
+                            maximum: delta.maximum * 1000 / (interval.intervalMs - uncertainty),
+                        };
+                    }
                 } else {
-                    thread.allocationRateBytesPerSecond = Number(
-                        ((allocatedDeltaBytes * 1000) / interval.intervalMs).toFixed(3),
-                    );
+                    thread.allocationRateBytesPerSecond = Number((delta.minimum * 1000 / interval.intervalMs).toFixed(3));
                     allocationRateSamples += 1;
-                    ratedAllocatedDeltaBytes += allocatedDeltaBytes;
+                    ratedAllocatedDeltaBytes += delta.minimum;
                     totalAllocationIntervalMs += interval.intervalMs;
                     diagnostics.allocationRatesComputed += 1;
                 }

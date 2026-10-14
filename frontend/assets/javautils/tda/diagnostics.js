@@ -75,7 +75,7 @@ const MEASURED_CPU = evidence(
 const MEASURED_ALLOCATION = evidence(
     'measured',
     'Measured adjacent-snapshot allocated-byte rate with exact thread identity and a validated interval.',
-    'This is heap allocation throughput, not retained/live heap, off-heap usage, or proof of a memory leak.',
+    'Rounded counters use conservative lower bounds for thresholds. This is heap allocation throughput, not retained/live heap, off-heap usage, or proof of a memory leak.',
 );
 const MEASURED_INFRASTRUCTURE_CPU = evidence(
     'mixed',

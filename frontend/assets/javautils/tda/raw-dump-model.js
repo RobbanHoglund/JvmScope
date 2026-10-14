@@ -59,6 +59,7 @@ function occurrencesForThread(thread, sourceLines) {
     const occurrences = [];
     let inOwnableSynchronizers = false;
     for (let lineNumber = thread.rawStartLine; lineNumber <= thread.rawEndLine; lineNumber += 1) {
+        if (thread.mountedVirtualRange && lineNumber >= thread.mountedVirtualRange.startLine && lineNumber <= thread.mountedVirtualRange.endLine) continue;
         const text = sourceLines[lineNumber - 1] ?? '';
         if (OWNABLE_HEADER.test(text)) {
             inOwnableSynchronizers = true;
@@ -223,7 +224,7 @@ function buildRawSections(sourceLines, blocks) {
                 lines: sourceLines.slice(cursor - 1, block.startLine - 1),
             });
         }
-        cursor = block.endLine + 1;
+        cursor = Math.max(cursor, block.endLine + 1);
     }
     if (cursor <= sourceLines.length) {
         sections.push({

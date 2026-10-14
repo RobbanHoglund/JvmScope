@@ -51,8 +51,8 @@ for (const version of [21, 23, 24, 25, 26, 27]) {
             const owner = dump.threads.find(thread => thread.threadName === 'sample-owner');
             const waiter = dump.threads.find(thread => thread.threadName === 'sample-waiter');
             const ownerDetails = buildThreadDetailsViewModel(owner);
-            assert.equal(ownerDetails.summaryMeta.find(item => item.label === 'Locks held').value, modern && version < 25 ? '—' : '1');
-            assert.equal(ownerDetails.coreFacts.some(item => item.label === 'Locks held'), false);
+            assert.equal(ownerDetails.summaryMeta.find(item => item.label === 'Locks observed').value, modern && version < 25 ? '—' : '1');
+            assert.equal(ownerDetails.coreFacts.some(item => item.label === 'Locks observed'), false);
             const ownerNode = graph.threadNodes.find(node => node.sourceKey === owner.sourceKey);
             assert.equal(formatLockCount(ownerNode), modern && version < 25 ? '—' : '1');
             if (!modern || version >= 25) {

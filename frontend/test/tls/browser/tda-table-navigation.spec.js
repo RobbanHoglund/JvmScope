@@ -1,0 +1,23 @@
+import {test,expect} from './fixtures.js';
+test('TDA thread-table shortcut is visible without scrolling and preserves analysis context',async({page,appUrl})=>{
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    await page.locator('#loadSampleBtn').click();
+    await expect(page.locator('#threadTableBody tr').first()).toBeAttached();
+    const jump=page.getByRole('link',{name:'Threads ↓',exact:true});
+    await expect(jump).toBeVisible({timeout:1000});
+    const shortcut=await jump.boundingBox();
+    expect(shortcut.height).toBeLessThanOrEqual(36);
+    expect(shortcut.y+shortcut.height).toBeLessThan(page.viewportSize().height);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize().width);
+    await page.locator('#dumpSelect').selectOption('1');
+    await page.locator('#onlyBlockedToggle').check();
+    await jump.focus();await page.keyboard.press('Enter');
+    await expect(page.locator('#searchInput')).toBeFocused();
+    await expect(page.locator('#dumpSelect')).toHaveValue('1');
+    await expect(page.locator('#onlyBlockedToggle')).toBeChecked();
+    const table=await page.locator('#threadTable').boundingBox();
+    expect(table.y).toBeGreaterThanOrEqual(0);
+    expect(table.y).toBeLessThan(page.viewportSize().height/2);
+    await page.locator('#clearBtn').click();
+    await expect(jump).not.toBeVisible();
+});

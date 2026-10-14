@@ -1,3 +1,4 @@
+import { allocationCounterBounds } from './allocation-metrics.js';
 /**
  * Pure parsing utilities for the JvmScope · Java Thread Dump Analyzer.
  *
@@ -87,16 +88,19 @@ function extractThreadLocks(thread) {
     thread.ownedSynchronizers = [];
     thread.waitingLocks = [];
     let inOwnableSynchronizers = false;
+    let ownableSynchronizersReported = false;
 
-    for (const line of thread.rawBlock || []) {
+    for (const line of thread.analysisBlock || thread.rawBlock || []) {
         if (OWNABLE_SYNCHRONIZERS_HEADER.test(line)) {
             inOwnableSynchronizers = true;
             continue;
         }
 
         if (inOwnableSynchronizers) {
+            if (/^\s*-\s+None\s*$/.test(line)) ownableSynchronizersReported = true;
             const synchronizerMatch = line.match(OWNABLE_SYNCHRONIZER_LINE);
             if (synchronizerMatch?.groups) {
+                ownableSynchronizersReported = true;
                 thread.ownedSynchronizers.push({
                     lockId: synchronizerMatch.groups.lockId,
                     lockType: synchronizerMatch.groups.lockType,
@@ -165,6 +169,12 @@ function extractThreadLocks(thread) {
     thread.lockedMonitors = uniqueLocks(thread.lockedMonitors);
     thread.ownedSynchronizers = uniqueLocks(thread.ownedSynchronizers);
     thread.heldLocks = uniqueLocks([...thread.lockedMonitors, ...thread.ownedSynchronizers]);
+    thread.lockCoverage = {
+        monitors: thread.lockDataAvailable !== false || thread.lockedMonitors.length > 0
+            || thread.waitingLocks.some(lock => lock.kind.startsWith('monitor-')),
+        ownableSynchronizers: ownableSynchronizersReported,
+    };
+    thread.lockDataAvailable = thread.lockCoverage.monitors || ownableSynchronizersReported || thread.waitingLocks.length > 0;
 }
 
 function classNameFromClinitFrame(line) {
@@ -178,7 +188,7 @@ function extractClassInitialization(thread) {
     thread.classInitializationWaits = [];
     thread.initializingClasses = [];
 
-    for (const [lineIndex, line] of (thread.rawBlock || []).entries()) {
+    for (const [lineIndex, line] of (thread.analysisBlock || thread.rawBlock || []).entries()) {
         const rawLineNumber = Number.isInteger(thread.rawStartLine)
             ? thread.rawStartLine + lineIndex
             : null;
@@ -236,6 +246,48 @@ function extractCarrierVirtualThreadInfo(thread) {
             (inMountedSection ? thread.mountedVirtualStackLines : thread.carrierStackLines).push(line);
         }
     }
+}
+
+
+/** A mounted section belongs to a distinct Java Thread, not its carrier. */
+function splitMountedVirtualThread(carrier, snapshotIndex) {
+    const start = carrier.rawBlock.findIndex(line => MOUNTED_VIRTUAL_THREAD_LINE.test(line));
+    if (start < 0) return null;
+    const ownable = carrier.rawBlock.findIndex((line, index) => index > start && OWNABLE_SYNCHRONIZERS_HEADER.test(line));
+    const end = ownable < 0 ? carrier.rawBlock.length : ownable;
+    const id = carrier.mountedVirtualThreadId;
+    // Reuse the stack/lock parser without inventing native IDs, CPU or elapsed
+    // counters. The name is a display fallback; HotSpot supplies only this ID.
+    const virtual = parseThreadDump(`#${id} "Virtual thread #${id}" virtual\n${carrier.rawBlock.slice(start + 1, end).join('\n')}`, { snapshotIndex, splitMounted: false })[0];
+    virtual.format = 'hotspot-mounted-virtual';
+    virtual.embeddedVirtualThread = true;
+    virtual.carrierThreadId = String(carrier.jvmId);
+    virtual.rawBlock = carrier.rawBlock.slice(start, end);
+    virtual.rawHeaderLine = virtual.rawBlock[0];
+    virtual.rawStartLine = carrier.rawStartLine + start;
+    virtual.rawEndLine = carrier.rawStartLine + end - 1;
+    virtual.lockDataAvailable = true;
+    // Restore source coordinates after parsing the temporary analysis header.
+    extractClassInitialization(virtual);
+    carrier.mountedVirtualRange = { startLine: virtual.rawStartLine, endLine: virtual.rawEndLine };
+    carrier.analysisBlock = carrier.rawBlock.map((line, index) => index >= start && index < end ? '' : line);
+    carrier.stackLines = carrier.carrierStackLines;
+    carrier.stackFrames = carrier.stackLines.filter(line => AT_LINE.test(line)).length;
+    carrier.topFrame = carrier.stackLines.map(line => line.match(AT_LINE)?.[1]).find(Boolean) || '';
+    const state = carrier.analysisBlock.map(line => line.match(JAVA_STATE)?.groups).find(Boolean);
+    carrier.javaState = state?.state || null;
+    carrier.javaStateDetail = state?.detail || null;
+    return virtual;
+}
+
+function resolveEmbeddedCarriers(threads) {
+    for (const virtual of threads.filter(thread => thread.embeddedVirtualThread)) {
+        const carriers = threads.filter(thread => String(thread.jvmId) === virtual.carrierThreadId && !thread.isVirtualThread);
+        if (carriers.length === 1 && threads.filter(thread => String(thread.jvmId) === String(virtual.jvmId)).length === 1) {
+            virtual.carrierSourceKey = carriers[0].sourceKey;
+        }
+    }
+    return threads;
 }
 
 function isThreadDumpSectionBoundary(line) {
@@ -353,7 +405,7 @@ export function parseThreadHeader(rawHeaderLine) {
  * Parses HotSpot Thread.print/jstack and Thread.dump_to_file text/JSON.
  * Missing source fields remain unavailable; JSON keeps original source ranges.
  */
-export function parseThreadDump(text, { snapshotIndex = 0, diagnostics = null } = {}) {
+export function parseThreadDump(text, { snapshotIndex = 0, diagnostics = null, splitMounted = true } = {}) {
     const source = String(text || '').replaceAll('\r\n', '\n').replaceAll('\r', '\n').replace(/^\uFEFF/, '');
     const json = readJsonThreadDump(source);
     if (json) {
@@ -386,11 +438,13 @@ export function parseThreadDump(text, { snapshotIndex = 0, diagnostics = null } 
     function flush() {
         if (!current) return;
         current.topFrame = current.topFrame || '';
+        extractCarrierVirtualThreadInfo(current);
+        const virtual = splitMounted ? splitMountedVirtualThread(current, snapshotIndex) : null;
         extractThreadLocks(current);
         extractClassInitialization(current);
-        extractCarrierVirtualThreadInfo(current);
         current.locksHeldCount = current.heldLocks.length;
         threads.push(current);
+        if (virtual) threads.push(virtual);
         current = null;
     }
 
@@ -442,6 +496,7 @@ export function parseThreadDump(text, { snapshotIndex = 0, diagnostics = null } 
                 stackFrames: 0,
                 allocated,
                 allocatedBytes: allocated ? parseBytes(allocated) : null,
+                allocationCounterBounds: allocationCounterBounds(allocated, parseBytes(allocated)),
                 definedClasses: definedClasses != null ? Number(definedClasses) : null,
                 carrierVirtualThreadId: null,
                 mountedVirtualThreadId: null,
@@ -482,7 +537,7 @@ export function parseThreadDump(text, { snapshotIndex = 0, diagnostics = null } 
     }
 
     flush();
-    return assignThreadSourceKeys(threads, snapshotIndex);
+    return resolveEmbeddedCarriers(assignThreadSourceKeys(threads, snapshotIndex));
 }
 
 export function parseDeadlocks(text) {

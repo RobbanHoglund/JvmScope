@@ -1,3 +1,5 @@
+import { describeLockCoverage } from './lock-coverage.js';
+import { formatAllocationMetric } from './allocation-metrics.js';
 import { formatSnapshotTime } from './time-quality.js';
 
 export const THREAD_DETAILS_TAB_ORDER = ['overview', 'locks', 'history'];
@@ -95,9 +97,11 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
         { label: 'Java state', value: detailValue ? `${stateValue} · ${detailValue}` : stateValue },
         { label: 'JVM ID', value: hasValue(thread.jvmId) ? `#${thread.jvmId}` : '—' },
         { label: 'Native ID', value: hasValue(thread.nid) ? String(thread.nid) : '—' },
-        { label: 'Locks held', value: locksHeldValue },
+        { label: 'Locks observed', value: locksHeldValue, description: describeLockCoverage(thread) },
         ...(thread.isVirtualThread != null ? [{ label: 'Thread kind', value: thread.isVirtualThread ? 'Virtual' : 'Platform' }] : []),
-        { label: 'Deadlock', value: thread.isDeadlocked ? 'Confirmed' : 'No' },
+        { label: 'Deadlock', value: thread.isDeadlocked ? 'Confirmed' : 'Not confirmed by source',
+            description: thread.isDeadlocked ? 'The JVM explicitly reported this thread in a deadlock cycle.'
+                : 'No JVM-reported deadlock was linked to this thread. This does not rule out deadlock; the JVM detector does not cover cycles involving virtual threads.' },
         { label: 'Carrier', value: carrierValue },
         ...(classInitialization.length ? [{
             label: 'Class init',
@@ -138,7 +142,7 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
         ...(hasValue(thread.javaState) ? [`   java.lang.Thread.State: ${stateValue}${detailValue ? ` (${detailValue})` : ''}`] : []),
         ...(Array.isArray(thread.stackLines) ? thread.stackLines : []).filter(hasValue).map(line => `    ${String(line).trim()}`),
     ];
-    const stackText = isFileDump ? readableFileLines.join('\n') : rawBlockText.trim() || fallbackStackLines.join('\n');
+    const stackText = isFileDump ? readableFileLines.join('\n') : (thread.analysisBlock ? thread.analysisBlock.filter(Boolean).join('\n') : rawBlockText).trim() || fallbackStackLines.join('\n');
     const rawText = rawBlockText || (hasValue(thread.rawHeaderLine) ? String(thread.rawHeaderLine) : '');
 
     const coreFacts = [
@@ -154,13 +158,16 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
                 : '—',
         },
         { label: 'Allocated total', value: hasValue(thread.allocated) ? String(thread.allocated) : formatBytes(thread.allocatedBytes) },
-        { label: 'Allocation delta', value: formatBytes(thread.allocatedDeltaBytes) },
+        { label: 'Allocation delta', value: formatAllocationMetric(thread, 'delta', formatBytes) },
         {
             label: 'Allocation rate',
-            value: Number.isFinite(thread.allocationRateBytesPerSecond)
+            value: thread.allocationRateBounds ? `${formatAllocationMetric(thread, 'rate', formatBytes)}/s`
+                : Number.isFinite(thread.allocationRateBytesPerSecond)
                 ? `${thread.allocationIntervalQuality === 'estimated' ? '≈ ' : ''}${formatBytes(thread.allocationRateBytesPerSecond)}/s`
                 : '—',
         },
+        ...(thread.allocationDeltaBounds ? [{ label: 'Allocation precision', value: 'Rounded JVM counters; range only, not an exact measurement.' }] : []),
+        { label: 'Lock coverage', value: describeLockCoverage(thread) },
         { label: 'Elapsed', value: formatMetric(thread.elapsedS, 's') },
         { label: 'Stack frames', value: Number.isFinite(thread.stackFrames) ? String(thread.stackFrames) : '—' },
     ];
@@ -223,6 +230,7 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
             || Boolean(thread.lockAssessment && thread.lockAssessment.tier !== 'none')
             || Array.isArray(thread.contentionChains) && thread.contentionChains.length > 0,
         lockEvidence: {
+            coverage: describeLockCoverage(thread),
             heldLocks,
             waitingLocks,
             assessment: thread.lockAssessment || null,

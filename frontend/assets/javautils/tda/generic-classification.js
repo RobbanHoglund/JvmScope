@@ -91,7 +91,7 @@ export function evaluateSynchronizationPatterns(thread) {
 
     const conditionFrames = matchingFrames(
         frames,
-        /java\.util\.concurrent\.locks\.AbstractQueuedSynchronizer\$ConditionObject\.(?:await|awaitNanos|awaitUntil)\(/,
+        /java\.util\.concurrent\.locks\.AbstractQueuedSynchronizer\$ConditionObject\.(?:await|awaitNanos|awaitUntil|awaitUninterruptibly)\(/,
     );
     if (conditionFrames.length) {
         const signals = [signal('exact-library-frame', 'Exact AQS ConditionObject await frame', 70)];

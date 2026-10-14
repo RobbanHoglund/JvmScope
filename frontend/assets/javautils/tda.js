@@ -1,3 +1,5 @@
+import { describeLockCoverage } from './tda/lock-coverage.js';
+import { formatAllocationMetric } from './tda/allocation-metrics.js';
 import { scoreRunnableStackSimilarityDetailed, normalizeRunnableCompareLine } from './tda/analysis.js';
 import { createAnalysisClient } from './tda/analysis-client.js';
 import { bindAnalyzerStart, renderAnalyzerStart, bindAnalyzerDropZones } from './analyzer-start.js';
@@ -56,6 +58,7 @@ const UI = {
     sessionInputStatus: document.getElementById('sessionInputStatus'),
     fileName: document.getElementById('fileName'),
     searchInput: document.getElementById('searchInput'),
+    jumpToThreads: document.getElementById('jumpToThreads'),
     refreshBtn: document.getElementById('refreshBtn'),
     loadSampleBtn: document.getElementById('loadSampleBtn'),
     pasteClipboardBtn: document.getElementById('pasteClipboardBtn'),
@@ -272,6 +275,7 @@ function cpuRateBasisLabel(basis) {
 function cpuDeltaStatusLabel(status) {
     const labels = {
         computed: 'Computed from previous snapshot',
+        bounded: 'Range from rounded JVM counters; no exact measurement',
         'first-occurrence': 'No previous correlated occurrence',
         'identity-ambiguous': 'Thread identity is ambiguous',
         'identity-unavailable': 'No exact thread match in previous snapshot',
@@ -287,6 +291,7 @@ function cpuDeltaStatusLabel(status) {
 function allocationDeltaStatusLabel(status) {
     const labels = {
         computed: 'Computed from previous snapshot',
+        bounded: 'Range from rounded JVM counters; no exact measurement',
         'first-occurrence': 'No previous correlated occurrence',
         'identity-ambiguous': 'Thread identity is ambiguous',
         'identity-unavailable': 'No exact thread match in previous snapshot',
@@ -1342,7 +1347,7 @@ function renderTableRows() {
             const topFrameText = t.topFrame || '—';
             const stackFrames = t.stackFrames ?? 0;
             const allocated = t.allocated ?? '—';
-            const allocationRate = `${t.allocationIntervalQuality === 'estimated' ? '≈ ' : ''}${fmtAllocationRate(t.allocationRateBytesPerSecond)}`;
+            const allocationRate = `${t.allocationIntervalQuality === 'estimated' ? '≈ ' : ''}${formatAllocationMetric(t, 'rate', fmtAllocationRate)}`;
             const definedClasses = t.definedClasses ?? '—';
             const nativeIdDec = t.nativeIdDec ?? '—';
             const prio = t.prio ?? '—';
@@ -1366,7 +1371,7 @@ function renderTableRows() {
             ].join('\n');
             const allocationTooltip = [
                 `Cumulative allocated: ${allocated}`,
-                `Allocation delta: ${fmtBytes(t.allocatedDeltaBytes)}`,
+                `Allocation delta: ${formatAllocationMetric(t, 'delta', fmtBytes)}`,
                 `Allocation rate: ${allocationRate}`,
                 `Rate basis: ${cpuRateBasisLabel(t.allocationRateBasis)}`,
                 `Delta status: ${allocationDeltaStatusLabel(t.allocationDeltaStatus)}`,
@@ -1400,8 +1405,8 @@ function renderTableRows() {
                   </td>
 
                   <td${tooltipAttr(t.javaState || '—')}>${stateBadge(t.javaState)}</td>
-                  <td${tooltipAttr(Array.isArray(t.heldLocks) ? t.heldLocks.map((l) => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`).join('\n') : '—')}>${locksHeldBadge(t)}</td>
-                  <td${tooltipAttr(t.isDeadlocked ? 'Confirmed Java deadlock' : '—')}>${deadlockBadge(t.isDeadlocked)}</td>
+                  <td${tooltipAttr([describeLockCoverage(t), ...(t.heldLocks || []).map(l => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`)].join('\n'))}>${locksHeldBadge(t)}</td>
+                  <td${tooltipAttr(t.isDeadlocked ? 'Confirmed Java deadlock' : 'Not confirmed by source; absence is not established')}>${deadlockBadge(t.isDeadlocked)}</td>
                   <td${tooltipAttr(t.daemon == null ? 'Daemon status not provided by this dump format' : t.daemon ? 'Daemon thread' : 'Not daemon')}>${t.daemon == null ? '—' : badgeYesNo(t.daemon)}</td>
 
                   <td class="right thread-metadata"${tooltipAttr(prio)}>${escapeHtml(prio)}</td>
@@ -3771,7 +3776,7 @@ function renderThreadDetailsTabMarkup(model) {
             const evidenceHtml = [
                 assessmentHtml,
                 renderLockObservations('Waiting for', waitingLocks),
-                renderLockObservations('Held monitors and synchronizers', heldLocks),
+                renderLockObservations('Observed held monitors and synchronizers', heldLocks),
             ].filter(Boolean).join('');
 
             return `
@@ -3782,6 +3787,7 @@ function renderThreadDetailsTabMarkup(model) {
                     aria-labelledby="threadDetailsTab-${tabId}"
                     ${isActive ? '' : 'hidden'}
                 >
+                    <p class="thread-details-empty-state">${escapeHtml(lockEvidence.coverage || '')}</p>
                     ${evidenceHtml || `
                         <div class="thread-details-card">
                             <div class="thread-details-card-header">
@@ -4043,7 +4049,7 @@ function openThreadModal(thread, sourceElement = document.activeElement) {
         snapshotCount: parsedDumps.length,
     });
     const summaryMetaHtml = model.summaryMeta.map((item) => `
-        <span${item.label === 'Java state' ? ` data-java-state="${escapeAttr(String(thread.javaState || 'UNKNOWN').trim().toUpperCase())}"` : ''} class="thread-details-chip ${['JVM ID', 'Native ID', 'Java state', 'Locks held'].includes(item.label) || ['No', 'Not reported', '—', '0'].includes(String(item.value)) ? 'thread-details-chip-neutral' : ''}"><span class="thread-details-chip-label">${escapeHtml(item.label)}</span> <span>${escapeHtml(String(item.value ?? '—'))}</span></span>
+        <span${item.label === 'Java state' ? ` data-java-state="${escapeAttr(String(thread.javaState || 'UNKNOWN').trim().toUpperCase())}"` : ''} class="thread-details-chip ${['JVM ID', 'Native ID', 'Java state', 'Locks observed'].includes(item.label) || ['No', 'Not confirmed by source', 'Not reported', '—', '0'].includes(String(item.value)) ? 'thread-details-chip-neutral' : ''}"><span class="thread-details-chip-label"${item.description ? tooltipAttr(item.description) : ''}>${escapeHtml(item.label)}</span> <span>${escapeHtml(String(item.value ?? '—'))}</span></span>
     `).join('');
 
     UI.modalTitle.textContent = model.title;
@@ -4752,6 +4758,12 @@ document.addEventListener('click', (e) => {
         resetRunnableClusterTableFocusAndRender();
     }
 });
+UI.jumpToThreads?.addEventListener('click', (event) => {
+    event.preventDefault();
+    UI.dropZone?.scrollIntoView({ block: 'start' });
+    UI.searchInput?.focus({ preventScroll: true });
+});
+
 UI.searchInput?.addEventListener(
     'input',
     debounce(() => {

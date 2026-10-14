@@ -1,3 +1,4 @@
+import { allocationRateFloor } from './allocation-metrics.js';
 import { diagnosticEvidenceFor, hasThreadDiagnostic } from './diagnostics.js';
 import { isPossibleStarvationCandidate } from './classification.js';
 
@@ -394,14 +395,14 @@ function addMeasuredInfrastructureCpuFinding(findings, threads) {
 function addMeasuredAllocationFinding(findings, threads) {
     const hotThreads = threads.filter((thread) =>
         hasThreadDiagnostic(thread, 'allocation-hot')
-        && thread?.allocationDeltaStatus === 'computed'
-        && Number.isFinite(Number(thread?.allocationRateBytesPerSecond))
-        && Number(thread.allocationRateBytesPerSecond) > 0);
+        && ['computed', 'bounded'].includes(thread?.allocationDeltaStatus)
+        && Number.isFinite(allocationRateFloor(thread))
+        && allocationRateFloor(thread) > 0);
     if (!hotThreads.length) return;
 
     const records = hotThreads.map((thread) => diagnosticRecord(thread, 'allocation-hot')).filter(Boolean);
     const highestRate = Math.max(...hotThreads.map((thread) =>
-        Number(thread?.allocationRateBytesPerSecond || 0)));
+        allocationRateFloor(thread) || 0));
     const temporal = temporalFact(hotThreads, 'allocation-hot');
 
     findings.push(makeFinding({
@@ -413,7 +414,7 @@ function addMeasuredAllocationFinding(findings, threads) {
         confidence: lowestConfidence(records, 'medium'),
         threads: hotThreads,
         facts: [
-            { label: 'Highest allocation rate', value: formatByteRate(highestRate) },
+            { label: hotThreads.some(t => t.allocationRateBounds) ? 'Highest allocation lower bound' : 'Highest allocation rate', value: `${hotThreads.some(t => t.allocationRateBounds) ? '≥ ' : ''}${formatByteRate(highestRate)}` },
             { label: 'Measured hot allocators', value: String(hotThreads.length) },
             temporal,
         ],
@@ -458,7 +459,7 @@ function buildLimitations({
             && Number.isFinite(Number(thread.allocatedBytes))).length;
     const measuredCpuRates = threads.filter((thread) => thread?.cpuDeltaStatus === 'computed').length;
     const measuredAllocationRates = threads
-        .filter((thread) => thread?.allocationDeltaStatus === 'computed').length;
+        .filter((thread) => ['computed', 'bounded'].includes(thread?.allocationDeltaStatus)).length;
 
     if (analysisStatus === 'partial') {
         const warning = uniqueValues(parserWarnings).join(' ');

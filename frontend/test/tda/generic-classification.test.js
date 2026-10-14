@@ -137,3 +137,16 @@ test('uses parsed lock semantics without treating every ReentrantLock frame as c
     assert.equal(detectGenericSynchronizationScenario(holder)?.key, 'reentrant-lock-holder');
     assert.equal(detectGenericSynchronizationScenario(unlockFrame), null);
 });
+
+test('all standard ConditionObject await variants retain the specific rule', () => {
+    for (const method of ['await', 'awaitNanos', 'awaitUntil', 'awaitUninterruptibly']) {
+        const thread = threadWithStack('worker', [
+            'jdk.internal.misc.Unsafe.park(Native Method)',
+            `java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.${method}(AbstractQueuedSynchronizer.java:1)`,
+        ]);
+        assert.equal(detectGenericSynchronizationScenario(thread)?.key, 'condition-await', method);
+    }
+    assert.equal(detectGenericSynchronizationScenario(threadWithStack('worker', [
+        'example.ConditionObject.awaitUninterruptibly(ConditionObject.java:1)',
+    ])), null, 'application method names are not JVM evidence');
+});

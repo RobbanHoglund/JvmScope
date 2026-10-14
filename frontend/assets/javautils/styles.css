@@ -4223,13 +4223,14 @@ dialog.modal::backdrop {
   width: 156px;
 }
 
-/* Locks held */
+/* Locks observed */
 #threadTable th:nth-child(4),
 #threadTable td:nth-child(4) {
   width: 100px;
   text-align: center;
   white-space: nowrap;
 }
+#threadTable th:nth-child(4) { white-space: normal; }
 
 /* Deadlock */
 #threadTable th:nth-child(5),
@@ -4286,6 +4287,7 @@ dialog.modal::backdrop {
   width: 120px;
   text-align: right;
 }
+#threadTable td:nth-child(12) { white-space: normal; overflow-wrap: anywhere; }
 
 /* Defined classes */
 #threadTable th:nth-child(13),
@@ -8549,6 +8551,16 @@ body.dependency-graph-body-locked {
   .tda-page .tda-filter-row .toggles-row { gap: 8px 16px; padding: 0; }
   .tda-page .tda-filter-row .toggle { white-space: nowrap; }
   .tda-page .tda-filter-row .cpu-profile-select-wrap { width: auto; }
+  .tda-page #jumpToThreads {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    line-height: 1.4;
+    text-decoration: none;
+  }
   .tda-page .tda-header .btn:has(.tda-action-icon) {
     display: inline-flex;
     align-items: center;

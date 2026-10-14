@@ -76,7 +76,7 @@ test('collector clock precision does not imply atomic JVM sampling precision', (
 });
 
 test('an interval conflict retains deltas and prevents both normalized rates', () => {
-    const dump = (timestamp, cpu, elapsed, allocated) => `${timestamp}\nFull thread dump OpenJDK 64-Bit Server VM:\n\n"worker" #11 [101] prio=5 os_prio=0 cpu=${cpu}ms elapsed=${elapsed}s allocated=${allocated}KB tid=0x11 nid=0x65 runnable [0x1100]\n   java.lang.Thread.State: RUNNABLE\n    at example.Work.run(Work.java:1)\n\nJNI global refs: 1\n`;
+    const dump = (timestamp, cpu, elapsed, allocated) => `${timestamp}\nFull thread dump OpenJDK 64-Bit Server VM:\n\n"worker" #11 [101] prio=5 os_prio=0 cpu=${cpu}ms elapsed=${elapsed}s allocated=${allocated * 1024}B tid=0x11 nid=0x65 runnable [0x1100]\n   java.lang.Thread.State: RUNNABLE\n    at example.Work.run(Work.java:1)\n\nJNI global refs: 1\n`;
     const a = analyzeThreadDumpData(dump('2026-10-04 12:00:00', 10, '1.00', 1) + dump('2026-10-04 12:00:01', 20, '20.00', 2));
     const t = a.parsedDumps[1].threads[0];
     assert.equal(t.cpuDeltaStatus, 'interval-conflict');
