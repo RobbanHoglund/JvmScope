@@ -88,6 +88,7 @@ function extractThreadLocks(thread) {
     thread.ownedSynchronizers = [];
     thread.waitingLocks = [];
     let inOwnableSynchronizers = false;
+    let ownableSynchronizersReported = false;
 
     for (const line of thread.analysisBlock || thread.rawBlock || []) {
         if (OWNABLE_SYNCHRONIZERS_HEADER.test(line)) {
@@ -96,8 +97,10 @@ function extractThreadLocks(thread) {
         }
 
         if (inOwnableSynchronizers) {
+            if (/^\s*-\s+None\s*$/.test(line)) ownableSynchronizersReported = true;
             const synchronizerMatch = line.match(OWNABLE_SYNCHRONIZER_LINE);
             if (synchronizerMatch?.groups) {
+                ownableSynchronizersReported = true;
                 thread.ownedSynchronizers.push({
                     lockId: synchronizerMatch.groups.lockId,
                     lockType: synchronizerMatch.groups.lockType,
@@ -166,6 +169,12 @@ function extractThreadLocks(thread) {
     thread.lockedMonitors = uniqueLocks(thread.lockedMonitors);
     thread.ownedSynchronizers = uniqueLocks(thread.ownedSynchronizers);
     thread.heldLocks = uniqueLocks([...thread.lockedMonitors, ...thread.ownedSynchronizers]);
+    thread.lockCoverage = {
+        monitors: thread.lockDataAvailable !== false || thread.lockedMonitors.length > 0
+            || thread.waitingLocks.some(lock => lock.kind.startsWith('monitor-')),
+        ownableSynchronizers: ownableSynchronizersReported,
+    };
+    thread.lockDataAvailable = thread.lockCoverage.monitors || ownableSynchronizersReported || thread.waitingLocks.length > 0;
 }
 
 function classNameFromClinitFrame(line) {

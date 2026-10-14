@@ -1,3 +1,4 @@
+import { describeLockCoverage } from './lock-coverage.js';
 import { buildThreadDependencyGraph } from './dependency-graph.js';
 import {
     DEFAULT_DEPENDENCY_GRAPH_OPTIONS,
@@ -2106,7 +2107,8 @@ class ThreadDependencyGraphView {
         if (node.cpuIntervalReason) appendFact(facts, 'CPU interval', node.cpuIntervalReason);
         appendFact(facts, 'Elapsed', formatElapsed(node.elapsedS));
         appendFact(facts, 'Allocated', formatBytes(node.allocatedBytes));
-        appendFact(facts, 'Held locks', formatLockCount(node));
+        appendFact(facts, 'Held locks observed', formatLockCount(node));
+        appendFact(facts, 'Lock coverage', describeLockCoverage(node.rawThread));
         appendFact(facts, 'Waiting locks', formatLockCount(node, 'waiting'));
         if (node.isVirtualThread != null) appendFact(facts, 'Thread kind', node.isVirtualThread ? 'Virtual' : 'Platform');
         if (node.carrierId) appendFact(facts, 'Carrier', this.fullNodeById.get(node.carrierId)?.label || 'Not resolved');
@@ -2249,7 +2251,7 @@ class ThreadDependencyGraphView {
             appendFact(facts, 'CPU', formatCpu(node.cpuMs));
             appendFact(facts, 'CPU rate', `${node.cpuIntervalQuality === 'estimated' ? '≈ ' : ''}${formatRate(node.cpuRatePercent)}`);
             if (node.cpuIntervalReason) appendFact(facts, 'CPU interval', node.cpuIntervalReason);
-            appendFact(facts, 'Locks', `${formatLockCount(node)} held · ${formatLockCount(node, 'waiting')} waiting`);
+            appendFact(facts, 'Lock observations', `${formatLockCount(node)} held · ${formatLockCount(node, 'waiting')} waiting`);
             appendFact(facts, 'Relations', `${node.dependencyTargetIds.length} dependencies · ${node.dependencySourceIds.length} blocked`);
             const lockRole = this.threadLockRoleIndex.get(node.id);
             appendFact(facts, 'synchronized', resourceRoleLabel(lockRole, 'monitor'));

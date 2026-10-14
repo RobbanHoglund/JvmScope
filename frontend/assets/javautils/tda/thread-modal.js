@@ -1,3 +1,4 @@
+import { describeLockCoverage } from './lock-coverage.js';
 import { formatAllocationMetric } from './allocation-metrics.js';
 import { formatSnapshotTime } from './time-quality.js';
 
@@ -96,7 +97,7 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
         { label: 'Java state', value: detailValue ? `${stateValue} · ${detailValue}` : stateValue },
         { label: 'JVM ID', value: hasValue(thread.jvmId) ? `#${thread.jvmId}` : '—' },
         { label: 'Native ID', value: hasValue(thread.nid) ? String(thread.nid) : '—' },
-        { label: 'Locks held', value: locksHeldValue },
+        { label: 'Locks observed', value: locksHeldValue, description: describeLockCoverage(thread) },
         ...(thread.isVirtualThread != null ? [{ label: 'Thread kind', value: thread.isVirtualThread ? 'Virtual' : 'Platform' }] : []),
         { label: 'Deadlock', value: thread.isDeadlocked ? 'Confirmed' : 'Not confirmed by source',
             description: thread.isDeadlocked ? 'The JVM explicitly reported this thread in a deadlock cycle.'
@@ -166,6 +167,7 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
                 : '—',
         },
         ...(thread.allocationDeltaBounds ? [{ label: 'Allocation precision', value: 'Rounded JVM counters; range only, not an exact measurement.' }] : []),
+        { label: 'Lock coverage', value: describeLockCoverage(thread) },
         { label: 'Elapsed', value: formatMetric(thread.elapsedS, 's') },
         { label: 'Stack frames', value: Number.isFinite(thread.stackFrames) ? String(thread.stackFrames) : '—' },
     ];
@@ -228,6 +230,7 @@ export function buildThreadDetailsViewModel(thread = {}, { snapshot = null, snap
             || Boolean(thread.lockAssessment && thread.lockAssessment.tier !== 'none')
             || Array.isArray(thread.contentionChains) && thread.contentionChains.length > 0,
         lockEvidence: {
+            coverage: describeLockCoverage(thread),
             heldLocks,
             waitingLocks,
             assessment: thread.lockAssessment || null,

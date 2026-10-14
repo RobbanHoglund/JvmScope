@@ -1,3 +1,4 @@
+import { describeLockCoverage } from './tda/lock-coverage.js';
 import { formatAllocationMetric } from './tda/allocation-metrics.js';
 import { scoreRunnableStackSimilarityDetailed, normalizeRunnableCompareLine } from './tda/analysis.js';
 import { createAnalysisClient } from './tda/analysis-client.js';
@@ -1403,7 +1404,7 @@ function renderTableRows() {
                   </td>
 
                   <td${tooltipAttr(t.javaState || '—')}>${stateBadge(t.javaState)}</td>
-                  <td${tooltipAttr(Array.isArray(t.heldLocks) ? t.heldLocks.map((l) => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`).join('\n') : '—')}>${locksHeldBadge(t)}</td>
+                  <td${tooltipAttr([describeLockCoverage(t), ...(t.heldLocks || []).map(l => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`)].join('\n'))}>${locksHeldBadge(t)}</td>
                   <td${tooltipAttr(t.isDeadlocked ? 'Confirmed Java deadlock' : 'Not confirmed by source; absence is not established')}>${deadlockBadge(t.isDeadlocked)}</td>
                   <td${tooltipAttr(t.daemon == null ? 'Daemon status not provided by this dump format' : t.daemon ? 'Daemon thread' : 'Not daemon')}>${t.daemon == null ? '—' : badgeYesNo(t.daemon)}</td>
 
@@ -3774,7 +3775,7 @@ function renderThreadDetailsTabMarkup(model) {
             const evidenceHtml = [
                 assessmentHtml,
                 renderLockObservations('Waiting for', waitingLocks),
-                renderLockObservations('Held monitors and synchronizers', heldLocks),
+                renderLockObservations('Observed held monitors and synchronizers', heldLocks),
             ].filter(Boolean).join('');
 
             return `
@@ -3785,6 +3786,7 @@ function renderThreadDetailsTabMarkup(model) {
                     aria-labelledby="threadDetailsTab-${tabId}"
                     ${isActive ? '' : 'hidden'}
                 >
+                    <p class="thread-details-empty-state">${escapeHtml(lockEvidence.coverage || '')}</p>
                     ${evidenceHtml || `
                         <div class="thread-details-card">
                             <div class="thread-details-card-header">
@@ -4046,7 +4048,7 @@ function openThreadModal(thread, sourceElement = document.activeElement) {
         snapshotCount: parsedDumps.length,
     });
     const summaryMetaHtml = model.summaryMeta.map((item) => `
-        <span${item.label === 'Java state' ? ` data-java-state="${escapeAttr(String(thread.javaState || 'UNKNOWN').trim().toUpperCase())}"` : ''} class="thread-details-chip ${['JVM ID', 'Native ID', 'Java state', 'Locks held'].includes(item.label) || ['No', 'Not confirmed by source', 'Not reported', '—', '0'].includes(String(item.value)) ? 'thread-details-chip-neutral' : ''}"><span class="thread-details-chip-label"${item.description ? tooltipAttr(item.description) : ''}>${escapeHtml(item.label)}</span> <span>${escapeHtml(String(item.value ?? '—'))}</span></span>
+        <span${item.label === 'Java state' ? ` data-java-state="${escapeAttr(String(thread.javaState || 'UNKNOWN').trim().toUpperCase())}"` : ''} class="thread-details-chip ${['JVM ID', 'Native ID', 'Java state', 'Locks observed'].includes(item.label) || ['No', 'Not confirmed by source', 'Not reported', '—', '0'].includes(String(item.value)) ? 'thread-details-chip-neutral' : ''}"><span class="thread-details-chip-label"${item.description ? tooltipAttr(item.description) : ''}>${escapeHtml(item.label)}</span> <span>${escapeHtml(String(item.value ?? '—'))}</span></span>
     `).join('');
 
     UI.modalTitle.textContent = model.title;

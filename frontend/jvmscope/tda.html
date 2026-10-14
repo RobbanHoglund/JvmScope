@@ -249,7 +249,7 @@
                             <ul class="docs-list">
                                 <li>Each row represents a thread in the selected snapshot. Click anywhere on the row or its <strong>Details</strong> button. A focused row also opens with <strong>Enter</strong> or <strong>Space</strong>.</li>
                                 <li><strong>Java state</strong> and the header’s <strong>JVM status</strong> describe different layers and can differ. RUNNABLE alone does not prove CPU consumption; a thread may be waiting in native I/O.</li>
-                                <li><strong>Locks held</strong> counts distinct reported monitors and ownable synchronizers. <strong>—</strong> means unavailable; zero means lock information was supplied and no hold was reported. Deadlock marks JVM-confirmed members. Carrier marks a platform thread carrying a mounted virtual thread.</li>
+                                <li><strong>Locks observed</strong> counts distinct reported monitors and ownable synchronizers. <strong>—</strong> means unavailable; zero means no hold was observed in the supplied fields, not that the thread owns no locks. Check the per-thread coverage: default classic dumps and JSON can omit owned synchronizers. Deadlock marks JVM-confirmed members. Carrier marks a platform thread carrying a mounted virtual thread.</li>
                                 <li><strong>Top frame</strong> is the first meaningful Java frame found. <strong>CPU time</strong> is a cumulative per-thread counter, not current CPU usage. Hover for its delta and comparable rate; Details explains the adjacent comparison.</li>
                                 <li><strong>Allocated</strong> is cumulative per-thread heap allocation, not retained/live heap. Rounded JVM counters produce allocation-rate ranges; high-allocation findings require the lower bound to cross the threshold. Exact rate charts require exact counters. Neither proves a memory leak.</li>
                                 <li><strong>NEW</strong> marks a new exact identity. <strong>Δ</strong> lists changes in state, frame, locks, deadlock, name or measured activity. <strong>IDENTITY?</strong> means no safe comparison was possible.</li>
@@ -778,7 +778,7 @@
 							class="sort-indicator"></span></th>
 						<th data-key="javaState" class="sortable">Java state <span
 							class="sort-indicator"></span></th>
-						<th data-key="locksHeldCount" class="sortable">Locks held <span
+						<th data-key="locksHeldCount" class="sortable">Locks observed <span
 							class="sort-indicator"></span></th>
 						<th data-key="isDeadlocked" class="sortable">Deadlock <span
 							class="sort-indicator"></span></th>

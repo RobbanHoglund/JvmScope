@@ -282,7 +282,7 @@ test('TDA details identify independent snapshot sources and qualify rounded CPU 
     await expect(page.locator('.thread-details-comparison')).toContainText('±10 ms');
     await expect(page.getByRole('tabpanel', { name: 'Overview', exact: true })).toContainText('No diagnostic rule matched');
     await expect(page.getByRole('tabpanel', { name: 'Overview', exact: true })).toContainText('does not establish that the thread is problem-free');
-    await expect(page.locator('.thread-details-fact').filter({ hasText: 'Locks held' })).toHaveCount(0);
+    await expect(page.locator('.thread-details-fact').filter({ hasText: 'Locks observed' })).toHaveCount(0);
 });
 
 test('TDA JSON missing counters and class-initialization details remain available beside the dump', async ({ page }) => {

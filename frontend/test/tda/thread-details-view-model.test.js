@@ -19,8 +19,8 @@ for (const [name, thread, expected] of [
 ]) {
     test(`lock counts remain ${name} in the identity summary and graph displays`, () => {
         const details = buildThreadDetailsViewModel(thread);
-        assert.equal(details.summaryMeta.find(item => item.label === 'Locks held').value, expected);
-        assert.equal(details.coreFacts.some(item => item.label === 'Locks held'), false);
+        assert.equal(details.summaryMeta.find(item => item.label === 'Locks observed').value, expected);
+        assert.equal(details.coreFacts.some(item => item.label === 'Locks observed'), false);
         const node = buildThreadDependencyGraph([thread]).threadNodes[0];
         assert.equal(formatLockCount(node), expected);
         assert.equal(node.locksHeldCount, expected === '—' ? null : Number(expected));
@@ -232,7 +232,7 @@ test('buildThreadDetailsViewModel exposes parsed waiting and held monitor eviden
     const model = buildThreadDetailsViewModel(thread);
 
     assert.equal(model.hasLocks, true);
-    assert.equal(model.summaryMeta.find((item) => item.label === 'Locks held').value, '2');
+    assert.equal(model.summaryMeta.find((item) => item.label === 'Locks observed').value, '2');
     assert.deepEqual(model.lockEvidence.waitingLocks, [{
         lockId: '0x000004000531d120',
         lockType: 'a oracle.ons.NotificationNetwork',
