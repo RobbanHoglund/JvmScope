@@ -3,6 +3,7 @@ const { randomUUID } = require('node:crypto');
 const { renderWebview, resolveRoute } = require('./webview.cjs');
 const { MAX_BYTES, isMessage, validateRequest, readSources } = require('./protocol.cjs');
 const { SourceRegistry } = require('./source-navigation.cjs');
+const { AnalysisSidebar, NavigationSession } = require('./analysis-sidebar.cjs');
 const decoder = new TextDecoder();
 const titles = { tda: 'JvmScope · Thread dumps', tls: 'JvmScope · TLS logs', docs: 'JvmScope · Knowledge' };
 
@@ -19,6 +20,12 @@ async function activate(context) {
         for (const [key, value] of evidence) if (value.owner === owner) { evidence.delete(key); changes.fire(vscode.Uri.parse(key)); }
     };
     const errorMessage = error => error instanceof Error ? error.message : 'The requested JvmScope action failed.';
+
+    const sidebar = new AnalysisSidebar(vscode, async kind => {
+        const session = await openPage(`/jvmscope/${kind}.html`);
+        await session.ready;
+    });
+    context.subscriptions.push(sidebar, vscode.window.createTreeView('jvmscope.analysis', { treeDataProvider: sidebar, showCollapseAll: true }));
 
     async function openPage(route) {
         const { name, hash } = resolveRoute(route, pages);
@@ -43,11 +50,17 @@ async function activate(context) {
         const readyTimer = setTimeout(() => readyReject(new Error('JvmScope did not finish loading. Close and reopen the view.')), 30_000);
         session = { panel, page: name, owner: id, sources, ready, disposed: false, loads: new Map(), nextLoad: 0, requests: new Set() };
         sessions.set(kind, session);
+        if (kind !== 'docs') {
+            session.navigation = new NavigationSession(message => panel.webview.postMessage(message), () => sidebar.changed(kind));
+            sidebar.attach(kind, session);
+        }
         panel.onDidDispose(() => {
             session.disposed = true; clearTimeout(readyTimer); readyReject(new Error('The analysis view closed.'));
             for (const job of session.loads.values()) { clearTimeout(job.timer); job.reject(new Error('The analysis view closed.')); }
             session.loads.clear(); clearEvidence(id);
             sources.dispose();
+            session.navigation?.dispose();
+            sidebar.detach(kind, session);
             if (sessions.get(kind) === session) sessions.delete(kind);
         }, null, context.subscriptions);
         const reply = message => panel.webview.postMessage({ channel: 'jvmscope', version: 1, ...message });
@@ -98,6 +111,8 @@ async function activate(context) {
                 if (!job) return;
                 session.loads.delete(message.id); clearTimeout(job.timer);
                 if (message.error) job.reject(new Error(String(message.error).slice(0, 500))); else job.resolve(message.value);
+            } else if (message.type === 'navigationState' || message.type === 'navigationResult') {
+                session.navigation?.receive(message);
             } else if (message.type === 'request') {
                 if (session.requests.has(message.id) || session.requests.size >= 4) return;
                 session.requests.add(message.id);
@@ -136,10 +151,13 @@ async function activate(context) {
         try { return await action(...args); }
         catch (error) { await vscode.window.showErrorMessage(errorMessage(error)); return { error: errorMessage(error) }; }
     }));
+    register('jvmscope.openAnalysis', () => vscode.commands.executeCommand('jvmscope.analysis.focus'));
+    register('jvmscope.revealAnalysisItem', id => sidebar.reveal(id));
     register('jvmscope.openTda', async () => { const session = await openPage('/jvmscope/tda.html'); await session.ready; });
     register('jvmscope.openTls', async () => { const session = await openPage('/jvmscope/tls.html'); await session.ready; });
     register('jvmscope.analyzeThreadDump', (uri, selected) => analyze('tda', uri, selected));
     register('jvmscope.analyzeTlsLog', (uri, selected) => analyze('tls', uri, selected));
     context.subscriptions.push({ dispose: () => { for (const session of sessions.values()) session.panel.dispose(); evidence.clear(); } });
+    return Object.freeze({ getAnalysisItems: (analyzer, parentId) => sidebar.list(analyzer, parentId) });
 }
 module.exports = { activate };

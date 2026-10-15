@@ -7,16 +7,35 @@ const fixture = relative => vscode.Uri.file(path.join(root, relative));
 exports.run = async () => {
     const extension = vscode.extensions.getExtension('RobbanHoglund.jvmscope');
     assert.ok(extension, 'Extension is installed in the real extension host');
-    await extension.activate();
+    const api = await extension.activate();
+    await vscode.commands.executeCommand('jvmscope.openAnalysis');
+    assert.deepEqual(await api.getAnalysisItems('tda'), []);
     const tda = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump',
         fixture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt'));
     assert.ok(tda?.snapshots === 1 && tda.threads > 0, JSON.stringify(tda));
     const tls = await vscode.commands.executeCommand('jvmscope.analyzeTlsLog',
         fixture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt'));
     assert.ok(tls?.interactions > 0, JSON.stringify(tls));
+    // Query the hidden retained TDA webview while TLS is active, then reveal its exact thread.
+    const [tdaFile] = await api.getAnalysisItems('tda');
+    const [snapshot] = await api.getAnalysisItems('tda', tdaFile.id);
+    const threads = await api.getAnalysisItems('tda', snapshot.id);
+    assert.ok(threads.some(item => item.kind === 'thread'));
+    assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem', threads[0].id), true);
+    const [tlsFile] = await api.getAnalysisItems('tls');
+    const [interaction] = await api.getAnalysisItems('tls', tlsFile.id);
+    const events = await api.getAnalysisItems('tls', interaction.id);
+    assert.ok(events.some(item => item.kind === 'event'));
+    assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem', events[0].id), true);
     const pair = ['allocation-before.txt', 'allocation-after.txt'].map(name => fixture('frontend/test/tda/fixtures/ga-regressions/' + name));
     const series = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump', pair[0], pair);
     assert.equal(series?.snapshots, 2, JSON.stringify(series));
+    await assert.rejects(api.getAnalysisItems('tda', tdaFile.id), /analysis changed/);
+    const files = await api.getAnalysisItems('tda');
+    assert.equal(files.length, 2);
+    const [secondSnapshot] = await api.getAnalysisItems('tda', files[1].id);
+    const secondThreads = await api.getAnalysisItems('tda', secondSnapshot.id);
+    assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem', secondThreads[0].id), true);
     const content = await vscode.workspace.fs.readFile(pair[0]);
     const document = await vscode.workspace.openTextDocument({ content: Buffer.from(content).toString('utf8'), language: 'plaintext' });
     await vscode.window.showTextDocument(document);
@@ -34,5 +53,5 @@ exports.run = async () => {
     await assert.rejects(sources.open({sourceId, startLine: 2, endLine: 3}), /changed since analysis/);
     sources.dispose();
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
-    console.log('PASS: real VS Code extension activation, both webviews/workers, multiple snapshots, unsaved input, source selection and stale-source rejection.');
+    console.log('PASS: real VS Code extension activation, both webviews/workers, multiple snapshots, unsaved input, source selection, stale-source rejection and native sidebar navigation across retained webviews.');
 };

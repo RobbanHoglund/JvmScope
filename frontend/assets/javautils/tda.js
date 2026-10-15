@@ -1,5 +1,6 @@
+import { createThreadNavigation } from './host/navigation-model.js';
 import { describeLockCoverage } from './tda/lock-coverage.js';
-import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence, syncSourceLinks, bindSourceButton } from './host/platform.js';
+import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence, syncSourceLinks, bindSourceButton, createHostNavigation } from './host/platform.js';
 import { threadSourceLocation } from './tda/source-location.js';
 import { formatAllocationMetric } from './tda/allocation-metrics.js';
 import { scoreRunnableStackSimilarityDetailed, normalizeRunnableCompareLine } from './tda/analysis.js';
@@ -4159,11 +4160,19 @@ function beginInputRequest() {
     return requestId;
 }
 
+const hostNavigation = createHostNavigation(({snapshotIndex,thread}) => {
+    if (UI.modal?.open) closeThreadModal();
+    navigateToDump('direct',snapshotIndex);
+    if (thread) openThreadModal(thread);
+    else UI.fileName.scrollIntoView({block:'nearest'});
+});
+
 function applySessionAnalysis(result) {
     reportDatasetRevision++;
     blockingPatterns = result.blockingPatterns || [];
     blockingPatternSummary = result.blockingPatternSummary || null;
     ({ parserResult, parsedDumps, threadSeries, runnableStackClusters } = result);
+    if (isVsCode()) hostNavigation.publish(createThreadNavigation(sessionSources, parsedDumps));
     cpuTimelineModelCache = null;
     UI.fileName.textContent = sessionSources.length === 1
         ? inputSourceLabel(sessionSources[0])
@@ -4638,6 +4647,7 @@ UI.howToUseModal?.addEventListener('cancel', (event) => {
 UI.clearBtn?.addEventListener('click', () => {
     cancelSessionInputs();
     sessionSources = [];
+    hostNavigation.publish(null);
     syncSourceLinks([]);
     showSessionInputStatus('');
 

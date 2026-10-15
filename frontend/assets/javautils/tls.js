@@ -1,5 +1,6 @@
+import { createTlsNavigation } from './host/navigation-model.js';
 // Java TLS Log Analyzer 
-import { bindHostInputs, writeClipboard, isVsCode, syncSourceLinks, openSourceLocation } from './host/platform.js';
+import { bindHostInputs, writeClipboard, isVsCode, syncSourceLinks, openSourceLocation, createHostNavigation } from './host/platform.js';
 
 import { TLS_FAILURE_HIGHLIGHT } from './tls-core.js';
 import { bindAnalyzerStart, renderAnalyzerStart, bindAnalyzerDropZones } from './analyzer-start.js';
@@ -191,6 +192,20 @@ function applyFiltersSortAndRender() {
 function renderInspector() {
     inspector.render(selectedInteraction, filteredInteractions.indexOf(selectedInteraction), filteredInteractions.length);
 }
+
+const hostNavigation = createHostNavigation(({interaction,eventIndex}) => {
+    closeDialog(UI.modal);
+    closeDialog(UI.helpModal);
+    closeIssueModal();
+    if (!interaction) {UI.fileName.scrollIntoView({block:'nearest'});return;}
+    // The inspector is only visible in investigation mode.
+    if (!document.body.classList.contains('tls-investigating')) setTableColumns('investigate');
+    // A sidebar selection must remain reachable even when table filters hide it.
+    if (!filteredInteractions.includes(interaction)) clearFilters();
+    selectInteraction(interaction.id);
+    if (eventIndex != null) inspector.revealEvent(eventIndex);
+    else document.getElementById('tlsInspector').scrollIntoView({block:'nearest'});
+});
 
 function selectInteraction(id) {
     selectedInteraction = filteredInteractions.find(item => item.id === id) || null;
@@ -895,6 +910,7 @@ UI.clearBtn.addEventListener('click', () => {
     setLoading(false);
     lastLoadedText = '';
     lastLoadedSourceId = null;
+    hostNavigation.publish(null);
     syncSourceLinks([]);
     allInteractions = [];
     selectedInteraction = null;
@@ -1006,6 +1022,7 @@ async function loadText(text, name, requestId = beginInputRequest(), exampleAnal
         UI.fileName.textContent = name;
         UI.fileName.title = name;
         allInteractions = analysis.interactions;
+        if (isVsCode()) hostNavigation.publish(createTlsNavigation(name, allInteractions));
         selectedInteraction = null;
         autoSelectInteraction = true;
         analysisEntries = entries;
