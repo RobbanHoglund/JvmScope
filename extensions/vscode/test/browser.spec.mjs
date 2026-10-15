@@ -422,3 +422,20 @@ test('home and knowledge surfaces remain readable across host themes',async({hos
     }
 });
 
+test('knowledge filters and articles fit narrow VS Code editor splits',async({host},testInfo)=>{
+    const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8')).filter(name=>name.startsWith('knowledge/'));
+    for(const width of [600,360]) {
+        await host.page.setViewportSize({width,height:900});
+        for(const name of pages) {
+            await host.open('/'+name+'?java=21');
+            expect(await host.page.evaluate(()=>document.documentElement.scrollWidth),name).toBeLessThanOrEqual(width);
+        }
+        await host.open('/knowledge/index.html');
+        await host.page.locator('#knowledgeVersion').selectOption('21');
+        await host.page.locator('#knowledgeTopic').selectOption('threads');
+        await host.page.locator('#knowledgeSearch').fill('dump');
+        await expect(host.page.locator('.knowledge-card').first()).toBeVisible();
+        await host.page.screenshot({path:testInfo.outputPath(`knowledge-${width}.png`)});
+    }
+});
+
