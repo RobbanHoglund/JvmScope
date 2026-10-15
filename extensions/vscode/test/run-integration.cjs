@@ -5,6 +5,7 @@ const { runTests, runVSCodeCommand } = require('@vscode/test-electron');
 const root = path.resolve(__dirname, '../../..');
 async function main() {
     const options = { version: process.env.VSCODE_VERSION || '1.110.0', cachePath: path.join(root, '.run/vscode-test') };
+    await fs.mkdir(options.cachePath, { recursive: true });
     const extensions = path.join(options.cachePath, 'extensions');
     const profile = ['--user-data-dir', path.join(options.cachePath, 'user-data'), '--extensions-dir', extensions];
     let extensionDevelopmentPath = path.resolve(__dirname, '..');
