@@ -220,15 +220,14 @@ async function applyTheme(page,name) {
     await expect.poll(()=>page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe(name.includes('light')?'rgb(255, 255, 255)':name==='vscode-dark'?'rgb(30, 30, 30)':'rgb(0, 0, 0)');
 }
 async function expectReadable(locator) {
-    const ratio=await locator.evaluate(el=>{
+    await expect.poll(()=>locator.evaluate(el=>{
         const rgb=value=>value.match(/[\d.]+/g).slice(0,3).map(Number);
         const luminance=value=>rgb(value).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
         let parent=el,bg;
         while(parent){bg=getComputedStyle(parent).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)')break;parent=parent.parentElement;}
         const a=luminance(getComputedStyle(el).color),b=luminance(bg);
-        return {ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05),fg:getComputedStyle(el).color,bg};
-    });
-    expect(ratio.ratio,JSON.stringify(ratio)).toBeGreaterThanOrEqual(4.5);
+        return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+    })).toBeGreaterThanOrEqual(4.5);
 }
 for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live themes and fits a narrow editor`,async({host},testInfo)=>{
     await host.page.setViewportSize({width:600,height:900});
@@ -400,6 +399,26 @@ test('bundled knowledge articles use their packaged route and preserve Java vers
         await host.open('/knowledge/'+href.slice(2));
         await expect(host.page.locator('#articleIntro h1')).toBeVisible();
         await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+    }
+});
+
+test('home and knowledge surfaces remain readable across host themes',async({host},testInfo)=>{
+    await host.page.setViewportSize({width:600,height:900});
+    for(const name of ['index.html','knowledge/thread-dumps.html']) {
+        await host.open('/'+name);
+        for(const theme of Object.keys(themePalettes)) {
+            await applyTheme(host.page,theme);
+            await expectReadable(host.page.locator('h1'));
+            const surfaces=host.page.locator(name==='index.html'?'.hero, .utility-card a, .knowledge a':'.knowledge-find, .knowledge-callout');
+            for(const surface of await surfaces.all()) {
+                // Solid host palette surfaces make the contrast calculation meaningful;
+                // the old dark gradients remained behind light-theme foregrounds.
+                expect(await surface.evaluate(el=>getComputedStyle(el).backgroundImage)).toBe('none');
+                await expectReadable(surface);
+            }
+            if(name==='index.html')await expect(host.page.locator('.privacy strong')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+            await host.page.screenshot({path:testInfo.outputPath(name.replaceAll('/','-')+'-'+theme+'.png')});
+        }
     }
 });
 

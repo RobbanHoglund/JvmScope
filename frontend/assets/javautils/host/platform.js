@@ -54,7 +54,7 @@ export function showHostError(error) {
 export function initializeHostNavigation() {
     if (!vscode) return;
     document.body.dataset.jvmscopeHost = 'vscode';
-    for (const notice of document.querySelectorAll('.analyzer-start-privacy')) {
+    for (const notice of document.querySelectorAll('.analyzer-start-privacy, .privacy strong')) {
         notice.textContent = 'Analyzed locally in VS Code. Nothing is uploaded.';
     }
     window.addEventListener('message', ({ data }) => {
