@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — Editor integration preview
+
+- Open thread evidence and TLS event/raw lines in the original source editor.
+- Preserve physical line ranges across snapshots, JSON, mounted virtual threads and CRLF input.
+- Reject stale or revoked source links; examples and pasted text have no original-file link.
+- Follow VS Code light, dark and high-contrast themes, with layouts for narrow editor splits.
+- Add source registry, parser, webview/theme and real extension-host navigation regression tests.
+
 ## 0.1.0 — Stage 1 preview
 
 - Package the existing thread dump and TLS analyzers as offline VS Code webviews.

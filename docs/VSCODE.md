@@ -34,18 +34,28 @@ this initial Linux integration run.
 
 ## Stage 2 — deeper editor integration
 
-Keep this separate from the first usable release:
+The 0.2 preview implements source navigation and host theme adaptation.
+Thread details select their original physical range; TLS event/raw links select
+the original log line. Native per-panel registries resolve opaque IDs to captured
+URIs and compare normalized content digests before highlighting. They recheck
+after opening the editor, reject stale content, and revoke replaced/cleared inputs.
+No arbitrary URI from a webview is accepted. Samples and pasted text have no link.
 
-1. **Source navigation:** associate observations with the original URI, document
-   version, snapshot and exact line range; detect stale edits before highlighting.
+Both analyzers follow live VS Code theme variables, including high-contrast light
+and dark, and stack their layouts in narrow panels. Browser tests cover all four
+theme families at 600px with contrast/focus checks; these use representative
+palettes rather than certifying every third-party theme. The standalone website
+and report export palettes remain independent.
+
+Remaining roadmap:
+
 2. **Native navigation:** provide an analysis tree for snapshots, threads and TLS
    interactions while keeping the detailed webviews.
 3. **Problems diagnostics:** surface only evidence-backed findings, with source
    ranges and qualified wording; unsupported/missing input is not a clean bill of health.
 4. **Refresh:** offer explicit reanalysis and optional file watching with cancellation,
    debouncing and a visible stale-analysis state.
-5. **Themes/accessibility:** adapt both views to light/dark/high-contrast themes and
-   smaller editor splits; verify keyboard and screen-reader flows in real VS Code.
+5. **Accessibility:** extend real VS Code keyboard and screen-reader coverage.
 6. **Session handling:** restore view preferences separately from sensitive capture
    contents; persistence of raw logs requires an explicit design and user choice.
 7. **Release matrix:** exercise Windows/macOS/Linux and remote workspaces; verify
@@ -62,8 +72,8 @@ meaning belongs in the shared models with JVM-fixture and UI regression coverage
 - Browser tests load the production extension assets with the same CSP, inline
   workers and a simulated host transport; they cover TDA/TLS results and host actions.
 - Extension-host tests run inside a real isolated VS Code, activating commands,
-  loading real captures in both webviews, comparing snapshots and reading an
-  unsaved editor. This catches webview-resource/CSP differences that mocks cannot.
+  loading real captures in both webviews, comparing snapshots, reading an
+  unsaved editor, selecting original evidence and rejecting a changed document. This catches webview-resource/CSP differences that mocks cannot.
 - `VS Code extension checks` builds and uploads the VSIX without publishing it.
 
 Primary API references:
