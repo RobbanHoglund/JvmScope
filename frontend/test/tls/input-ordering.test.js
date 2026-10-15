@@ -19,6 +19,7 @@ function element() {
         },
         querySelector() { return null; },
         querySelectorAll() { return []; },
+        replaceChildren() { this.innerHTML = ''; this.textContent = ''; },
         setAttribute() {},
         addEventListener(type, listener) {
             const registered = listeners.get(type) || [];

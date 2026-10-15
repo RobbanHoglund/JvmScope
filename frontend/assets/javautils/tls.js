@@ -770,6 +770,17 @@ function closeDialog(dialogEl) {
 }
 
 
+function retireCaptureDialogs() {
+    closeDialog(UI.modal);
+    UI.modalTitle.textContent = '';
+    UI.modalBody.replaceChildren();
+    UI.modalCopyBtn.onclick = null;
+    UI.modalCopyBtn.disabled = true;
+    closeIssueModal();
+    UI.issueModalTitle.textContent = '';
+    UI.issueModalBody.replaceChildren();
+}
+
 function closeIssueModal() {
     if (!UI.issueModal) return;
     closeDialog(UI.issueModal);
@@ -902,6 +913,7 @@ createExamplePicker({ samples: TLS_EXAMPLES, analyzer: 'tls',
 UI.loadSampleBtn.addEventListener('click', () => loadTlsExample(TLS_EXAMPLES[0]));
 
 UI.clearBtn.addEventListener('click', () => {
+    retireCaptureDialogs();
     analysisClient.cancel();
     tablePage = 0;
     exampleReadController?.abort();
@@ -1016,6 +1028,7 @@ async function loadText(text, name, requestId = beginInputRequest(), exampleAnal
         const prepared = exampleAnalysis || await analysisClient.analyze(text);
         if (!prepared || !inputRequestGate.isCurrent(requestId)) return;
         const { analysis, entries } = prepared;
+        retireCaptureDialogs();
         lastLoadedText = text;
         lastLoadedSourceId = hostSourceId;
         syncSourceLinks(hostSourceId ? [hostSourceId] : []);

@@ -343,3 +343,28 @@ test('sidebar metadata is also published for bundled examples and keeps uncertai
     expect((await host.navigation('select',interaction.key)).value).toBe(true);
     await expect(host.page.locator('.tls-no-events')).toBeVisible();
 });
+
+test('TLS capture replacement and clear retire open evidence and diagnostic dialogs',async({host})=>{
+    await host.open('/jvmscope/tls.html');
+    const source={name:'first.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt')};
+    await host.load([source]);
+    await host.page.locator('#tlsInspector [data-action="full"]').click();
+    await expect(host.page.locator('#tlsModal')).toBeVisible();
+    await host.load([{name:'second.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk26-tlsv1.3-success-client.txt')}]);
+    await expect(host.page.locator('#fileName')).toHaveText('second.log');
+    await expect(host.page.locator('#tlsModal')).toBeHidden();
+    await expect(host.page.locator('#tlsModalBody')).toBeEmpty();
+    expect(await host.page.locator('#tlsModalCopyBtn').evaluate(el=>el.onclick)).toBeNull();
+    await host.page.locator('#tlsInspector [data-action="full"]').click();
+    await host.page.locator('#clearBtn').dispatchEvent('click');
+    await expect(host.page.locator('#tlsModal')).toBeHidden();
+    await expect(host.page.locator('#tlsModalBody')).toBeEmpty();
+    await host.load([source]);
+    await host.page.locator('#tlsAllColumns').click();
+    await host.page.locator('#tlsTableBody .explain-btn').first().click();
+    await expect(host.page.locator('#issueModal')).toBeVisible();
+    await host.load([{...source,name:'third.log'}]);
+    await expect(host.page.locator('#issueModal')).toBeHidden();
+    await expect(host.page.locator('#issueModalBody')).toBeEmpty();
+});
+
