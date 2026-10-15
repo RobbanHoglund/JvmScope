@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 — Clear Java positioning
+
+- Identify Java explicitly in the extension title, description, documentation and commands.
+- Categorize the extension under Programming Languages and Visualization.
+
 ## 0.2.1 — Extension icon
 
 - Use the supplied avatar as the extension listing and analysis-tab icon.

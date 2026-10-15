@@ -1,6 +1,6 @@
-# JvmScope for VS Code
+# JvmScope — Java Thread Dumps & TLS Logs for VS Code
 
-Investigate **Java thread dumps** and **JSSE TLS logs** inside VS Code, using the
+Investigate **Java thread dumps** and **Java TLS/SSL logs (JSSE)** inside VS Code, using the
 same analysis engines as JvmScope's browser application. No Java installation,
 server, account or external analysis service is needed.
 
@@ -11,8 +11,8 @@ also contains the searchable help, examples and knowledge base.
 ## Install the preview
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
-2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.2.1.vsix`.
-3. Open the Command Palette and run **JvmScope: Open Thread Dump Analyzer** or **JvmScope: Open TLS Log Analyzer**.
+2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.2.2.vsix`.
+3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
 
 Alternatively, build the package using the instructions below. Requires VS Code
 **1.110 or later** on desktop. Browser-hosted VS Code (`vscode.dev`) is not included
