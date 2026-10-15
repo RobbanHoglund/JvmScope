@@ -1,0 +1,9 @@
+# Changelog
+
+## 0.1.0 — Stage 1 preview
+
+- Package the existing thread dump and TLS analyzers as offline VS Code webviews.
+- Add Command Palette, Explorer and editor context actions, including unsaved editor input and multiple thread dumps.
+- Integrate native file selection, clipboard, read-only raw evidence and save dialogs.
+- Bundle examples, help and the knowledge base; retain the existing analysis rules.
+- Add protocol/package tests, CSP browser tests, real extension-host tests and VSIX build artifacts.

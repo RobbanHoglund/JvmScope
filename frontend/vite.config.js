@@ -44,7 +44,7 @@ function analyzerRedirects() {
 
 // Home, analyzers and knowledge pages ship together on Java and static Pages.
 // Separate output directories keep preview and application assets independent.
-export function toolNavigation({ slim = false } = {}) {
+export function toolNavigation({ slim = false, vscode = false } = {}) {
   let base = '/';
   return {
     name: 'tool-navigation',
@@ -54,14 +54,15 @@ export function toolNavigation({ slim = false } = {}) {
       handler(html, context) {
         const active = context.filename.includes('knowledge') ? 'knowledge' : context.filename.endsWith('tls.html') ? 'tls'
           : context.filename.endsWith('tda.html') ? 'tda' : 'home';
+        const navigationBase = vscode ? (active === 'home' ? './' : '../') : base;
         const link = (name, path, label) => `<a href="${path}"${active === name ? ' aria-current="page"' : ''}>${label}</a>`;
-        const navigation = `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
+        const navigation = `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${vscode ? `${navigationBase}index.html` : base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${navigationBase}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${navigationBase}jvmscope/tls.html`, 'TLS log analyzer')}${link('knowledge', `${navigationBase}knowledge/index.html`, 'Knowledge base')}</nav>`;
         // Reuse the brand asset and let Vite apply the delivery target's base.
         // Keep each analyzer's own icon; home/knowledge pages need a default.
         const icon = /<link\b[^>]*\brel=["']icon["']/i.test(html) ? ''
           : '<link rel="icon" type="image/svg+xml" href="/assets/javautils/java-thread-mark.svg" />\n';
-        return html.replace('</head>', `${icon}<link rel="stylesheet" href="/assets/tool-navigation.css" />\n</head>`)
-          .replace(/(<body\b[^>]*>)/, `$1\n${navigation}`);
+        return html.replace('</head>', `${icon}<link rel="stylesheet" href="/assets/tool-navigation.css" />${vscode ? '<script type="module" src="/assets/javautils/host/vscode-entry.js"></script>' : ''}\n</head>`)
+          .replace(/(<body\b[^>]*)(>)/, `$1${vscode ? ` data-jvmscope-page="${active}"` : ''}$2\n${navigation}`);
       },
     },
   };
@@ -69,9 +70,10 @@ export function toolNavigation({ slim = false } = {}) {
 
 export default defineConfig(({ mode }) => ({
   define: { __JVMSCOPE_REVISION__: JSON.stringify(buildRevision()) },
-  plugins: [analyzerRedirects(), toolNavigation({ slim: ['slim', 'pages'].includes(mode) }), projectLegalNotices()],
+  plugins: [analyzerRedirects(), toolNavigation({ slim: ['slim', 'pages'].includes(mode), vscode: mode === 'vscode' }), projectLegalNotices()],
   root: rootDir,
-  base: "/",
+  base: mode === 'vscode' ? './' : '/',
+  resolve: mode === 'vscode' ? { alias: [{ find: /(?:\.\.\/|\.\/)host\/workers\.js$/, replacement: resolve(rootDir, 'assets/javautils/host/vscode-workers.js') }] } : {},
   // Removed or misspelled tool URLs must return 404 rather than the portal HTML.
   appType: "mpa",
 
@@ -93,14 +95,14 @@ export default defineConfig(({ mode }) => ({
   },
 
   build: {
-    outDir: resolve(rootDir, mode === 'pages' ? "../build/pages" : mode === 'slim' ? "../slim/build/frontend" : "../build/frontend"),
+    outDir: resolve(rootDir, mode === 'vscode' ? '../extensions/vscode/media' : mode === 'pages' ? "../build/pages" : mode === 'slim' ? "../slim/build/frontend" : "../build/frontend"),
     emptyOutDir: true,
     minify: mode !== "development",
     // Small teaching captures must remain fetchable files, including JSON/TXT excerpts.
     assetsInlineLimit: filePath => /\.(txt|json)$/i.test(filePath) ? false : undefined,
 
     rollupOptions: {
-      input: ['slim', 'pages'].includes(mode) ? {
+      input: ['slim', 'pages', 'vscode'].includes(mode) ? {
         main: resolve(rootDir, 'index.html'),
         ...knowledgeInputs,
         tda: resolve(rootDir, "jvmscope/tda.html"),

@@ -96,7 +96,7 @@ for (const [extension, label] of [['html', 'HTML'], ['md', 'Markdown']]) {
 // Exercise every report mutation against the real DOM/controller module.
 // Source modules are served only to this isolated test page, without rewriting
 // imports or adding a production route. The tests above use the built app.
-const sourceFiles = new Map(['findings-report-view.js', 'findings-report.js', 'tda/ui-safety.js']
+const sourceFiles = new Map(['findings-report-view.js', 'findings-report.js', 'tda/ui-safety.js', 'host/platform.js']
     .map(name => [name, new URL(`../../../assets/javautils/${name}`, import.meta.url)]));
 async function reportHarness(page, appUrl) {
     await page.route('**/__report-review.html', route => route.fulfill({ contentType: 'text/html', body:

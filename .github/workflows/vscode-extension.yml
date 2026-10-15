@@ -1,0 +1,58 @@
+name: VS Code extension checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vscode-extension-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            extensions/vscode/package-lock.json
+      - name: Install build and test dependencies
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix extensions/vscode
+          cd frontend
+          npx --no-install playwright install --with-deps chromium
+      - name: Build shared analyzers for VS Code
+        run: npm run build --prefix extensions/vscode
+      - name: Extension protocol and packaged-asset tests
+        run: npm test --prefix extensions/vscode
+      - name: Webview CSP and browser integration
+        run: npx --prefix frontend playwright test --config extensions/vscode/test/playwright.config.mjs
+      - name: Real VS Code extension host
+        run: xvfb-run -a npm run test:integration --prefix extensions/vscode
+      - name: Package installable VSIX
+        run: npm run package --prefix extensions/vscode
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jvmscope-vscode
+          path: build/vscode/*.vsix
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: vscode-test-failures
+          path: |
+            .run/vscode-browser/
+            .run/vscode-test/user-data/logs/
+          retention-days: 7

@@ -1,4 +1,5 @@
 import { describeLockCoverage } from './tda/lock-coverage.js';
+import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence } from './host/platform.js';
 import { formatAllocationMetric } from './tda/allocation-metrics.js';
 import { scoreRunnableStackSimilarityDetailed, normalizeRunnableCompareLine } from './tda/analysis.js';
 import { createAnalysisClient } from './tda/analysis-client.js';
@@ -3970,6 +3971,10 @@ function revealFromRawDump(reveal, sourceElement) {
 function openRawDumpTab() {
     const dump = parsedDumps[selectedDumpIndex];
     if (!dump?.rawText) return;
+    if (isVsCode()) {
+        openRawEvidence(dump.rawText, `thread-dump-${selectedDumpIndex + 1}.txt`).catch(showHostError);
+        return;
+    }
     rawDumpOrigin = document.activeElement;
     if (rawDumpSnapshot !== dump || !rawDumpWorkspace || rawDumpTab?.closed) {
         const origin = rawDumpOrigin;
@@ -4024,6 +4029,7 @@ rawDumpReturn.addEventListener('click', () => {
 });
 
 function invalidateRawDumpWorkspace({ closeTab = true } = {}) {
+    invalidateHostEvidence();
     const popup = rawDumpTab;
     rawDumpTab = null;
     if (popup && !popup.closed) popup.removeEventListener('pagehide', rawDumpTabUnload);
@@ -4113,7 +4119,7 @@ UI.modal.addEventListener('click', (event) => {
 UI.modalCopyBtn?.addEventListener('click', async () => {
     const raw = UI.modalCopyBtn.dataset.copy || '';
     try {
-        await navigator.clipboard.writeText(raw);
+        await writeClipboard(raw);
         UI.modalCopyBtn.textContent = 'Copied';
         setTimeout(() => (UI.modalCopyBtn.textContent = 'Copy raw thread block'), 900);
     } catch {
@@ -4129,7 +4135,7 @@ UI.openRawDumpBtn?.addEventListener('click', openRawDumpTab);
 
 async function pasteThreadDumpFromClipboard() {
     // Start reading at the click, rather than after earlier queued additions.
-    const read = Promise.resolve().then(() => navigator.clipboard.readText()).then(text =>
+    const read = Promise.resolve().then(readClipboard).then(text =>
         text.trim()
             ? { sources: [{ text, name: 'clipboard-thread-dump.txt', kind: 'clipboard' }], failures: [] }
             : { sources: [], failures: ['Clipboard is empty. Copy a JVM thread dump and try Paste again.'], notice: {
@@ -4262,8 +4268,15 @@ function queueSessionImport(read, mode = UI.inputMode?.value || 'append') {
             const rejected = submittedResults.filter(source => !source.accepted)
                 .map(source => `${source.label}: ${getInputFeedback(source)?.summary || 'No supported thread dump was found.'}`);
             if (!additions.length) {
-                if (!sessionSources.length) renderParserState(result.parserResult);
-                showSessionInputStatus([...failures, ...rejected, sessionSources.length ? 'The current session was kept.' : ''].filter(Boolean).join(' '));
+                if (!sessionSources.length) {
+                    // The parser banner already explains the rejected sources.
+                    // Keep a single persistent error after the dialog closes.
+                    renderParserState(result.parserResult);
+                    if (failures.length && UI.errorState) UI.errorState.textContent += ` ${failures.join(' ')}`;
+                    showSessionInputStatus('');
+                } else {
+                    showSessionInputStatus([...failures, ...rejected, 'The current session was kept.'].join(' '));
+                }
                 inputFeedbackDialog.show(feedback);
                 return;
             }
@@ -4909,7 +4922,7 @@ UI.contentionPanelBody?.addEventListener('click', async (event) => {
     const copyButton = event.target.closest('.contention-copy-btn');
     if (copyButton) {
         try {
-            await navigator.clipboard.writeText(copyButton.dataset.copyLock);
+            await writeClipboard(copyButton.dataset.copyLock);
             copyButton.textContent = 'Copied';
         } catch {
             copyButton.textContent = 'Copy failed';
@@ -5641,7 +5654,15 @@ function debounce(fn, ms) {
 }
 
 // Initial render
+UI.dropZone.after(UI.dependencyGraphPanel);
 initDeadlockLockHover();
 initAppTooltips();
 
 render();
+bindHostInputs({
+    fileInput: UI.fileInput,
+    onSources: async (sources, mode) => {
+        await queueSessionImport(Promise.resolve({ sources: sources.map(source => ({ ...source, kind: 'file' })) }), mode);
+        return { snapshots: parsedDumps.length, threads: parsedDumps.reduce((count, dump) => count + dump.threads.length, 0) };
+    },
+});

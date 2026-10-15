@@ -1,7 +1,6 @@
+import { createTdaWorker } from '../host/workers.js';
 /** One disposable worker per analysis; cancellation also releases its dump data. */
-export function createAnalysisClient(createWorker = () => new Worker(
-    new URL('./analysis-worker.js', import.meta.url), { type: 'module' },
-)) {
+export function createAnalysisClient(createWorker = createTdaWorker) {
     let pending = null;
 
     function cancel() {

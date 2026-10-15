@@ -41,6 +41,14 @@ examples and 20 TLS examples. Try the four-snapshot CPU-hot program, virtual
 workers, a monitor deadlock, or TLS trust and client-authentication failures
 without supplying a private capture. [Example guide and provenance](docs/EXAMPLES.md).
 
+## VS Code preview
+
+Both analyzers are also available as an offline desktop VS Code extension.
+Open captures from Explorer or the active editor, compare thread snapshots, and
+use native clipboard, raw-evidence and export actions. No Java server is required.
+[Install/build the stage 1 VSIX](extensions/vscode/README.md) ·
+[Two-stage integration plan](docs/VSCODE.md).
+
 ## Privacy and scope
 
 Your dump/log contents stay in the browser. Both analyzers run in disposable browser
