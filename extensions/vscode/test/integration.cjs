@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { SourceRegistry } = require('../src/source-navigation.cjs');
 const root = path.resolve(__dirname, '../../..');
 const fixture = relative => vscode.Uri.file(path.join(root, relative));
 exports.run = async () => {
@@ -22,6 +23,16 @@ exports.run = async () => {
     const unsaved = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump');
     assert.equal(unsaved?.snapshots, 1, JSON.stringify(unsaved));
     await vscode.window.showTextDocument(document);
+    const sources = new SourceRegistry(vscode);
+    const sourceId = sources.register(document.uri, document.getText(), document.version);
+    sources.activate([sourceId]);
+    await sources.open({sourceId, startLine: 2, endLine: 3});
+    assert.equal(vscode.window.activeTextEditor.document.uri.toString(), document.uri.toString());
+    assert.equal(vscode.window.activeTextEditor.selection.start.line, 1);
+    assert.equal(vscode.window.activeTextEditor.selection.end.line, 2);
+    await vscode.window.activeTextEditor.edit(edit => edit.insert(new vscode.Position(0, 0), 'changed after analysis\n'));
+    await assert.rejects(sources.open({sourceId, startLine: 2, endLine: 3}), /changed since analysis/);
+    sources.dispose();
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
-    console.log('PASS: real VS Code extension activation, both webviews/workers, multiple snapshots and unsaved editor input.');
+    console.log('PASS: real VS Code extension activation, both webviews/workers, multiple snapshots, unsaved input, source selection and stale-source rejection.');
 };

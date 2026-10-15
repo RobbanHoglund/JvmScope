@@ -1,18 +1,18 @@
-# JvmScope for VS Code
+# JvmScope — Java Thread Dumps & TLS Logs for VS Code
 
-Investigate **Java thread dumps** and **JSSE TLS logs** inside VS Code, using the
+Investigate **Java thread dumps** and **Java TLS/SSL logs (JSSE)** inside VS Code, using the
 same analysis engines as JvmScope's browser application. No Java installation,
 server, account or external analysis service is needed.
 
-This is the **stage 1 preview**. The two analyzers are bundled webviews with native
+This is the **0.2 editor integration preview**. The two analyzers are bundled webviews with native
 file opening, clipboard, read-only raw evidence and export dialogs. The package
 also contains the searchable help, examples and knowledge base.
 
 ## Install the preview
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
-2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.1.0.vsix`.
-3. Open the Command Palette and run **JvmScope: Open Thread Dump Analyzer** or **JvmScope: Open TLS Log Analyzer**.
+2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.2.2.vsix`.
+3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
 
 Alternatively, build the package using the instructions below. Requires VS Code
 **1.110 or later** on desktop. Browser-hosted VS Code (`vscode.dev`) is not included
@@ -33,6 +33,19 @@ file do not silently change the current analysis. A new **Analyze as…** comman
 replaces that analyzer's input; TDA's in-view Add/Replace control still applies to
 its file picker and Paste actions.
 
+## Navigate to source
+
+Thread details offer **Open source in VS Code**. In TLS, use **Open source**, a
+sequence event line number, or a raw-log line number. These open the original
+capture beside the analysis and select the evidence lines, including the correct
+snapshot in files containing multiple dumps. This navigates the capture, not Java
+application source code.
+
+Links are available for files and editor documents imported through VS Code.
+Examples and pasted captures have no original-document link. If the document
+contents change, navigation asks you to analyze it again before selecting lines.
+Clearing/replacing the input or closing the panel revokes its source links.
+
 ## Privacy and scope
 
 Captures stay in the VS Code extension host and its webviews. There is no upload,
@@ -46,9 +59,9 @@ the analyzer panel is closed or VS Code reloads. Raw evidence is invalidated whe
 its owning capture is cleared/replaced or its panel closes. Exports can contain
 sensitive diagnostic data; review them before saving or sharing.
 
-The shared analyzer UI uses its dark evidence palette in this preview. VS Code
-focus colors are respected. Full theme integration and the browser's annotated
-raw-dump workspace are not part of stage 1; raw evidence uses the native editor.
+Both views follow VS Code light, dark and high-contrast themes and adapt to narrow
+editor splits. The standalone application and exported reports retain their own
+palettes. Raw snapshots still open in the native read-only editor.
 The verified inputs are HotSpot thread dumps and SunJSSE traces; missing fields
 remain unknown. This extension adds no additional JVM/vendor compatibility claim.
 
@@ -87,8 +100,8 @@ account before a public release.
 
 ## Next stage
 
-Stage 2 can add explicit links back to source-file lines, an analysis/results tree,
-carefully scoped Problems diagnostics, opt-in refresh after edits, theme support,
-and session serialization with clear privacy choices. These features should use
+Further work can add an analysis/results tree, carefully scoped Problems
+diagnostics, opt-in refresh after edits, and session serialization with clear
+privacy choices. These features should use
 the same parsers and rule models; a dump observation must never become a stronger
 claim merely because it appears in VS Code. See [the implementation plan](../../docs/VSCODE.md).

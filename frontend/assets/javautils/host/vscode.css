@@ -1,12 +1,209 @@
-/* The shared analyzers keep their established dark evidence palette in stage 1. */
-body[data-jvmscope-host="vscode"] { padding: 12px; }
-body[data-jvmscope-host="vscode"] :focus-visible { outline: 2px solid var(--vscode-focusBorder, #8ddcff); outline-offset: 2px; }
-body[data-jvmscope-host="vscode"] #hostError { padding: 10px 14px; border: 1px solid #f2a46f; border-radius: 6px; color: #ffe3cd; }
-body[data-jvmscope-host="vscode"] .tool-nav { margin-bottom: 12px; }
-body[data-jvmscope-host="vscode"] .session-input-mode { min-width: 0; max-width: 100%; }
-body[data-jvmscope-host="vscode"] .session-input-mode .dump-select { width: auto; min-width: 0; flex: 1 1 auto; }
-body[data-jvmscope-host="vscode"] .analyzer-brand-copy { flex-shrink: 1; min-width: 0; }
-body[data-jvmscope-host="vscode"] .dump-select-wrap { max-width: 100%; flex-wrap: wrap; }
-body[data-jvmscope-host="vscode"] #dumpSelect { min-width: 0; max-width: 100%; }
-body[data-jvmscope-host="vscode"] .tda-header .header-center { min-width: 0; max-width: 100%; }
-body[data-jvmscope-host="vscode"] .tda-file-actions { min-width: 0; max-width: 100%; flex-wrap: wrap; }
+/* Host-only adaptation. The browser application and exported reports retain
+   their own palettes. VS Code updates these variables/classes on theme change. */
+body[data-jvmscope-host="vscode"] {
+  --host-bg: var(--vscode-editor-background, #1e1e1e);
+  --host-fg: var(--vscode-editor-foreground, #d4d4d4);
+  --host-muted: var(--vscode-descriptionForeground, #a9a9a9);
+  --host-surface: var(--vscode-sideBar-background, #252526);
+  --host-raised: var(--vscode-editorWidget-background, #252526);
+  --host-border: var(--vscode-contrastBorder, var(--vscode-panel-border, #454545));
+  --host-link: var(--vscode-textLink-foreground, #75beff);
+  --host-error: var(--vscode-errorForeground, #f48771);
+  --host-warning: var(--vscode-editorWarning-foreground, #cca700);
+  --host-success: var(--vscode-testing-iconPassed, #73c991);
+  --tda-surface: var(--host-surface);
+  --tda-surface-raised: var(--host-raised);
+  --tda-surface-inset: var(--host-bg);
+  --tda-panel-border: var(--host-border);
+  --tls-surface: var(--host-surface);
+  --tls-raised: var(--host-raised);
+  --tls-inset: var(--host-bg);
+  --tls-border: var(--host-border);
+  --tls-accent: var(--host-link);
+  --text-strong: var(--host-fg);
+  --text-normal: var(--host-fg);
+  --text-muted: var(--host-muted);
+  --text-soft: var(--host-muted);
+  --analyzer-ui-font: var(--vscode-font-family, system-ui);
+  --analyzer-brand-muted: var(--host-muted);
+  --analyzer-brand-border: var(--host-border);
+  box-sizing: border-box;
+  width: 100%; max-width: none; margin: 0; padding: 12px;
+  background: var(--host-bg) !important;
+  color: var(--host-fg) !important;
+  font-family: var(--vscode-font-family, system-ui);
+  font-size: var(--vscode-font-size, 13px);
+  color-scheme: dark;
+
+  /* Legacy components have literal text colors. Reset those inside the host,
+     then restore muted text, actions and diagnostic semantics below. */
+  & :where(*) { color: inherit !important; box-sizing: border-box; }
+  & :is(.muted, .hint-muted, .tda-value-neutral, .thread-metadata,
+      .analyzer-brand-tagline, .analyzer-start-context, .thread-details-context,
+      .thread-details-chip-label, .thread-stack-legend, .tls-sequence-note,
+      .tls-event-flow, .tls-grouping-note, .tls-row-context, .tls-event-clock,
+      .tls-certificate-facts small, .tls-inspector-facts, .tls-coverage) {
+    color: var(--host-muted) !important;
+  }
+  & :is(a, .tls-name-filter, .tls-select-btn, .tls-evidence-link, .tls-source-number) { color: var(--host-link) !important; }
+  & :is(.analyzer-start, .panel-host, .table-container, .thread-state-chart-panel,
+      .modal-dialog, .tls-analysis, .tls-inspector, .dependency-graph-panel,
+      .dependency-graph-details, .runnable-cluster-panel-shell, .docs-card,
+      .tls-period-popover, .tls-table-toolbar, .search-bar, .findings-report,
+      .tool-nav a, .knowledge-card, .article-card) {
+    background: var(--host-surface) !important;
+    border-color: var(--host-border) !important; box-shadow: none !important;
+  }
+  & :is(.modal-header, .modal-footer, .thread-details-tabs, .thread-details-card,
+      .help-search-toolbar, .help-quickstart, .docs-nav, .chart-filter-bar,
+      .smart-analysis-card, .smart-analysis-overview, .smart-analysis-fact,
+      .smart-analysis-limitations, .class-initialization-card, .contention-card,
+      .locks-card, .carrier-card, .pr-card, .thread-stack-card, .series-diagnostics-card,
+      .runnable-cluster-card, .runnable-cluster-card-summary, .runnable-cluster-member-card,
+      .runnable-compare-card, .runnable-compare-summary-bar, .thread-state-chart-card,
+      .cpu-timeline-card, .dependency-graph-toolbar, .dependency-graph-filterbar,
+      .dependency-graph-control-group, .dependency-graph-metric, .dependency-graph-inspector,
+      .app-tooltip, .rich-tooltip, .dependency-graph-tooltip, .example-dialog) {
+    background: var(--host-raised) !important;
+    border-color: var(--host-border) !important; box-shadow: none !important;
+  }
+  & :is(pre, .thread-details-body, .thread-details-code, .thread-details-stack-shell,
+      .runnable-compare-stack, .runnable-cluster-inline-stack, .dependency-graph-stage,
+      .dependency-graph-workspace, .dependency-graph-minimap, .tls-raw-toolbar) {
+    background: var(--host-bg) !important; border-color: var(--host-border) !important;
+  }
+  & :is(pre, code, .rawline, .thread-details-code) { font-family: var(--vscode-editor-font-family, monospace); }
+  & :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    color: var(--vscode-input-foreground, var(--host-fg)) !important;
+    background: var(--vscode-input-background, var(--host-bg)) !important;
+    border-color: var(--vscode-input-border, var(--host-border)) !important;
+  }
+  & :is(input, textarea)::placeholder { color: var(--vscode-input-placeholderForeground, var(--host-muted)) !important; opacity: 1; }
+  & :is(button, .btn, .tls-evidence-link) {
+    color: var(--vscode-button-secondaryForeground, var(--host-fg)) !important;
+    background: var(--vscode-button-secondaryBackground, var(--host-raised)) !important;
+    border-color: var(--host-border) !important; box-shadow: none !important; text-shadow: none !important;
+  }
+  & :is(button, .btn):hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground, var(--host-surface)) !important; }
+  & :is(.btn-primary, .btn-accent) {
+    color: var(--vscode-button-foreground, #fff) !important;
+    background: var(--vscode-button-background, #0e639c) !important;
+  }
+  & :is(.btn-primary, .btn-accent):hover { background: var(--vscode-button-hoverBackground, #1177bb) !important; }
+  & :is([aria-selected="true"], [aria-pressed="true"], .tool-nav [aria-current="page"], .segmented-filter .active) {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+    border-color: var(--vscode-focusBorder, var(--host-link)) !important;
+  }
+  & :focus-visible { outline: 2px solid var(--vscode-focusBorder, #8ddcff) !important; outline-offset: 2px; }
+  & :is(th, td) { border-color: var(--host-border) !important; }
+  & :is(thead, th) { background: var(--host-raised) !important; }
+  & tbody td { background: inherit !important; }
+  & tbody tr { background: var(--host-surface) !important; }
+  & tbody tr:nth-child(even) { background: var(--host-bg) !important; }
+  & tbody tr:hover { background: var(--vscode-list-hoverBackground, var(--host-raised)) !important; }
+  & .tls-selected-row td {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+  }
+  & :is(.badge, .chip, .scenario-badge, .thread-details-chip, .thread-details-badge,
+      .series-diagnostic-badge, .smart-analysis-count, .smart-analysis-severity) {
+    background: var(--host-raised) !important; border-color: var(--host-border) !important;
+  }
+  & :is(.analysis-state-error, .badge-failure, .status-bad, .tls-verdict-failure,
+      .smart-analysis-count-critical, .smart-analysis-severity-critical, .scenario-badge-critical,
+      [data-java-state="BLOCKED"], .tls-event-failure .tls-event-title, #hostError, .host-source-status) {
+    color: var(--host-error) !important;
+    background: color-mix(in srgb, var(--host-error) 10%, var(--host-bg)) !important;
+    border-color: var(--host-error) !important;
+  }
+  & :is(.analysis-state-warning, .badge-locks, .status-warn, .tls-verdict-unknown, .scenario-badge-high,
+      .smart-analysis-count-high, .smart-analysis-severity-high, [data-java-state="WAITING"], [data-java-state="TIMED_WAITING"]) {
+    color: var(--host-warning) !important;
+    background: color-mix(in srgb, var(--host-warning) 10%, var(--host-bg)) !important;
+    border-color: var(--host-warning) !important;
+  }
+  & :is(.badge-success, .status-ok, .tls-verdict-success, [data-java-state="RUNNABLE"]) {
+    color: var(--host-success) !important;
+    background: color-mix(in srgb, var(--host-success) 10%, var(--host-bg)) !important;
+    border-color: var(--host-success) !important;
+  }
+  & :is(.scenario-badge-medium, .smart-analysis-count-medium, .smart-analysis-severity-medium,
+      .analysis-input-loading, .badge-carrier) { color: var(--host-link) !important; background: var(--host-raised) !important; }
+  & :is(.tls-source-row.is-evidence, mark, .thread-stack-match) {
+    color: var(--host-fg) !important;
+    background: var(--vscode-editor-findMatchHighlightBackground, #634c28) !important;
+    outline: 1px solid var(--vscode-editor-findMatchBorder, var(--host-warning));
+  }
+  & .tls-selected-row .tls-row-context { color: inherit !important; }
+  & :is(.thread-details-code:not(.is-plain), .thread-stack-legend) .is-jvm { color: var(--host-muted) !important; }
+  & :is(.thread-details-code:not(.is-plain), .thread-stack-legend) :is(.is-header, .is-section, .is-other) { color: var(--host-link) !important; }
+  & :is(.thread-details-code:not(.is-plain), .thread-stack-legend) :is(.is-state, .is-library) { color: var(--vscode-symbolIcon-classForeground, var(--host-fg)) !important; }
+  & :is(.thread-details-code:not(.is-plain), .thread-stack-legend) .is-lock { color: var(--host-warning) !important; }
+  & svg text { fill: var(--host-fg); }
+  & .dependency-graph-node-label { fill: var(--host-fg) !important; stroke: var(--host-bg); }
+  & .dependency-graph-node-sub-label { fill: var(--host-muted) !important; stroke: var(--host-bg); }
+  & .dependency-graph-node-symbol { fill: #fff !important; }
+  & .host-source-status:empty { display: none; }
+  & .host-source-status:not(:empty) { display: block; flex-basis: 100%; padding: 8px; overflow-wrap: anywhere; }
+  & #hostError { padding: 10px 14px; border: 1px solid; border-radius: 6px; }
+  & .tls-source-number[data-source-line] { padding: 0; border: 0; background: transparent !important; font: inherit; text-decoration: underline; }
+  & .thread-details-footer { flex-wrap: wrap; }
+  & .tool-nav { margin-bottom: 12px; flex-wrap: wrap; }
+  & :is(main, .header-center, .tda-file-actions, .tls-header, .tls-meta, .tls-table-toolbar) { min-width: 0; max-width: 100%; }
+  & :is(.session-input-mode, .dump-select-wrap, #dumpSelect) { min-width: 0; max-width: 100%; }
+  & .session-input-mode .dump-select { width: auto; min-width: 0; flex: 1 1 auto; }
+  & .analyzer-brand-copy { flex-shrink: 1; min-width: 0; }
+  & :is(.dump-select-wrap, .tda-file-actions, .tls-inspector-navigation, .analyzer-start-actions) { flex-wrap: wrap; }
+  & .analyzer-file-name { overflow-wrap: anywhere; }
+  & .table-container { max-width: 100%; min-width: 0; overflow-x: auto; }
+  & .tls-period-popover { max-width: calc(100vw - 48px); }
+  & :is(.modal, #threadModal, #howToUseModal) { max-width: calc(100vw - 24px); }
+  & .modal-dialog { max-width: 100%; }
+  &.vscode-light, &.vscode-high-contrast-light { color-scheme: light; }
+  &.vscode-high-contrast, &.vscode-high-contrast-light {
+    & :is(button, .btn, input, select, textarea, .badge, .panel-host, .tls-inspector, .table-container) { border: 1px solid var(--host-border) !important; }
+    & a { text-decoration: underline; }
+    & :focus-visible { outline-width: 3px !important; }
+  }
+  &.vscode-reduce-motion, &.vscode-reduce-motion * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+@media (max-width: 1100px) {
+  body[data-jvmscope-host="vscode"] {
+    &.tls-investigating { height: auto; min-height: 100dvh; display: block; }
+    & .tls-header { display: block; }
+    & .tls-workspace { display: grid; grid-template-columns: minmax(0, 1fr); }
+    & .tls-table-scroll { max-height: 320px; flex: none; }
+    & .tls-inspector { min-height: 440px; max-height: 650px; }
+    & .tls-inspector-header { flex-wrap: wrap; }
+    & .analyzer-start { grid-template-columns: minmax(0, 1fr); padding: 20px; }
+    & .analyzer-start-format { min-height: 120px; padding: 16px; }
+    & .tls-facet-row { flex-wrap: wrap; }
+    & .tls-timeline-controls { flex-wrap: wrap; }
+  }
+}
+@media (max-width: 650px) {
+  body[data-jvmscope-host="vscode"] {
+    & .analyzer-brand { flex-wrap: wrap; flex-basis: 100%; }
+    & .analyzer-file-name { flex-basis: 100%; max-width: 100%; margin-left: 0; padding-left: 0; border-left: 0; }
+    & .analyzer-header h1 { font-size: 18px; }
+    & :is(.tda-file-actions, .tls-file-actions) { width: 100%; margin-left: 0; justify-content: flex-start; }
+    & .tls-event { grid-template-columns: 86px minmax(0, 1fr) 54px; gap: 6px; }
+    & #howToUseModal .help-search-toolbar { grid-template-columns: minmax(0, 1fr) auto; }
+    & #howToUseModal .help-search-toolbar label { grid-column: 1 / -1; }
+    & .docs-layout { display: block; }
+    & .thread-details-tabs { overflow-x: auto; }
+  }
+}
+
+@media (max-width: 900px) {
+  body[data-jvmscope-host="vscode"] #threadModal {
+    & .thread-details-shell { display: block; overflow-y: auto; }
+    & .thread-details-sidebar { overflow: visible; border-right: 0; }
+    & .thread-details-panel { max-height: 260px; overflow: auto; }
+    & .thread-details-evidence { min-height: 300px; border-top: 1px solid var(--host-border); }
+    & .thread-details-code { max-height: 400px; min-height: 200px; }
+    & .thread-stack-toolbar { flex-wrap: wrap; }
+  }
+}

@@ -622,11 +622,16 @@ function parseTimestampLine(value) {
  * Finds snapshot headers before slicing input. This prevents a later header from
  * leaking into the preceding snapshot and preserves any initial preamble.
  */
+function snapshotSource(text, startLine = 1) {
+    const leading = text.slice(0, text.length - text.trimStart().length);
+    return { rawText: text.trim(), sourceStartLine: startLine + (leading.match(/\n/g)?.length || 0) };
+}
+
 export function splitThreadDumpSnapshots(text) {
     const normalized = String(text || '').replaceAll('\r\n', '\n').replaceAll('\r', '\n').replace(/^\uFEFF/, '');
     const json = readJsonThreadDump(normalized);
     if (json) return [{ index: 0, timestamp: json.time || null, ...snapshotTimestampFields(json.time),
-        boundaryStrategy: 'json', headerLine: null, rawText: normalized.trim(),
+        boundaryStrategy: 'json', headerLine: null, ...snapshotSource(normalized),
         processId: json.processId ?? null, collectionScope: 'all-threads' }];
     const lines = normalized.split('\n');
     const boundaries = [];
@@ -676,7 +681,7 @@ export function splitThreadDumpSnapshots(text) {
             ...missingTimestamp,
             boundaryStrategy: 'single-fallback',
             headerLine: null,
-            rawText: normalized.trim(),
+            ...snapshotSource(normalized),
         }];
     }
 
@@ -703,7 +708,7 @@ export function splitThreadDumpSnapshots(text) {
             processId: boundary.processId ?? null,
             collectionScope: boundary.collectionScope,
             headerLine: lines[boundary.headerIndex].trim(),
-            rawText: lines.slice(startIndex, endIndex).join('\n').trim(),
+            ...snapshotSource(lines.slice(startIndex, endIndex).join('\n'), startIndex + 1),
         };
     });
 }

@@ -10,7 +10,7 @@ const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
         const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8'));
-        let origin, clipboard=''; const messages=[];
+        let origin, clipboard='', sourceError=''; const messages=[];
         const server=createServer(async(req,res)=>{
             try {
                 const url=new URL(req.url,origin);
@@ -37,7 +37,8 @@ const test=base.extend({
                 if(message.action==='paste')value=clipboard;
                 if(message.action==='copy')clipboard=message.text;
                 if(message.action==='chooseFiles')value=null;
-                await page.evaluate(({message,value})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value},'*'),{message,value});
+                const error=message.action==='openSource'?sourceError:undefined;
+                await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
             }
         });
         await page.exposeFunction('testCspViolation',value=>violations.push(value));
@@ -45,9 +46,10 @@ const test=base.extend({
             window.acquireVsCodeApi=()=>({postMessage:message=>window.testHostMessage(message)});
             document.addEventListener('securitypolicyviolation',event=>window.testCspViolation(`${event.violatedDirective}: ${event.blockedURI}`));
         });
-        await use({page,origin,messages,clipboard:()=>clipboard,open:async name=>{
+        await use({page,origin,messages,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},open:async name=>{
+            const previous=messages.filter(m=>m.type==='ready').length;
             await page.goto(`${origin}/view?page=${encodeURIComponent(name)}`);
-            await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(0);
+            await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(previous);
         },load:async sources=>{
             const id='test:'+Math.random();
             await page.evaluate(({sources,id})=>window.postMessage({channel:'jvmscope',version:1,type:'load',id,sources},'*'),{sources,id});
@@ -88,7 +90,55 @@ test('VS Code TLS analyzes real JSSE input and uses native copy without network 
     await host.page.locator('#tlsInspector [data-action="full"]').click();
     await host.page.locator('#tlsModalCopyBtn').click();
     await expect.poll(()=>host.clipboard()).not.toBe('');
-    expect(host.messages.filter(m=>m.type==='request').every(m=>['copy'].includes(m.action))).toBe(true);
+    expect(host.messages.filter(m=>m.type==='request').every(m=>['copy','syncSources'].includes(m.action))).toBe(true);
+});
+
+test('VS Code TDA links the selected snapshot to original file lines and reports stale sources in the dialog',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    const dump=(await capture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt')).trim();
+    const text='\n\n'+dump+'\n\n'+dump;
+    const sourceId='11111111-1111-1111-1111-111111111111';
+    await host.load([{name:'same.txt',text,hostSourceId:sourceId}]);
+    await host.page.locator('#dumpSelect').selectOption('1');
+    const row=host.page.locator('#threadTableBody tr').filter({hasText:'Virtual thread #26'});
+    await row.getByRole('button',{name:'Details',exact:true}).click();
+    const button=host.page.locator('#threadModalSourceBtn');
+    await button.click();
+    await expect.poll(()=>host.messages.find(m=>m.action==='openSource')).toBeTruthy();
+    const location=host.messages.find(m=>m.action==='openSource');
+    const lines=text.split('\n');
+    expect(location.sourceId).toBe(sourceId);
+    expect(location.startLine).toBeGreaterThan(dump.split('\n').length);
+    expect(lines[location.startLine-1]).toContain('Mounted virtual thread #26');
+    host.rejectSource('The source has changed since analysis. Analyze the file again.');
+    await button.click();
+    await expect(host.page.locator('#threadModal .host-source-status')).toContainText('changed since analysis');
+    await host.page.locator('#threadModalClose2').click();
+    await host.page.locator('#clearBtn').click();
+    await expect.poll(()=>host.messages.filter(m=>m.action==='syncSources').at(-1)?.sourceIds).toEqual([]);
+    await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#threadTableBody tr').first().getByRole('button',{name:'Details',exact:true}).click();
+    await expect(button).toBeHidden();
+});
+
+test('VS Code TLS sequence and raw lines navigate original physical source coordinates',async({host})=>{
+    await host.open('/jvmscope/tls.html');
+    const text=await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt');
+    const sourceId='22222222-2222-2222-2222-222222222222';
+    await host.load([{name:'tls.log',text,hostSourceId:sourceId}]);
+    const event=host.page.locator('#tlsInspector [data-event]').first();
+    const line=Number((await event.textContent()).match(/\d+/)[0]);
+    await event.click();
+    await expect.poll(()=>host.messages.find(m=>m.action==='openSource')?.startLine).toBe(line);
+    expect(host.messages.find(m=>m.action==='openSource').sourceId).toBe(sourceId);
+    await host.page.locator('#tlsRawTab').click();
+    const raw=host.page.locator('.tls-source-number[data-source-line]').first();
+    const rawLine=Number(await raw.getAttribute('data-source-line'));
+    await expect(raw.locator('..')).toContainText(text.replaceAll('\r\n','\n').split('\n')[rawLine-1]);
+    await raw.click();
+    await expect.poll(()=>host.messages.filter(m=>m.action==='openSource').at(-1)?.startLine).toBe(rawLine);
+    await host.page.locator('#clearBtn').click();
+    await expect.poll(()=>host.messages.filter(m=>m.action==='syncSources').at(-1)?.sourceIds).toEqual([]);
 });
 
 test('VS Code rejects invalid input once and preserves a valid session on an invalid replacement',async({host})=>{
@@ -146,5 +196,66 @@ test('VS Code previews findings and exports Markdown, HTML and graph PNG through
         const report=Buffer.from(host.messages.find(m=>m.action==='save'&&m.name.endsWith(extension)).base64,'base64').toString('utf8');
         expect(report).toContain('Dependencies on Virtual thread');
         expect(report).not.toContain('Dependencies on ForkJoinPool-1-worker-1');
+    }
+});
+
+const themePalettes={
+    'vscode-dark': {bg:'#1e1e1e',fg:'#d4d4d4',surface:'#252526',muted:'#aaaaaa',border:'#454545',link:'#75beff',selection:'#094771',selected:'#ffffff',error:'#f48771',warning:'#cca700',success:'#73c991'},
+    'vscode-light': {bg:'#ffffff',fg:'#333333',surface:'#f3f3f3',muted:'#616161',border:'#767676',link:'#005fb8',selection:'#0060c0',selected:'#ffffff',error:'#b5200d',warning:'#795e00',success:'#176f2c'},
+    'vscode-high-contrast': {bg:'#000000',fg:'#ffffff',surface:'#000000',muted:'#ffffff',border:'#ffffff',link:'#21a6ff',selection:'#000000',selected:'#ffffff',error:'#ff6373',warning:'#ffdf00',success:'#89d185'},
+    'vscode-high-contrast-light': {bg:'#ffffff',fg:'#000000',surface:'#ffffff',muted:'#292929',border:'#292929',link:'#0f4a85',selection:'#0f4a85',selected:'#ffffff',error:'#b5200d',warning:'#795e00',success:'#176f2c'},
+};
+async function applyTheme(page,name) {
+    await page.evaluate(({name,p})=>{
+        document.body.classList.remove('vscode-dark','vscode-light','vscode-high-contrast','vscode-high-contrast-light');
+        document.body.classList.add(name);
+        const values={'editor-background':p.bg,'editor-foreground':p.fg,'sideBar-background':p.surface,'editorWidget-background':p.surface,'descriptionForeground':p.muted,'panel-border':p.border,'contrastBorder':p.border,'textLink-foreground':p.link,'focusBorder':p.link,'input-background':p.bg,'input-foreground':p.fg,'button-secondaryBackground':p.surface,'button-secondaryForeground':p.fg,'list-activeSelectionBackground':p.selection,'list-activeSelectionForeground':p.selected,'errorForeground':p.error,'editorWarning-foreground':p.warning,'testing-iconPassed':p.success,'editor-findMatchHighlightBackground':p.surface};
+        for(const [key,value] of Object.entries(values))document.documentElement.style.setProperty('--vscode-'+key,value);
+    },{name,p:themePalettes[name]});
+    await expect.poll(()=>page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe(name.includes('light')?'rgb(255, 255, 255)':name==='vscode-dark'?'rgb(30, 30, 30)':'rgb(0, 0, 0)');
+}
+async function expectReadable(locator) {
+    const ratio=await locator.evaluate(el=>{
+        const rgb=value=>value.match(/[\d.]+/g).slice(0,3).map(Number);
+        const luminance=value=>rgb(value).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+        let parent=el,bg;
+        while(parent){bg=getComputedStyle(parent).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)')break;parent=parent.parentElement;}
+        const a=luminance(getComputedStyle(el).color),b=luminance(bg);
+        return {ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05),fg:getComputedStyle(el).color,bg};
+    });
+    expect(ratio.ratio,JSON.stringify(ratio)).toBeGreaterThanOrEqual(4.5);
+}
+for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live themes and fits a narrow editor`,async({host},testInfo)=>{
+    await host.page.setViewportSize({width:600,height:900});
+    await host.open(`/jvmscope/${analyzer}.html`);
+    await applyTheme(host.page,'vscode-light');
+    await expectReadable(host.page.locator('.analyzer-start h2'));
+    const text=await capture(analyzer==='tda'?'frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt':'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt');
+    await host.load([{name:'theme-test.txt',text,hostSourceId:'33333333-3333-3333-3333-333333333333'}]);
+    const rows=host.page.locator(analyzer==='tda'?'#threadTableBody tr':'#tlsTableBody tr');
+    const count=await rows.count();expect(count).toBeGreaterThan(0);
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(host.page,theme);
+        await expect(rows).toHaveCount(count);
+        expect(await host.page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(600);
+        await expectReadable(host.page.locator('#fileName'));
+        await host.page.keyboard.press('Tab');
+        await host.page.locator('#clearBtn').focus();
+        expect(await host.page.locator('#clearBtn').evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+        if(analyzer==='tda') {
+            await rows.first().getByRole('button',{name:'Details',exact:true}).click();
+            await expectReadable(host.page.locator('#threadModalSourceBtn'));
+            const evidence=await host.page.locator('.thread-details-evidence').boundingBox();
+            expect(evidence.width).toBeGreaterThan(500);
+            await host.page.screenshot({path:testInfo.outputPath(`${theme}.png`)});
+            await host.page.locator('#threadModalClose2').click();
+        }else {
+            await expectReadable(host.page.locator('.tls-event-title').first());
+            const clock=await host.page.locator('.tls-event-clock time').first().boundingBox();
+            const content=await host.page.locator('.tls-event-content').first().boundingBox();
+            expect(clock.x+clock.width).toBeLessThanOrEqual(content.x);
+            await host.page.locator('#tlsInspector').scrollIntoViewIfNeeded();
+            await host.page.screenshot({path:testInfo.outputPath(`${theme}.png`)});
+        }
     }
 });
