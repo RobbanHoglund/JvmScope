@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Name the sidebar view JvmScope Analyses so it is easy to find through View → Open View….
+- Add both analyzer commands to the sidebar's … menu alongside the existing toolbar icons.
+
 ## 0.3.2 — Publication review
 
 - Retire TLS evidence and diagnostic dialogs when their capture is replaced or cleared.

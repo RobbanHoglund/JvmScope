@@ -12,9 +12,23 @@ exports.run = async () => {
         assert.equal(extension.packageJSON.version, process.env.JVMSCOPE_TEST_VERSION);
     }
     const { SourceRegistry } = require(path.join(extension.extensionPath, 'src/source-navigation.cjs'));
-    const api = await extension.activate();
+    // Exercise the contributed view's focus command and analyzer menu commands
+    // without explicitly activating the extension, as a user opening the view would.
+    await vscode.commands.executeCommand('jvmscope.analysis.focus');
+    for (const [command, title] of [
+        ['jvmscope.openTda', 'JvmScope · Thread dumps'],
+        ['jvmscope.openTls', 'JvmScope · TLS logs'],
+    ]) {
+        const result = await vscode.commands.executeCommand(command);
+        assert.ok(!result?.error, JSON.stringify(result));
+        assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, title,
+            'The sidebar menu command opens and focuses the requested analyzer');
+    }
+    assert.ok(extension.isActive, 'Opening the view and its tools activates JvmScope');
+    const api = extension.exports;
     await vscode.commands.executeCommand('jvmscope.openAnalysis');
     assert.deepEqual(await api.getAnalysisItems('tda'), []);
+    assert.deepEqual(await api.getAnalysisItems('tls'), []);
     const tda = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump',
         fixture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt'));
     assert.ok(tda?.snapshots === 1 && tda.threads > 0, JSON.stringify(tda));
@@ -58,5 +72,5 @@ exports.run = async () => {
     await assert.rejects(sources.open({sourceId, startLine: 2, endLine: 3}), /changed since analysis/);
     sources.dispose();
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
-    console.log('PASS: real VS Code extension activation, both webviews/workers, multiple snapshots, unsaved input, source selection, stale-source rejection and native sidebar navigation across retained webviews.');
+    console.log('PASS: real VS Code view/menu activation, both webviews/workers, multiple snapshots, unsaved input, source selection, stale-source rejection and native sidebar navigation across retained webviews.');
 };

@@ -41,9 +41,13 @@ its file picker and Paste actions.
 
 ## Browse analyses in the sidebar
 
-Open **JvmScope** in the Activity Bar, or run **JvmScope: Open Analysis Sidebar**.
-The two roots open the Java thread dump and Java TLS analyzers. The view's toolbar
-also opens either analyzer.
+Use **View → Open View…**, type **JvmScope**, and select **JvmScope Analyses**.
+You can also open **JvmScope** in the Activity Bar or run
+**JvmScope: Open Analysis Sidebar** from the Command Palette.
+
+The **JvmScope Analyses** view's **…** menu offers **Open Java Thread Dump Analyzer**
+and **Open Java TLS Log Analyzer**. The toolbar's tree and shield icons and the
+two tree roots open the same analyzers.
 
 - **Java thread dumps:** expand a source file, then a snapshot, then its threads.
   Select a thread to open its details in the correct snapshot, even when names repeat.
@@ -86,9 +90,11 @@ the analyzer panel is closed or VS Code reloads. Raw evidence is invalidated whe
 its owning capture is cleared/replaced or its panel closes. Exports can contain
 sensitive diagnostic data; review them before saving or sharing.
 
-Both views follow VS Code light, dark and high-contrast themes and adapt to narrow
-editor splits. The standalone application and exported reports retain their own
-palettes. Raw snapshots still open in the native read-only editor.
+The sidebar and both analyzers follow VS Code's theme, including light, dark,
+high-contrast dark and high-contrast light. Run **Preferences: Color Theme** to
+switch themes; open analyzers update immediately. Both analyzers also adapt to
+narrow editor splits. The standalone application and exported reports retain
+their own palettes. Raw snapshots still open in the native read-only editor.
 The verified inputs are HotSpot thread dumps and SunJSSE traces; missing fields
 remain unknown. This extension adds no additional JVM/vendor compatibility claim.
 
