@@ -8,6 +8,11 @@ test('knowledge controls and long article content remain inside a narrow viewpor
         await page.goto(`${appUrl}/knowledge/${name}.html?java=21`);
         await expect(page.locator('h1')).toBeVisible();
         expect(await page.evaluate(()=>document.documentElement.scrollWidth),name).toBeLessThanOrEqual(360);
+        for(const link of await page.locator('.tool-nav a').all()) {
+            const bounds=await link.boundingBox();
+            expect(bounds.x).toBeGreaterThanOrEqual(0);
+            expect(bounds.x+bounds.width).toBeLessThanOrEqual(360);
+        }
     }
     await page.goto(`${appUrl}/knowledge/index.html`);
     await page.locator('#knowledgeVersion').selectOption('21');
