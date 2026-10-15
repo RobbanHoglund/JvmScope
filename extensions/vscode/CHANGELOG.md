@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 — Analyzer menu symbols
+
+- Prefix Analyze as Java Thread Dump with 🧵 and Analyze as Java TLS Log with 🔒 so the two actions are easier to distinguish in context menus and the Command Palette.
+
 ## 0.3.0 — Native analysis sidebar preview
 
 - Add the JvmScope Activity Bar view with source files, snapshots, threads, TLS interactions and observed events.
