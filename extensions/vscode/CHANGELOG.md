@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — Extension icon
+
+- Use the supplied avatar as the extension listing and analysis-tab icon.
+
 ## 0.2.0 — Editor integration preview
 
 - Open thread evidence and TLS event/raw lines in the original source editor.

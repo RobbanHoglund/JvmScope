@@ -33,6 +33,7 @@ async function activate(context) {
         const panel = vscode.window.createWebviewPanel('jvmscope.' + kind, titles[kind], vscode.ViewColumn.Active, {
             enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [media], enableFindWidget: true,
         });
+        panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'icon.png');
         const id = randomUUID();
         const sources = new SourceRegistry(vscode);
         let readyResolve, readyReject;
