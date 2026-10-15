@@ -137,6 +137,11 @@ body[data-jvmscope-host="vscode"] {
     outline: 1px solid var(--vscode-editor-findMatchBorder, var(--host-warning));
   }
   & .tls-selected-row .tls-row-context { color: inherit !important; }
+  & :is(.tls-explanation, .tls-possible-explanation, .tls-explanation-origin) {
+    --tls-raised: var(--host-raised);
+    --tls-border: var(--host-border);
+    --tls-accent: var(--host-link);
+  }
   & :is(.thread-details-code:not(.is-plain), .thread-stack-legend) .is-jvm { color: var(--host-muted) !important; }
   & :is(.thread-details-code:not(.is-plain), .thread-stack-legend) :is(.is-header, .is-section, .is-other) { color: var(--host-link) !important; }
   & :is(.thread-details-code:not(.is-plain), .thread-stack-legend) :is(.is-state, .is-library) { color: var(--vscode-symbolIcon-classForeground, var(--host-fg)) !important; }

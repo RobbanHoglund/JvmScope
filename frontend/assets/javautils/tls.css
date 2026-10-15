@@ -529,10 +529,25 @@ body.tls-page.tls-investigating { height: calc(100dvh - 28px); margin-bottom: 14
 .tls-page .tls-event-transport .tls-event-content { border-color: #c8ae6c; }
 .tls-page .tls-evidence-link { border: 1px solid #425773; background: #1e2c3e; color: #b4d4f4; font: inherit; font-size: 11px; border-radius: 5px; padding: 4px 6px; cursor: pointer; white-space: nowrap; }
 .tls-page .tls-evidence-link:hover { border-color: #88b6e4; background: #2b4260; }
-.tls-page .tls-possible-explanation { margin-top: 12px; padding: 10px; border: 1px solid #3c4858; border-radius: 6px; }
-.tls-page .tls-possible-explanation summary { font-size: 13px; color: #bfd1e6; cursor: pointer; }
-.tls-page .tls-possible-explanation pre { font: inherit; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0 0; }
-.tls-page .tls-possible-explanation > p { margin-top: 10px; }
+.tls-page .tls-possible-explanation { margin-top: 16px; border: 1px solid var(--tls-border); border-radius: 8px; }
+.tls-page .tls-possible-explanation > summary { padding: 14px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.tls-page .tls-possible-explanation > summary::marker { color: var(--tls-accent); }
+.tls-page .tls-possible-explanation > summary:focus-visible { outline: 2px solid var(--tls-accent); outline-offset: -2px; border-radius: 8px; }
+.tls-page .tls-possible-explanation > .tls-sequence-note { padding: 0 16px; margin: 0 0 16px; font-size: 12px; line-height: 1.6; }
+.tls-page .tls-explanation { font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.tls-page .tls-possible-explanation > .tls-explanation { padding: 16px; border-top: 1px solid var(--tls-border); }
+.tls-page .tls-explanation-section { max-width: 78ch; }
+.tls-page .tls-explanation-section + .tls-explanation-section { margin-top: 22px; }
+.tls-page .tls-explanation-section h3 { font-size: 14px; font-weight: 650; line-height: 1.4; margin: 0 0 8px; }
+.tls-page .tls-explanation-section p { margin: 0; }
+.tls-page .tls-explanation-section p + p { margin-top: 8px; }
+.tls-page .tls-explanation-section ul { margin: 0; padding-inline-start: 20px; }
+.tls-page .tls-explanation-section li { padding-inline-start: 3px; }
+.tls-page .tls-explanation-section li + li { margin-top: 6px; }
+.tls-page .tls-explanation-section li::marker { color: var(--tls-accent); }
+.tls-page .tls-explanation-section[data-section="meaning"] p { font-size: 14px; }
+.tls-page .tls-explanation-section:is([data-section="important"], [data-section="tip"]) { padding: 12px 14px; border-left: 3px solid var(--tls-accent); border-radius: 0 6px 6px 0; background: var(--tls-raised); }
+.tls-page .tls-explanation-origin { margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--tls-border); font-size: 13px; line-height: 1.6; }
 .tls-page .tls-inspector-panel h3 { font-size: 14px; margin: 0 0 12px; }
 .tls-page .tls-certificate-facts { margin: 0; font-size: 12px; }
 .tls-page .tls-certificate-facts dt { margin-top: 14px; color: #9db9d8; }

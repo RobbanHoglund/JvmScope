@@ -41,6 +41,9 @@ examples and 20 TLS examples. Try the four-snapshot CPU-hot program, virtual
 workers, a monitor deadlock, or TLS trust and client-authentication failures
 without supplying a private capture. [Example guide and provenance](docs/EXAMPLES.md).
 
+For files to open directly in either the application or VS Code, see the
+[real TLS logs from eight Java versions](testdata/tls-logs/README.md).
+
 ## VS Code preview
 
 Both analyzers are also available as an offline desktop VS Code extension.

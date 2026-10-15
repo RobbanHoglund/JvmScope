@@ -13,6 +13,7 @@ import { clientCertDisplay, clientCertificateDetailsText, certificateAuthorities
     peerHostTooltipBody, sniTooltipBody, tlsOutcomeDisplay, tlsDirectionDisplay, tlsMissingFactDisplay,
     tlsUncertaintyExplanation } from './tls-view-model.js';
 import { explainIssueText } from './tls-explanations.js';
+import { renderTlsExplanation } from './tls-explanation-view.js';
 import { createLatestInputRequestGate } from './tda/input-request.js';
 import { createTlsFilters, selectTlsEntries, facetKey, interactionTime, failureLabel } from './tls-analysis-model.js';
 import { createTlsAnalysisView } from './tls-analysis-view.js';
@@ -1089,11 +1090,8 @@ function openIssueModal(issueText) {
     const match = explainIssueText(issueText);
 
     const title = match ? `Explain issues: ${failureLabel(match.key)}` : "Explain issues";
-    const explanation = match?.locallyRaised
-        ? `The local JVM raised the TLS alert.\n\n${match.explanation}`
-        : match?.explanation;
     const body = match
-        ? `<pre class="body-pre">${escapeHtml(explanation)}</pre>`
+        ? `${match.locallyRaised ? '<p class="tls-explanation-origin">The local JVM raised the TLS alert.</p>' : ''}${renderTlsExplanation(issueText)}`
         : `<div class="muted">No explanation found yet for:</div>
        <pre class="body-pre">${escapeHtml(String(issueText || "(empty)"))}</pre>
        <div class="muted" style="margin-top:10px;">Use Details to inspect the surrounding log messages for more context.</div>`;

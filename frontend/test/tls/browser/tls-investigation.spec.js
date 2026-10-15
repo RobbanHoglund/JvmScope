@@ -13,6 +13,45 @@ async function sample(page) {
     await expect(page.locator('#rowCount')).toHaveText('35 / 35 interactions');
 }
 
+test('real trust failures present readable explanation sections in the inspector and issue dialog', async ({ page }, testInfo) => {
+    const text = readFileSync(new URL('../../../../testdata/tls-logs/java17-temurin-tlsv1.3-untrusted-client.txt', import.meta.url), 'utf8');
+    await page.locator('#tlsInvestigateColumns').dispatchEvent('click');
+    await upload(page, text);
+    const guidance = inspector(page).locator('.tls-possible-explanation');
+    await guidance.locator('summary').focus();
+    await page.keyboard.press('Space');
+    await expect(guidance).toHaveAttribute('open', '');
+    const meaning = 'The JVM could not build a trusted certification path from the peer certificate to a trust anchor in the active truststore.';
+    const checkSections = async container => {
+        await expect(container.getByRole('heading', { level: 3 })).toHaveText(['Meaning', 'Common causes', 'Important', 'What to check']);
+        await expect(container.locator('[data-section="meaning"] p')).toHaveText(meaning);
+        await expect(container.locator('[data-section="causes"] li')).toHaveCount(5);
+        await expect(container.locator('[data-section="checks"] li')).toHaveCount(4);
+        await expect(container.locator('pre')).toHaveCount(0);
+        const layout = await container.locator('.tls-explanation').evaluate(el => {
+            const style = getComputedStyle(el);
+            return { width: el.clientWidth, scrollWidth: el.scrollWidth, font: parseFloat(style.fontSize), line: parseFloat(style.lineHeight) };
+        });
+        expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
+        expect(layout.font).toBeGreaterThanOrEqual(13);
+        expect(layout.line).toBeGreaterThanOrEqual(layout.font * 1.5);
+    };
+    await checkSections(guidance);
+    await guidance.locator('summary').evaluate(el => el.scrollIntoView({ block: 'start' }));
+    await page.screenshot({ path: testInfo.outputPath('tls-explanation-inspector.png') });
+    await page.keyboard.press('Space');
+    await expect(guidance).not.toHaveAttribute('open');
+    await page.keyboard.press('Space');
+    await expect(guidance).toHaveAttribute('open', '');
+
+    await page.locator('#tlsAllColumns').click();
+    await page.locator('#tlsTableBody .explain-btn').click();
+    await expect(page.locator('#issueModal')).toBeVisible();
+    await checkSections(page.locator('#issueModalBody'));
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#tlsTableBody .explain-btn')).toBeFocused();
+});
+
 test('opens the linked investigation workspace by default with usable desktop panes', async ({ page }) => {
     await page.reload();
     await expect(page.locator('#tlsInvestigateColumns')).toHaveAttribute('aria-pressed', 'true');
