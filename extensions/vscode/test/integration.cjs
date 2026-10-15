@@ -12,17 +12,22 @@ exports.run = async () => {
         assert.equal(extension.packageJSON.version, process.env.JVMSCOPE_TEST_VERSION);
     }
     const { SourceRegistry } = require(path.join(extension.extensionPath, 'src/source-navigation.cjs'));
-    // Exercise the contributed view's focus command and analyzer menu commands
+    // Exercise the contributed view's focus command and editor toolbar commands
     // without explicitly activating the extension, as a user opening the view would.
     await vscode.commands.executeCommand('jvmscope.analysis.focus');
+    const editorDocument = await vscode.workspace.openTextDocument(
+        fixture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt'));
     for (const [command, title] of [
         ['jvmscope.openTda', 'JvmScope · Thread dumps'],
         ['jvmscope.openTls', 'JvmScope · TLS logs'],
     ]) {
-        const result = await vscode.commands.executeCommand(command);
+        await vscode.window.showTextDocument(editorDocument);
+        // editor/title supplies the current resource URI. Opening a tool must
+        // remain a launcher, even when that editor contains the other log format.
+        const result = await vscode.commands.executeCommand(command, editorDocument.uri);
         assert.ok(!result?.error, JSON.stringify(result));
         assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, title,
-            'The sidebar menu command opens and focuses the requested analyzer');
+            'The editor toolbar command opens and focuses the requested analyzer');
     }
     assert.ok(extension.isActive, 'Opening the view and its tools activates JvmScope');
     const api = extension.exports;

@@ -2,7 +2,7 @@
   "name": "jvmscope",
   "displayName": "JvmScope — Java Thread Dumps & TLS Logs",
   "description": "Analyze Java thread dumps and Java TLS/SSL (JSSE) logs locally in VS Code. Inspect threads, deadlocks and TLS handshakes.",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "publisher": "RobbanHoglund",
   "icon": "icon.png",
   "license": "Apache-2.0",
@@ -45,13 +45,19 @@
         "command": "jvmscope.openTda",
         "title": "Open Java Thread Dump Analyzer",
         "category": "JvmScope",
-        "icon": "$(list-tree)"
+        "icon": {
+          "light": "resources/threads-light.svg",
+          "dark": "resources/threads-dark.svg"
+        }
       },
       {
         "command": "jvmscope.openTls",
         "title": "Open Java TLS Log Analyzer",
         "category": "JvmScope",
-        "icon": "$(shield)"
+        "icon": {
+          "light": "resources/tls-light.svg",
+          "dark": "resources/tls-dark.svg"
+        }
       },
       {
         "command": "jvmscope.analyzeThreadDump",
@@ -80,6 +86,16 @@
           "command": "jvmscope.analyzeTlsLog",
           "when": "!explorerResourceIsFolder",
           "group": "jvmscope@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "jvmscope.openTda",
+          "group": "navigation@20"
+        },
+        {
+          "command": "jvmscope.openTls",
+          "group": "navigation@21"
         }
       ],
       "editor/title/context": [
@@ -139,7 +155,7 @@
     "test": "node --test test/*.test.cjs",
     "test:integration": "node test/run-integration.cjs",
     "vscode:prepublish": "npm run build",
-    "package": "vsce package --no-dependencies --out ../../build/vscode/jvmscope-0.3.2.vsix"
+    "package": "vsce package --no-dependencies --out ../../build/vscode/jvmscope-0.3.3.vsix"
   },
   "devDependencies": {
     "@vscode/test-electron": "3.1.0",

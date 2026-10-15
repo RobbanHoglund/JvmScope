@@ -34,6 +34,21 @@ with zipfile.ZipFile(package) as archive:
     assert "extension/" + manifest["main"].removeprefix("./") in names
     for item in manifest["contributes"]["viewsContainers"]["activitybar"]:
         assert "extension/" + item["icon"] in names
+    # A missing toolbar image leaves a working command with an invisible button.
+    # Check every declared variant in the actual archive, not just the source tree.
+    for command in manifest["contributes"]["commands"]:
+        command_icon = command.get("icon")
+        if not command_icon or isinstance(command_icon, str) and command_icon.startswith("$("):
+            continue
+        paths = [command_icon] if isinstance(command_icon, str) else [command_icon["light"], command_icon["dark"]]
+        for relative in paths:
+            asset = "extension/" + relative
+            assert asset in names, f"Missing command icon: {relative}"
+            if relative.endswith(".svg"):
+                svg = ElementTree.fromstring(archive.read(asset))
+                assert svg.tag == "{http://www.w3.org/2000/svg}svg", relative
+                viewbox = [float(value) for value in svg.attrib["viewBox"].split()]
+                assert len(viewbox) == 4 and viewbox[2] > 0 and viewbox[3] > 0, relative
     icon = archive.read("extension/" + manifest["icon"])
     assert icon[:8] == b"\x89PNG\r\n\x1a\n"
     width, height = struct.unpack(">II", icon[16:24])
