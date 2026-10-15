@@ -3,6 +3,11 @@
 Only controlled captures and synthetic fixtures belong in this repository.
 Do not add production dumps or logs, even after renaming their package prefixes.
 
+- [`tls-logs/`](tls-logs/README.md) is a ready-to-open selection of 28 real TLS
+  logs from Java 7, 8, 11, 17, 21, 25, 26 and 27. It includes both endpoint
+  perspectives, successful handshakes, certificate failures, mutual TLS and
+  session-reuse attempts. Its manifest links unchanged copies to their original
+  verified JVM reports, hashes and independent workload results.
 - `thread-dumps/real-java-all-1-snapshot.txt` and
   `thread-dumps/real-java-all-3-snapshots.txt` were captured from the standalone
   scenario generator in `tools/thread-dump-generator`. The browser's built-in
