@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.4 — Native navigation
+
+- Remove the repeated website navigation row from VS Code views, while keeping it in the standalone application.
+- Add a permanent Knowledge base shortcut to the sidebar, its … menu and the Command Palette.
+- Keep capture actions, samples, Paste and Help in their analyzer views.
+
 ## 0.3.3 — Analyzer shortcuts
 
 - Name the sidebar view JvmScope Analyses so it is easy to find through View → Open View….

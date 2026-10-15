@@ -39,6 +39,7 @@ test('production extension has both analyzers, offline examples, legal notices a
     for (const page of list) {
         const html = readFileSync(path.join(media, page), 'utf8');
         assert.match(html, /data-jvmscope-page=/);
+        assert.doesNotMatch(html, /class="tool-nav"/, `Website navigation must be absent from ${page}`);
         const rendered = renderWebview(html, { ...options, page, pages: list });
         assert.match(rendered, /Content-Security-Policy/);
         for (const [, resource] of rendered.matchAll(/(?:src|href)="https:\/\/resources.example\/(assets\/[^"#?]+)"/g)) {

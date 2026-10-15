@@ -157,6 +157,7 @@ async function activate(context) {
     register('jvmscope.revealAnalysisItem', id => sidebar.reveal(id));
     register('jvmscope.openTda', async () => { const session = await openPage('/jvmscope/tda.html'); await session.ready; });
     register('jvmscope.openTls', async () => { const session = await openPage('/jvmscope/tls.html'); await session.ready; });
+    register('jvmscope.openKnowledge', async () => { const session = await openPage('/knowledge/index.html'); await session.ready; });
     register('jvmscope.analyzeThreadDump', (uri, selected) => analyze('tda', uri, selected));
     register('jvmscope.analyzeTlsLog', (uri, selected) => analyze('tls', uri, selected));
     context.subscriptions.push({ dispose: () => { for (const session of sessions.values()) session.panel.dispose(); evidence.clear(); } });
