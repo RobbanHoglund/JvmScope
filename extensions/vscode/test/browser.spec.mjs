@@ -263,7 +263,12 @@ for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live theme
             const clock=await host.page.locator('.tls-event-clock time').first().boundingBox();
             const content=await host.page.locator('.tls-event-content').first().boundingBox();
             expect(clock.x+clock.width).toBeLessThanOrEqual(content.x);
-            await host.page.locator('#tlsInspector').scrollIntoViewIfNeeded();
+            const guidance=host.page.locator('.tls-possible-explanation');
+            if(!await guidance.evaluate(el=>el.open))await guidance.locator('summary').click();
+            await expect(guidance.getByRole('heading',{name:'Meaning',exact:true})).toBeVisible();
+            for(const block of await guidance.locator('.tls-explanation-section :is(h3,p,li)').all())await expectReadable(block);
+            expect(await guidance.evaluate(el=>el.scrollWidth)).toBeLessThanOrEqual(await guidance.evaluate(el=>el.clientWidth));
+            await guidance.locator('summary').evaluate(el=>el.scrollIntoView({block:'start'}));
             await host.page.screenshot({path:testInfo.outputPath(`${theme}.png`)});
         }
     }

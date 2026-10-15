@@ -50,7 +50,7 @@ function findExplanationKey(candidates) {
     return null;
 }
 
-export function explainIssueText(issueText) {
+function resolveIssueExplanation(issueText) {
     const text = String(issueText || '').trim().toLowerCase();
     if (!text) return null;
     // Alert origin is independent of the specific reason accompanying the alert.
@@ -79,13 +79,39 @@ export function explainIssueText(issueText) {
     ].find(([observation]) => text.startsWith(observation))?.[1];
     const key = findExplanationKey([localReason, renormalized].filter(Boolean))
         || findExplanationKey([text]) || transportKey;
-    if (key) {
-        const explanation = ISSUE_EXPLANATIONS.get(key)
-            .replaceAll('{AlertEndpoint}', endpoint[0].toUpperCase() + endpoint.slice(1))
-            .replaceAll('{alertEndpoint}', endpoint);
-        return { key, explanation, locallyRaised };
-    }
+    if (key) return { key, endpoint, locallyRaised };
     return locallyRaised
-        ? { key: LOCAL_FATAL_KEY, explanation: LOCAL_FATAL_EXPLANATION, locallyRaised }
+        ? { key: LOCAL_FATAL_KEY, endpoint, locallyRaised }
         : null;
+}
+
+function resolveEndpoint(text, endpoint) {
+    return text.replaceAll('{AlertEndpoint}', endpoint[0].toUpperCase() + endpoint.slice(1))
+        .replaceAll('{alertEndpoint}', endpoint);
+}
+
+export function explainIssueText(issueText) {
+    const match = resolveIssueExplanation(issueText);
+    if (!match) return null;
+    const { key, endpoint, locallyRaised } = match;
+    const explanation = key === LOCAL_FATAL_KEY ? LOCAL_FATAL_EXPLANATION
+        : resolveEndpoint(ISSUE_EXPLANATIONS.get(key), endpoint);
+    return { key, explanation, locallyRaised };
+}
+
+// Present the authored structure directly; keep the plain-text API and copied
+// summaries stable, including the same endpoint attribution and matching order.
+export function explainIssueSections(issueText) {
+    const match = resolveIssueExplanation(issueText);
+    if (!match) return [];
+    if (match.key === LOCAL_FATAL_KEY) {
+        return [{ id: 'meaning', title: 'Meaning', paragraphs: [LOCAL_FATAL_EXPLANATION] }];
+    }
+    return TLS_ISSUE_CATALOG.find(issue => issue.matchKey === match.key).sections.map(section => ({
+        id: section.id,
+        title: section.title,
+        ...(section.paragraphs
+            ? { paragraphs: section.paragraphs.map(text => resolveEndpoint(text, match.endpoint)) }
+            : { bullets: section.bullets.map(text => resolveEndpoint(text, match.endpoint)) }),
+    }));
 }

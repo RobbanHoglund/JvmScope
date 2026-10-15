@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { TLS_ISSUE_CATALOG } from '../../assets/javautils/tls-issue-catalog.js';
-import { ISSUE_EXPLANATIONS, explainIssueText } from '../../assets/javautils/tls-explanations.js';
+import { ISSUE_EXPLANATIONS, explainIssueText, explainIssueSections } from '../../assets/javautils/tls-explanations.js';
 
 // Reviewed text references protect complete explanations, including punctuation
 // and newlines, independently of their structured projection. Intentional content
@@ -53,4 +53,25 @@ test('catalogue entries have unique stable identities and complete presentation 
             }
         }
     }
+});
+
+test('structured presentation preserves every reviewed explanation and endpoint attribution', () => {
+    const originalCatalog = JSON.stringify(TLS_ISSUE_CATALOG);
+    for (const { key } of contract.catalog) {
+        for (const text of [key, `Sent fatal alert: ${key}`, `Received fatal alert: ${key}`,
+            `Fatal (HANDSHAKE_FAILURE): ${key}`, `Fatal (HANDSHAKE_FAILURE): Received fatal alert: ${key}`]) {
+            const sections = explainIssueSections(text);
+            const plain = sections.map(section => [
+                `${section.title}:`, ...(section.paragraphs ?? section.bullets.map(bullet => `• ${bullet}`)),
+            ].join('\n')).join('\n\n');
+            assert.equal(plain, explainIssueText(text).explanation, text);
+            assert.doesNotMatch(plain, /\{[Aa]lertEndpoint\}/);
+        }
+    }
+    const fallback = 'Fatal (INTERNAL_ERROR): Unexpected error';
+    assert.deepEqual(explainIssueSections(fallback), [{
+        id: 'meaning', title: 'Meaning', paragraphs: [explainIssueText(fallback).explanation],
+    }]);
+    for (const unmatched of ['Unexpected error', '', null]) assert.deepEqual(explainIssueSections(unmatched), []);
+    assert.equal(JSON.stringify(TLS_ISSUE_CATALOG), originalCatalog, 'Rendering must not mutate authored templates');
 });

@@ -1,7 +1,7 @@
 import { tlsObservedSequence, tlsDiagnosis, tlsCaptureCoverage } from './tls-sequence-model.js';
 import { certificateAuthoritiesDetailsText, clientCertificateDetailsText, peerHostTooltipBody,
     tlsOutcomeDisplay, tlsDirectionDisplay, tlsMissingFactDisplay, tlsUncertaintyExplanation } from './tls-view-model.js';
-import { explainIssueText } from './tls-explanations.js';
+import { renderTlsExplanation } from './tls-explanation-view.js';
 
 const escape = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
@@ -99,7 +99,7 @@ export function createTlsInspector({ root, onDetails, onStep, copy, hasSource = 
             for (let index = record.rawStart; index < record.rawEnd; index++) sourceLines[index] = record.sourceStart + index - record.rawStart;
         }
         sequence = tlsObservedSequence(it);
-        const explanation = it.outcome === 'failure' ? explainIssueText(it.failureReason) : null;
+        const explanation = it.outcome === 'failure' ? renderTlsExplanation(it.failureReason) : '';
         const uncertainty = tlsUncertaintyExplanation(it);
         const missingFact = tlsMissingFactDisplay(it);
         const span = it.durationMs >= 0 ? elapsed(it.durationMs) : 'Not captured';
@@ -124,7 +124,7 @@ export function createTlsInspector({ root, onDetails, onStep, copy, hasSource = 
             <div class="tls-verdict tls-verdict-${it.outcome}" title="${escape(verdictDetail)}" ><strong>${escape(tlsDiagnosis(it))}</strong>${uncertainty ? `<p tabindex="0" aria-label="Why the outcome is uncertain">${escape(uncertainty)}</p>` : ''}</div>
             <p class="tls-grouping-note">${escape(grouping)}</p>
             <div class="tls-inspector-tabs" role="tablist" aria-label="Interaction evidence"><button type="button" role="tab" id="tlsSequenceTab" aria-controls="tlsSequencePanel" aria-selected="true" data-tab="sequence">Sequence <span>${sequence.length}</span></button><button type="button" role="tab" id="tlsCertificatesTab" aria-controls="tlsCertificatesPanel" aria-selected="false" tabindex="-1" data-tab="certificates">Certificates</button><button type="button" role="tab" id="tlsRawTab" aria-controls="tlsRawPanel" aria-selected="false" tabindex="-1" data-tab="raw">Raw log <span>${it.rawLines.length}</span></button></div>
-            <section class="tls-inspector-panel" id="tlsSequencePanel" role="tabpanel" aria-labelledby="tlsSequenceTab" data-panel="sequence"><p class="tls-sequence-note">File order · UTC. Produced / consumed describe JSSE observations; delivery is not verified.</p><p class="tls-coverage">${escape(tlsCaptureCoverage(it))}</p><ol class="tls-event-list">${events || '<li class="tls-no-events">No attributable handshake events captured. Inspect the raw log for context.</li>'}</ol>${explanation ? `<details class="tls-possible-explanation"><summary>Possible explanations and checks</summary><p class="tls-sequence-note">General guidance for this diagnostic. A cause must be confirmed against the observed evidence.</p><pre>${escape(explanation.explanation)}</pre></details>` : ''}</section>
+            <section class="tls-inspector-panel" id="tlsSequencePanel" role="tabpanel" aria-labelledby="tlsSequenceTab" data-panel="sequence"><p class="tls-sequence-note">File order · UTC. Produced / consumed describe JSSE observations; delivery is not verified.</p><p class="tls-coverage">${escape(tlsCaptureCoverage(it))}</p><ol class="tls-event-list">${events || '<li class="tls-no-events">No attributable handshake events captured. Inspect the raw log for context.</li>'}</ol>${explanation ? `<details class="tls-possible-explanation"><summary>Possible explanations and checks</summary><p class="tls-sequence-note">General guidance for this diagnostic. A cause must be confirmed against the observed evidence.</p>${explanation}</details>` : ''}</section>
             <section class="tls-inspector-panel" id="tlsCertificatesPanel" role="tabpanel" aria-labelledby="tlsCertificatesTab" data-panel="certificates" hidden><h3>Captured certificate information</h3><dl class="tls-certificate-facts"><dt>Peer host</dt><dd>${escape(it.peerHost || missingFact)}<small>${escape(peerHostTooltipBody(it))}</small></dd><dt>Requested name / SNI</dt><dd>${escape(it.sni || missingFact)}</dd><dt>Negotiated cipher</dt><dd>${escape(it.cipherSuite || missingFact)}</dd><dt>Certificate authorities requested by server</dt><dd><pre>${escape(certificateAuthoritiesDetailsText(it))}</pre></dd><dt>Client certificate</dt><dd><pre>${escape(clientCertificateDetailsText(it))}</pre></dd></dl><p class="tls-sequence-note">This summary does not establish certificate validity or peer trust. Full captured certificate records are available in Raw log.</p></section>
             <section class="tls-inspector-panel tls-raw-panel" id="tlsRawPanel" role="tabpanel" aria-labelledby="tlsRawTab" data-panel="raw" hidden><div class="tls-raw-toolbar"><span id="tlsEvidenceLocation">Complete interaction · original source line numbers</span><button class="btn btn-sm" type="button" data-action="copy">Copy raw</button></div><div class="tls-inspector-raw"></div></section>`;
         root.querySelectorAll('.tls-inspector-panel').forEach(panel => { panel.scrollTop = 0; });

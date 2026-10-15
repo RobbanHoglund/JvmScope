@@ -88,6 +88,14 @@ The issue dialog is named for assistive technology and updates `aria-hidden` thr
 
 `tls-explanations.js` keeps the matching tiers, normalization, endpoint resolution and the existing `ISSUE_EXPLANATIONS`/`explainIssueText` exports. It projects structured sections into the existing newline-delimited format. File loading, drop, demonstration, filters, table, details and copied summaries retain their existing paths; no parser, API, shared CSS or persisted data is changed by extraction. The unmatched-issue UI hint now directs users to Details instead of referring to the old catalogue implementation location.
 
+The inspector and issue dialog use `explainIssueSections` through the shared
+`tls-explanation-view.js` renderer for semantic headings, paragraphs and lists.
+Meaning, causes, qualifications and checks retain the catalogue's order and text;
+the plain-text contract above remains unchanged. Browser regressions load a real
+PKIX failure from `testdata/tls-logs/`, check both views and keyboard disclosure,
+and exercise readable explanation text in narrow VS Code editors under all four
+supported theme variants.
+
 `catalog.test.js` checks catalogue identities/section completeness and uses `fixtures/explanation-contract.json` to verify all complete templates and 164 resolver results. The baseline was captured before extraction; three explanation templates were deliberately corrected during the [GA review](GA-REVIEW.md), covering hostname validity/SAN precedence, RSA/ECDHE authentication and configurable algorithm constraints. Content and matching changes must deliberately update this contract after reviewing the changed output; it should not be regenerated merely to silence a failed refactor test.
 
 The integration catalog enumerates expected runtime filenames and fails on missing or untested additions. Tests assert outcome, protocol, selected cipher, direction, SNI/peer semantics, client certificates, requested CAs, time availability, raw text and repeated handshakes. CI needs Node and the regular project JDK; it does not need the other historical JVMs or a live TLS service.
