@@ -17,7 +17,7 @@ const test=base.extend({
                 if(url.pathname==='/view') {
                     const route=url.searchParams.get('page')||'/jvmscope/tda.html';
                     const {name}=webview.resolveRoute(route,pages);
-                    const html=webview.renderWebview(await readFile(resolve(media,name),'utf8'),{page:name,pages,cspSource:origin,resourceUri:name=>origin+'/'+name});
+                    const html=webview.renderWebview(await readFile(resolve(media,name),'utf8'),{page:name,route,pages,cspSource:origin,resourceUri:name=>origin+'/'+name});
                     res.setHeader('Content-Type','text/html');res.end(html);
                 }else{
                     const name=decodeURIComponent(url.pathname.slice(1));
@@ -366,5 +366,40 @@ test('TLS capture replacement and clear retire open evidence and diagnostic dial
     await host.load([{...source,name:'third.log'}]);
     await expect(host.page.locator('#issueModal')).toBeHidden();
     await expect(host.page.locator('#issueModalBody')).toBeEmpty();
+});
+
+test('bundled knowledge articles use their packaged route and preserve Java version links',async({host})=>{
+    await host.open('/knowledge/index.html');
+    await host.page.locator('#knowledgeVersion').selectOption('21');
+    await host.page.locator('.knowledge-card').filter({hasText:'Collect the right thread dump'}).first().click();
+    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/thread-dumps.html?java=21');
+    await host.open('/knowledge/thread-dumps.html?java=21');
+    await expect(host.page.locator('#articleIntro h1')).toHaveText('Collect the right thread dump');
+    await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+    await host.page.locator('#articleVersion').selectOption('25');
+    await host.page.locator('#relatedGuides a[href*="thread-counters"]').click();
+    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/thread-counters.html?java=25');
+    await host.page.locator('#knowledgeBack').click();
+    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/index.html?java=25');
+    await host.open('/knowledge/thread-counters.html?java=21#find=CPU&section=check');
+    await expect(host.page.locator('#articleIntro h1')).toHaveText('CPU, elapsed and allocation: evidence and limits');
+    await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+    await expect(host.page.locator('#articleSearch')).toHaveValue('CPU');
+    expect(await host.page.locator('mark[data-article-match]').count()).toBeGreaterThan(0);
+    await host.page.locator('#articleSearchClear').click();
+    await expect(host.page.locator('mark[data-article-match]')).toHaveCount(0);
+    await host.page.locator('#knowledgeBack').click();
+    const back=host.messages.findLast(m=>m.action==='navigate')?.route;
+    expect(back).toBe('/knowledge/index.html?java=21#find=CPU&section=articleIntro');
+    await host.open(back);
+    await expect(host.page.locator('#knowledgeSearch')).toHaveValue('CPU');
+    await expect(host.page.locator('#knowledgeVersion')).toHaveValue('21');
+    await host.page.locator('#knowledgeSearchClear').click();
+    await expect(host.page.locator('.knowledge-card')).toHaveCount(8);
+    for(const href of await host.page.locator('.knowledge-card').evaluateAll(links=>links.map(a=>a.getAttribute('href')))) {
+        await host.open('/knowledge/'+href.slice(2));
+        await expect(host.page.locator('#articleIntro h1')).toBeVisible();
+        await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+    }
 });
 

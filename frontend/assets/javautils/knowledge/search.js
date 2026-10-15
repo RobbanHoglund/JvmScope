@@ -1,4 +1,5 @@
 import { escapeHtml } from '../tda/ui-safety.js';
+import { getPageUrl, replacePageUrl } from '../host/platform.js';
 
 export const SECTION_TITLES = {
     does:'What it does — and does not do', versions:'Versions, status and defaults',
@@ -78,7 +79,8 @@ export function readSearchFragment(hash) {
     return {query:queryTokens(query).length?query:'',section:validSection(params.get('section'))};
 }
 export function clearSearchFragment() {
-    if(readSearchFragment(location.hash).query){const url=new URL(location.href);url.hash='';history.replaceState(null,'',url);}
+    const url=getPageUrl();
+    if(readSearchFragment(url.hash).query){url.hash='';replacePageUrl(url);}
 }
 
 export function createArticleSearch(root,{query='',section='articleIntro'}={}) {

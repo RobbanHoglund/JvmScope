@@ -5,22 +5,24 @@ import { articleExcerpt, highlightText, queryTokens, matchRanges, createArticleS
 import readme from '../../../../README.md?raw';
 import { escapeHtml as h, escapeAttr as a } from '../tda/ui-safety.js';
 import './knowledge.css';
+import { getPageUrl, replacePageUrl } from '../host/platform.js';
 
 const root=document.getElementById('knowledgeRoot');
 const coverage=parseGeneratedCoverage(readme);
-const article=ARTICLES.find(item=>location.pathname.endsWith(`/${item.id}.html`));
-const params=new URLSearchParams(location.search);
-const initialSearch=readSearchFragment(location.hash);
+const pageUrl=getPageUrl();
+const article=ARTICLES.find(item=>pageUrl.pathname.endsWith(`/${item.id}.html`));
+const params=pageUrl.searchParams;
+const initialSearch=readSearchFragment(pageUrl.hash);
 const selectedVersion=()=>JAVA_VERSIONS.includes(Number(params.get('java')))?Number(params.get('java')):'';
 const versionPath=(path,version)=>JAVA_VERSIONS.includes(Number(version))?`${path}?java=${Number(version)}`:path;
 const revision=typeof __JVMSCOPE_REVISION__==='string'?__JVMSCOPE_REVISION__:null;
 const evidenceUrl=coverageEvidenceUrl(revision);
 
 function rememberVersion(version) {
-    const url=new URL(location.href);
+    const url=getPageUrl();
     if(JAVA_VERSIONS.includes(Number(version))){url.searchParams.set('java',String(Number(version)));params.set('java',String(Number(version)));}
     else {url.searchParams.delete('java');params.delete('java');}
-    history.replaceState(null,'',url);
+    replacePageUrl(url);
 }
 const options=(selected,all=false)=>`${all?'<option value="">All versions</option>':''}${JAVA_VERSIONS.map(v=>`<option value="${v}"${v===Number(selected)?' selected':''}>Java ${v}</option>`).join('')}`;
 

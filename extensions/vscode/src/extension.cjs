@@ -31,7 +31,9 @@ async function activate(context) {
         const { name, hash } = resolveRoute(route, pages);
         const kind = name === 'jvmscope/tda.html' ? 'tda' : name === 'jvmscope/tls.html' ? 'tls' : 'docs';
         let session = sessions.get(kind);
-        if (session && session.page === name) {
+        // Documentation owns its query/search state in the page. Reopening it
+        // must apply the requested version and fragment, including same-page links.
+        if (session && session.page === name && kind !== 'docs') {
             session.panel.reveal();
             if (hash) await session.panel.webview.postMessage({ channel: 'jvmscope', version: 1, type: 'revealHash', hash });
             return session;
@@ -122,7 +124,7 @@ async function activate(context) {
             }
         }, null, context.subscriptions);
         const html = decoder.decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(media, name)));
-        if (!session.disposed) panel.webview.html = renderWebview(html, { page: name, pages, cspSource: panel.webview.cspSource,
+        if (!session.disposed) panel.webview.html = renderWebview(html, { page: name, route, pages, cspSource: panel.webview.cspSource,
             resourceUri: relative => panel.webview.asWebviewUri(vscode.Uri.joinPath(media, relative)).toString() });
         return session;
     }

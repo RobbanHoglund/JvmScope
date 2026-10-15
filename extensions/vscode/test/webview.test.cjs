@@ -18,10 +18,18 @@ test('bundled resources are rewritten; scripts receive a nonce and external capa
 });
 
 test('navigation is limited to packaged pages, with no external origin or query injection', () => {
-    assert.deepEqual(resolveRoute('/knowledge/index.html#references', pages), { name: 'knowledge/index.html', hash: '#references' });
-    for (const value of ['//evil.test/index.html', '/../../etc/passwd', '/assets/capture.txt', '/jvmscope/tda.html?load=file:///x', 'command:x']) {
+    assert.deepEqual(resolveRoute('/knowledge/index.html#references', pages), { name: 'knowledge/index.html', search: '', hash: '#references' });
+    assert.deepEqual(resolveRoute('/knowledge/index.html?java=21#support', pages), { name: 'knowledge/index.html', search: '?java=21', hash: '#support' });
+    for (const value of ['//evil.test/index.html', '/../../etc/passwd', '/assets/capture.txt', '/jvmscope/tda.html?load=file:///x', 'command:x',
+        '/jvmscope/tda.html?java=21', '/knowledge/index.html?java=28', '/knowledge/index.html?java=6',
+        '/knowledge/index.html?java=21&java=25', '/knowledge/index.html?java=21&load=file:///x', '/knowledge/index.html?java=21.0']) {
         assert.throws(() => resolveRoute(value, pages));
     }
+    const html = renderWebview('<head></head><a href="./index.html?java=21#support">Support</a>', {
+        ...options, page: 'knowledge/index.html', route: '/knowledge/index.html?java=25#find=CPU&section=check',
+    });
+    assert.match(html, /name="jvmscope-page" content="\/knowledge\/index.html\?java=25#find=CPU&amp;section=check"/);
+    assert.match(html, /data-host-route="\/knowledge\/index.html\?java=21#support"/);
 });
 
 test('production extension has both analyzers, offline examples, legal notices and self-contained workers', () => {
