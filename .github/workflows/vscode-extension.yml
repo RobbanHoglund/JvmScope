@@ -39,10 +39,14 @@ jobs:
         run: npm test --prefix extensions/vscode
       - name: Webview CSP and browser integration
         run: npx --prefix frontend playwright test --config extensions/vscode/test/playwright.config.mjs
-      - name: Real VS Code extension host
-        run: xvfb-run -a npm run test:integration --prefix extensions/vscode
       - name: Package installable VSIX
         run: npm run package --prefix extensions/vscode
+      - name: Validate the actual Marketplace package
+        run: python3 extensions/vscode/test/package.py
+      - name: Install VSIX and test the minimum VS Code version
+        env:
+          VSCODE_VSIX: build/vscode/jvmscope-0.3.2.vsix
+        run: xvfb-run -a npm run test:integration --prefix extensions/vscode
       - uses: actions/upload-artifact@v4
         with:
           name: jvmscope-vscode
@@ -55,4 +59,48 @@ jobs:
           path: |
             .run/vscode-browser/
             .run/vscode-test/user-data/logs/
+          retention-days: 7
+
+  installed-package:
+    needs: extension
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            vscode: '1.110.0'
+          - os: macos-latest
+            vscode: '1.110.0'
+          - os: ubuntu-latest
+            vscode: stable
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: extensions/vscode/package-lock.json
+      - run: npm ci --prefix extensions/vscode
+      - uses: actions/download-artifact@v4
+        with:
+          name: jvmscope-vscode
+          path: build/vscode
+      - name: Install and exercise the same VSIX on each desktop platform
+        shell: bash
+        env:
+          VSCODE_VERSION: ${{ matrix.vscode }}
+          VSCODE_VSIX: build/vscode/jvmscope-0.3.2.vsix
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a npm run test:integration --prefix extensions/vscode
+          else
+            npm run test:integration --prefix extensions/vscode
+          fi
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: vscode-installed-failures-${{ matrix.os }}-${{ matrix.vscode }}
+          path: .run/vscode-test/user-data/logs/
           retention-days: 7

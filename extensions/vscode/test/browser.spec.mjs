@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import webview from '../src/webview.cjs';
+import protocol from '../src/protocol.cjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const media=resolve(root,'extensions/vscode/media');
 const capture=relative=>readFile(resolve(root,relative),'utf8');
@@ -17,7 +18,7 @@ const test=base.extend({
                 if(url.pathname==='/view') {
                     const route=url.searchParams.get('page')||'/jvmscope/tda.html';
                     const {name}=webview.resolveRoute(route,pages);
-                    const html=webview.renderWebview(await readFile(resolve(media,name),'utf8'),{page:name,pages,cspSource:origin,resourceUri:name=>origin+'/'+name});
+                    const html=webview.renderWebview(await readFile(resolve(media,name),'utf8'),{page:name,route,pages,cspSource:origin,resourceUri:name=>origin+'/'+name});
                     res.setHeader('Content-Type','text/html');res.end(html);
                 }else{
                     const name=decodeURIComponent(url.pathname.slice(1));
@@ -37,7 +38,11 @@ const test=base.extend({
                 if(message.action==='paste')value=clipboard;
                 if(message.action==='copy')clipboard=message.text;
                 if(message.action==='chooseFiles')value=null;
-                const error=message.action==='openSource'?sourceError:undefined;
+                let error=message.action==='openSource'?sourceError:undefined;
+                try {
+                    protocol.validateRequest(message);
+                    if(message.action==='navigate')webview.resolveRoute(message.route,pages);
+                } catch(cause) { error=cause.message; }
                 await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
             }
         });
@@ -220,15 +225,14 @@ async function applyTheme(page,name) {
     await expect.poll(()=>page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe(name.includes('light')?'rgb(255, 255, 255)':name==='vscode-dark'?'rgb(30, 30, 30)':'rgb(0, 0, 0)');
 }
 async function expectReadable(locator) {
-    const ratio=await locator.evaluate(el=>{
+    await expect.poll(()=>locator.evaluate(el=>{
         const rgb=value=>value.match(/[\d.]+/g).slice(0,3).map(Number);
         const luminance=value=>rgb(value).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
         let parent=el,bg;
         while(parent){bg=getComputedStyle(parent).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)')break;parent=parent.parentElement;}
         const a=luminance(getComputedStyle(el).color),b=luminance(bg);
-        return {ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05),fg:getComputedStyle(el).color,bg};
-    });
-    expect(ratio.ratio,JSON.stringify(ratio)).toBeGreaterThanOrEqual(4.5);
+        return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+    })).toBeGreaterThanOrEqual(4.5);
 }
 for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live themes and fits a narrow editor`,async({host},testInfo)=>{
     await host.page.setViewportSize({width:600,height:900});
@@ -343,3 +347,111 @@ test('sidebar metadata is also published for bundled examples and keeps uncertai
     expect((await host.navigation('select',interaction.key)).value).toBe(true);
     await expect(host.page.locator('.tls-no-events')).toBeVisible();
 });
+
+test('TLS capture replacement and clear retire open evidence and diagnostic dialogs',async({host})=>{
+    await host.open('/jvmscope/tls.html');
+    const source={name:'first.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt')};
+    await host.load([source]);
+    await host.page.locator('#tlsInspector [data-action="full"]').click();
+    await expect(host.page.locator('#tlsModal')).toBeVisible();
+    await host.load([{name:'second.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk26-tlsv1.3-success-client.txt')}]);
+    await expect(host.page.locator('#fileName')).toHaveText('second.log');
+    await expect(host.page.locator('#tlsModal')).toBeHidden();
+    await expect(host.page.locator('#tlsModalBody')).toBeEmpty();
+    expect(await host.page.locator('#tlsModalCopyBtn').evaluate(el=>el.onclick)).toBeNull();
+    await host.page.locator('#tlsInspector [data-action="full"]').click();
+    await host.page.locator('#clearBtn').dispatchEvent('click');
+    await expect(host.page.locator('#tlsModal')).toBeHidden();
+    await expect(host.page.locator('#tlsModalBody')).toBeEmpty();
+    await host.load([source]);
+    await host.page.locator('#tlsAllColumns').click();
+    await host.page.locator('#tlsTableBody .explain-btn').first().click();
+    await expect(host.page.locator('#issueModal')).toBeVisible();
+    await host.load([{...source,name:'third.log'}]);
+    await expect(host.page.locator('#issueModal')).toBeHidden();
+    await expect(host.page.locator('#issueModalBody')).toBeEmpty();
+});
+
+test('bundled knowledge articles use their packaged route and preserve Java version links',async({host})=>{
+    await host.open('/knowledge/index.html');
+    await host.page.locator('#knowledgeVersion').selectOption('21');
+    await host.page.locator('.knowledge-card').filter({hasText:'Collect the right thread dump'}).first().click();
+    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/thread-dumps.html?java=21');
+    await host.open('/knowledge/thread-dumps.html?java=21');
+    await expect(host.page.locator('#articleIntro h1')).toHaveText('Collect the right thread dump');
+    await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+    await host.page.locator('#articleVersion').selectOption('25');
+    await host.page.locator('#relatedGuides a[href*="thread-counters"]').click();
+    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/thread-counters.html?java=25');
+    await host.page.locator('#knowledgeBack').click();
+    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/index.html?java=25');
+    await host.open('/knowledge/thread-counters.html?java=21#find=CPU&section=check');
+    await expect(host.page.locator('#articleIntro h1')).toHaveText('CPU, elapsed and allocation: evidence and limits');
+    await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+    await expect(host.page.locator('#articleSearch')).toHaveValue('CPU');
+    expect(await host.page.locator('mark[data-article-match]').count()).toBeGreaterThan(0);
+    await host.page.locator('#articleSearchClear').click();
+    await expect(host.page.locator('mark[data-article-match]')).toHaveCount(0);
+    await host.page.locator('#knowledgeBack').click();
+    const back=host.messages.findLast(m=>m.action==='navigate')?.route;
+    expect(back).toBe('/knowledge/index.html?java=21#find=CPU&section=articleIntro');
+    await host.open(back);
+    await expect(host.page.locator('#knowledgeSearch')).toHaveValue('CPU');
+    await expect(host.page.locator('#knowledgeVersion')).toHaveValue('21');
+    await host.page.locator('#knowledgeSearchClear').click();
+    await expect(host.page.locator('.knowledge-card')).toHaveCount(8);
+    for(const href of await host.page.locator('.knowledge-card').evaluateAll(links=>links.map(a=>a.getAttribute('href')))) {
+        await host.open('/knowledge/'+href.slice(2));
+        await expect(host.page.locator('#articleIntro h1')).toBeVisible();
+        await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+    }
+    await host.open('/knowledge/index.html');
+    const longQuery=Array(128).fill('cpu').join(' ');
+    await host.page.locator('#knowledgeSearch').fill(longQuery);
+    await host.page.locator('.knowledge-card').first().click();
+    const route=host.messages.findLast(m=>m.action==='navigate').route;
+    expect(route.length).toBeGreaterThan(500);
+    // Requests above are checked by the real host validator, including their size.
+    await expect(host.page.locator('#hostError')).toHaveCount(0);
+    protocol.validateRequest({channel:'jvmscope',version:1,type:'request',id:'web:1',action:'navigate',route});
+    await host.open(route);
+    await expect(host.page.locator('#articleSearch')).toHaveValue(longQuery);
+});
+
+test('home and knowledge surfaces remain readable across host themes',async({host},testInfo)=>{
+    await host.page.setViewportSize({width:600,height:900});
+    for(const name of ['index.html','knowledge/thread-dumps.html']) {
+        await host.open('/'+name);
+        for(const theme of Object.keys(themePalettes)) {
+            await applyTheme(host.page,theme);
+            await expectReadable(host.page.locator('h1'));
+            const surfaces=host.page.locator(name==='index.html'?'.hero, .utility-card a, .knowledge a':'.knowledge-find, .knowledge-callout');
+            for(const surface of await surfaces.all()) {
+                // Solid host palette surfaces make the contrast calculation meaningful;
+                // the old dark gradients remained behind light-theme foregrounds.
+                expect(await surface.evaluate(el=>getComputedStyle(el).backgroundImage)).toBe('none');
+                await expectReadable(surface);
+            }
+            if(name==='index.html')await expect(host.page.locator('.privacy strong')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+            await host.page.screenshot({path:testInfo.outputPath(name.replaceAll('/','-')+'-'+theme+'.png')});
+        }
+    }
+});
+
+test('knowledge filters and articles fit narrow VS Code editor splits',async({host},testInfo)=>{
+    const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8')).filter(name=>name.startsWith('knowledge/'));
+    for(const width of [600,360]) {
+        await host.page.setViewportSize({width,height:900});
+        for(const name of pages) {
+            await host.open('/'+name+'?java=21');
+            expect(await host.page.evaluate(()=>document.documentElement.scrollWidth),name).toBeLessThanOrEqual(width);
+        }
+        await host.open('/knowledge/index.html');
+        await host.page.locator('#knowledgeVersion').selectOption('21');
+        await host.page.locator('#knowledgeTopic').selectOption('threads');
+        await host.page.locator('#knowledgeSearch').fill('dump');
+        await expect(host.page.locator('.knowledge-card').first()).toBeVisible();
+        await host.page.screenshot({path:testInfo.outputPath(`knowledge-${width}.png`)});
+    }
+});
+

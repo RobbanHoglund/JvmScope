@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.2 — Publication review
+
+- Retire TLS evidence and diagnostic dialogs when their capture is replaced or cleared.
+- Fix bundled knowledge article navigation, Java version filters, related links and search fragments in VS Code.
+- Apply host themes to home and knowledge surfaces, including light and high-contrast themes.
+- Keep knowledge filters and articles usable in narrow editors and browser windows.
+- Fix the Marketplace documentation link and validate the actual VSIX contents.
+- Install the same release package in real VS Code on Linux, Windows and macOS; cover the minimum and current stable VS Code versions.
+
 ## 0.3.1 — Analyzer menu symbols
 
 - Prefix Analyze as Java Thread Dump with 🧵 and Analyze as Java TLS Log with 🔒 so the two actions are easier to distinguish in context menus and the Command Palette.

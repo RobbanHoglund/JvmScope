@@ -2,6 +2,25 @@ import { test, expect } from './fixtures.js';
 import { ARTICLES, VERIFIED_DATE } from '../../../assets/javautils/knowledge/data.js';
 import { renderBlock, sourceLinks } from '../../../assets/javautils/knowledge/view.js';
 
+test('knowledge controls and long article content remain inside a narrow viewport',async({page,appUrl})=>{
+    await page.setViewportSize({width:360,height:800});
+    for(const name of ['index',...ARTICLES.map(article=>article.id)]) {
+        await page.goto(`${appUrl}/knowledge/${name}.html?java=21`);
+        await expect(page.locator('h1')).toBeVisible();
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth),name).toBeLessThanOrEqual(360);
+        for(const link of await page.locator('.tool-nav a').all()) {
+            const bounds=await link.boundingBox();
+            expect(bounds.x).toBeGreaterThanOrEqual(0);
+            expect(bounds.x+bounds.width).toBeLessThanOrEqual(360);
+        }
+    }
+    await page.goto(`${appUrl}/knowledge/index.html`);
+    await page.locator('#knowledgeVersion').selectOption('21');
+    await page.locator('#knowledgeTopic').selectOption('threads');
+    await page.locator('#knowledgeSearch').fill('dump');
+    await expect(page.locator('.knowledge-card').first()).toBeVisible();
+});
+
 test('knowledge body search opens the matching section, navigates highlights and retains no search text in requests or storage',async({page,context,appUrl})=>{
     await page.goto(`${appUrl}/knowledge/index.html?java=25`);
     const requests=[];context.on('request',r=>requests.push({url:r.url(),body:r.postData()}));

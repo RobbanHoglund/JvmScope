@@ -6,6 +6,19 @@ const pending = new Map();
 let nextId = 0;
 export const isVsCode = () => vscode !== null;
 
+// A webview's location belongs to VS Code, not the bundled document. Keep the
+// logical page URL separate so documentation links, filters and search work in
+// both deliveries without navigating away from the sandboxed webview.
+export function getPageUrl() {
+    const page = vscode && document.querySelector('meta[name="jvmscope-page"]');
+    return page ? new URL(page.content, 'https://jvmscope.invalid') : new URL(location.href);
+}
+export function replacePageUrl(url) {
+    const page = vscode && document.querySelector('meta[name="jvmscope-page"]');
+    if (page) page.content = url.pathname + url.search + url.hash;
+    else history.replaceState(null, '', url);
+}
+
 function send(message) { vscode?.postMessage({ channel, version: 1, ...message }); }
 function request(action, payload = {}) {
     return new Promise((resolve, reject) => {
@@ -41,7 +54,7 @@ export function showHostError(error) {
 export function initializeHostNavigation() {
     if (!vscode) return;
     document.body.dataset.jvmscopeHost = 'vscode';
-    for (const notice of document.querySelectorAll('.analyzer-start-privacy')) {
+    for (const notice of document.querySelectorAll('.analyzer-start-privacy, .privacy strong')) {
         notice.textContent = 'Analyzed locally in VS Code. Nothing is uploaded.';
     }
     window.addEventListener('message', ({ data }) => {
@@ -58,6 +71,12 @@ export function initializeHostNavigation() {
             event.preventDefault(); request('navigate', { route }).catch(showHostError);
         } else if (/^https?:\/\//i.test(href || '')) {
             event.preventDefault(); request('external', { url: href }).catch(showHostError);
+        } else if (href && !href.startsWith('#') && !/^[a-z][a-z0-9+.-]*:/i.test(href)) {
+            event.preventDefault();
+            const url = new URL(href, getPageUrl());
+            if (url.origin === 'https://jvmscope.invalid') {
+                request('navigate', { route: url.pathname + url.search + url.hash }).catch(showHostError);
+            }
         }
     });
     if (!['tda', 'tls'].includes(document.body.dataset.jvmscopePage)) send({ type: 'ready' });

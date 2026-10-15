@@ -1,12 +1,17 @@
 const vscode = require('vscode');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { SourceRegistry } = require('../src/source-navigation.cjs');
 const root = path.resolve(__dirname, '../../..');
 const fixture = relative => vscode.Uri.file(path.join(root, relative));
 exports.run = async () => {
     const extension = vscode.extensions.getExtension('RobbanHoglund.jvmscope');
     assert.ok(extension, 'Extension is installed in the real extension host');
+    if (process.env.JVMSCOPE_TEST_INSTALL_ROOT) {
+        const relative = path.relative(process.env.JVMSCOPE_TEST_INSTALL_ROOT, extension.extensionPath);
+        assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative), 'JvmScope must run from the installed VSIX, not the source folder');
+        assert.equal(extension.packageJSON.version, process.env.JVMSCOPE_TEST_VERSION);
+    }
+    const { SourceRegistry } = require(path.join(extension.extensionPath, 'src/source-navigation.cjs'));
     const api = await extension.activate();
     await vscode.commands.executeCommand('jvmscope.openAnalysis');
     assert.deepEqual(await api.getAnalysisItems('tda'), []);
