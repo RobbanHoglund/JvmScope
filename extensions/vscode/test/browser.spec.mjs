@@ -10,7 +10,7 @@ const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
         const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8'));
-        let origin, clipboard=''; const messages=[];
+        let origin, clipboard='', sourceError=''; const messages=[];
         const server=createServer(async(req,res)=>{
             try {
                 const url=new URL(req.url,origin);
@@ -37,7 +37,8 @@ const test=base.extend({
                 if(message.action==='paste')value=clipboard;
                 if(message.action==='copy')clipboard=message.text;
                 if(message.action==='chooseFiles')value=null;
-                await page.evaluate(({message,value})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value},'*'),{message,value});
+                const error=message.action==='openSource'?sourceError:undefined;
+                await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
             }
         });
         await page.exposeFunction('testCspViolation',value=>violations.push(value));
@@ -45,9 +46,10 @@ const test=base.extend({
             window.acquireVsCodeApi=()=>({postMessage:message=>window.testHostMessage(message)});
             document.addEventListener('securitypolicyviolation',event=>window.testCspViolation(`${event.violatedDirective}: ${event.blockedURI}`));
         });
-        await use({page,origin,messages,clipboard:()=>clipboard,open:async name=>{
+        await use({page,origin,messages,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},open:async name=>{
+            const previous=messages.filter(m=>m.type==='ready').length;
             await page.goto(`${origin}/view?page=${encodeURIComponent(name)}`);
-            await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(0);
+            await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(previous);
         },load:async sources=>{
             const id='test:'+Math.random();
             await page.evaluate(({sources,id})=>window.postMessage({channel:'jvmscope',version:1,type:'load',id,sources},'*'),{sources,id});
@@ -88,7 +90,55 @@ test('VS Code TLS analyzes real JSSE input and uses native copy without network 
     await host.page.locator('#tlsInspector [data-action="full"]').click();
     await host.page.locator('#tlsModalCopyBtn').click();
     await expect.poll(()=>host.clipboard()).not.toBe('');
-    expect(host.messages.filter(m=>m.type==='request').every(m=>['copy'].includes(m.action))).toBe(true);
+    expect(host.messages.filter(m=>m.type==='request').every(m=>['copy','syncSources'].includes(m.action))).toBe(true);
+});
+
+test('VS Code TDA links the selected snapshot to original file lines and reports stale sources in the dialog',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    const dump=(await capture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt')).trim();
+    const text='\n\n'+dump+'\n\n'+dump;
+    const sourceId='11111111-1111-1111-1111-111111111111';
+    await host.load([{name:'same.txt',text,hostSourceId:sourceId}]);
+    await host.page.locator('#dumpSelect').selectOption('1');
+    const row=host.page.locator('#threadTableBody tr').filter({hasText:'Virtual thread #26'});
+    await row.getByRole('button',{name:'Details',exact:true}).click();
+    const button=host.page.locator('#threadModalSourceBtn');
+    await button.click();
+    await expect.poll(()=>host.messages.find(m=>m.action==='openSource')).toBeTruthy();
+    const location=host.messages.find(m=>m.action==='openSource');
+    const lines=text.split('\n');
+    expect(location.sourceId).toBe(sourceId);
+    expect(location.startLine).toBeGreaterThan(dump.split('\n').length);
+    expect(lines[location.startLine-1]).toContain('Mounted virtual thread #26');
+    host.rejectSource('The source has changed since analysis. Analyze the file again.');
+    await button.click();
+    await expect(host.page.locator('#threadModal .host-source-status')).toContainText('changed since analysis');
+    await host.page.locator('#threadModalClose2').click();
+    await host.page.locator('#clearBtn').click();
+    await expect.poll(()=>host.messages.filter(m=>m.action==='syncSources').at(-1)?.sourceIds).toEqual([]);
+    await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#threadTableBody tr').first().getByRole('button',{name:'Details',exact:true}).click();
+    await expect(button).toBeHidden();
+});
+
+test('VS Code TLS sequence and raw lines navigate original physical source coordinates',async({host})=>{
+    await host.open('/jvmscope/tls.html');
+    const text=await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt');
+    const sourceId='22222222-2222-2222-2222-222222222222';
+    await host.load([{name:'tls.log',text,hostSourceId:sourceId}]);
+    const event=host.page.locator('#tlsInspector [data-event]').first();
+    const line=Number((await event.textContent()).match(/\d+/)[0]);
+    await event.click();
+    await expect.poll(()=>host.messages.find(m=>m.action==='openSource')?.startLine).toBe(line);
+    expect(host.messages.find(m=>m.action==='openSource').sourceId).toBe(sourceId);
+    await host.page.locator('#tlsRawTab').click();
+    const raw=host.page.locator('.tls-source-number[data-source-line]').first();
+    const rawLine=Number(await raw.getAttribute('data-source-line'));
+    await expect(raw.locator('..')).toContainText(text.replaceAll('\r\n','\n').split('\n')[rawLine-1]);
+    await raw.click();
+    await expect.poll(()=>host.messages.filter(m=>m.action==='openSource').at(-1)?.startLine).toBe(rawLine);
+    await host.page.locator('#clearBtn').click();
+    await expect.poll(()=>host.messages.filter(m=>m.action==='syncSources').at(-1)?.sourceIds).toEqual([]);
 });
 
 test('VS Code rejects invalid input once and preserves a valid session on an invalid replacement',async({host})=>{

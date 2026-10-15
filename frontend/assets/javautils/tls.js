@@ -1,5 +1,5 @@
 // Java TLS Log Analyzer 
-import { bindHostInputs, writeClipboard } from './host/platform.js';
+import { bindHostInputs, writeClipboard, isVsCode, syncSourceLinks, openSourceLocation } from './host/platform.js';
 
 import { TLS_FAILURE_HIGHLIGHT } from './tls-core.js';
 import { bindAnalyzerStart, renderAnalyzerStart, bindAnalyzerDropZones } from './analyzer-start.js';
@@ -69,6 +69,7 @@ const UI = {
 let allInteractions = [];
 let filteredInteractions = [];
 let lastLoadedText = '';
+let lastLoadedSourceId = null;
 let sortState = { key: 'startTs', dir: 'desc' };
 let directionFilter = 'all';
 let analysisEntries = [];
@@ -76,7 +77,9 @@ let parsedAt = null;
 let selectedInteraction = null;
 let autoSelectInteraction = false;
 const inspector = createTlsInspector({ root: document.getElementById('tlsInspector'),
-    onDetails: openModalForInteraction, onStep: stepInteraction, copy: copyToClipboard });
+    onDetails: openModalForInteraction, onStep: stepInteraction, copy: copyToClipboard,
+    hasSource: () => isVsCode() && Boolean(lastLoadedSourceId),
+    onSource: line => openSourceLocation({ sourceId: lastLoadedSourceId, startLine: line, endLine: line }) });
 const filters = createTlsFilters();
 const analysisView = createTlsAnalysisView({ filters, onChange: () => {
     UI.searchInput.value = filters.search;
@@ -891,6 +894,8 @@ UI.clearBtn.addEventListener('click', () => {
     inputRequestGate.invalidate();
     setLoading(false);
     lastLoadedText = '';
+    lastLoadedSourceId = null;
+    syncSourceLinks([]);
     allInteractions = [];
     selectedInteraction = null;
     filteredInteractions = [];
@@ -967,14 +972,14 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !UI.modal.classList.contains('hidden')) closeDialog(UI.modal);
 });
 
-async function loadFile(file) {
+async function loadFile(file, hostSourceId = null) {
     const requestId = beginInputRequest();
     setLoading(true);
     hideError();
     try {
         const text = await file.text();
         if (!inputRequestGate.isCurrent(requestId)) return;
-        await loadText(text, file.name, requestId);
+        await loadText(text, file.name, requestId, null, hostSourceId);
     } catch (error) {
         if (inputRequestGate.isCurrent(requestId)) {
             showError(`Could not read file: ${error?.message || String(error)}`);
@@ -984,7 +989,7 @@ async function loadFile(file) {
     }
 }
 
-async function loadText(text, name, requestId = beginInputRequest(), exampleAnalysis = null) {
+async function loadText(text, name, requestId = beginInputRequest(), exampleAnalysis = null, hostSourceId = null) {
     if (!inputRequestGate.isCurrent(requestId)) return;
     setLoading(true);
     hideError();
@@ -996,6 +1001,8 @@ async function loadText(text, name, requestId = beginInputRequest(), exampleAnal
         if (!prepared || !inputRequestGate.isCurrent(requestId)) return;
         const { analysis, entries } = prepared;
         lastLoadedText = text;
+        lastLoadedSourceId = hostSourceId;
+        syncSourceLinks(hostSourceId ? [hostSourceId] : []);
         UI.fileName.textContent = name;
         UI.fileName.title = name;
         allInteractions = analysis.interactions;
@@ -1077,7 +1084,7 @@ bindHostInputs({
     fileInput: UI.fileInput,
     onSources: async sources => {
         if (sources.length !== 1) throw new Error('Choose one TLS log at a time.');
-        await loadFile({ name: sources[0].name, text: async () => sources[0].text });
+        await loadFile({ name: sources[0].name, text: async () => sources[0].text }, sources[0].hostSourceId);
         return { interactions: allInteractions.length };
     },
 });

@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const { randomUUID } = require('node:crypto');
 const { renderWebview, resolveRoute } = require('./webview.cjs');
 const { MAX_BYTES, isMessage, validateRequest, readSources } = require('./protocol.cjs');
+const { SourceRegistry } = require('./source-navigation.cjs');
 const decoder = new TextDecoder();
 const titles = { tda: 'JvmScope · Thread dumps', tls: 'JvmScope · TLS logs', docs: 'JvmScope · Knowledge' };
 
@@ -33,17 +34,19 @@ async function activate(context) {
             enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [media], enableFindWidget: true,
         });
         const id = randomUUID();
+        const sources = new SourceRegistry(vscode);
         let readyResolve, readyReject;
         const ready = new Promise((resolve, reject) => { readyResolve = resolve; readyReject = reject; });
         // A user may close a loading panel before a command starts waiting for it.
         ready.catch(() => {});
         const readyTimer = setTimeout(() => readyReject(new Error('JvmScope did not finish loading. Close and reopen the view.')), 30_000);
-        session = { panel, page: name, owner: id, ready, disposed: false, loads: new Map(), nextLoad: 0, requests: new Set() };
+        session = { panel, page: name, owner: id, sources, ready, disposed: false, loads: new Map(), nextLoad: 0, requests: new Set() };
         sessions.set(kind, session);
         panel.onDidDispose(() => {
             session.disposed = true; clearTimeout(readyTimer); readyReject(new Error('The analysis view closed.'));
             for (const job of session.loads.values()) { clearTimeout(job.timer); job.reject(new Error('The analysis view closed.')); }
             session.loads.clear(); clearEvidence(id);
+            sources.dispose();
             if (sessions.get(kind) === session) sessions.delete(kind);
         }, null, context.subscriptions);
         const reply = message => panel.webview.postMessage({ channel: 'jvmscope', version: 1, ...message });
@@ -55,8 +58,10 @@ async function activate(context) {
                     const uris = await vscode.window.showOpenDialog({ canSelectMany: kind === 'tda', canSelectFolders: false,
                         openLabel: kind === 'tda' ? 'Analyze thread dumps' : 'Analyze TLS log',
                         filters: { 'Capture files': ['txt', 'log', 'json', 'dump', 'tdump'], 'All files': ['*'] } });
-                    return uris ? readSources(vscode, uris, kind) : null;
+                    return uris ? readSources(vscode, uris, kind, sources.register.bind(sources)) : null;
                 }
+                case 'syncSources': sources.activate(message.sourceIds); return true;
+                case 'openSource': return sources.open(message);
                 case 'copy': await vscode.env.clipboard.writeText(message.text); return true;
                 case 'clearRaw': clearEvidence(id); return true;
                 case 'paste': {
@@ -111,9 +116,9 @@ async function activate(context) {
         const uris = Array.isArray(selected) && selected.length ? selected : uri ? [uri]
             : vscode.window.activeTextEditor ? [vscode.window.activeTextEditor.document.uri] : null;
         if (!uris) throw new Error('Open a capture in the editor or select it in Explorer first.');
-        const sources = await readSources(vscode, uris, kind);
-        if (sequences.get(kind) !== sequence) return { cancelled: true };
         const session = await openPage(`/jvmscope/${kind}.html`);
+        const sources = await readSources(vscode, uris, kind, session.sources.register.bind(session.sources));
+        if (sequences.get(kind) !== sequence || session.disposed) return { cancelled: true };
         await session.ready;
         if (sequences.get(kind) !== sequence || session.disposed) return { cancelled: true };
         clearEvidence(session.owner);

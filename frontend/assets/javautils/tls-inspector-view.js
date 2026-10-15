@@ -8,7 +8,7 @@ const escape = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll(
 const time = epoch => epoch == null ? 'No clock' : new Date(epoch).toISOString().slice(11, 23);
 const elapsed = ms => ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(2)} s`;
 
-export function createTlsInspector({ root, onDetails, onStep, copy }) {
+export function createTlsInspector({ root, onDetails, onStep, copy, hasSource = () => false, onSource }) {
     let selected = null, sequence = [], activeTab = 'sequence', rawRendered = false;
     let sourceLines = [];
     function activateTab(name, focus = false) {
@@ -22,7 +22,9 @@ export function createTlsInspector({ root, onDetails, onStep, copy }) {
         root.querySelectorAll('[role="tabpanel"]').forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
         if (name === 'raw' && !rawRendered) {
             const lines = root.querySelector('.tls-inspector-raw');
-            lines.innerHTML = selected.rawLines.map((line, index) => `<div class="tls-source-row" data-raw-index="${index}" tabindex="-1"><span class="tls-source-number">${sourceLine(index)}</span><span class="rawline">${escape(line)}</span></div>`).join('');
+            lines.innerHTML = selected.rawLines.map((line, index) => `<div class="tls-source-row" data-raw-index="${index}" tabindex="-1">${hasSource() && Number.isSafeInteger(sourceLine(index))
+                ? `<button type="button" class="tls-source-number" data-source-line="${sourceLine(index)}" aria-label="Open source line ${sourceLine(index)} in VS Code">${sourceLine(index)}</button>`
+                : `<span class="tls-source-number">${sourceLine(index)}</span>`}<span class="rawline">${escape(line)}</span></div>`).join('');
             rawRendered = true;
         }
     }
@@ -43,7 +45,19 @@ export function createTlsInspector({ root, onDetails, onStep, copy }) {
         const button = event.target.closest('button');
         if (!button || !selected) return;
         if (button.dataset.tab) activateTab(button.dataset.tab);
-        if (button.dataset.event != null) showRaw(sequence[Number(button.dataset.event)].rawIndex);
+        let source = button.dataset.sourceLine ? Number(button.dataset.sourceLine) : null;
+        if (button.dataset.event != null) {
+            const item = sequence[Number(button.dataset.event)];
+            if (hasSource()) source = item.sourceLine;
+            else showRaw(item.rawIndex);
+        }
+        if (source != null && hasSource()) {
+            const status = root.querySelector('.host-source-status');
+            status.textContent = ''; button.disabled = true;
+            try { await onSource(source); }
+            catch (error) { if (status.isConnected) status.textContent = error.message; }
+            finally { if (button.isConnected) button.disabled = false; }
+        }
         if (button.dataset.step) onStep(Number(button.dataset.step));
         if (button.dataset.action === 'full') onDetails(selected.id);
         if (button.dataset.action === 'copy') {
@@ -102,7 +116,7 @@ export function createTlsInspector({ root, onDetails, onStep, copy }) {
         const events = sequence.map((item, index) => {
             const flow = ['Produced', 'Sent'].includes(item.action) ? 'Local JVM → peer' : ['Consumed', 'Received'].includes(item.action) ? 'Peer → local JVM' : 'Local observation';
             const title = item.action === 'Received' ? item.title.replace(/^Received /, '') : item.action === 'Sent' ? item.title.replace(/^Sent /, '') : item.title;
-            return `<li class="tls-event tls-event-${item.kind}"><div class="tls-event-clock"><time title="${escape(item.tsRaw || 'Timestamp not captured')}">${time(item.epochMillis)}</time></div><div class="tls-event-content"><div class="tls-event-title"><span class="tls-event-action">${escape(item.action)}</span><strong>${escape(title)}</strong></div><span class="tls-event-flow">${flow}${item.postHandshake ? ' · after completion' : ''}</span></div><button type="button" class="tls-evidence-link" data-event="${index}" aria-label="Show source line ${item.sourceLine}">L${item.sourceLine} ↗</button></li>`;
+            return `<li class="tls-event tls-event-${item.kind}"><div class="tls-event-clock"><time title="${escape(item.tsRaw || 'Timestamp not captured')}">${time(item.epochMillis)}</time></div><div class="tls-event-content"><div class="tls-event-title"><span class="tls-event-action">${escape(item.action)}</span><strong>${escape(title)}</strong></div><span class="tls-event-flow">${flow}${item.postHandshake ? ' · after completion' : ''}</span></div><button type="button" class="tls-evidence-link" data-event="${index}" aria-label="${hasSource() ? 'Open' : 'Show'} source line ${item.sourceLine}${hasSource() ? ' in VS Code' : ''}">L${item.sourceLine} ↗</button></li>`;
         }).join('');
         root.innerHTML = `
             <header class="tls-inspector-header"><div><span class="tls-eyebrow">Interaction #${it.id}</span><h2>${escape(it.peerHost || it.sni || `Endpoint: ${missingFact.toLowerCase()}`)}</h2></div><div class="tls-inspector-navigation"><button class="btn btn-sm" data-step="-1" type="button" aria-label="Previous interaction" ${position <= 0 ? 'disabled' : ''}>↑</button><button class="btn btn-sm" data-step="1" type="button" aria-label="Next interaction" ${position >= count - 1 ? 'disabled' : ''}>↓</button><button class="btn btn-sm" data-action="full" type="button">Full details</button></div></header>
@@ -114,6 +128,16 @@ export function createTlsInspector({ root, onDetails, onStep, copy }) {
             <section class="tls-inspector-panel" id="tlsCertificatesPanel" role="tabpanel" aria-labelledby="tlsCertificatesTab" data-panel="certificates" hidden><h3>Captured certificate information</h3><dl class="tls-certificate-facts"><dt>Peer host</dt><dd>${escape(it.peerHost || missingFact)}<small>${escape(peerHostTooltipBody(it))}</small></dd><dt>Requested name / SNI</dt><dd>${escape(it.sni || missingFact)}</dd><dt>Negotiated cipher</dt><dd>${escape(it.cipherSuite || missingFact)}</dd><dt>Certificate authorities requested by server</dt><dd><pre>${escape(certificateAuthoritiesDetailsText(it))}</pre></dd><dt>Client certificate</dt><dd><pre>${escape(clientCertificateDetailsText(it))}</pre></dd></dl><p class="tls-sequence-note">This summary does not establish certificate validity or peer trust. Full captured certificate records are available in Raw log.</p></section>
             <section class="tls-inspector-panel tls-raw-panel" id="tlsRawPanel" role="tabpanel" aria-labelledby="tlsRawTab" data-panel="raw" hidden><div class="tls-raw-toolbar"><span id="tlsEvidenceLocation">Complete interaction · original source line numbers</span><button class="btn btn-sm" type="button" data-action="copy">Copy raw</button></div><div class="tls-inspector-raw"></div></section>`;
         root.querySelectorAll('.tls-inspector-panel').forEach(panel => { panel.scrollTop = 0; });
+        if (hasSource()) {
+            const status = document.createElement('output');
+            status.className = 'host-source-status'; status.setAttribute('role', 'alert'); root.append(status);
+            const firstLine = sourceLines.find(Number.isSafeInteger);
+            if (firstLine) {
+                const button = document.createElement('button'); button.className = 'btn btn-sm'; button.type = 'button';
+                button.dataset.sourceLine = String(firstLine); button.textContent = 'Open source';
+                root.querySelector('.tls-inspector-navigation').append(button);
+            }
+        }
         root.querySelectorAll('[role="tabpanel"]').forEach(panel => { panel.tabIndex = 0; });
     }
     return { render };

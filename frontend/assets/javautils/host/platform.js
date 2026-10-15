@@ -84,6 +84,23 @@ export const writeClipboard = text => vscode ? request('copy', { text }) : navig
 export const readClipboard = () => vscode ? request('paste') : navigator.clipboard.readText();
 export const openRawEvidence = (text, name) => request('openRaw', { text, name });
 export const invalidateHostEvidence = () => { if (vscode) request('clearRaw').catch(showHostError); };
+export const syncSourceLinks = sourceIds => { if (vscode) request('syncSources', { sourceIds: sourceIds.filter(Boolean) }).catch(showHostError); };
+export const openSourceLocation = location => request('openSource', location);
+
+export function bindSourceButton(button, location) {
+    if (!button) return;
+    button.hidden = !vscode || !location;
+    button.disabled = false;
+    const status = button.parentElement.querySelector('.host-source-status');
+    if (status) status.textContent = '';
+    button.onclick = async () => {
+        if (!vscode || !location) return;
+        button.disabled = true;
+        try { await openSourceLocation(location); }
+        catch (error) { if (status && button.isConnected) status.textContent = error.message; }
+        finally { if (button.isConnected) button.disabled = false; }
+    };
+}
 
 export async function saveBlob(blob, name) {
     if (vscode) {

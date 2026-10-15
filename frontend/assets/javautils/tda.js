@@ -1,5 +1,6 @@
 import { describeLockCoverage } from './tda/lock-coverage.js';
-import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence } from './host/platform.js';
+import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence, syncSourceLinks, bindSourceButton } from './host/platform.js';
+import { threadSourceLocation } from './tda/source-location.js';
 import { formatAllocationMetric } from './tda/allocation-metrics.js';
 import { scoreRunnableStackSimilarityDetailed, normalizeRunnableCompareLine } from './tda/analysis.js';
 import { createAnalysisClient } from './tda/analysis-client.js';
@@ -4074,6 +4075,8 @@ function openThreadModal(thread, sourceElement = document.activeElement) {
     UI.modalCopyBtn.textContent = 'Copy raw thread block';
     UI.modalCopyBtn.dataset.copy = model.rawText;
     UI.modalCopyBtn.disabled = !model.hasOriginal;
+    bindSourceButton(document.getElementById('threadModalSourceBtn'),
+        threadSourceLocation(parsedDumps[selectedDumpIndex], thread, sessionSources));
 
     UI.modal.classList.remove('hidden');
     UI.modal.setAttribute('aria-hidden', 'false');
@@ -4288,6 +4291,7 @@ function queueSessionImport(read, mode = UI.inputMode?.value || 'append') {
                 clearRunnableClusterTableFocus();
             }
             sessionSources = candidates.filter((_, index) => result.sourceResults[index].accepted);
+            syncSourceLinks(sessionSources.map(source => source.hostSourceId));
             selectedDumpIndex = oldCount;
             applySessionAnalysis(result);
             const count = additions.reduce((total, source) => total + source.snapshotCount, 0);
@@ -4634,6 +4638,7 @@ UI.howToUseModal?.addEventListener('cancel', (event) => {
 UI.clearBtn?.addEventListener('click', () => {
     cancelSessionInputs();
     sessionSources = [];
+    syncSourceLinks([]);
     showSessionInputStatus('');
 
     parsedDumps = [];
