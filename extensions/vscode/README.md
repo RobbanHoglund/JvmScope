@@ -124,4 +124,4 @@ account before a public release.
 Further work can add carefully scoped Problems diagnostics, opt-in refresh after
 edits, and session serialization with clear privacy choices. These features should use
 the same parsers and rule models; a dump observation must never become a stronger
-claim merely because it appears in VS Code. See [the implementation plan](../../docs/VSCODE.md).
+claim merely because it appears in VS Code. See [the implementation plan](https://github.com/RobbanHoglund/JvmScope/blob/main/docs/VSCODE.md).

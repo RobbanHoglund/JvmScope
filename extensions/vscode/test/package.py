@@ -1,0 +1,78 @@
+"""Validate the actual VSIX (including Markdown rewritten by vsce).
+
+Run with Python 3 after `npm run package --prefix extensions/vscode`.
+Only the standard library is used; this gate runs on the packaging job.
+"""
+import hashlib
+import json
+import posixpath
+import re
+import struct
+import sys
+import zipfile
+from html.parser import HTMLParser
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+from xml.etree import ElementTree
+
+extension = Path(__file__).resolve().parents[1]
+root = extension.parents[1]
+expected = json.loads((extension / "package.json").read_text())
+package = Path(sys.argv[1]) if len(sys.argv) > 1 else root / "build/vscode" / f"jvmscope-{expected['version']}.vsix"
+
+with zipfile.ZipFile(package) as archive:
+    names = set(archive.namelist())
+    assert len(names) == len(archive.namelist()), "Duplicate ZIP entries"
+    assert not any(".." in name.split("/") or name.startswith("/") for name in names)
+    assert all(name in {"extension.vsixmanifest", "[Content_Types].xml"} or re.fullmatch(
+        r"extension/(?:package\.json|readme\.md|changelog\.md|LICENSE\.txt|NOTICE|THIRD-PARTY-NOTICES\.md|icon\.png|(?:src|media|resources)/.+)", name
+    ) for name in names), "Unexpected development files in the release package"
+    manifest = json.loads(archive.read("extension/package.json"))
+    for key in ["name", "publisher", "version", "engines", "preview"]:
+        assert manifest[key] == expected[key], f"Wrong packaged {key}"
+    assert not manifest.get("dependencies"), "Runtime dependencies need a new packaging review"
+    assert "extension/" + manifest["main"].removeprefix("./") in names
+    for item in manifest["contributes"]["viewsContainers"]["activitybar"]:
+        assert "extension/" + item["icon"] in names
+    icon = archive.read("extension/" + manifest["icon"])
+    assert icon[:8] == b"\x89PNG\r\n\x1a\n"
+    width, height = struct.unpack(">II", icon[16:24])
+    assert width == height and width >= 128
+    assert b"Apache License" in archive.read("extension/LICENSE.txt")
+    assert archive.read("extension/NOTICE")
+    assert archive.read("extension/THIRD-PARTY-NOTICES.md")
+    xml = ElementTree.fromstring(archive.read("extension.vsixmanifest"))
+    identity = xml.find(".//{*}Identity")
+    assert identity.attrib["Id"] == expected["name"]
+    assert identity.attrib["Publisher"] == expected["publisher"]
+    assert identity.attrib["Version"] == expected["version"]
+    readme = archive.read("extension/readme.md").decode()
+    assert "https://github.com/RobbanHoglund/JvmScope/blob/main/docs/VSCODE.md" in readme
+    for document in [readme, archive.read("extension/changelog.md").decode()]:
+        for image, target in re.findall(r"(!?)\[[^\]]*\]\(([^)]+)\)", document):
+            url = urlsplit(target)
+            assert ".." not in unquote(url.path).split("/"), f"Malformed Marketplace link: {target}"
+            if image:
+                assert url.scheme == "https" and not url.path.lower().endswith(".svg"), target
+
+    class Assets(HTMLParser):
+        def handle_starttag(self, tag, attributes):
+            for key, value in attributes:
+                if key not in {"src", "href"} or not value:
+                    continue
+                url = urlsplit(value)
+                if url.scheme or url.netloc or not url.path:
+                    continue
+                asset = posixpath.normpath(posixpath.join(posixpath.dirname(self.page), url.path))
+                if asset.startswith("assets/"):
+                    assert "extension/media/" + asset in names, f"Missing resource: {asset}"
+
+    pages = json.loads(archive.read("extension/media/pages.json"))
+    assert {"index.html", "jvmscope/tda.html", "jvmscope/tls.html", "knowledge/index.html"} <= set(pages)
+    for page in pages:
+        parser = Assets()
+        parser.page = page
+        parser.feed(archive.read("extension/media/" + page).decode())
+
+digest = hashlib.sha256(package.read_bytes()).hexdigest()
+print(f"PASS: {package.name}: {len(names)} entries, {len(pages)} pages, {width}x{height} icon, valid assets, legal notices and Marketplace links. SHA-256: {digest}")
