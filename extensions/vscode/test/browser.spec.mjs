@@ -198,3 +198,64 @@ test('VS Code previews findings and exports Markdown, HTML and graph PNG through
         expect(report).not.toContain('Dependencies on ForkJoinPool-1-worker-1');
     }
 });
+
+const themePalettes={
+    'vscode-dark': {bg:'#1e1e1e',fg:'#d4d4d4',surface:'#252526',muted:'#aaaaaa',border:'#454545',link:'#75beff',selection:'#094771',selected:'#ffffff',error:'#f48771',warning:'#cca700',success:'#73c991'},
+    'vscode-light': {bg:'#ffffff',fg:'#333333',surface:'#f3f3f3',muted:'#616161',border:'#767676',link:'#005fb8',selection:'#0060c0',selected:'#ffffff',error:'#b5200d',warning:'#795e00',success:'#176f2c'},
+    'vscode-high-contrast': {bg:'#000000',fg:'#ffffff',surface:'#000000',muted:'#ffffff',border:'#ffffff',link:'#21a6ff',selection:'#000000',selected:'#ffffff',error:'#ff6373',warning:'#ffdf00',success:'#89d185'},
+    'vscode-high-contrast-light': {bg:'#ffffff',fg:'#000000',surface:'#ffffff',muted:'#292929',border:'#292929',link:'#0f4a85',selection:'#0f4a85',selected:'#ffffff',error:'#b5200d',warning:'#795e00',success:'#176f2c'},
+};
+async function applyTheme(page,name) {
+    await page.evaluate(({name,p})=>{
+        document.body.classList.remove('vscode-dark','vscode-light','vscode-high-contrast','vscode-high-contrast-light');
+        document.body.classList.add(name);
+        const values={'editor-background':p.bg,'editor-foreground':p.fg,'sideBar-background':p.surface,'editorWidget-background':p.surface,'descriptionForeground':p.muted,'panel-border':p.border,'contrastBorder':p.border,'textLink-foreground':p.link,'focusBorder':p.link,'input-background':p.bg,'input-foreground':p.fg,'button-secondaryBackground':p.surface,'button-secondaryForeground':p.fg,'list-activeSelectionBackground':p.selection,'list-activeSelectionForeground':p.selected,'errorForeground':p.error,'editorWarning-foreground':p.warning,'testing-iconPassed':p.success,'editor-findMatchHighlightBackground':p.surface};
+        for(const [key,value] of Object.entries(values))document.documentElement.style.setProperty('--vscode-'+key,value);
+    },{name,p:themePalettes[name]});
+    await expect.poll(()=>page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe(name.includes('light')?'rgb(255, 255, 255)':name==='vscode-dark'?'rgb(30, 30, 30)':'rgb(0, 0, 0)');
+}
+async function expectReadable(locator) {
+    const ratio=await locator.evaluate(el=>{
+        const rgb=value=>value.match(/[\d.]+/g).slice(0,3).map(Number);
+        const luminance=value=>rgb(value).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+        let parent=el,bg;
+        while(parent){bg=getComputedStyle(parent).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)')break;parent=parent.parentElement;}
+        const a=luminance(getComputedStyle(el).color),b=luminance(bg);
+        return {ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05),fg:getComputedStyle(el).color,bg};
+    });
+    expect(ratio.ratio,JSON.stringify(ratio)).toBeGreaterThanOrEqual(4.5);
+}
+for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live themes and fits a narrow editor`,async({host},testInfo)=>{
+    await host.page.setViewportSize({width:600,height:900});
+    await host.open(`/jvmscope/${analyzer}.html`);
+    await applyTheme(host.page,'vscode-light');
+    await expectReadable(host.page.locator('.analyzer-start h2'));
+    const text=await capture(analyzer==='tda'?'frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt':'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt');
+    await host.load([{name:'theme-test.txt',text,hostSourceId:'33333333-3333-3333-3333-333333333333'}]);
+    const rows=host.page.locator(analyzer==='tda'?'#threadTableBody tr':'#tlsTableBody tr');
+    const count=await rows.count();expect(count).toBeGreaterThan(0);
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(host.page,theme);
+        await expect(rows).toHaveCount(count);
+        expect(await host.page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(600);
+        await expectReadable(host.page.locator('#fileName'));
+        await host.page.keyboard.press('Tab');
+        await host.page.locator('#clearBtn').focus();
+        expect(await host.page.locator('#clearBtn').evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+        if(analyzer==='tda') {
+            await rows.first().getByRole('button',{name:'Details',exact:true}).click();
+            await expectReadable(host.page.locator('#threadModalSourceBtn'));
+            const evidence=await host.page.locator('.thread-details-evidence').boundingBox();
+            expect(evidence.width).toBeGreaterThan(500);
+            await host.page.screenshot({path:testInfo.outputPath(`${theme}.png`)});
+            await host.page.locator('#threadModalClose2').click();
+        }else {
+            await expectReadable(host.page.locator('.tls-event-title').first());
+            const clock=await host.page.locator('.tls-event-clock time').first().boundingBox();
+            const content=await host.page.locator('.tls-event-content').first().boundingBox();
+            expect(clock.x+clock.width).toBeLessThanOrEqual(content.x);
+            await host.page.locator('#tlsInspector').scrollIntoViewIfNeeded();
+            await host.page.screenshot({path:testInfo.outputPath(`${theme}.png`)});
+        }
+    }
+});
