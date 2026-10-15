@@ -4,14 +4,14 @@ Investigate **Java thread dumps** and **Java TLS/SSL logs (JSSE)** inside VS Cod
 same analysis engines as JvmScope's browser application. No Java installation,
 server, account or external analysis service is needed.
 
-This is the **0.2 editor integration preview**. The two analyzers are bundled webviews with native
+This is the **0.3 native sidebar preview**. The two analyzers are bundled webviews with native
 file opening, clipboard, read-only raw evidence and export dialogs. The package
 also contains the searchable help, examples and knowledge base.
 
 ## Install the preview
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
-2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.2.2.vsix`.
+2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.1.vsix`.
 3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
 
 Alternatively, build the package using the instructions below. Requires VS Code
@@ -20,7 +20,7 @@ in this first version.
 
 ## Analyze captures
 
-- Right-click a capture in Explorer and choose **Analyze as Java Thread Dump** or **Analyze as Java TLS Log**.
+- Right-click a capture in Explorer and choose **🧵 Analyze as Java Thread Dump** or **🔒 Analyze as Java TLS Log**.
 - Select several thread dump files to compare snapshots. TLS analysis opens one log at a time.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
 - Inside an analyzer, use **Choose dumps / Choose log** to open the native file picker, or try the bundled examples.
@@ -32,6 +32,27 @@ if memory use becomes excessive. Inputs are analyzed on demand: later edits to a
 file do not silently change the current analysis. A new **Analyze as…** command
 replaces that analyzer's input; TDA's in-view Add/Replace control still applies to
 its file picker and Paste actions.
+
+## Browse analyses in the sidebar
+
+Open **JvmScope** in the Activity Bar, or run **JvmScope: Open Analysis Sidebar**.
+The two roots open the Java thread dump and Java TLS analyzers. The view's toolbar
+also opens either analyzer.
+
+- **Java thread dumps:** expand a source file, then a snapshot, then its threads.
+  Select a thread to open its details in the correct snapshot, even when names repeat.
+- **Java TLS logs:** expand the file, an interaction, then its observed events.
+  Select an event to show and highlight it in the investigation sequence. This
+  switches to investigation mode and clears table filters if they hide that interaction.
+- Long branches show 100 items at a time; expand **More (…)** for the next page.
+  The sidebar shows the whole loaded analysis, independently of table filters.
+- Clear, replace or close an analyzer to update its tree. An invalid TDA replacement
+  preserves the existing analysis. Old items cannot select objects in a new capture.
+
+The tree uses the same uncertainty qualifications as the analyzers. In particular,
+ambiguous legacy TLS grouping does not produce a single-connection event sequence.
+Items represent captured observations; they are not live JVM threads or connections.
+The sidebar also works with bundled examples and pasted captures.
 
 ## Navigate to source
 
@@ -100,8 +121,7 @@ account before a public release.
 
 ## Next stage
 
-Further work can add an analysis/results tree, carefully scoped Problems
-diagnostics, opt-in refresh after edits, and session serialization with clear
-privacy choices. These features should use
+Further work can add carefully scoped Problems diagnostics, opt-in refresh after
+edits, and session serialization with clear privacy choices. These features should use
 the same parsers and rule models; a dump observation must never become a stronger
 claim merely because it appears in VS Code. See [the implementation plan](../../docs/VSCODE.md).

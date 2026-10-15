@@ -10,7 +10,7 @@ const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
         const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8'));
-        let origin, clipboard='', sourceError=''; const messages=[];
+        let origin, clipboard='', sourceError='', nextNavigation=0; const messages=[];
         const server=createServer(async(req,res)=>{
             try {
                 const url=new URL(req.url,origin);
@@ -50,6 +50,11 @@ const test=base.extend({
             const previous=messages.filter(m=>m.type==='ready').length;
             await page.goto(`${origin}/view?page=${encodeURIComponent(name)}`);
             await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(previous);
+        },navigation:async(action,key='',offset=0,revision=messages.findLast(m=>m.type==='navigationState')?.revision)=>{
+            const id=`nav:${++nextNavigation}`;
+            await page.evaluate(message=>window.postMessage(message,'*'),{channel:'jvmscope',version:1,type:'navigationRequest',id,revision,action,key,offset});
+            await expect.poll(()=>messages.find(m=>m.type==='navigationResult'&&m.id===id)).toBeTruthy();
+            return messages.find(m=>m.type==='navigationResult'&&m.id===id);
         },load:async sources=>{
             const id='test:'+Math.random();
             await page.evaluate(({sources,id})=>window.postMessage({channel:'jvmscope',version:1,type:'load',id,sources},'*'),{sources,id});
@@ -258,4 +263,83 @@ for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live theme
             await host.page.screenshot({path:testInfo.outputPath(`${theme}.png`)});
         }
     }
+});
+
+
+test('sidebar selects the exact thread snapshot despite duplicate names and active filters, and revokes old keys',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    const sources=await Promise.all(['allocation-before.txt','allocation-after.txt'].map(async name=>({name:'dump.txt',text:await capture('frontend/test/tda/fixtures/ga-regressions/'+name)})));
+    await host.load(sources);
+    const revision=host.messages.findLast(m=>m.type==='navigationState').revision;
+    const files=(await host.navigation('children')).value.items;
+    expect(files.map(x=>x.label)).toEqual(['dump.txt','dump.txt']);
+    const snapshot=(await host.navigation('children',files[1].key)).value.items[0];
+    const threads=(await host.navigation('children',snapshot.key)).value.items;
+    const thread=threads.find(x=>x.label==='audit-allocation-boundary');
+    await host.page.locator('#dumpSelect').selectOption('0');
+    await host.page.locator('#searchInput').fill('does-not-match-any-thread');
+    await expect(host.page.locator('#threadTableBody tr')).toHaveCount(0);
+    expect((await host.navigation('select',thread.key)).value).toBe(true);
+    await expect(host.page.locator('#dumpSelect')).toHaveValue('1');
+    await expect(host.page.locator('#threadModal')).toBeVisible();
+    await expect(host.page.locator('#threadModalTitle')).toContainText(thread.label);
+    await host.page.locator('#threadModalCopyBtn').click();
+    await expect.poll(()=>host.clipboard()).toContain('allocated=101G');
+    // Selecting another snapshot closes the previous thread dialog.
+    expect((await host.navigation('select','snapshot:0')).value).toBe(true);
+    await expect(host.page.locator('#threadModal')).toBeHidden();
+    await expect(host.page.locator('#dumpSelect')).toHaveValue('0');
+    await host.load([{name:'invalid.txt',text:'This is not a Java thread dump.'}]);
+    expect(host.messages.findLast(m=>m.type==='navigationState').revision).toBe(revision);
+    await host.page.locator('#inputFeedbackModal').getByRole('button',{name:'Close',exact:true}).click();
+    await host.load([sources[0]]);
+    expect((await host.navigation('select',thread.key,0,revision)).error).toContain('analysis changed');
+    const current=host.messages.findLast(m=>m.type==='navigationState').revision;
+    await host.page.locator('#clearBtn').click();
+    await expect.poll(()=>host.messages.findLast(m=>m.type==='navigationState').count).toBe(0);
+    expect((await host.navigation('select','snapshot:0',0,current)).error).toContain('analysis changed');
+});
+
+test('sidebar reveals hidden TLS interactions and exact events in the visible inspector',async({host},testInfo)=>{
+    await host.open('/jvmscope/tls.html');
+    await host.load([{name:'runtime.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt')}]);
+    const file=(await host.navigation('children')).value.items[0];
+    const interaction=(await host.navigation('children',file.key)).value.items[0];
+    const events=(await host.navigation('children',interaction.key)).value.items;
+    expect(events.length).toBeGreaterThan(1);
+    await host.page.locator('#tlsOverviewColumns').click();
+    await host.page.locator('#searchInput').fill('does-not-match-any-interaction');
+    await expect(host.page.locator('#tlsTableBody tr')).toHaveCount(0);
+    const event=events.at(-1);
+    expect((await host.navigation('select',event.key)).value).toBe(true);
+    await expect(host.page.locator('#tlsInvestigateColumns')).toHaveAttribute('aria-pressed','true');
+    await expect(host.page.locator('#searchInput')).toHaveValue('');
+    const selected=host.page.locator('.tls-event[aria-current="true"]');
+    await expect(selected).toBeVisible();
+    await expect(selected).toContainText(event.label.split(' · ').slice(1).join(' · '));
+    await expect(selected.locator('button')).toBeFocused();
+    await expect(selected.locator('button')).toHaveText('L'+event.description.replace('Source line ','')+' ↗');
+    await host.page.screenshot({path:testInfo.outputPath('sidebar-event-selection.png')});
+    // Navigation also dismisses a blocking raw-evidence modal.
+    await host.page.locator('#tlsInspector [data-action="full"]').click();
+    expect((await host.navigation('select',events[0].key)).value).toBe(true);
+    await expect(host.page.locator('#tlsModal')).toBeHidden();
+    await expect(host.page.locator('.tls-event[aria-current="true"]')).toHaveCount(1);
+    const revision=host.messages.findLast(m=>m.type==='navigationState').revision;
+    await host.page.locator('#clearBtn').click();
+    expect((await host.navigation('select',event.key,0,revision)).error).toContain('analysis changed');
+});
+
+test('sidebar metadata is also published for bundled examples and keeps uncertain TLS events empty',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    await expect.poll(()=>host.messages.findLast(m=>m.type==='navigationState')?.count).toBeGreaterThan(0);
+    expect((await host.navigation('children')).value.items[0].kind).toBe('file');
+    await host.open('/jvmscope/tls.html');
+    await host.load([{name:'uncertain.log',text:'first, WRITE: TLSv1.2 Handshake, length = 10\n*** ClientHello, TLSv1.2\nsecond, READ: TLSv1.2 Handshake, length = 10\n*** ServerHello, TLSv1.2\n*** Finished'}]);
+    const interaction=(await host.navigation('children','file:0')).value.items[0];
+    expect(interaction.description).toContain('uncertain');
+    expect((await host.navigation('children',interaction.key)).value).toEqual({total:0,items:[]});
+    expect((await host.navigation('select',interaction.key)).value).toBe(true);
+    await expect(host.page.locator('.tls-no-events')).toBeVisible();
 });

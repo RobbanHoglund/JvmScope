@@ -47,10 +47,21 @@ theme families at 600px with contrast/focus checks; these use representative
 palettes rather than certifying every third-party theme. The standalone website
 and report export palettes remain independent.
 
-Remaining roadmap:
+The 0.3 preview adds a native Activity Bar tree: files → snapshots → threads and
+file → TLS interactions → observed events. Branches request at most 100 labels
+and opaque keys at a time from the existing webviews. Clicking a node reveals its
+owning panel and selects the exact object. Every successful analysis publishes a
+new revision; replacement, clear and panel disposal invalidate old nodes and
+in-flight replies. Rejected TDA input preserves the previous analysis and tree.
 
-2. **Native navigation:** provide an analysis tree for snapshots, threads and TLS
-   interactions while keeping the detailed webviews.
+TLS tree labels reuse the outcome/uncertainty models, and event branches reuse
+the inspector's observed-sequence model. Ambiguous legacy grouping has no
+attributable event children. The native host does not parse captures or invent
+additional findings. Tree metadata is transient and contains no raw stack/log
+blocks. The extension's read-only `getAnalysisItems(analyzer, parentId?)` API
+exposes this same paged metadata for editor integrations and extension-host tests.
+
+Remaining roadmap:
 3. **Problems diagnostics:** surface only evidence-backed findings, with source
    ranges and qualified wording; unsupported/missing input is not a clean bill of health.
 4. **Refresh:** offer explicit reanalysis and optional file watching with cancellation,
@@ -68,12 +79,15 @@ meaning belongs in the shared models with JVM-fixture and UI regression coverage
 
 - Existing frontend tests remain the analysis-rule gate.
 - Extension unit tests cover native-message validation, limits, dirty/virtual
-  documents, packaged asset paths, CSP and route restrictions.
+  documents, packaged asset paths, CSP and route restrictions. Sidebar tests cover
+  pagination, duplicate names, revision changes, disposal and invalid replies.
 - Browser tests load the production extension assets with the same CSP, inline
-  workers and a simulated host transport; they cover TDA/TLS results and host actions.
+  workers and a simulated host transport; they cover TDA/TLS results, host actions,
+  exact sidebar selections, hidden filters, bundled examples and stale requests.
 - Extension-host tests run inside a real isolated VS Code, activating commands,
   loading real captures in both webviews, comparing snapshots, reading an
-  unsaved editor, selecting original evidence and rejecting a changed document. This catches webview-resource/CSP differences that mocks cannot.
+  unsaved editor, selecting original evidence, rejecting a changed document and
+  navigating the native sidebar across hidden retained webviews. This catches webview-resource/CSP differences that mocks cannot.
 - `VS Code extension checks` builds and uploads the VSIX without publishing it.
 
 Primary API references:

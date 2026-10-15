@@ -115,3 +115,27 @@ export async function saveBlob(blob, name) {
     return true;
 }
 export const saveText = (text, name, type = 'text/plain;charset=utf-8') => saveBlob(new Blob([text], { type }), name);
+
+// Navigation transfers only a bounded page of labels/IDs, never raw captures.
+// Each published analysis gets a revision, so delayed sidebar clicks cannot
+// accidentally select a similarly named item in a replacement capture.
+export function createHostNavigation(onSelect) {
+    let revision=0, model=null;
+    if (vscode) window.addEventListener('message', ({data})=>{
+        if (data?.channel!==channel || data.version!==1 || data.type!=='navigationRequest') return;
+        if (typeof data.id!=='string' || !/^nav:\d{1,12}$/.test(data.id)) return;
+        try {
+            if (data.revision!==revision || !model) throw new Error('The analysis changed. Select an item from the updated JvmScope sidebar.');
+            let value;
+            if (data.action==='children') value=model.children(data.key,data.offset);
+            else if (data.action==='select') {onSelect(model.resolve(data.key));value=true;}
+            else throw new Error('Unsupported navigation action.');
+            send({type:'navigationResult',id:data.id,revision,value});
+        } catch(error) {send({type:'navigationResult',id:data.id,revision,error:error.message});}
+    });
+    return {publish(next) {
+        if (!vscode) return;
+        model=next;revision++;
+        send({type:'navigationState',revision,count:model?.count || 0,summary:model?.count?model.summary:'No capture loaded'});
+    }};
+}

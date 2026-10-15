@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.1 — Analyzer menu symbols
+
+- Prefix Analyze as Java Thread Dump with 🧵 and Analyze as Java TLS Log with 🔒 so the two actions are easier to distinguish in context menus and the Command Palette.
+
+## 0.3.0 — Native analysis sidebar preview
+
+- Add the JvmScope Activity Bar view with source files, snapshots, threads, TLS interactions and observed events.
+- Open exact thread details and highlight TLS events from the tree, including objects hidden by table filters.
+- Load branches in pages of 100 items and invalidate stale selections when analyses change or close.
+- Reuse existing TLS uncertainty and event models; keep captures in the owning webviews.
+- Add model, native tree/protocol, production webview and real VS Code integration tests.
+
 ## 0.2.2 — Clear Java positioning
 
 - Identify Java explicitly in the extension title, description, documentation and commands.

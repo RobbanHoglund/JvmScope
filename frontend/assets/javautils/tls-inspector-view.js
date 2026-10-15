@@ -140,5 +140,13 @@ export function createTlsInspector({ root, onDetails, onStep, copy, hasSource = 
         }
         root.querySelectorAll('[role="tabpanel"]').forEach(panel => { panel.tabIndex = 0; });
     }
-    return { render };
+    function revealEvent(index) {
+        if (!Number.isSafeInteger(index) || !sequence[index]) throw new Error('Event no longer available.');
+        activateTab('sequence');
+        root.querySelectorAll('.tls-event[aria-current]').forEach(item=>item.removeAttribute('aria-current'));
+        const button=root.querySelector(`[data-event="${index}"]`);
+        button.closest('.tls-event').setAttribute('aria-current','true');
+        button.focus({preventScroll:true});button.scrollIntoView({block:'center',inline:'nearest'});
+    }
+    return { render, revealEvent };
 }

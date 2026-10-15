@@ -1,8 +1,8 @@
 {
   "name": "jvmscope",
-  "displayName": "JvmScope \u2014 Java Thread Dumps & TLS Logs",
+  "displayName": "JvmScope — Java Thread Dumps & TLS Logs",
   "description": "Analyze Java thread dumps and Java TLS/SSL (JSSE) logs locally in VS Code. Inspect threads, deadlocks and TLS handshakes.",
-  "version": "0.2.2",
+  "version": "0.3.1",
   "publisher": "RobbanHoglund",
   "icon": "icon.png",
   "license": "Apache-2.0",
@@ -44,21 +44,28 @@
       {
         "command": "jvmscope.openTda",
         "title": "Open Java Thread Dump Analyzer",
-        "category": "JvmScope"
+        "category": "JvmScope",
+        "icon": "$(list-tree)"
       },
       {
         "command": "jvmscope.openTls",
         "title": "Open Java TLS Log Analyzer",
-        "category": "JvmScope"
+        "category": "JvmScope",
+        "icon": "$(shield)"
       },
       {
         "command": "jvmscope.analyzeThreadDump",
-        "title": "Analyze as Java Thread Dump",
+        "title": "🧵 Analyze as Java Thread Dump",
         "category": "JvmScope"
       },
       {
         "command": "jvmscope.analyzeTlsLog",
-        "title": "Analyze as Java TLS Log",
+        "title": "🔒 Analyze as Java TLS Log",
+        "category": "JvmScope"
+      },
+      {
+        "command": "jvmscope.openAnalysis",
+        "title": "Open Analysis Sidebar",
         "category": "JvmScope"
       }
     ],
@@ -84,6 +91,36 @@
           "command": "jvmscope.analyzeTlsLog",
           "group": "jvmscope@2"
         }
+      ],
+      "view/title": [
+        {
+          "command": "jvmscope.openTda",
+          "when": "view == jvmscope.analysis",
+          "group": "navigation@1"
+        },
+        {
+          "command": "jvmscope.openTls",
+          "when": "view == jvmscope.analysis",
+          "group": "navigation@2"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "jvmscope",
+          "title": "JvmScope",
+          "icon": "resources/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "jvmscope": [
+        {
+          "id": "jvmscope.analysis",
+          "name": "Analyses",
+          "contextualTitle": "JvmScope"
+        }
       ]
     }
   },
@@ -92,7 +129,7 @@
     "test": "node --test test/*.test.cjs",
     "test:integration": "node test/run-integration.cjs",
     "vscode:prepublish": "npm run build",
-    "package": "vsce package --no-dependencies --out ../../build/vscode/jvmscope-0.2.2.vsix"
+    "package": "vsce package --no-dependencies --out ../../build/vscode/jvmscope-0.3.1.vsix"
   },
   "devDependencies": {
     "@vscode/test-electron": "3.1.0",
