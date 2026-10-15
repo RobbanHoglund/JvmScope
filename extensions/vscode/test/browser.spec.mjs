@@ -171,16 +171,25 @@ test('VS Code rejects invalid input once and preserves a valid session on an inv
     await expect(host.page.locator('#errorState')).toBeHidden();
 });
 
-test('VS Code bundled examples, navigation and native picker remain usable at narrow editor widths',async({host})=>{
+for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} keeps capture actions and help without website navigation`,async({host},testInfo)=>{
     await host.page.setViewportSize({width:900,height:800});
-    await host.open('/jvmscope/tda.html');
+    await host.open(`/jvmscope/${analyzer}.html`);
+    await expect(host.page.getByRole('navigation',{name:'Analysis tools'})).toHaveCount(0);
+    await expect(host.page.locator('label[for="fileInput"]')).toBeVisible();
+    await expect(host.page.locator('#loadSampleBtn')).toBeVisible();
+    if(analyzer==='tda')await expect(host.page.locator('#pasteClipboardBtn')).toBeVisible();
+    await host.page.locator('#howToUseBtn').click();
+    await expect(host.page.locator('#howToUseModal')).toBeVisible();
+    await host.page.keyboard.press('Escape');
+    await expect(host.page.locator('#howToUseModal')).toBeHidden();
+    await applyTheme(host.page,'vscode-dark');
+    await host.page.screenshot({path:testInfo.outputPath('empty-analyzer.png')});
     await host.page.locator('#loadSampleBtn').click();
-    await expect(host.page.locator('#threadTableBody tr').first()).toBeVisible();
-    await host.page.getByRole('link',{name:'TLS log analyzer',exact:true}).click();
-    await expect.poll(()=>host.messages.find(m=>m.action==='navigate')?.route).toBe('/jvmscope/tls.html');
-    await host.page.locator('#fileInput').dispatchEvent('click');
+    const rows=host.page.locator(analyzer==='tda'?'#threadTableBody tr':'#tlsTableBody tr');
+    await expect(rows.first()).toBeVisible();
+    await host.page.locator('label[for="fileInput"]').click();
     await expect.poll(()=>host.messages.some(m=>m.action==='chooseFiles')).toBe(true);
-    await expect(host.page.locator('#threadTableBody tr').first()).toBeVisible();
+    await expect(rows.first()).toBeVisible();
     const width=await host.page.evaluate(()=>document.documentElement.scrollWidth);
     expect(width).toBeLessThanOrEqual(900);
 });

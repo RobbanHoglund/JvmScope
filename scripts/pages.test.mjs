@@ -77,11 +77,18 @@ test('Pages and Railway keep independent output paths and base-aware tool naviga
     for (const prefix of ['/',base]) {
         const plugin = toolNavigation({slim:true});
         plugin.configResolved({base:prefix});
-        const html = plugin.transformIndexHtml.handler('<head></head><body></body>',{filename:'tda.html'});
-        assert.ok(html.includes(`href="${prefix}jvmscope/tda.html" aria-current="page"`));
-        assert.ok(html.includes(`href="${prefix}jvmscope/tls.html"`));
-        assert.ok(html.includes(`href="${prefix}"`));
-        assert.ok(html.includes(`href="${prefix}knowledge/index.html"`));
+        for (const [filename, active] of [['index.html',''],['jvmscope/tda.html','jvmscope/tda.html'],
+            ['jvmscope/tls.html','jvmscope/tls.html'],['knowledge/index.html','knowledge/index.html'],
+            ['knowledge/thread-dumps.html','knowledge/index.html']]) {
+            const html = plugin.transformIndexHtml.handler('<head></head><body></body>',{filename});
+            assert.ok(html.includes(`href="${prefix}${active}" aria-current="page"`),filename);
+            for (const path of ['', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html']) {
+                assert.ok(html.includes(`href="${prefix}${path}"`),filename);
+            }
+            assert.match(html, /<nav class="tool-nav" aria-label="Analysis tools">/);
+            assert.match(html, /tool-navigation\.css/);
+            assert.doesNotMatch(html, /vscode-entry\.js/);
+        }
     }
 });
 

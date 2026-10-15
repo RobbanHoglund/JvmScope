@@ -54,14 +54,15 @@ export function toolNavigation({ slim = false, vscode = false } = {}) {
       handler(html, context) {
         const active = context.filename.includes('knowledge') ? 'knowledge' : context.filename.endsWith('tls.html') ? 'tls'
           : context.filename.endsWith('tda.html') ? 'tda' : 'home';
-        const navigationBase = vscode ? (active === 'home' ? './' : '../') : base;
         const link = (name, path, label) => `<a href="${path}"${active === name ? ' aria-current="page"' : ''}>${label}</a>`;
-        const navigation = `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${vscode ? `${navigationBase}index.html` : base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${navigationBase}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${navigationBase}jvmscope/tls.html`, 'TLS log analyzer')}${link('knowledge', `${navigationBase}knowledge/index.html`, 'Knowledge base')}</nav>`;
+        // VS Code provides native tool navigation and a knowledge-base shortcut.
+        // Omit the website navigation entirely so it takes no space or tab stops.
+        const navigation = vscode ? '' : `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
         // Reuse the brand asset and let Vite apply the delivery target's base.
         // Keep each analyzer's own icon; home/knowledge pages need a default.
         const icon = /<link\b[^>]*\brel=["']icon["']/i.test(html) ? ''
           : '<link rel="icon" type="image/svg+xml" href="/assets/javautils/java-thread-mark.svg" />\n';
-        return html.replace('</head>', `${icon}<link rel="stylesheet" href="/assets/tool-navigation.css" />${vscode ? '<script type="module" src="/assets/javautils/host/vscode-entry.js"></script>' : ''}\n</head>`)
+        return html.replace('</head>', `${icon}${vscode ? '<script type="module" src="/assets/javautils/host/vscode-entry.js"></script>' : '<link rel="stylesheet" href="/assets/tool-navigation.css" />'}\n</head>`)
           .replace(/(<body\b[^>]*)(>)/, `$1${vscode ? ` data-jvmscope-page="${active}"` : ''}$2\n${navigation}`);
       },
     },

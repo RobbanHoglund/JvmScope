@@ -64,11 +64,19 @@ class AnalysisSidebar {
         this.vscode=vscode;this.open=open;this.sessions=new Map();this.nodes=new Map();
         this.events=new vscode.EventEmitter();this.onDidChangeTreeData=this.events.event;
         this.roots=['tda','tls'].map(analyzer=>({id:analyzer,analyzer,root:true,key:''}));
+        this.knowledge={id:'knowledge',label:'Knowledge base'};
     }
     attach(analyzer, session) {this.sessions.set(analyzer,session);this.changed(analyzer);}
     detach(analyzer,session) {if(this.sessions.get(analyzer)===session){this.sessions.delete(analyzer);this.changed(analyzer);}}
     changed(analyzer) {for(const [id,node] of this.nodes)if(node.analyzer===analyzer)this.nodes.delete(id);this.events.fire(this.roots.find(root=>root.analyzer===analyzer));}
     getTreeItem(node) {
+        if (node===this.knowledge) {
+            const item=new this.vscode.TreeItem(node.label,this.vscode.TreeItemCollapsibleState.None);
+            item.id=node.id;item.tooltip='Open Java guides and references';
+            item.iconPath=new this.vscode.ThemeIcon('book');item.contextValue='jvmscope.knowledge';
+            item.command={command:'jvmscope.openKnowledge',title:'Open Knowledge Base'};
+            return item;
+        }
         const vscode=this.vscode,session=this.sessions.get(node.analyzer);
         const item=new vscode.TreeItem(node.root?(node.analyzer==='tda'?'Java thread dumps':'Java TLS logs'):node.label,
             node.root || node.children ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
@@ -81,7 +89,7 @@ class AnalysisSidebar {
         return item;
     }
     async getChildren(parent) {
-        if (!parent) return this.roots;
+        if (!parent) return [...this.roots,this.knowledge];
         const session=this.sessions.get(parent.analyzer);
         if (!session || !session.navigation.count) return [];
         if (!parent.root && (!parent.children || !this.nodes.has(parent.id) || parent.owner!==session.owner || parent.revision!==session.navigation.revision)) return [];

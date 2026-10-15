@@ -12,26 +12,52 @@ exports.run = async () => {
         assert.equal(extension.packageJSON.version, process.env.JVMSCOPE_TEST_VERSION);
     }
     const { SourceRegistry } = require(path.join(extension.extensionPath, 'src/source-navigation.cjs'));
-    const api = await extension.activate();
+    // Exercise the contributed view's focus command and editor toolbar commands
+    // without explicitly activating the extension, as a user opening the view would.
+    await vscode.commands.executeCommand('jvmscope.analysis.focus');
+    const editorDocument = await vscode.workspace.openTextDocument(
+        fixture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt'));
+    for (const [command, title] of [
+        ['jvmscope.openTda', 'JvmScope · Thread dumps'],
+        ['jvmscope.openTls', 'JvmScope · TLS logs'],
+        ['jvmscope.openKnowledge', 'JvmScope · Knowledge'],
+    ]) {
+        await vscode.window.showTextDocument(editorDocument);
+        // editor/title supplies the current resource URI. Opening a tool must
+        // remain a launcher, even when that editor contains the other log format.
+        const result = await vscode.commands.executeCommand(command, editorDocument.uri);
+        assert.ok(!result?.error, JSON.stringify(result));
+        assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, title,
+            'The native navigation command opens and focuses the requested view');
+    }
+    assert.ok(extension.isActive, 'Opening the view and its tools activates JvmScope');
+    const api = extension.exports;
     await vscode.commands.executeCommand('jvmscope.openAnalysis');
     assert.deepEqual(await api.getAnalysisItems('tda'), []);
+    assert.deepEqual(await api.getAnalysisItems('tls'), []);
     const tda = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump',
         fixture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt'));
     assert.ok(tda?.snapshots === 1 && tda.threads > 0, JSON.stringify(tda));
     const tls = await vscode.commands.executeCommand('jvmscope.analyzeTlsLog',
         fixture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt'));
     assert.ok(tls?.interactions > 0, JSON.stringify(tls));
-    // Query the hidden retained TDA webview while TLS is active, then reveal its exact thread.
+    // Knowledge opens independently of the retained analyzer sessions. Both
+    // loaded trees must still navigate back to their exact threads and events.
+    const knowledge = await vscode.commands.executeCommand('jvmscope.openKnowledge');
+    assert.ok(!knowledge?.error, JSON.stringify(knowledge));
+    assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, 'JvmScope · Knowledge');
     const [tdaFile] = await api.getAnalysisItems('tda');
     const [snapshot] = await api.getAnalysisItems('tda', tdaFile.id);
     const threads = await api.getAnalysisItems('tda', snapshot.id);
     assert.ok(threads.some(item => item.kind === 'thread'));
     assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem', threads[0].id), true);
+    assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, 'JvmScope · Thread dumps');
     const [tlsFile] = await api.getAnalysisItems('tls');
     const [interaction] = await api.getAnalysisItems('tls', tlsFile.id);
     const events = await api.getAnalysisItems('tls', interaction.id);
     assert.ok(events.some(item => item.kind === 'event'));
     assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem', events[0].id), true);
+    assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, 'JvmScope · TLS logs');
     const pair = ['allocation-before.txt', 'allocation-after.txt'].map(name => fixture('frontend/test/tda/fixtures/ga-regressions/' + name));
     const series = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump', pair[0], pair);
     assert.equal(series?.snapshots, 2, JSON.stringify(series));
@@ -58,5 +84,5 @@ exports.run = async () => {
     await assert.rejects(sources.open({sourceId, startLine: 2, endLine: 3}), /changed since analysis/);
     sources.dispose();
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
-    console.log('PASS: real VS Code extension activation, both webviews/workers, multiple snapshots, unsaved input, source selection, stale-source rejection and native sidebar navigation across retained webviews.');
+    console.log('PASS: real VS Code view/menu activation, knowledge base, both webviews/workers, multiple snapshots, unsaved input, source selection, stale-source rejection and native sidebar navigation across retained webviews.');
 };

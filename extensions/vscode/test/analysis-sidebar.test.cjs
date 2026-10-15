@@ -16,6 +16,21 @@ const vscode={
     TreeItemCollapsibleState:{None:0,Collapsed:1},ThemeIcon:class {constructor(id){this.id=id;}},
 };
 
+test('knowledge base is a permanent native shortcut, including before a capture is loaded',async()=>{
+    const sidebar=new AnalysisSidebar(vscode,async()=>assert.fail('Knowledge must not open an analyzer'));
+    const roots=await sidebar.getChildren();
+    assert.deepEqual(roots.map(node=>node.id),['tda','tls','knowledge']);
+    const knowledge=sidebar.getTreeItem(roots[2]);
+    assert.equal(knowledge.label,'Knowledge base');
+    assert.equal(knowledge.collapsibleState,vscode.TreeItemCollapsibleState.None);
+    assert.equal(knowledge.iconPath.id,'book');
+    assert.deepEqual(knowledge.command,{command:'jvmscope.openKnowledge',title:'Open Knowledge Base'});
+    assert.deepEqual(await sidebar.getChildren(roots[2]),[]);
+    sidebar.changed('tda');sidebar.changed('tls');
+    assert.equal((await sidebar.getChildren())[2],roots[2]);
+    sidebar.dispose();
+});
+
 test('navigation validates bounded plain labels, unique identities and complete pages',()=>{
     assert.equal(validatePage({total:1,items:[item(0)]},0).items.length,1);
     for(const value of [

@@ -17,7 +17,7 @@ The release is labeled **Preview** while broader desktop feedback is collected.
 For an unpublished build or offline installation:
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
-2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.2.vsix`.
+2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.4.vsix`.
 3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
 
 Alternatively, build the package using the instructions below. Requires VS Code
@@ -26,6 +26,9 @@ in this first version.
 
 ## Analyze captures
 
+- Use the **blue thread-tree** and **teal shield** buttons at the top-right of an
+  editor's tab bar to open or focus the Java thread dump and TLS analyzers.
+  Their tooltips name each tool; the icons adapt to light and dark themes.
 - Right-click a capture in Explorer and choose **🧵 Analyze as Java Thread Dump** or **🔒 Analyze as Java TLS Log**.
 - Select several thread dump files to compare snapshots. TLS analysis opens one log at a time.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
@@ -41,9 +44,18 @@ its file picker and Paste actions.
 
 ## Browse analyses in the sidebar
 
-Open **JvmScope** in the Activity Bar, or run **JvmScope: Open Analysis Sidebar**.
-The two roots open the Java thread dump and Java TLS analyzers. The view's toolbar
-also opens either analyzer.
+Use **View → Open View…**, type **JvmScope**, and select **JvmScope Analyses**.
+You can also open **JvmScope** in the Activity Bar or run
+**JvmScope: Open Analysis Sidebar** from the Command Palette.
+
+The **JvmScope Analyses** view's **…** menu offers **Open Java Thread Dump Analyzer**,
+**Open Java TLS Log Analyzer** and **Open Knowledge Base**. The toolbar's blue tree and
+teal shield icons and the two analyzer roots open the same analyzers.
+
+Select **Knowledge base** in the sidebar to open the bundled Java guides and references,
+or run **JvmScope: Open Knowledge Base** from the Command Palette. The website's navigation
+row is omitted inside VS Code; the standalone app keeps it. Capture actions and Help
+remain inside each analyzer, and opening the knowledge base preserves loaded analyses.
 
 - **Java thread dumps:** expand a source file, then a snapshot, then its threads.
   Select a thread to open its details in the correct snapshot, even when names repeat.
@@ -86,9 +98,11 @@ the analyzer panel is closed or VS Code reloads. Raw evidence is invalidated whe
 its owning capture is cleared/replaced or its panel closes. Exports can contain
 sensitive diagnostic data; review them before saving or sharing.
 
-Both views follow VS Code light, dark and high-contrast themes and adapt to narrow
-editor splits. The standalone application and exported reports retain their own
-palettes. Raw snapshots still open in the native read-only editor.
+The sidebar and both analyzers follow VS Code's theme, including light, dark,
+high-contrast dark and high-contrast light. Run **Preferences: Color Theme** to
+switch themes; open analyzers update immediately. Both analyzers also adapt to
+narrow editor splits. The standalone application and exported reports retain
+their own palettes. Raw snapshots still open in the native read-only editor.
 The verified inputs are HotSpot thread dumps and SunJSSE traces; missing fields
 remain unknown. This extension adds no additional JVM/vendor compatibility claim.
 
@@ -111,7 +125,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.2.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.4.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or
