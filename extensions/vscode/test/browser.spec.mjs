@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import webview from '../src/webview.cjs';
+import protocol from '../src/protocol.cjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const media=resolve(root,'extensions/vscode/media');
 const capture=relative=>readFile(resolve(root,relative),'utf8');
@@ -37,7 +38,11 @@ const test=base.extend({
                 if(message.action==='paste')value=clipboard;
                 if(message.action==='copy')clipboard=message.text;
                 if(message.action==='chooseFiles')value=null;
-                const error=message.action==='openSource'?sourceError:undefined;
+                let error=message.action==='openSource'?sourceError:undefined;
+                try {
+                    protocol.validateRequest(message);
+                    if(message.action==='navigate')webview.resolveRoute(message.route,pages);
+                } catch(cause) { error=cause.message; }
                 await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
             }
         });
@@ -400,6 +405,17 @@ test('bundled knowledge articles use their packaged route and preserve Java vers
         await expect(host.page.locator('#articleIntro h1')).toBeVisible();
         await expect(host.page.locator('#articleVersion')).toHaveValue('21');
     }
+    await host.open('/knowledge/index.html');
+    const longQuery=Array(128).fill('cpu').join(' ');
+    await host.page.locator('#knowledgeSearch').fill(longQuery);
+    await host.page.locator('.knowledge-card').first().click();
+    const route=host.messages.findLast(m=>m.action==='navigate').route;
+    expect(route.length).toBeGreaterThan(500);
+    // Requests above are checked by the real host validator, including their size.
+    await expect(host.page.locator('#hostError')).toHaveCount(0);
+    protocol.validateRequest({channel:'jvmscope',version:1,type:'request',id:'web:1',action:'navigate',route});
+    await host.open(route);
+    await expect(host.page.locator('#articleSearch')).toHaveValue(longQuery);
 });
 
 test('home and knowledge surfaces remain readable across host themes',async({host},testInfo)=>{

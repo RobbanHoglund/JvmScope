@@ -4,6 +4,12 @@ const { MAX_BYTES, validateRequest, readSources } = require('../src/protocol.cjs
 const uri = name => ({ path: '/' + name, toString: () => 'testfs:/' + name });
 const request = (action, fields = {}) => ({ channel: 'jvmscope', version: 1, type: 'request', id: 'web:1', action, ...fields });
 
+test('knowledge navigation accepts the full encoded search field while remaining bounded', () => {
+    const route = '/knowledge/thread-dumps.html?java=21#find=' + encodeURIComponent('界'.repeat(512)) + '&section=check';
+    assert.equal(validateRequest(request('navigate', { route })).route, route);
+    assert.throws(() => validateRequest(request('navigate', { route: '/' + 'a'.repeat(8192) })), /Invalid page/);
+});
+
 test('native requests reject command execution, paths and executable exports', () => {
     for (const message of [request('executeCommand'), request('save', { name: '../secret.txt', base64: 'YQ==' }),
         request('save', { name: 'launch.js', base64: 'YQ==' }), request('external', { url: 'command:workbench.action.terminal.new' }),

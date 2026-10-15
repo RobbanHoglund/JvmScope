@@ -16,7 +16,9 @@ function validateRequest(message) {
             || typeof message.base64 !== 'string' || message.base64.length > Math.ceil(MAX_BYTES / 3) * 4
             || message.base64.length % 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(message.base64)) throw new Error('Invalid export.');
     }
-    if (message.action === 'navigate' && (typeof message.route !== 'string' || message.route.length > 500)) throw new Error('Invalid page.');
+    // Knowledge search permits 512 characters; percent-encoded Unicode and the
+    // page/version/section suffix can exceed the old 500-character route bound.
+    if (message.action === 'navigate' && (typeof message.route !== 'string' || message.route.length > 8192)) throw new Error('Invalid page.');
     if (message.action === 'syncSources' && (!Array.isArray(message.sourceIds) || message.sourceIds.length > 1000
         || !message.sourceIds.every(sourceId))) throw new Error('Invalid source references.');
     if (message.action === 'openSource' && (!sourceId(message.sourceId) || !Number.isSafeInteger(message.startLine)
