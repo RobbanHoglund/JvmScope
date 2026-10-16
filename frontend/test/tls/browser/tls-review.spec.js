@@ -76,6 +76,6 @@ test('TLS laptop starts compact, keeps at least six complete rows, and remembers
     await page.reload();
     await page.getByRole('button', { name: 'Full sample', exact: true }).click();
     await expect(panel).not.toHaveAttribute('open', '');
-    await expect(page.getByRole('checkbox', { name: 'Highlights', exact: true })).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Highlights (32)', exact: true })).toBeVisible();
     await page.screenshot({ path: `../.run/tls-review/compact-${test.info().project.name}.png` });
 });
