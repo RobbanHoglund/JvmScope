@@ -2084,6 +2084,11 @@ function render() {
     renderTableRows();
     updateSortIndicators();
     renderRunnableClusterPanel();
+    document.getElementById('jumpToClusters').disabled = !runnableStackClusters.length;
+    document.getElementById('jumpToClusters').title = runnableStackClusters.length
+        ? 'Explore stack shapes observed in two or more snapshots'
+        : 'No recurring RUNNABLE stacks observed in two or more snapshots';
+    document.getElementById('jumpToGraph').disabled = !allThreads.length;
     document.getElementById('threadEmptyState').hidden = !parsedDumps.length || filtered.length > 0;
 }
 function renderDependencyGraph() {
@@ -4740,6 +4745,18 @@ document.getElementById('jumpToCpu').addEventListener('click', () => {
     card.scrollIntoView({block: 'start'});
     document.getElementById('cpuTimelineSearch').focus({preventScroll: true});
 });
+for (const [buttonId, panel] of [
+    ['jumpToClusters', UI.runnableClusterPanel],
+    ['jumpToGraph', UI.dependencyGraphPanel],
+]) {
+    document.getElementById(buttonId).addEventListener('click', () => {
+        const details = panel.querySelector('details');
+        if (!details) return;
+        details.open = true;
+        details.querySelector('summary').focus({ preventScroll: true });
+        panel.scrollIntoView({ block: 'start' });
+    });
+}
 document.getElementById('clearThreadFiltersBtn').addEventListener('click', () => {
     UI.searchInput.value = '';
     for (const toggle of [UI.onlyDaemonToggle, UI.onlyBlockedToggle, UI.onlyWaitingToggle, UI.onlyDeadlockedToggle, UI.onlyCarrierToggle]) toggle.checked = false;
