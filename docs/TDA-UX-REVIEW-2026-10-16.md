@@ -36,7 +36,7 @@ variables; they do not run an installed desktop VS Code instance locally.
 
 
 | Counts, coverage and priority | Overview leads with the highest-priority finding; cycles, mapped thread blocks and thread-filter counts use separate units. CPU findings show unavailable when reliable interval evidence is absent. Full coverage and precision remain in a disclosure. | Unit cases for missing, estimated, zero and partial CPU evidence; browser finding focus preserves existing filters. |
-| Compact deadlock evidence | Each row names its JVM-reported owner, including the closing relationship when reported. Cycle actions sit beside the heading. Missing mappings remain unknown. | Closing-owner, cycle inspector and Details browser regression. |
+| Visual deadlock evidence | Inline diagrams show thread and lock cards with waiting and ownership arrows. Return paths follow resolved JVM-reported identities. Full relationship rows remain in a disclosure. Missing mappings remain unknown. | Closing-owner, cycle inspector and Details browser regression; real Java 8/17/25/27 captures. |
 | Task-focused thread table | Analysis columns are the default; all technical columns remain selectable. Sort and scope stay explicit. Details is reachable and technical horizontal scrolling does not move the controls. | Narrow editor, column-switch, pointer/keyboard, sorting, paging and exact-identity regressions. |
 | CPU comparison | Whole-capture scope, selected-snapshot availability, interval duration/timestamps, a ranked comparison table and Clear selection. Unsafe rates remain absent rather than plotted as zero. | Existing interval safety/keyboard tests plus selection/reset regression. Selected CPU hover contrast is checked in all four host palette families. |
 | Annotated controls | Common exclusive filters show thread counts; specialist filters move into More lock filters. Investigation candidates no longer claims confirmed faults. Copy/search/print scope and mode-specific settings are explicit. | Filter/search/copy, Display menu, Exact/Annotated and theme regressions. |
@@ -333,3 +333,28 @@ panels at 1366/600px in four representative host palettes, including text contra
 and resource-label overlap. Browser checks emulate the VS Code webview bridge;
 installed desktop extension integration remains a CI gate. These checks are not a
 claim that every Java dump format or third-party theme has been exhaustively tested.
+
+## Inline dependency diagrams
+
+User testing found that replacing the original deadlock cards with text rows lost
+the immediate visual explanation of circular waiting. Diagrams are now the main
+presentation inside the deadlock, contention and class-initialization panels.
+Thread cards open Details with keyboard support and focus return. Resource cards
+retain full addresses or class names. Solid arrows indicate waiting; dashed arrows
+indicate reported ownership or a uniquely resolved initializer. No animation or
+external diagram service is used.
+
+Deadlock diagrams traverse resolved owner identities, not report order. Unmapped
+participants retain the JVM's named relationships without inventing a closed loop
+or a clickable thread block. An unresolved class initializer gets no initializer
+edge. Contention and class-init diagrams do not independently confirm a deadlock.
+Thread-group disclosures retain every waiter, and an explicit disclosure exposes
+additional lock graphs beyond the first three. Tables remain available as evidence.
+
+Native HTML card dimensions determine SVG paths. Layout switches between columns
+and vertical flow according to actual panel width; labels are not scaled down.
+Regressions cover shuffled and larger cycles, duplicate names, unresolved owners,
+escaping, two/three/five-thread browser layouts, expanded waiter groups, Details
+return, and navigation to/from the dependency map. Real captured Java 8, 17, 25 and
+27 deadlock reports retain every reported wait and closing owner edge. Browser
+checks inspect narrow layouts down to 420px and four VS Code theme families.

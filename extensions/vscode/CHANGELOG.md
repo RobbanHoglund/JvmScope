@@ -2,12 +2,14 @@
 
 ## 0.3.10 — Focused thread investigation
 
+- Restore deadlock diagrams as the primary view, with clickable thread cards, explicit lock nodes and complete return arrows based on resolved JVM-reported owners. Retain relationship details below each graph.
+- Show lock-contention and class-initialization dependencies inline. Keep unknown owners unresolved, expose every waiter through disclosure, and adapt graph layout to narrow editors and all VS Code theme families.
 - Keep explicit class-initialization waits separate in recurring stack clusters and preserve case-sensitive Java class identities in the dependency graph.
 - Preserve complete confirmed deadlock cycles in compact graphs, retain room for other contention, count all omitted waits, search every parsed frame, and render class-initialization arrowheads.
 - Add Recurring stacks and Dependency map shortcuts, exclusive trend filtering, readable responsive cluster cards, visible density controls and a reveal-all action. Distinguish waiting from ownership with solid/dashed edges and place flow labels outside the main arrows.
 - Remove emoji prefixes from the Analyze commands. Reuse the toolbar's themed thread-tree and shield SVGs in their command definitions; native context menus and the Command Palette retain plain text labels.
 - Lead with the strongest finding and explicit counts for cycles, threads and CPU measurement coverage. Keep full metadata in a disclosure.
-- Compact deadlock relationships show the JVM-reported owner for every participant; missing mappings remain unknown.
+- Deadlock relationships show the JVM-reported owner for every participant; missing mappings remain unknown.
 - Default to analysis columns, retain technical columns and sort context, and keep Details reachable in narrow editors.
 - Compare CPU intervals in a ranked table with selected-snapshot scope, duration, timing basis and Clear selection.
 - Simplify Annotated filters, label wait/lock evidence as investigation candidates, clarify Copy/search/print scope and show only relevant Display settings.

@@ -2,6 +2,9 @@ import { createThreadNavigation } from './host/navigation-model.js';
 import { describeLockCoverage } from './tda/lock-coverage.js';
 import { cpuCoverage, compactSnapshotTime } from './tda/presentation.js';
 import './tda/triage.css';
+import { deadlockDiagrams, renderRelationshipDiagram, classInitializationDiagram, contentionDiagram } from './tda/relationship-diagram.js';
+import { createRelationshipDiagramsView } from './tda/relationship-diagram-view.js';
+import './tda/relationship-diagram.css';
 import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence, syncSourceLinks, bindSourceButton, createHostNavigation } from './host/platform.js';
 import { threadSourceLocation } from './tda/source-location.js';
 import { formatAllocationMetric } from './tda/allocation-metrics.js';
@@ -15,7 +18,7 @@ import { createExamplePicker } from './example-picker.js';
 
 import { observedVirtualThreadIds } from './tda/dump-to-file.js';
 import { getChartFilterView, getChartLegendItemView } from './tda/chart-filter-view.js';
-import { renderContentionTable } from './tda/contention-view.js';
+import { renderContentionTable, isConfirmedContentionDeadlock } from './tda/contention-view.js';
 import { buildCpuTimelineModel, buildSnapshotTickIndexes } from './tda/cpu-timeline.js';
 import { getRunnableCpuThresholdProfile, runnableCpuThresholdProfileFromSearch, resolveRunnableCpuThresholdProfileId, updateRunnableCpuThresholdProfileSearch } from './tda/classification.js';
 import { diagnosticEvidenceFor, hasThreadDiagnostic } from './tda/diagnostics.js';
@@ -41,6 +44,7 @@ import { patternSnapshot } from './tda/blocking-patterns.js';
 import { createBlockingFinding, inputDigest } from './findings-report.js';
 import { createFindingsReportView } from './findings-report-view.js';
 const findingsReport = createFindingsReportView(document.getElementById('findingReportHost'));
+const relationshipDiagramsView = createRelationshipDiagramsView();
 let reportDatasetRevision = 0;
 
 let blockingPatterns = [];
@@ -1882,6 +1886,7 @@ function renderDeadlockPanel() {
 
 function renderDeadlockCard(cycle) {
     const items = cycle.threads || [];
+    const diagrams = deadlockDiagrams(cycle, allThreads);
     const rows = items.map(item => {
         const thread = item.sourceKey ? allThreads.find(t => t.sourceKey === item.sourceKey) : null;
         return `<li class="tda-cycle-edge">
@@ -1895,8 +1900,11 @@ function renderDeadlockCard(cycle) {
     return `<section class="tda-cycle" aria-label="Deadlock cycle ${escapeAttr(String(cycle.id))}">
       <header><h3>Cycle ${escapeHtml(String(cycle.id))} <span>· ${items.length} reported participants</span></h3>
         <button type="button" class="btn btn-sm show-deadlocked-threads-btn" data-cycle-id="${escapeAttr(String(cycle.id))}">Inspect cycle</button></header>
-      <p>Follow the JVM-reported owners to trace the cycle. Missing mappings remain unknown.</p>
-      <ol class="tda-cycle-edges">${rows}</ol>
+      <p>${diagrams[0]?.closed ? 'Follow the arrows around the circular wait. Select a thread to inspect its stack.' : 'JVM-reported dependencies. Some thread identities are unresolved; no return path is assumed.'}</p>
+      ${diagrams.map(renderRelationshipDiagram).join('')}
+      <details class="relationship-evidence"><summary>Relationship details and lock addresses</summary>
+        <ol class="tda-cycle-edges">${rows}</ol>
+      </details>
     </section>`;
 }
 
@@ -1913,29 +1921,7 @@ function classInitializationResourceText(resource) {
     return identity || 'JVM wait resource';
 }
 
-function renderClassInitializationThreadButton(thread, roleClass = '') {
-    if (!thread) return '<span class="class-initialization-missing">Not observed</span>';
-    return `
-      <button type="button"
-              class="btn btn-sm class-initialization-thread-btn ${escapeAttr(roleClass)}"
-              data-source-key="${escapeAttr(thread.sourceKey)}">
-        ${escapeHtml(thread.threadName || 'unknown')}
-      </button>
-    `;
-}
-
 function renderClassInitializationCard(chain) {
-    const initializerHtml = chain.initializer
-        ? renderClassInitializationThreadButton(chain.initializer, 'class-initialization-initializer-btn')
-        : (chain.initializers || []).length
-            ? chain.initializers.map((thread) => renderClassInitializationThreadButton(
-                thread,
-                'class-initialization-initializer-btn',
-            )).join('')
-            : '<span class="class-initialization-missing">Initializer not present in this dump</span>';
-    const waitersHtml = (chain.waiters || [])
-        .map((thread) => renderClassInitializationThreadButton(thread, 'class-initialization-waiter-btn'))
-        .join('');
     const waitingResources = chain.initializerWaitingResources || [];
     const currentWait = `${chain.initializerState || 'UNKNOWN'}; no JVM wait resource parsed`;
 
@@ -1955,21 +1941,13 @@ function renderClassInitializationCard(chain) {
             <span class="class-initialization-status is-snapshot">SNAPSHOT ONLY</span>
           </div>
         </header>
-        <div class="class-initialization-chain-grid">
-          <section class="class-initialization-chain-node">
-            <div class="class-initialization-chain-label">Initializer via &lt;clinit&gt;</div>
-            <div class="class-initialization-chip-wrap">${initializerHtml}</div>
+        ${renderRelationshipDiagram(classInitializationDiagram(chain))}
+        ${chain.initializer ? `
             <dl class="class-initialization-facts">
               <dt>Java state</dt><dd>${chain.initializerState ? stateBadge(chain.initializerState) : 'Not observed'}</dd>
               <dt>Current wait</dt><dd class="mono-small">${waitingResources.length ? waitingResources.map((resource) => escapeHtml(classInitializationResourceText(resource))).join('<br>') : escapeHtml(currentWait)}</dd>
             </dl>
-          </section>
-          <div class="class-initialization-chain-arrow" aria-hidden="true">⟵</div>
-          <section class="class-initialization-chain-node">
-            <div class="class-initialization-chain-label">Waiting for class initialization</div>
-            <div class="class-initialization-chip-wrap">${waitersHtml}</div>
-          </section>
-        </div>
+        ` : '<p class="class-initialization-qualification">No initializer edge is drawn because a unique initializer could not be resolved.</p>'}
         <p class="class-initialization-qualification">${escapeHtml(chain.qualification)}</p>
       </article>
     `;
@@ -2021,6 +1999,13 @@ function renderContentionPanel() {
     UI.contentionPanel.classList.remove('hidden');
 
     const waiterCount = contentionChains.reduce((sum, c) => sum + (c.waiters?.length || 0), 0);
+    const chains = [...contentionChains].sort((a, b) => (b.waiters?.length || 0) - (a.waiters?.length || 0)
+        || String(a.lockId).localeCompare(String(b.lockId)));
+    const graphCard = chain => `<article class="relationship-contention-card">
+        <header><h3>${escapeHtml(String(chain.lockType || 'Lock').replace(/^(?:a|an)\s+/, ''))}</h3>
+          <button type="button" class="btn btn-sm contention-graph-btn" data-lock-id="${escapeAttr(chain.lockId)}">Explore in dependency map</button></header>
+        ${renderRelationshipDiagram(contentionDiagram(chain, isConfirmedContentionDeadlock(chain, deadlocks)))}
+      </article>`;
 
     UI.contentionPanelBody.innerHTML = `
 	  <details class="contention-panel-details">
@@ -2033,7 +2018,11 @@ function renderContentionPanel() {
 	      </div>
 	    </summary>
 
-        ${renderContentionTable(contentionChains, deadlocks)}
+        ${chains.slice(0, 3).map(graphCard).join('')}
+        ${chains.length > 3 ? `<details class="relationship-contention-more"><summary>Show ${chains.length - 3} more lock graphs</summary>${chains.slice(3).map(graphCard).join('')}</details>` : ''}
+        <details class="relationship-evidence"><summary>All lock details and addresses</summary>
+          ${renderContentionTable(contentionChains, deadlocks)}
+        </details>
         <div class="contention-action-status" role="status"></div>
 	  </details>
 	`;
@@ -2047,6 +2036,7 @@ function render() {
     renderDeadlockPanel();
     renderClassInitializationPanel();
     renderContentionPanel();
+    relationshipDiagramsView.refresh([UI.deadlockPanelBody, UI.classInitializationPanelBody, UI.contentionPanelBody]);
     renderDependencyGraph();
     renderChartFilterBar();
     renderFocusFilterBar();
@@ -4629,7 +4619,7 @@ UI.deadlockPanelBody?.addEventListener('click', (e) => {
     const btn = e.target.closest('.deadlock-thread-btn');
     if (btn) {
         const t = allThreads.find((x) => x.sourceKey === btn.dataset.sourceKey);
-        if (t) openThreadModal(t);
+        if (t) openThreadModal(t, btn);
     }
 });
 
@@ -4887,17 +4877,18 @@ UI.contentionPanelBody?.addEventListener('click', async (event) => {
 
 contentionGraphReturn.addEventListener('click', () => {
     if (!contentionGraphOrigin?.isConnected) return;
-    contentionGraphOrigin.closest('tr').scrollIntoView({ block: 'center' });
+    (contentionGraphOrigin.closest('tr, .relationship-contention-card') || contentionGraphOrigin).scrollIntoView({ block: 'center' });
     contentionGraphOrigin.focus({ preventScroll: true });
 });
 
-UI.classInitializationPanelBody?.addEventListener('click', (e) => {
-    const btn = e.target.closest('.class-initialization-thread-btn');
-    if (!btn) return;
-
-    const thread = allThreads.find((item) => item.sourceKey === btn.dataset.sourceKey);
-    if (thread) openThreadModal(thread, btn);
-});
+for (const panel of [UI.deadlockPanelBody, UI.classInitializationPanelBody, UI.contentionPanelBody]) {
+    panel?.addEventListener('click', event => {
+        const button = event.target.closest('.relationship-thread-btn');
+        if (!button) return;
+        const thread = allThreads.find(item => item.sourceKey === button.dataset.sourceKey);
+        if (thread) openThreadModal(thread, button);
+    });
+}
 
 function openThreadRowDetails(row, sourceElement = row) {
     const thread = allThreads.find((item) => item.sourceKey === row.dataset.sourceKey);

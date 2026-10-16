@@ -120,16 +120,73 @@ test('TDA overview separates CPU coverage from zero and leads to scoped thread e
 test('deadlock cycle lists the closing owner relationship and opens mapped evidence',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.page.locator('#loadSampleBtn').click();
-    await host.page.locator('#deadlockPanel summary').click();
+    await host.page.locator('#deadlockPanel .deadlock-panel-summary').click();
     const cycle=host.page.getByRole('region',{name:'Deadlock cycle 1',exact:true});
+    await expect(cycle.locator('.relationship-figure')).toBeVisible();
+    await expect(cycle.locator('.relationship-edge')).toHaveCount(4);
+    await expect(cycle.locator('.relationship-edge.is-closing')).toHaveCount(1);
     await expect(cycle.locator('.tda-cycle-edge')).toHaveCount(2);
     const first=await cycle.locator('.tda-cycle-thread strong').first().textContent();
     await expect(cycle.locator('.tda-cycle-owner strong').last()).toHaveText(first);
     await cycle.getByRole('button',{name:'Inspect cycle',exact:true}).click();
     await expect(host.page.locator('#deadlockedThreadsModal')).toBeVisible();
     await host.page.keyboard.press('Escape');
-    await cycle.locator('.deadlock-thread-btn').first().click();
+    await cycle.locator('.relationship-thread-btn').first().click();
     await expect(host.page.locator('#threadModalTitle')).toHaveText(first);
+});
+
+test('TDA inline dependency diagrams fit host themes and keep their labels clear of nodes',async({host},testInfo)=>{
+    const {page}=host;
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:'classic-sequence.txt',text:await capture('testdata/jvm-samples/gh-37180401747-1-bisheng-25-all/classic-sequence.txt')}]);
+    for(const selector of ['.deadlock-panel-summary','.class-initialization-panel-summary','.contention-panel-summary'])await page.locator(selector).click();
+    for(const width of [1366,600]) {
+        await page.setViewportSize({width,height:1000});
+        for(const theme of Object.keys(themePalettes)) {
+            await applyTheme(page,theme);
+            for(const panel of ['#deadlockPanel','#classInitializationPanel','#contentionPanel']) {
+                const graph=page.locator(`${panel} .relationship-figure`).first();
+                await expect(graph).toBeVisible();
+                await expectReadable(graph.locator('.relationship-node-name').first());
+                await expect.poll(()=>graph.evaluate(el=>{
+                    const nodes=[...el.querySelectorAll('[data-rel-node]')].map(n=>n.getBoundingClientRect());
+                    const labels=[...el.querySelectorAll('.relationship-edge text')].map(n=>n.getBoundingClientRect());
+                    const overlaps=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+                    const bounds=el.getBoundingClientRect();
+                    return nodes.some((a,i)=>nodes.some((b,j)=>i!==j&&overlaps(a,b)))
+                        ||labels.some(a=>nodes.some(b=>overlaps(a,b)))
+                        ||[...nodes,...labels].some(a=>a.left<bounds.left||a.right>bounds.right);
+                })).toBe(false);
+                for(const edge of await graph.locator('.relationship-edge').all()) {
+                    await expect(edge.locator('path')).toHaveAttribute('marker-end',/url\(#rel-/);
+                }
+                await graph.screenshot({path:testInfo.outputPath(`${panel.slice(1)}-${width}-${theme}.png`)});
+            }
+            expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        }
+    }
+    const thread=page.locator('#deadlockPanel .relationship-thread-btn').first();
+    await thread.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#threadModal')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(thread).toBeFocused();
+    const origin=page.locator('#contentionPanel .relationship-contention-card .contention-graph-btn').first();
+    await origin.click();
+    await expect(page.locator('#dependencyGraphDetails')).toHaveAttribute('open','');
+    await page.locator('#contentionGraphReturn').click();
+    await expect(origin).toBeFocused();
+});
+
+test('TDA unresolved participants show reported dependencies without invented cycle closure',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:'unmapped.txt',text:await capture('frontend/test/tda/fixtures/unmapped-deadlock-participants.txt')}]);
+    await host.page.locator('.deadlock-panel-summary').click();
+    const panel=host.page.locator('#deadlockPanel');
+    await expect(panel.locator('.relationship-figure')).toHaveCount(2);
+    await expect(panel.locator('.relationship-edge.is-closing')).toHaveCount(0);
+    await expect(panel.locator('.relationship-thread-btn')).toHaveCount(0);
+    await expect(panel).toContainText('no return path is assumed');
 });
 
 test('TDA analysis columns keep evidence reachable and preserve sort when switching columns',async({host})=>{
@@ -169,10 +226,10 @@ test('TDA overview fits the viewport without brand overlap and expanded evidence
         expect((await host.page.locator('.tda-priority').boundingBox()).y).toBeLessThan(650);
     }
     await host.page.setViewportSize({width:1366,height:900});
-    await host.page.locator('#deadlockPanel summary').click();
+    await host.page.locator('#deadlockPanel .deadlock-panel-summary').click();
     const [panel,grid]=await Promise.all([host.page.locator('#deadlockPanel').boundingBox(),host.page.locator('.tda-secondary-panels').boundingBox()]);
     expect(Math.abs(panel.width-grid.width)).toBeLessThan(2);
-    await host.page.locator('#deadlockPanel summary').click();
+    await host.page.locator('#deadlockPanel .deadlock-panel-summary').click();
     await expect(host.page.locator('.tda-priority .smart-analysis-focus-btn')).toBeVisible();
 });
 
@@ -325,7 +382,7 @@ test('VS Code raw dump keeps structured evidence, search, details, graph navigat
 test('TDA triage, cycle evidence and selected CPU threads stay readable across host themes',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.page.locator('#loadSampleBtn').click();
-    await host.page.locator('#deadlockPanel summary').click();
+    await host.page.locator('#deadlockPanel .deadlock-panel-summary').click();
     await host.page.locator('#jumpToCpu').click();
     const selected=host.page.locator('.cpu-timeline-legend-item').first();
     await selected.click();
@@ -333,7 +390,7 @@ test('TDA triage, cycle evidence and selected CPU threads stay readable across h
         await host.page.setViewportSize({width,height:900});
         for(const theme of Object.keys(themePalettes)) {
             await applyTheme(host.page,theme);
-            for(const selector of ['.tda-priority h2','.tda-snapshot-metrics strong','.tda-cycle-thread strong','.tda-cycle-wait code','.tda-cycle-owner strong','.tda-table-scope','.tda-cpu-ranking caption','#cpuTimelineSelection']) {
+            for(const selector of ['.tda-priority h2','.tda-snapshot-metrics strong','.relationship-node-name','.relationship-node-detail','.relationship-legend','.tda-table-scope','.tda-cpu-ranking caption','#cpuTimelineSelection']) {
                 await expectReadable(host.page.locator(selector).first());
             }
             await expect(selected).toHaveAttribute('aria-pressed','true');
