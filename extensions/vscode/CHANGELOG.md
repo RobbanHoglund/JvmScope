@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.12 — Deadlock graphs at first glance
+
+- Open confirmed deadlock evidence automatically for each new snapshot and show the first cycle immediately.
+- Select other cycles through separate buttons with participant counts; show one graph at a time and retain the selected cycle while filtering or refreshing the current snapshot.
+- Make the Deadlocks shortcut open the panel and move keyboard focus there in one action. Keep lock addresses and relationship details collapsed until requested.
+
 ## 0.3.11 — Identifiable diagram update
 
 - Give the inline deadlock, lock-contention and class-initialization diagrams a distinct extension version and VSIX filename, so the installed update can be verified.

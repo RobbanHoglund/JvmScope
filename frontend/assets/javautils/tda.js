@@ -534,6 +534,8 @@ let sessionSources = [];
 let nextSessionSourceId = 0;
 let parserResult = null;
 let deadlocks = [];
+let deadlockPanelSnapshot = null;
+let selectedDeadlockCycleId = null;
 let classInitializationChains = [];
 let contentionChains = [];
 let smartAnalysis = null;
@@ -1859,25 +1861,39 @@ function renderDeadlockPanel() {
     if (!deadlocks.length) {
         UI.deadlockPanel.classList.add('hidden');
         UI.deadlockPanelBody.innerHTML = '';
+        deadlockPanelSnapshot = null;
+        selectedDeadlockCycleId = null;
         return;
     }
 
     UI.deadlockPanel.classList.remove('hidden');
 
     const deadlockedThreadCount = allThreads.filter((t) => t.isDeadlocked).length;
+    const snapshot = parsedDumps[selectedDumpIndex];
+    const sameSnapshot = snapshot === deadlockPanelSnapshot;
+    const panelOpen = !sameSnapshot || UI.deadlockPanelBody.querySelector('.deadlock-panel-details')?.open !== false;
+    if (!sameSnapshot || !deadlocks.some(cycle => String(cycle.id) === selectedDeadlockCycleId)) {
+        selectedDeadlockCycleId = String(deadlocks[0].id);
+    }
+    deadlockPanelSnapshot = snapshot;
 
     UI.deadlockPanelBody.innerHTML = `
-	  <details class="deadlock-panel-details">
+	  <details class="deadlock-panel-details" ${panelOpen ? 'open' : ''}>
 	    <summary class="deadlock-panel-summary app-section-summary">
 	      <div class="app-section-summary-inner">
 	        <div class="app-section-summary-title">Java Deadlock Detected</div>
 	        <div class="app-section-summary-subtitle">
-	          Found ${deadlocks.length} deadlock cycle${deadlocks.length === 1 ? '' : 's'} involving ${deadlockedThreadCount} thread${deadlockedThreadCount === 1 ? '' : 's'}.
+	          ${deadlocks.length} JVM-reported cycle${deadlocks.length === 1 ? '' : 's'} · ${deadlockedThreadCount} mapped thread blocks.
 	        </div>
 	      </div>
 	    </summary>
 
-	    <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;margin-bottom:14px;">
+        ${deadlocks.length > 1 ? `<div class="deadlock-cycle-picker" role="group" aria-label="Deadlock cycles">
+          ${deadlocks.map(cycle => `<button type="button" class="btn deadlock-cycle-btn"
+            data-cycle-id="${escapeAttr(String(cycle.id))}" aria-controls="deadlock-cycle-${escapeAttr(String(cycle.id))}"
+            aria-pressed="${String(cycle.id) === selectedDeadlockCycleId}">Cycle ${escapeHtml(String(cycle.id))} · ${(cycle.threads || []).length} participants</button>`).join('')}
+        </div>` : ''}
+	    <div class="deadlock-cycle-content">
 	      ${deadlocks.map(renderDeadlockCard).join('')}
 	    </div>
 	  </details>
@@ -1897,7 +1913,8 @@ function renderDeadlockCard(cycle) {
           <button type="button" class="btn btn-sm deadlock-thread-btn" ${thread ? `data-source-key="${escapeAttr(thread.sourceKey)}"` : 'disabled'} aria-label="Details for ${escapeAttr(item.threadName || 'unmapped participant')}">Details</button>
         </li>`;
     }).join('');
-    return `<section class="tda-cycle" aria-label="Deadlock cycle ${escapeAttr(String(cycle.id))}">
+    return `<section class="tda-cycle" id="deadlock-cycle-${escapeAttr(String(cycle.id))}" data-deadlock-cycle="${escapeAttr(String(cycle.id))}"
+      aria-label="Deadlock cycle ${escapeAttr(String(cycle.id))}" ${String(cycle.id) === selectedDeadlockCycleId ? '' : 'hidden'}>
       <header><h3>Cycle ${escapeHtml(String(cycle.id))} <span>· ${items.length} reported participants</span></h3>
         <button type="button" class="btn btn-sm show-deadlocked-threads-btn" data-cycle-id="${escapeAttr(String(cycle.id))}">Inspect cycle</button></header>
       <p>${diagrams[0]?.closed ? 'Follow the arrows around the circular wait. Select a thread to inspect its stack.' : 'JVM-reported dependencies. Some thread identities are unresolved; no return path is assumed.'}</p>
@@ -4608,6 +4625,18 @@ UI.runnableClusterCompareModal?.addEventListener('click', (e) => {
 });
 
 UI.deadlockPanelBody?.addEventListener('click', (e) => {
+    const cycleButton = e.target.closest('.deadlock-cycle-btn');
+    if (cycleButton) {
+        selectedDeadlockCycleId = cycleButton.dataset.cycleId;
+        for (const button of UI.deadlockPanelBody.querySelectorAll('.deadlock-cycle-btn')) {
+            button.setAttribute('aria-pressed', String(button.dataset.cycleId === selectedDeadlockCycleId));
+        }
+        for (const card of UI.deadlockPanelBody.querySelectorAll('[data-deadlock-cycle]')) {
+            card.hidden = card.dataset.deadlockCycle !== selectedDeadlockCycleId;
+        }
+        return;
+    }
+
     const showBtn = e.target.closest('.show-deadlocked-threads-btn');
     if (showBtn) {
         const cycleId = Number(showBtn.dataset.cycleId);
@@ -4654,10 +4683,12 @@ document.getElementById('jumpToCpu').addEventListener('click', () => {
     document.getElementById('cpuTimelineSearch').focus({preventScroll: true});
 });
 for (const [buttonId, panel] of [
+    ['jumpToDeadlocks', UI.deadlockPanel],
     ['jumpToClusters', UI.runnableClusterPanel],
     ['jumpToGraph', UI.dependencyGraphPanel],
 ]) {
-    document.getElementById(buttonId).addEventListener('click', () => {
+    document.getElementById(buttonId).addEventListener('click', event => {
+        event.preventDefault();
         const details = panel.querySelector('details');
         if (!details) return;
         details.open = true;

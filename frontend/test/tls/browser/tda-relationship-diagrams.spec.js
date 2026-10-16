@@ -15,14 +15,21 @@ async function expectClearLayout(graph) {
 test('TDA inline graphs retain two/three-thread cycles and expand every class-init waiter', async ({ page, appUrl }) => {
     await page.goto(`${appUrl}/jvmscope/tda.html`);
     await page.locator('#loadSampleBtn').click();
-    await page.locator('.deadlock-panel-summary').click();
+    await expect(page.locator('.deadlock-panel-details')).toHaveAttribute('open', '');
     const cycles = page.locator('#deadlockPanel .relationship-figure');
     await expect(cycles).toHaveCount(2);
+    await expect(cycles.nth(0)).toBeVisible();
+    await expect(cycles.nth(1)).toBeHidden();
     await expect(cycles.nth(0).locator('.relationship-edge')).toHaveCount(4);
-    await expect(cycles.nth(1).locator('.relationship-edge')).toHaveCount(6);
     for (const width of [1440, 600, 420]) {
         await page.setViewportSize({ width, height: 1000 });
-        for (const graph of await cycles.all()) await expectClearLayout(graph);
+        for (let i = 0; i < 2; i++) {
+            await page.locator('.deadlock-cycle-btn').nth(i).click();
+            await expect(cycles.nth(i)).toBeVisible();
+            await expect(cycles.nth(1 - i)).toBeHidden();
+            await expect(cycles.nth(i).locator('.relationship-edge')).toHaveCount(i ? 6 : 4);
+            await expectClearLayout(cycles.nth(i));
+        }
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     }
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -64,7 +71,8 @@ function largeCycle(count) {
 test('TDA five-thread cycle with long labels retains every dependency without overlaps', async ({ page, appUrl }) => {
     await page.goto(`${appUrl}/jvmscope/tda.html`);
     await page.locator('#fileInput').setInputFiles({ name: 'five-thread-cycle.txt', mimeType: 'text/plain', buffer: Buffer.from(largeCycle(5)) });
-    await page.locator('.deadlock-panel-summary').click();
+    await expect(page.locator('.deadlock-panel-details')).toHaveAttribute('open', '');
+    await expect(page.locator('.deadlock-cycle-btn')).toHaveCount(0);
     const graph = page.locator('#deadlockPanel .relationship-figure');
     await expect(graph).toHaveCount(1);
     await expect(graph.locator('.relationship-node')).toHaveCount(10);
