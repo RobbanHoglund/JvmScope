@@ -1913,101 +1913,22 @@ function renderDeadlockPanel() {
 
 function renderDeadlockCard(cycle) {
     const items = cycle.threads || [];
-
-    const nodesHtml = items.map((item, idx) => {
-        const thread = item.sourceKey ? allThreads.find((t) => t.sourceKey === item.sourceKey) : null;
-        const buttonAttrs = thread
-            ? `type="button" class="btn btn-sm deadlock-thread-btn" data-source-key="${escapeAttr(thread.sourceKey)}"`
-            : `type="button" class="btn btn-sm" disabled`;
-
-        const arrow = idx < items.length - 1
-            ? `<div style="align-self:center;font-size:22px;opacity:0.9;">→</div>`
-            : `<div style="align-self:center;font-size:22px;opacity:0.9;">↺</div>`;
-
-        return `
-      <div style="display:contents;">
-        <div style="
-		min-width:250px;
-		     padding:14px;
-          border-radius:14px;
-          border:1px solid var(--tda-panel-border, rgba(255,107,107,0.22));
-          background:var(--tda-surface-raised, rgba(255,255,255,0.04));
-          display:flex;
-          flex-direction:column;
-          gap:8px;
-        ">
-		<div style="font-weight:800;">${escapeHtml(item.threadName)}</div>
-
-		<div class="deadlock-lock-lines">
-		  <div class="deadlock-lock-line">
-		    <span class="deadlock-lock-label">waiting for</span>
-		    <span class="deadlock-lock-pill deadlock-lock-pill-waiting"
-		          title="${escapeAttr(thread?.deadlockWaitingLockType || item.waitingLockType || '')}">
-		      ${escapeHtml(item.waitingLockId || '—')}
-		    </span>
-		  </div>
-
-		  <div class="deadlock-lock-line">
-		    <span class="deadlock-lock-label">holding</span>
-		    <span class="deadlock-lock-pill deadlock-lock-pill-holding"
-		          title="${escapeAttr(thread?.deadlockHoldingLockType || '')}">
-		      ${escapeHtml(thread?.deadlockHoldingLockId || '—')}
-		    </span>
-		  </div>
-
-		  <div class="deadlock-lock-line">
-		    <span class="deadlock-lock-label">blocked by</span>
-		    <span class="deadlock-thread-pill">
-		      ${escapeHtml(item.heldBy || '—')}
-		    </span>
-		  </div>
-		</div>
-
-		<div>
-		  <button ${buttonAttrs}>Details</button>
-		</div>
-        </div>
-        ${arrow}
-      </div>
-    `;
+    const rows = items.map(item => {
+        const thread = item.sourceKey ? allThreads.find(t => t.sourceKey === item.sourceKey) : null;
+        return `<li class="tda-cycle-edge">
+          <div class="tda-cycle-thread"><strong>${escapeHtml(item.threadName || 'Unnamed participant')}</strong>
+            <small>Holding: <code>${escapeHtml(thread?.deadlockHoldingLockId || 'Not mapped')}</code></small></div>
+          <div class="tda-cycle-wait"><span>waits for</span><code>${escapeHtml(item.waitingLockId || 'Lock not reported')}</code></div>
+          <div class="tda-cycle-owner"><span aria-hidden="true">→ </span><small>JVM-reported owner</small><strong>${escapeHtml(item.heldBy || 'Not reported')}</strong></div>
+          <button type="button" class="btn btn-sm deadlock-thread-btn" ${thread ? `data-source-key="${escapeAttr(thread.sourceKey)}"` : 'disabled'} aria-label="Details for ${escapeAttr(item.threadName || 'unmapped participant')}">Details</button>
+        </li>`;
     }).join('');
-
-    const cycleBtn = `
-	  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-	    <button
-	      type="button"
-	      class="btn btn-sm show-deadlocked-threads-btn"
-	      data-cycle-id="${escapeAttr(String(cycle.id))}">
-	      Show deadlocked threads
-	    </button>
-	  </div>
-	`;
-
-    return `
-	  <div style="
-	    padding:14px 16px;
-	    border-radius:16px;
-	    border:1px solid var(--tda-panel-border, rgba(255,255,255,0.10));
-	    background:var(--tda-surface, rgba(255,255,255,0.03));
-	  ">
-	    <div style="font-size:16px;font-weight:800;margin-bottom:10px;">
-	      Cycle ${cycle.id} • ${items.length} thread${items.length === 1 ? '' : 's'}
-	    </div>
-
-	    ${cycleBtn}
-
-	    <div style="
-	      display:grid;
-	      grid-template-columns:repeat(${Math.max(1, items.length * 2)}, max-content);
-	      gap:10px;
-	      align-items:stretch;
-	      overflow:auto;
-	      padding-bottom:4px;
-	    ">
-	      ${nodesHtml}
-	    </div>
-	  </div>
-	`;
+    return `<section class="tda-cycle" aria-label="Deadlock cycle ${escapeAttr(String(cycle.id))}">
+      <header><h3>Cycle ${escapeHtml(String(cycle.id))} <span>· ${items.length} reported participants</span></h3>
+        <button type="button" class="btn btn-sm show-deadlocked-threads-btn" data-cycle-id="${escapeAttr(String(cycle.id))}">Inspect cycle</button></header>
+      <p>Each row links a waiting thread to the owner named by the JVM. The return relationship is included.</p>
+      <ol class="tda-cycle-edges">${rows}</ol>
+    </section>`;
 }
 
 function classInitializationStatusLabel(chain) {

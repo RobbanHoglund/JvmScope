@@ -117,6 +117,21 @@ test('TDA overview separates CPU coverage from zero and leads to scoped thread e
     await expect(host.page.locator('.tda-snapshot-metrics')).not.toContainText('Unavailable');
 });
 
+test('deadlock cycle lists the closing owner relationship and opens mapped evidence',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#deadlockPanel summary').click();
+    const cycle=host.page.getByRole('region',{name:'Deadlock cycle 1',exact:true});
+    await expect(cycle.locator('.tda-cycle-edge')).toHaveCount(2);
+    const first=await cycle.locator('.tda-cycle-thread strong').first().textContent();
+    await expect(cycle.locator('.tda-cycle-owner strong').last()).toHaveText(first);
+    await cycle.getByRole('button',{name:'Inspect cycle',exact:true}).click();
+    await expect(host.page.locator('#deadlockedThreadsModal')).toBeVisible();
+    await host.page.keyboard.press('Escape');
+    await cycle.locator('.deadlock-thread-btn').first().click();
+    await expect(host.page.locator('#threadModalTitle')).toHaveText(first);
+});
+
 const rawThreadName='waiter<script>window.rawInjected=1</script>';
 const rawEvidence=`2026-10-16 12:00:00
 Full thread dump OpenJDK 64-Bit Server VM (25+35 mixed mode, sharing):
