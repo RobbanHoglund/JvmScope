@@ -1843,7 +1843,7 @@ function renderSmartAnalysisPanel() {
           <h2>${escapeHtml(priority?.title || 'No configured material findings')}</h2>
           <p>${escapeHtml(prioritySummary)}</p>
         </div>
-        ${priority?.threads?.length ? `<div class="tda-priority-action"><button type="button" class="btn btn-accent smart-analysis-focus-btn" data-smart-finding-id="${escapeAttr(priority.id)}">Inspect ${priority.threads.length} threads</button><small>Existing table filters still apply</small></div>` : ''}
+        ${priority?.threads?.length ? `<div class="tda-priority-action"><button type="button" class="btn btn-accent smart-analysis-focus-btn" data-smart-finding-id="${escapeAttr(priority.id)}">Inspect ${priority.threads.length} thread${priority.threads.length === 1 ? '' : 's'}</button><small>Existing table filters still apply</small></div>` : ''}
       </div>
       <details class="smart-analysis-details">
         <summary class="smart-analysis-summary app-section-summary">
@@ -1927,7 +1927,7 @@ function renderDeadlockCard(cycle) {
     return `<section class="tda-cycle" aria-label="Deadlock cycle ${escapeAttr(String(cycle.id))}">
       <header><h3>Cycle ${escapeHtml(String(cycle.id))} <span>· ${items.length} reported participants</span></h3>
         <button type="button" class="btn btn-sm show-deadlocked-threads-btn" data-cycle-id="${escapeAttr(String(cycle.id))}">Inspect cycle</button></header>
-      <p>Each row links a waiting thread to the owner named by the JVM. The return relationship is included.</p>
+      <p>Follow the JVM-reported owners to trace the cycle. Missing mappings remain unknown.</p>
       <ol class="tda-cycle-edges">${rows}</ol>
     </section>`;
 }
@@ -4310,7 +4310,7 @@ function queueSessionImport(read, mode = UI.inputMode?.value || 'append') {
             applySessionAnalysis(result);
             const count = additions.reduce((total, source) => total + source.snapshotCount, 0);
             showSessionInputStatus([
-                `${count} snapshot${count === 1 ? '' : 's'} ${mode === 'replace' || !oldCount ? 'loaded' : 'added'} · ${parsedDumps.length} in this session from ${sessionSources.length} source${sessionSources.length === 1 ? '' : 's'}.`,
+                `${count} snapshot${count === 1 ? '' : 's'} ${mode === 'replace' || !oldCount ? 'loaded' : `added · ${parsedDumps.length} in this session`} from ${sessionSources.length} source${sessionSources.length === 1 ? '' : 's'}.`,
                 ...failures, ...rejected,
             ].join(' '));
             inputFeedbackDialog.show(feedback);

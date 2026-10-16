@@ -34,6 +34,10 @@ in this first version.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
 - Inside an analyzer, use **Choose dumps / Choose log** to open the native file picker, or try the bundled examples.
 - **Raw dump** opens JvmScope's evidence workspace inside the analysis tab. **Exact** is first and is the default for new evidence views, showing the complete snapshot text. Choose **Annotated** for thread filters, lock inspection and links to Details/Graph. Search works in both modes; returning to an existing view keeps its current mode. **Open as text** opens the complete snapshot in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
+- TDA leads with the highest-priority finding and an **Inspect threads** action. Snapshot totals distinguish missing CPU measurements from measured zero; **Snapshot context & coverage** retains full timing and measurement details.
+- **Columns: Analysis** keeps thread evidence and Details within a narrow editor. **All technical columns** exposes counters, IDs and priorities without changing the sort. **Reapply filters** updates the table, not the source file.
+- The CPU timeline covers the whole capture. Its ranked table compares the selected interval with peak CPU and measured-interval counts. Select a thread for duration and timing details; **Clear selection** resets the highlight.
+- In Annotated raw evidence, **Investigation candidates** means threads with wait/lock evidence, not proven faults. Filter counts are threads; search follows the selected view. **Copy snapshot** always copies the complete selected snapshot, including when filtered.
 - In TLS **Investigate**, drag the divider between the table and details to resize them.
   You can also focus it with Tab and use Left/Right, Shift for larger steps, or Home/End
   for the limits. Double-click resets the split. The width is remembered; narrow editors

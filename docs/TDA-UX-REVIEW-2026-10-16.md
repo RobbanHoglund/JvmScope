@@ -34,16 +34,25 @@ variables; they do not run an installed desktop VS Code instance locally.
 | Preserve active investigation state | Existing views keep their selected mode when reused or revisited from Details/Graph. Wrap and line-number preferences survive new views. | Reopening and graph-return tests, including native tab closure and creation of another snapshot's workspace. |
 | Correct Raw dump host-theme contrast | Selected mode/filter controls keep a matched foreground/background pair on hover. Line numbers and line hover use host colors instead of dark standalone colors. | Reproduced light-theme selected-button contrast around 1.11:1 before the fix; checks now require at least 4.5:1 for the tested text in four representative palettes at 1366px and 600px. |
 
+
+| Counts, coverage and priority | Overview leads with the highest-priority finding; cycles, mapped thread blocks and thread-filter counts use separate units. CPU findings show unavailable when reliable interval evidence is absent. Full coverage and precision remain in a disclosure. | Unit cases for missing, estimated, zero and partial CPU evidence; browser finding focus preserves existing filters. |
+| Compact deadlock evidence | Each row names its JVM-reported owner, including the closing relationship when reported. Cycle actions sit beside the heading. Missing mappings remain unknown. | Closing-owner, cycle inspector and Details browser regression. |
+| Task-focused thread table | Analysis columns are the default; all technical columns remain selectable. Sort and scope stay explicit. Details is reachable and technical horizontal scrolling does not move the controls. | Narrow editor, column-switch, pointer/keyboard, sorting, paging and exact-identity regressions. |
+| CPU comparison | Whole-capture scope, selected-snapshot availability, interval duration/timestamps, a ranked comparison table and Clear selection. Unsafe rates remain absent rather than plotted as zero. | Existing interval safety/keyboard tests plus selection/reset regression. Selected CPU hover contrast is checked in all four host palette families. |
+| Annotated controls | Common exclusive filters show thread counts; specialist filters move into More lock filters. Investigation candidates no longer claims confirmed faults. Copy/search/print scope and mode-specific settings are explicit. | Filter/search/copy, Display menu, Exact/Annotated and theme regressions. |
+| Overview layout | Compact secondary panels expand to full width. Capture title wraps without overlap; filters live with their table. | 1560/1366/780/600px layout and expanded-panel checks. |
+
 “Exact” refers to the parser's complete **selected snapshot text**, not a byte-for-byte
 copy of an entire imported multi-snapshot file. Existing parsing may normalize line
 endings and remove trailing snapshot separators. This change does not alter parsing.
 
-## Priorities for the next iteration
+## Original findings and implementation rationale
 
 P1 means address before presenting the interface as ready for a broad general
 audience; P2 means a meaningful workflow improvement; P3 is finishing work. These
-are UX priorities, not claims about data loss or analyzer correctness. Except for
-the changes above, the recommendations below are **not implemented** in this branch.
+are UX priorities, not claims about data loss or analyzer correctness. The core changes below are now implemented as summarized above. Optional future
+ideas, such as small-multiple CPU plots or a second adjacent deadlock inspector,
+remain design options rather than release requirements.
 
 ### 1. P1 — Counts need explicit entities and scope
 
@@ -250,27 +259,31 @@ Keep the entire disclosure row interactive and keyboard accessible; do not add a
 nested button solely to imitate its current appearance. Judge hit areas and contrast
 from rendered elements, not screenshot pixels affected by scaling.
 
-## Validation and next acceptance pass
+## Validation and comparison captures
 
 The Exact regression failed against the old production bundle before the fix.
-The targeted local checks cover:
+The selected CPU hover regression also reproduced low light-theme contrast (about
+1.11:1) before its correction. The targeted checks now cover:
 
-- 413 TDA unit tests and 35 TDA integration tests; 24 VS Code unit tests.
-- 40 standalone browser cases across desktop/laptop projects: raw evidence,
-  compatibility and session handling, including text/JSON, large virtualized dumps,
-  complete-source copy/print, search, escaping, popups and capture invalidation.
-  The four old Annotated/class-only assumptions were updated and rerun successfully.
-- 22 VS Code browser cases, with the expanded Raw dump theme case verified after
-  its fix: native bridge operations, state lifetime, Details/Graph return, keyboard
-  order and representative light/dark/high-contrast palettes at two widths.
+- 415 TDA unit tests, 35 TDA integration tests and 24 VS Code unit tests.
+- 170 standalone TDA/CPU browser cases across desktop/laptop projects. The first
+  broad pass had 158 passing cases; all 12 failed cases were corrected and rerun.
+  These covered old hidden-chart/navigation assumptions and technical-column
+  reachability, while retaining the assertions against unsafe CPU measurements.
+- 29 VS Code browser cases, including the new triage, cycle, compact table, layout,
+  CPU comparison and theme cases. Text contrast checks require at least 4.5:1 for
+  the tested elements in representative light/dark/high-contrast palettes.
+- Production webview/standalone builds and VSIX package validation.
+
+Authentic before/after screenshots use the same built-in sample, snapshot 1/3,
+1560×1000 viewport, fixed capture clock and representative VS Code dark palette.
+The baseline is this PR's earlier commit `d0a417c` (0.3.9), which already includes
+Exact-first. The Raw dump pair compares Annotated in both versions; an additional
+Exact screenshot shows the default. These are actual rendered production webviews
+with the host bridge emulated in Chromium, not mockups or screenshots of installed
+VS Code. No private workspace material is included.
 
 The theme measurements cover the tested elements and palettes, not every third-party
-theme. Keyboard focus was exercised; a screen-reader review and 200% zoom pass over
-all four surfaces remain useful release checks. No user study was conducted.
-
-Recommended implementation sequence: **count/coverage wording → overview hierarchy
-and thread table → compact deadlock evidence → CPU comparison → Annotated controls**.
-Validate with three short tasks: identify the critical issue in a new capture,
-follow a deadlock cycle to its original evidence, and explain why a CPU peak and the
-selected snapshot's finding count differ. Success should be task completion and
-correct interpretation, not a subjective increase in visual polish.
+theme. Keyboard focus was exercised; a screen-reader review remains useful. No user
+study was conducted. The analyzer's parsing and diagnostic rules are unchanged;
+this iteration changes presentation, evidence navigation and measurement wording.

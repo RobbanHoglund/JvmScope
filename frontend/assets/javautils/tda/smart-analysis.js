@@ -320,7 +320,7 @@ function addObservedContentionFinding(findings, threads) {
         id: 'observed-lock-contention',
         diagnosticKey: 'observed-lock-contention',
         title: 'Observed lock contention',
-        summary: `${contendedThreads.length} thread${contendedThreads.length === 1 ? '' : 's'} are waiting to acquire ${distinctResources || 'one or more'} observed JVM lock resource${distinctResources === 1 ? '' : 's'} in this snapshot.`,
+        summary: `${contendedThreads.length} thread${contendedThreads.length === 1 ? ' is' : 's are'} waiting to acquire ${distinctResources || 'one or more'} observed JVM lock resource${distinctResources === 1 ? '' : 's'} in this snapshot.`,
         severity,
         confidence: 'high',
         threads: contendedThreads,
@@ -570,8 +570,8 @@ export function analyzeSnapshotProblems({
         : counts.high
             ? `${counts.high} high-severity finding${counts.high === 1 ? '' : 's'} detected`
             : counts.total
-                ? `${counts.total} potential problem${counts.total === 1 ? '' : 's'} detected`
-                : 'No material problem detected by current rules';
+                ? `${counts.total} finding${counts.total === 1 ? '' : 's'} to investigate`
+                : 'No material findings under current rules';
 
     return {
         status: counts.total ? 'findings' : 'no-material-findings',
