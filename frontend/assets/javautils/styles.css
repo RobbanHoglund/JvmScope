@@ -4330,9 +4330,16 @@ dialog.modal::backdrop {
   white-space: nowrap;
 }
 
-/* Details */
+/* CPU interval */
 #threadTable th:nth-child(19),
 #threadTable td:nth-child(19) {
+  width: 100px;
+  text-align: right;
+}
+
+/* Details remains the last column when new measurements are added. */
+#threadTable th:last-child,
+#threadTable td:last-child {
   width: 90px;
   text-align: center;
   white-space: nowrap;
@@ -4340,9 +4347,9 @@ dialog.modal::backdrop {
   padding-right: 6px;
 }
 
-#threadTable td:nth-child(19) .details-btn,
-#threadTable td:nth-child(19) .btn,
-#threadTable td:nth-child(19) button {
+#threadTable td:last-child .details-btn,
+#threadTable td:last-child .btn,
+#threadTable td:last-child button {
   display: inline-block;
   width: 100%;
   max-width: 100%;

@@ -146,6 +146,11 @@ test('TDA analysis columns keep evidence reachable and preserve sort when switch
     await host.page.locator('#threadColumns').selectOption('all');
     await expect(table.locator('th[data-key="cpuMs"]')).toBeVisible();
     expect(await row.getAttribute('data-source-key')).toBe(before);
+    const controlsX=(await host.page.locator('#threadColumns').boundingBox()).x;
+    await row.getByRole('button',{name:'Details',exact:true}).click();
+    await expect(host.page.locator('#threadModal')).toBeVisible();
+    await host.page.keyboard.press('Escape');
+    expect((await host.page.locator('#threadColumns').boundingBox()).x).toBe(controlsX);
     await host.page.locator('#threadColumns').selectOption('analysis');
     await row.getByRole('button',{name:'Details',exact:true}).click();
     await expect(host.page.locator('#threadModal')).toBeVisible();
