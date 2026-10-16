@@ -1754,6 +1754,8 @@ class ThreadDependencyGraphView {
             node.state,
             node.stateDetail,
             node.topFrame,
+            // Parser-owned stack lines exclude any separately modeled mounted thread.
+            ...(node.rawThread?.stackLines || []),
             node.tid,
             node.nid,
             node.sourceKey,

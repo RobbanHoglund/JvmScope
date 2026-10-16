@@ -3,6 +3,30 @@ import test from 'node:test';
 
 import { createThreadDependencyGraphView } from '../../assets/javautils/tda/dependency-graph-view.js';
 import { buildThreadDependencyGraph } from '../../assets/javautils/tda/dependency-graph.js';
+import { parseThreadDump } from '../../assets/javautils/tda/parser.js';
+
+test('graph search finds deeper frames without attributing mounted frames to their carrier', () => {
+    const threads = parseThreadDump(`Full thread dump OpenJDK 64-Bit Server VM (25 mixed mode):
+
+"carrier" #10 [10] prio=5 os_prio=0 tid=0x10 [0x1000]
+   Carrying virtual thread #20
+    at jdk.internal.vm.Continuation.run(Continuation.java:1)
+    at example.Carrier.dispatch(Carrier.java:20)
+   Mounted virtual thread #20
+    at example.Service.handle(Service.java:1)
+    at example.Request.deepFrame(Request.java:42)
+`);
+    const view = createThreadDependencyGraphView();
+    const model = buildThreadDependencyGraph(threads);
+    view.fullNodeById = new Map(model.nodes.map(node => [node.id, node]));
+    view.searchTerm = 'request.deepframe';
+    view.updateSearchState();
+    assert.equal(view.searchMatches.length, 1);
+    assert.equal(view.searchMatches[0].rawThread.isVirtualThread, true);
+    view.searchTerm = 'carrier.dispatch';
+    view.updateSearchState();
+    assert.deepEqual(view.searchMatches.map(node => node.threadName), ['carrier']);
+});
 
 test('class resources retain their exact identities in dependency projection and reveal', () => {
     const view = createThreadDependencyGraphView();
