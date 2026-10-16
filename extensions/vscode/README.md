@@ -107,9 +107,32 @@ The sidebar and both analyzers follow VS Code's theme, including light, dark,
 high-contrast dark and high-contrast light. Run **Preferences: Color Theme** to
 switch themes; open analyzers update immediately. Both analyzers also adapt to
 narrow editor splits. The standalone application and exported reports retain
-their own palettes. Raw snapshots still open in the native read-only editor.
+their own palettes. Raw dump opens the structured evidence workspace; its
+**Open as text** action opens the native read-only editor.
 The verified inputs are HotSpot thread dumps and SunJSSE traces; missing fields
 remain unknown. This extension adds no additional JVM/vendor compatibility claim.
+
+## If an analysis view fails to open
+
+If loading times out, run the corresponding **JvmScope: Open…** command again.
+JvmScope recreates a failed view while retaining successfully loaded analyzer views.
+
+The message **Could not register service worker… The document is in an invalid state**
+comes from VS Code's webview startup, before JvmScope's page runs. JvmScope does
+not register a service worker. A fresh analysis panel cannot repair VS Code's
+shared service-worker state.
+
+1. Save your work, close **all** VS Code windows, and start VS Code again.
+2. If the same error persists on a standard Windows installation, close VS Code
+   completely and rename `%APPDATA%\Code\Service Worker` to an unused backup name,
+   such as `Service Worker.backup-20261016`. Then restart VS Code. This resets
+   the shared webview cache, so other extensions' webviews are affected too.
+   Insiders, portable installations and custom user-data directories use different paths.
+3. If it still fails, include **Help → About** and the relevant error from
+   **Developer: Toggle Developer Tools → Console** in a bug report.
+
+The host error and cache workaround are documented in
+[Microsoft's VS Code issue #247035](https://github.com/microsoft/vscode/issues/247035).
 
 ## Develop and test
 
