@@ -112,7 +112,11 @@ export function buildContentionVisibility({
     const visibleWaiterIdsByLock = new Map();
     const hiddenWaiterCountByLock = new Map();
     let visibleWaiterObservationCount = 0;
-    let hiddenWaiterObservationCount = 0;
+    // Include observations on entire resources omitted by the density limit.
+    // Explicit type/owner filters are reported separately, not as compaction.
+    let hiddenWaiterObservationCount = eligibleLocks
+        .filter(node => !selectedLockIds.has(node.id))
+        .reduce((count, node) => count + new Set(node.waiterIds || []).size, 0);
 
     for (const lockNode of selectedLocks) {
         const waiterIds = [...new Set(Array.isArray(lockNode.waiterIds) ? lockNode.waiterIds : [])]

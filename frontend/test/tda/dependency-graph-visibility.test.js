@@ -67,7 +67,8 @@ test('compact contention selects top locks and caps visible waiters without losi
     assert.equal(result.selectedLocks.length, 5);
     assert.equal(result.hiddenLockCount, 3);
     assert.ok([...result.visibleWaiterIdsByLock.values()].every((ids) => ids.size <= 6));
-    assert.equal(result.hiddenWaiterObservationCount, 20);
+    assert.equal(result.hiddenWaiterObservationCount, 50);
+    assert.equal(result.visibleWaiterObservationCount + result.hiddenWaiterObservationCount, 80);
     assert.equal(result.contendedLockCount, 8);
 });
 
@@ -88,6 +89,7 @@ test('contention visibility can hide synchronizers and unresolved waits', () => 
     assert.deepEqual(result.selectedLocks.map((node) => node.id), ['lock:monitor']);
     assert.equal(result.filteredByTypeCount, 1);
     assert.equal(result.filteredUnresolvedCount, 1);
+    assert.equal(result.hiddenWaiterObservationCount, 0, 'explicit filters are not density compaction');
 });
 
 test('waiter compaction prioritizes deadlocked and BLOCKED threads', () => {
