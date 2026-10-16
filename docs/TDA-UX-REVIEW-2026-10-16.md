@@ -275,6 +275,15 @@ The selected CPU hover regression also reproduced low light-theme contrast (abou
   the tested elements in representative light/dark/high-contrast palettes.
 - Production webview/standalone builds and VSIX package validation.
 
+The subsequent full CI run at `a8743cc` passed the VS Code checks, but both the
+standalone and container suites stopped on 20 session cases whose shared helper
+still expected the old repeated status text (`1 in this session`). The final
+wording cleanup happened after the earlier broad local run. The helper now checks
+the actual total in either the initial/replacement or append message, and the
+cancellation case asserts that late reads preserve the complete replacement
+status. All 20 session cases were rerun against the rebuilt final frontend. This
+follow-up changes tests and these notes only; the delivered UI and VSIX are unchanged.
+
 Authentic before/after screenshots use the same built-in sample, snapshot 1/3,
 1560×1000 viewport, fixed capture clock and representative VS Code dark palette.
 The baseline is this PR's earlier commit `d0a417c` (0.3.9), which already includes

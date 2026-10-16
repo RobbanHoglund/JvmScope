@@ -8,7 +8,11 @@ const file = (number, name = `dump-${number}.txt`) => ({ name, mimeType: 'text/p
 async function snapshots(page, count) {
     if (count > 1) await expect(page.locator('#dumpSelect option')).toHaveCount(count);
     else await expect(page.locator('#rowCount')).toHaveText('1–1 of 1 threads');
-    await expect(page.locator('#sessionInputStatus')).toContainText(`${count} in this session`);
+    // New/replaced captures state their total once; append feedback also states
+    // how many snapshots were added. Both must report the actual session total.
+    await expect(page.locator('#sessionInputStatus')).toContainText(new RegExp(
+        `(?:^${count} snapshot${count === 1 ? '' : 's'} loaded|\\b${count} in this session) from [1-9]\\d* sources?\\.`,
+    ));
     await expect(page.locator('#loadingState')).not.toBeVisible();
 }
 async function pasteEvent(page, texts) {
@@ -232,7 +236,7 @@ test('TDA Clear cancels a pending file read and queued paste without blocking a 
     });
     await expect(page.locator('#fileName')).toHaveText('dump-4.txt');
     await expect(page.locator('#dumpSelect option')).toHaveCount(0);
-    await expect(page.locator('#sessionInputStatus')).toContainText('1 in this session');
+    await expect(page.locator('#sessionInputStatus')).toHaveText('1 snapshot loaded from 1 source.');
 });
 
 test('TDA worker failure and unreadable files retain the session and allow a later valid addition', async ({ page }) => {
