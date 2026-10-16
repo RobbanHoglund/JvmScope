@@ -256,8 +256,11 @@ export function createTlsAnalysisView({ filters, onChange, onClear }) {
             const selected = selectTlsEntries(entries, filters);
             const counts = { success: 0, failure: 0, unknown: 0 };
             selected.forEach(entry => counts[entry.interaction.outcome in counts ? entry.interaction.outcome : 'unknown']++);
-            ui.tlsAnalysisCount.textContent = `${selected.length} / ${entries.length} selected`;
-            ui.tlsSelectionSummary.textContent = `Selection: ${counts.success} success · ${counts.failure} failure · ${counts.unknown} unknown`;
+            const filtered = selected.length !== entries.length;
+            ui.tlsAnalysisCount.textContent = `${selected.length} of ${entries.length} match filters`;
+            ui.tlsAnalysisCount.hidden = !filtered;
+            ui.tlsSelectionSummary.textContent = `Filtered: ${counts.success} success · ${counts.failure} failure · ${counts.unknown} unknown`;
+            ui.tlsSelectionSummary.hidden = !filtered;
             const rangeKey = filters.range ? `${filters.range.start}:${filters.range.end}` : null;
             if (filters.range && rangeKey !== displayedRange) {
                 ui.tlsTimeFrom.value = utcInputValue(filters.range.start);

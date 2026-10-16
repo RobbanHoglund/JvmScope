@@ -625,3 +625,12 @@ body.tls-page.tls-investigating { height: calc(100dvh - 28px); margin-bottom: 14
 .tls-page #tlsTable th { font-size: 13px; }
 .tls-page .tls-evidence-link { font-size: 12px; }
 .tls-page .tls-timeline-axis { font-size: 13px; }
+
+/* Keep a single unfiltered overview; counts beside the table describe only a
+   narrower selection or its page. The collapsed timeline retains its context. */
+.tls-page .metric-chip { font-size: 13px; }
+.tls-page .metric-total { font-weight: 600; color: #dce3ee; }
+.tls-page #tlsHighlightCount { font-variant-numeric: tabular-nums; }
+.tls-page :is(#tlsTableStatus, #tlsAnalysisCount, #tlsSelectionSummary)[hidden],
+.tls-page .tls-analysis[open] #tlsAnalysisCount { display: none; }
+.tls-page .tls-table-scroll { margin-top: 8px; }
