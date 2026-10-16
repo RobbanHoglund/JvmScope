@@ -408,6 +408,25 @@ test('VS Code raw evidence follows live themes and fits a narrow analysis tab',a
             const actions=await raw.locator('.raw-workspace-thread-actions').first().boundingBox();
             expect(actions.x>=title.x+title.width || actions.y>=title.y+title.height).toBe(true);
             await host.page.screenshot({path:testInfo.outputPath(`raw-${width}-${theme}.png`)});
+            // Selection must keep its own foreground/background pair on hover.
+            await raw.getByRole('button',{name:'Show structured evidence',exact:true}).hover();
+            await expectReadable(raw.locator('.raw-workspace-mode.is-active'));
+            await raw.getByRole('button',{name:'Filter: Everything',exact:true}).hover();
+            await expectReadable(raw.locator('.raw-workspace-filter.is-active'));
+            await raw.getByRole('button',{name:'Show the canonical raw dump',exact:true}).click();
+            await expect(raw.locator('.raw-workspace-outline')).toBeHidden();
+            await expect(raw.locator('.raw-workspace-inspector')).toBeHidden();
+            await expectReadable(raw.locator('.raw-workspace-mode.is-active'));
+            const firstLine=raw.locator('.raw-workspace-line').first();
+            await firstLine.hover();
+            await expectReadable(firstLine.locator('.raw-workspace-line-content'));
+            await expectReadable(firstLine.locator('.raw-workspace-line-number'));
+            await raw.getByRole('searchbox',{name:'Search raw dump evidence'}).hover();
+            await expectReadable(firstLine.locator('.raw-workspace-line-number'));
+            await expectReadable(raw.locator('.raw-workspace-mode.is-active'));
+            expect(await raw.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+            await host.page.screenshot({path:testInfo.outputPath(`raw-exact-${width}-${theme}.png`)});
+            await raw.getByRole('button',{name:'Show structured evidence',exact:true}).click();
         }
     }
 });

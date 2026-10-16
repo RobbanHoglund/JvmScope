@@ -263,6 +263,15 @@ body[data-jvmscope-host="vscode"] #rawDumpDialog {
   }
   & :is(.raw-workspace-evidence, .raw-workspace-thread-lines, .raw-workspace-exact) { background: var(--host-bg); }
   & :is(.raw-workspace-line, .raw-workspace-line-content) { font-family: var(--vscode-editor-font-family, monospace); }
+  & .raw-workspace-line-number { color: var(--host-muted) !important; background: var(--host-bg); border-color: var(--host-border); }
+  & .raw-workspace-line:hover { background: var(--vscode-list-hoverBackground, var(--host-raised)); }
+  /* Keep selected controls legible while the pointer is over them. The generic
+     button hover background must not replace only half of the selection pair. */
+  & :is(.raw-workspace-mode, .raw-workspace-filter).is-active {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+    border-color: var(--vscode-focusBorder, var(--host-link)) !important;
+  }
   & .raw-workspace-thread-block.is-selected { border-color: var(--host-link); }
   & .raw-workspace-thread-link.is-active {
     background: var(--vscode-list-activeSelectionBackground, #094771) !important;
