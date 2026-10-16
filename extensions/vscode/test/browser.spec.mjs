@@ -81,14 +81,106 @@ test('VS Code TDA uses inline workers, keeps allocation qualifications and opens
     const row=host.page.locator('#threadTableBody tr').filter({hasText:'audit-allocation-boundary'});
     await expect(row).not.toContainText('ALLOCATION HOT');await expect(row.locator('td').nth(11)).toContainText('–');
     await host.page.locator('#openRawDumpBtn').click();
+    await expect(host.page.getByRole('dialog',{name:'Raw dump evidence',exact:true})).toBeVisible();
+    expect(host.messages.some(m=>m.action==='openRaw')).toBe(false);
+    await host.page.getByRole('button',{name:'Open complete raw dump in text editor',exact:true}).click();
     await expect.poll(()=>host.messages.find(m=>m.action==='openRaw')).toBeTruthy();
     expect(host.messages.find(m=>m.action==='openRaw').text).toBe(sources[1].text.trimEnd());
+    await host.page.getByRole('button',{name:'Close raw dump evidence workspace',exact:true}).click();
     await row.getByRole('button',{name:'Details',exact:true}).click();
     await host.page.locator('#threadModalCopyBtn').click();
     await expect.poll(()=>host.clipboard()).toContain('audit-allocation-boundary');
     await host.page.locator('#threadModalClose2').click();
     await host.page.locator('#clearBtn').click();await expect(host.page.locator('#threadTableBody tr')).toHaveCount(0);
     expect(host.messages.some(m=>m.action==='clearRaw')).toBe(true);
+});
+
+const rawThreadName='waiter<script>window.rawInjected=1</script>';
+const rawEvidence=`2026-10-16 12:00:00
+Full thread dump OpenJDK 64-Bit Server VM (25+35 mixed mode, sharing):
+
+"holder" #1 prio=5 os_prio=0 tid=0x00000001 nid=0x1 runnable
+   java.lang.Thread.State: RUNNABLE
+        at example.Holder.run(Holder.java:10)
+        - locked <0x000000aa> (a java.lang.Object)
+
+"${rawThreadName}" #2 prio=5 os_prio=0 tid=0x00000002 nid=0x2 waiting for monitor entry
+   java.lang.Thread.State: BLOCKED (on object monitor)
+        at example.Waiter.run(Waiter.java:20)
+        - waiting to lock <0x000000aa> (a java.lang.Object)`;
+
+test('VS Code raw dump keeps structured evidence, search, details, graph navigation and exact native copy',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:'raw-evidence.txt',text:rawEvidence}]);
+    await host.page.locator('#openRawDumpBtn').click();
+    const raw=host.page.getByRole('dialog',{name:'Raw dump evidence',exact:true});
+    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(2);
+    expect(host.messages.some(m=>m.action==='openRaw')).toBe(false);
+    expect(host.page.context().pages()).toHaveLength(1);
+    expect(await host.page.evaluate(()=>window.rawInjected)).toBeUndefined();
+    await expect(raw.locator('script')).toHaveCount(0);
+    await raw.getByRole('button',{name:'Filter: BLOCKED threads',exact:true}).click();
+    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(1);
+    await raw.getByRole('button',{name:`Go to ${rawThreadName}`,exact:true}).click();
+    await expect(raw.locator('.raw-workspace-inspector')).toContainText('Lines 9–12');
+    const search=raw.getByRole('searchbox',{name:'Search raw dump evidence'});
+    await search.fill('Waiter.java:20');
+    await expect(raw.locator('.raw-workspace-match.is-active')).toBeVisible();
+    const details=raw.getByRole('button',{name:`Open details for ${rawThreadName}`,exact:true});
+    await details.click();
+    await expect(host.page.locator('#threadModal')).toBeVisible();
+    await expect(host.page.locator('#threadModalTitle')).toHaveText(rawThreadName);
+    await host.page.keyboard.press('Escape');
+    await expect(details).toBeFocused();
+    await expect(search).toHaveValue('Waiter.java:20');
+    await raw.getByRole('button',{name:`Reveal ${rawThreadName} in dependency graph`,exact:true}).click();
+    await expect(raw).toBeHidden();
+    await expect(host.page.locator('#dependencyGraphPanel')).toBeVisible();
+    await host.page.getByRole('button',{name:'← Back to raw dump',exact:true}).click();
+    await expect(raw).toBeVisible();
+    await expect(search).toHaveValue('Waiter.java:20');
+    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(1);
+    await raw.getByRole('button',{name:'Show the canonical raw dump',exact:true}).click();
+    const exact=await raw.locator('.raw-workspace-line-content').allTextContents();
+    expect(exact.map(line=>line===' '?'':line).join('\n')).toBe(rawEvidence);
+    await raw.getByRole('button',{name:'Copy complete canonical raw dump',exact:true}).click();
+    await expect.poll(()=>host.clipboard()).toBe(rawEvidence);
+    await raw.getByRole('button',{name:'Open complete raw dump in text editor',exact:true}).click();
+    await expect.poll(()=>host.messages.find(m=>m.action==='openRaw')?.text).toBe(rawEvidence);
+    const cleared=host.messages.filter(m=>m.action==='clearRaw').length;
+    await raw.getByRole('button',{name:'Close raw dump evidence workspace',exact:true}).click();
+    await expect(raw).toBeHidden();
+    expect(host.messages.filter(m=>m.action==='clearRaw')).toHaveLength(cleared);
+    await expect(host.page.locator('#openRawDumpBtn')).toBeFocused();
+    await expect(host.page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveCount(1);
+});
+
+test('VS Code raw evidence retires on snapshot navigation, successful replacement and Clear',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:'before.txt',text:rawEvidence},{name:'after.txt',text:rawEvidence.replaceAll('holder','second-holder')}]);
+    const raw=host.page.locator('#rawDumpDialog');
+    await host.page.locator('#openRawDumpBtn').click();
+    await expect(raw).toContainText('Snapshot 1 of 2');
+    const files=(await host.navigation('children')).value.items;
+    const snapshot=(await host.navigation('children',files[1].key)).value.items[0];
+    expect((await host.navigation('select',snapshot.key)).value).toBe(true);
+    await expect(raw).toHaveCount(0);
+    await host.page.locator('#openRawDumpBtn').click();
+    await expect(raw).toContainText('Snapshot 2 of 2');
+    await host.load([{name:'invalid.txt',text:'not a thread dump'}]);
+    await host.page.locator('#inputFeedbackModal').getByRole('button',{name:'Close',exact:true}).click();
+    await expect(raw).toBeVisible();
+    await expect(raw).toContainText('Snapshot 2 of 2');
+    await raw.getByRole('button',{name:'Open details for second-holder',exact:true}).click();
+    await host.load([{name:'replacement.txt',text:rawEvidence.replaceAll('holder','new-holder')}]);
+    await expect(raw).toHaveCount(0);
+    await expect(host.page.locator('#threadModal')).toBeHidden();
+    await host.page.locator('#openRawDumpBtn').click();
+    await expect(raw).toContainText('new-holder');
+    await raw.getByRole('button',{name:'Close raw dump evidence workspace',exact:true}).click();
+    await host.page.locator('#clearBtn').click();
+    await expect(raw).toHaveCount(0);
+    await expect(host.page.locator('#openRawDumpBtn')).toBeHidden();
 });
 
 test('VS Code TLS analyzes real JSSE input and uses native copy without network upload',async({host})=>{
@@ -235,7 +327,10 @@ async function applyTheme(page,name) {
 }
 async function expectReadable(locator) {
     await expect.poll(()=>locator.evaluate(el=>{
-        const rgb=value=>value.match(/[\d.]+/g).slice(0,3).map(Number);
+        const rgb=value=>{
+            const channels=value.match(/[\d.]+/g).slice(0,3).map(Number);
+            return value.startsWith('color(srgb ') ? channels.map(v=>v*255) : channels;
+        };
         const luminance=value=>rgb(value).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
         let parent=el,bg;
         while(parent){bg=getComputedStyle(parent).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)')break;parent=parent.parentElement;}
@@ -243,6 +338,43 @@ async function expectReadable(locator) {
         return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
     })).toBeGreaterThanOrEqual(4.5);
 }
+test('VS Code raw evidence follows live themes and fits a narrow analysis tab',async({host},testInfo)=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    await expect(host.page.locator('#openRawDumpBtn')).toBeEnabled();
+    await host.page.locator('#openRawDumpBtn').click();
+    const raw=host.page.locator('#rawDumpDialog');
+    await raw.locator('.raw-workspace-thread-title').first().click();
+    await raw.locator('.raw-workspace-disclosure').first().click();
+    for(const width of [1366,600]) {
+        await host.page.setViewportSize({width,height:900});
+        for(const theme of Object.keys(themePalettes)) {
+            await applyTheme(host.page,theme);
+            await expect(raw).toBeVisible();
+            await expect(raw.locator('.raw-workspace-inspector')).toBeVisible();
+            for(const selector of ['h1','.raw-workspace-meta','.raw-workspace-thread-title h2','.raw-workspace-state','.raw-workspace-filter','.raw-workspace-search-count','.raw-workspace-line-content']) {
+                const item=raw.locator(selector).first();
+                try { await expectReadable(item); }
+                catch(error) {
+                    const colors=await item.evaluate(el=>({color:getComputedStyle(el).color,background:getComputedStyle(el).backgroundColor}));
+                    throw new Error(`${theme}, ${width}px, ${selector}: ${JSON.stringify(colors)}`,{cause:error});
+                }
+            }
+            await raw.getByRole('searchbox',{name:'Search raw dump evidence'}).focus();
+            await host.page.keyboard.press('Tab');
+            expect(await raw.evaluate(el=>getComputedStyle(el.ownerDocument.activeElement).outlineStyle)).toBe('solid');
+            const geometry=await raw.evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth,
+                layoutWidth:el.querySelector('.raw-workspace-layout').clientWidth,layoutScroll:el.querySelector('.raw-workspace-layout').scrollWidth}));
+            expect(geometry.scroll).toBeLessThanOrEqual(geometry.width);
+            expect(geometry.layoutScroll).toBeLessThanOrEqual(geometry.layoutWidth);
+            const title=await raw.locator('.raw-workspace-thread-title').first().boundingBox();
+            const actions=await raw.locator('.raw-workspace-thread-actions').first().boundingBox();
+            expect(actions.x>=title.x+title.width || actions.y>=title.y+title.height).toBe(true);
+            await host.page.screenshot({path:testInfo.outputPath(`raw-${width}-${theme}.png`)});
+        }
+    }
+});
+
 test('VS Code TLS separator is visible across themes and keeps the loaded capture when resized',async({host})=>{
     await host.page.setViewportSize({width:1600,height:900});
     await host.open('/jvmscope/tls.html');

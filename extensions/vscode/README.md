@@ -33,7 +33,7 @@ in this first version.
 - Select several thread dump files to compare snapshots. TLS analysis opens one log at a time.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
 - Inside an analyzer, use **Choose dumps / Choose log** to open the native file picker, or try the bundled examples.
-- **Raw dump** opens exact snapshot text in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
+- **Raw dump** opens JvmScope's evidence workspace inside the analysis tab: Annotated/Exact modes, search, thread filters, lock inspection and links to Details/Graph. **Open as text** opens the complete snapshot in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
 - In TLS **Investigate**, drag the divider between the table and details to resize them.
   You can also focus it with Tab and use Left/Right, Shift for larger steps, or Home/End
   for the limits. Double-click resets the split. The width is remembered; narrow editors

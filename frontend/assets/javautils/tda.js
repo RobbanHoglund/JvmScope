@@ -3939,6 +3939,7 @@ function bindThreadDetailsTabs() {
 const rawDumpStatus = document.getElementById('rawDumpStatus');
 const rawDumpReturn = document.getElementById('rawDumpReturn');
 let rawDumpTab = null;
+let rawDumpDialog = null;
 let rawDumpTabUnload = null;
 let rawDumpSnapshot = null;
 let rawDumpWorkspace = null;
@@ -3948,7 +3949,13 @@ let threadModalOpener = null;
 
 function closeRawDumpTab() {
     const origin = rawDumpOrigin;
-    invalidateRawDumpWorkspace();
+    if (rawDumpDialog) {
+        // Hiding this view keeps its search and optional text-editor evidence
+        // valid until the owning snapshot changes or the analysis is cleared.
+        rawDumpDialog.close();
+        rawDumpReturn.hidden = true;
+        rawDumpGraphOrigin = null;
+    } else invalidateRawDumpWorkspace();
     window.focus();
     origin?.focus({ preventScroll: true });
 }
@@ -3961,6 +3968,7 @@ function revealFromRawDump(reveal, sourceElement) {
         if (details) details.open = wasOpen;
         return false;
     }
+    rawDumpDialog?.close();
     rawDumpGraphOrigin = sourceElement;
     contentionGraphReturn.hidden = true;
     rawDumpReturn.hidden = false;
@@ -3974,7 +3982,7 @@ function openRawDumpTab() {
     const dump = parsedDumps[selectedDumpIndex];
     if (!dump?.rawText) return;
     if (isVsCode()) {
-        openRawEvidence(dump.rawText, `thread-dump-${selectedDumpIndex + 1}.txt`).catch(showHostError);
+        openEmbeddedRawDump(dump);
         return;
     }
     rawDumpOrigin = document.activeElement;
@@ -4025,6 +4033,41 @@ function openRawDumpTab() {
     rawDumpWorkspace?.focus();
 }
 
+function openEmbeddedRawDump(dump) {
+    if (rawDumpSnapshot !== dump || !rawDumpWorkspace || !rawDumpDialog) {
+        const origin = document.activeElement;
+        invalidateRawDumpWorkspace();
+        rawDumpOrigin = origin;
+        rawDumpSnapshot = dump;
+        const dialog = document.createElement('dialog');
+        dialog.id = 'rawDumpDialog';
+        dialog.setAttribute('aria-label', 'Raw dump evidence');
+        dialog.addEventListener('cancel', event => { event.preventDefault(); closeRawDumpTab(); });
+        document.body.append(dialog);
+        rawDumpDialog = dialog;
+        dialog.showModal();
+        const isCurrent = () => rawDumpDialog === dialog && parsedDumps[selectedDumpIndex] === dump;
+        rawDumpWorkspace = createRawDumpWorkspace({
+            popup: window, container: dialog, dump,
+            snapshotIndex: selectedDumpIndex, snapshotCount: parsedDumps.length,
+            copyText: writeClipboard, onPrint: null,
+            onOpenText: () => isCurrent() && openRawEvidence(dump.rawText, `thread-dump-${selectedDumpIndex + 1}.txt`),
+            onClose: closeRawDumpTab,
+            onOpenThread: (thread, sourceElement) => { if (isCurrent()) openThreadModal(thread, sourceElement); },
+            onRevealThread: (thread, sourceElement) => isCurrent() && revealFromRawDump(
+                () => dependencyGraphView.revealThread(thread), sourceElement),
+            onRevealLock: (lockId, sourceElement) => isCurrent() && revealFromRawDump(
+                () => dependencyGraphView.revealLock(lockId), sourceElement),
+        });
+    } else if (!rawDumpDialog.open) rawDumpDialog.showModal();
+    rawDumpWorkspace?.focus();
+}
+
+if (isVsCode()) {
+    UI.openRawDumpBtn.title = 'Open raw dump evidence with search, thread filters and details';
+    document.getElementById('rawDumpGuide').textContent = 'Raw dump opens the selected snapshot in the analysis tab, with Annotated and Exact modes, search, thread filters and links to Details or the dependency map. Open as text opens a read-only VS Code editor. Snapshot changes, additions, replacement or Clear close the old evidence view.';
+}
+
 rawDumpReturn.addEventListener('click', () => {
     openRawDumpTab();
     if (rawDumpGraphOrigin?.isConnected) rawDumpGraphOrigin.focus({ preventScroll: true });
@@ -4038,6 +4081,13 @@ function invalidateRawDumpWorkspace({ closeTab = true } = {}) {
     rawDumpTabUnload = null;
     rawDumpWorkspace?.destroy();
     rawDumpWorkspace = null;
+    if (rawDumpDialog?.contains(threadModalOpener)) {
+        if (UI.modal.open) closeThreadModal();
+        threadModalOpener = null;
+    }
+    rawDumpDialog?.close();
+    rawDumpDialog?.remove();
+    rawDumpDialog = null;
     rawDumpSnapshot = null;
     rawDumpOrigin = null;
     rawDumpGraphOrigin = null;
@@ -4162,6 +4212,7 @@ function beginInputRequest() {
 
 const hostNavigation = createHostNavigation(({snapshotIndex,thread}) => {
     if (UI.modal?.open) closeThreadModal();
+    rawDumpDialog?.close();
     navigateToDump('direct',snapshotIndex);
     if (thread) openThreadModal(thread);
     else UI.fileName.scrollIntoView({block:'nearest'});

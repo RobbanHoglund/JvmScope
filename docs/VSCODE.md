@@ -22,10 +22,14 @@ compare multiple snapshots; TLS requires a single file. Command imports replace
 an analyzer's current input; the in-view Add/Replace control applies to TDA's file
 picker and Paste. No source file is modified by analysis.
 
-The raw snapshot viewer is a read-only virtual text document, owned by its
-analyzer panel. It is invalidated when the capture changes or closes. It is not a
-live source editor and does not claim that line numbers still match an edited
-source file.
+**Raw dump** opens the shared evidence workspace inside the analyzer webview,
+with Annotated/Exact modes, search, thread filters, lock inspection and links to
+Details or the dependency graph. It retains the webview's CSP and live theme.
+Copy uses the native clipboard. **Open as text** is an explicit action for a
+read-only virtual text document. Both views belong to the selected snapshot and
+are invalidated when it changes or the analysis closes. These are captured
+evidence, not a live source editor; source navigation validates original-file
+coordinates separately.
 
 The package is a desktop extension. Remote/virtual file providers are accessed
 through VS Code APIs without assuming a local filesystem path. Real remote
