@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.6 — Structured raw thread evidence
+
+- Open Raw dump inside the analysis tab with the shared Annotated/Exact workspace, search, thread filters, lock inspection and Details/Graph navigation.
+- Keep the complete read-only text editor available through an explicit Open as text action.
+- Follow live host themes, support narrow tabs, preserve native clipboard behavior and retire evidence when its snapshot changes.
+- Add browser regressions for raw evidence, navigation, replacement and theme/layout behavior; correct the compact TLS check for its new Highlights count.
+
 ## 0.3.5 — TLS investigation workspace
 
 - Improve small evidence text and selected-row contrast across VS Code themes.
