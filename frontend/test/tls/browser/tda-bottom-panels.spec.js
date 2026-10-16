@@ -34,3 +34,15 @@ test('recurring cards explain class waits and observations without overflowing a
     expect(await card.evaluate(el => el.scrollWidth <= el.clientWidth + 2)).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
 });
+
+test('class initialization waits and owners have visible graph arrowheads', async ({ page }) => {
+    await page.locator('#jumpToGraph').click();
+    for (const relation of ['class-init-wait', 'initialize']) {
+        const paths = page.locator(`.dependency-graph-edge-${relation}`);
+        await expect(paths.first()).toBeVisible();
+        expect(await paths.evaluateAll(edges => edges.every(edge => {
+            const id = edge.getAttribute('marker-end')?.match(/#([^)]*)/)?.[1];
+            return id && document.getElementById(id)?.querySelector('path');
+        }))).toBe(true);
+    }
+});

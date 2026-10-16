@@ -1236,7 +1236,7 @@ class ThreadDependencyGraphView {
         gradient.append('stop').attr('offset', '0%').attr('stop-color', '#7bc7ff').attr('stop-opacity', 0.28);
         gradient.append('stop').attr('offset', '100%').attr('stop-color', '#7bc7ff').attr('stop-opacity', 0);
 
-        const markerTypes = ['wait', 'park', 'await', 'hold', 'dependency', 'mount', 'deadlock'];
+        const markerTypes = ['wait', 'park', 'class-init-wait', 'initialize', 'await', 'hold', 'dependency', 'mount', 'deadlock'];
         for (const type of markerTypes) {
             defs.append('marker')
                 .attr('id', `${this.instanceId}-arrow-${type}`)
