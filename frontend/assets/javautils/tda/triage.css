@@ -19,6 +19,8 @@
 .tda-page .tda-section-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
 .tda-page .tda-section-nav :is(a,button) { font: inherit; padding: 6px 12px; color: var(--host-link, #a9ccff); background: transparent; border: 1px solid var(--tda-panel-border, #35404c); border-radius: 5px; text-decoration: none; cursor: pointer; }
 .tda-page .tda-section-nav button:disabled { opacity: .55; cursor: default; }
+.tda-page :is(.header-center,.tda-file-actions,.session-input-mode) { min-width: 0; max-width: 100%; }
+.tda-page .session-input-mode .dump-select { width: auto; min-width: 0; flex: 1 1 auto; }
 .tda-page :is(#runnableClusterPanel,#dependencyGraphPanel) { scroll-margin-top: 12px; }
 .tda-page .panel-host { margin-top: 10px; }
 .tda-page .app-section-summary { padding: 12px 14px; }
@@ -91,6 +93,32 @@
  .tda-page .tda-cpu-ranking :is(th,td):first-child { width: 38%; }
 }
 /* Secondary evidence stays compact until the user opens a section. */
+.tda-page .runnable-cluster-card-head { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px; align-items: center; }
+.tda-page .runnable-cluster-card-titlewrap { display: grid; gap: 5px; overflow: visible; }
+.tda-page .runnable-cluster-card-title { min-width: 0; max-width: none; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+.tda-page .runnable-cluster-card-signature { white-space: normal; overflow-wrap: anywhere; line-height: 1.5; color: var(--text-muted, #aebbc5); }
+.tda-page .runnable-cluster-card-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+.tda-page .runnable-cluster-stat { display: grid; gap: 4px; text-align: left; }
+.tda-page .runnable-cluster-stat > span { font-size: 11px; color: var(--text-muted, #aebbc5); }
+.tda-page .runnable-cluster-stat strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+.tda-page .runnable-cluster-card-summary { border-left-color: var(--tda-panel-border, #35404c); }
+.tda-page .runnable-cluster-trend-badge { color: inherit; background: var(--tda-surface, #171f28); border-color: var(--tda-panel-border, #35404c); font-weight: 500; }
+.tda-page .runnable-cluster-explanation { margin: 8px 0 12px; color: var(--text-muted, #aebbc5); line-height: 1.5; font-size: 12px; }
+.tda-page .runnable-cluster-method-details { border: 1px solid var(--tda-panel-border, #35404c); border-radius: 6px; padding: 10px 12px; font-size: 12px; line-height: 1.5; }
+.tda-page .runnable-cluster-method-details summary { cursor: pointer; }
+.tda-page .runnable-cluster-method-details p { margin: 10px 0; }
+.tda-page .runnable-cluster-method-details .runnable-cluster-section-label { margin-top: 12px; }
+.tda-page .runnable-cluster-card-body { min-width: 0; grid-template-columns: minmax(0,1fr); }
+.tda-page :is(.runnable-cluster-section,.runnable-cluster-stack-group,.runnable-cluster-member-list,.runnable-cluster-frames) { min-width: 0; grid-template-columns: minmax(0,1fr); }
+.tda-page .runnable-cluster-stack-group-head { flex-wrap: wrap; }
+.tda-page :is(.runnable-cluster-stack-group-signature,.runnable-cluster-member-frame,.runnable-cluster-frame-line) { overflow-wrap: anywhere; }
+.tda-page .runnable-cluster-inline-stack { max-width: 100%; overflow-x: auto; }
+@media(max-width: 800px) {
+ .tda-page .runnable-cluster-card-head { grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
+ .tda-page .runnable-cluster-card-titlewrap { grid-column: 1 / -1; }
+ .tda-page .runnable-cluster-card-stats { gap: 20px; }
+ .tda-page .runnable-cluster-filterbar { flex-wrap: wrap; gap: 12px; }
+}
 .tda-page .tda-secondary-panels { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin: 10px 0; }
 .tda-page .tda-secondary-panels > section { margin: 0; min-width: 0; padding: 0; }
 .tda-page .tda-secondary-panels > section:has(details[open]) { grid-column: 1 / -1; }

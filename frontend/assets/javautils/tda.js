@@ -671,15 +671,6 @@ function getClusterRunTooltip(cluster) {
     );
 }
 
-function getClusterSimilarityTooltip(cluster) {
-    const avg = Number(cluster?.quality?.averageSimilarity || 0);
-    const pct = Math.round(avg * 100);
-
-    return compactTooltip(
-        `Average similarity inside this cluster: ${pct}%. Higher means the grouped stacks are more alike. Lower means the cluster contains more variation.`
-    );
-}
-
 function getClusterPrimaryGroupingTooltip(cluster) {
     const primaryMethod = String(cluster?.primaryMethod || 'variant-merge');
     const methodLabel = getSimilarityMethodLabel(primaryMethod);
@@ -964,28 +955,6 @@ function getRunnableClusterTrendTooltip(trendRaw) {
             );
     }
 }
-
-function getRunnableClusterMixedMethodsTooltip(cluster) {
-    const breakdown = Array.isArray(cluster?.methodBreakdown) ? cluster.methodBreakdown : [];
-
-    if (!breakdown.length) {
-        return compactTooltip(
-            'Mixed methods means the cluster was grouped using more than one similarity rule.'
-        );
-    }
-
-    const methodsText = breakdown
-        .map((entry) => `${getSimilarityMethodLabel(entry.method)}: ${entry.count}`)
-        .join(', ');
-
-    return compactTooltip(
-        'Mixed methods means the threads in this cluster were not all grouped in exactly the same way. ' +
-        'Some matched by exact or very close stack similarity, while others matched by looser similarity rules. ' +
-        `Breakdown: ${methodsText}.`
-    );
-}
-
-
 
 function renderChartFilterBar() {
     if (!UI.chartFilterSummary) return;
@@ -2791,6 +2760,7 @@ function renderRunnableClusterPanel() {
 	  </summary>
 
 	    <section class="runnable-cluster-panel-shell">
+          <p class="runnable-cluster-explanation">Repeated RUNNABLE stacks are observations, not proof of CPU usage or livelock. Explicit class-initialization waits are grouped separately.</p>
 	      ${renderRunnableClusterFilterBar()}
 
 	      ${paging}
@@ -3085,6 +3055,11 @@ function summarizeDumpOccurrences(groupMembers) {
         .join(', ');
 }
 
+function shortRunnableFrame(frame) {
+    const method = String(frame).replace(/^at\s+/, '').split('(')[0].split('/').pop();
+    return method.split('.').slice(-2).join('.');
+}
+
 function renderRunnableClusterCard(cluster) {
     const representativeFrames = Array.isArray(cluster.representativeFrames)
         ? cluster.representativeFrames.filter(Boolean).slice(0, 3)
@@ -3096,6 +3071,14 @@ function renderRunnableClusterCard(cluster) {
         'RUNNABLE stack';
 
     const title = representativeFrames[0] || fallbackTopFrame;
+    const classWaits = cluster.representative?.classInitializationWaits || [];
+    const isClassWait = cluster.observationKind === 'class-initialization-wait';
+    const shortTitle = isClassWait
+        ? `Class initialization wait · ${classWaits.map(wait => wait.className.split('.').pop()).join(', ')}`
+        : shortRunnableFrame(title);
+    const contextText = isClassWait
+        ? `Waiting for ${classWaits.map(wait => wait.className).join(', ')}. Reported RUNNABLE by the JVM.`
+        : 'Similar RUNNABLE stacks observed across snapshots.';
 
     const averageSimilarity = Number(cluster.quality?.averageSimilarity || 0);
     const similarityPct = Number.isFinite(averageSimilarity)
@@ -3104,7 +3087,6 @@ function renderRunnableClusterCard(cluster) {
 
     const primaryMethod = String(cluster.primaryMethod || 'Unknown');
     const methodBreakdown = Array.isArray(cluster.methodBreakdown) ? cluster.methodBreakdown : [];
-    const hasMixedMethods = methodBreakdown.length > 1;
     const dumpCountSeen = Number(cluster.dumpCountSeen || 0);
     const totalOccurrences = Number(cluster.totalOccurrences || 0);
     const longestConsecutiveRun = Number(cluster.longestConsecutiveRun || 0);
@@ -3117,9 +3099,7 @@ function renderRunnableClusterCard(cluster) {
     const members = Array.isArray(cluster.members) ? cluster.members : [];
     
 
-    const signatureText = representativeFrames.length
-        ? representativeFrames.join(' → ')
-        : fallbackTopFrame;
+
 
     const breakdownHtml = methodBreakdown.length
         ? methodBreakdown.map((entry) => {
@@ -3269,79 +3249,24 @@ function renderRunnableClusterCard(cluster) {
                   data-details-loaded="${detailsLoaded}"
 				  ${isRunnableClusterOpen(cluster.id) ? 'open' : ''}
 				>
-				    <summary class="runnable-cluster-card-summary">
-				      <div class="runnable-cluster-card-head">
-				        <div class="runnable-cluster-card-titlewrap">
-				          <div class="runnable-cluster-card-title has-tooltip"
-				               data-tooltip="${escapeAttr(title)}">
-				            ${escapeHtml(title)}
-				          </div>
-
-				          <div class="runnable-cluster-card-signature has-tooltip"
-				               data-tooltip="${escapeAttr(signatureText)}">
-				            ${escapeHtml(signatureText)}
-				          </div>
-				        </div>
-
-				        <div class="runnable-cluster-card-stats">
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterSeenTooltip(cluster))}"
-				          >
-				            <label>Seen</label>
-				            <strong>${dumpCountSeen}/${parsedDumps.length}</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterTotalTooltip(cluster))}"
-				          >
-				            <label>Total</label>
-				            <strong>${totalOccurrences}</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterRunTooltip(cluster))}"
-				          >
-				            <label>Run</label>
-				            <strong>${longestConsecutiveRun}</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterSimilarityTooltip(cluster))}"
-				          >
-				            <label>Similarity</label>
-				            <strong>${similarityPct}%</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat runnable-cluster-stat-help has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterPrimaryGroupingTooltip(cluster))}"
-				          >
-				            <label>Primary</label>
-				            <strong>${escapeHtml(getSimilarityMethodLabel(primaryMethod))}</strong>
-				          </span>
-				        </div>
-
-						<div class="runnable-cluster-card-badges">
-						  <span
-						    class="runnable-cluster-trend-badge runnable-cluster-trend-${escapeAttr(trendKey)} has-tooltip"
-						    data-tooltip="${escapeAttr(getRunnableClusterTrendTooltip(trendRaw))}">
-						    ${escapeHtml(trendRaw)}
-						  </span>
-
-						  ${hasMixedMethods ? `
-						    <span
-						      class="runnable-cluster-trend-badge runnable-cluster-trend-intermittent has-tooltip"
-						      data-tooltip="${escapeAttr(getRunnableClusterMixedMethodsTooltip(cluster))}">
-						      Mixed
-						    </span>
-						  ` : ''}
-						</div>
-				      </div>
-				    </summary>
+                <summary class="runnable-cluster-card-summary">
+                  <div class="runnable-cluster-card-head">
+                    <div class="runnable-cluster-card-titlewrap">
+                      <div class="runnable-cluster-card-title" title="${escapeAttr(title)}">${escapeHtml(shortTitle)}</div>
+                      <div class="runnable-cluster-card-signature">${escapeHtml(contextText)}</div>
+                    </div>
+                    <div class="runnable-cluster-card-stats">
+                      <span class="runnable-cluster-stat has-tooltip" data-tooltip="${escapeAttr(getClusterSeenTooltip(cluster))}">
+                        <span>Snapshots</span><strong>${dumpCountSeen}/${parsedDumps.length}</strong>
+                      </span>
+                      <span class="runnable-cluster-stat has-tooltip" data-tooltip="${escapeAttr(getClusterTotalTooltip(cluster))}">
+                        <span>Observations</span><strong>${totalOccurrences}</strong>
+                      </span>
+                    </div>
+                    <span class="runnable-cluster-trend-badge runnable-cluster-trend-${escapeAttr(trendKey)} has-tooltip"
+                      data-tooltip="${escapeAttr(getRunnableClusterTrendTooltip(trendRaw))}">${escapeHtml(trendRaw)}</span>
+                  </div>
+                </summary>
 
 			    <div class="runnable-cluster-card-body">
 				
@@ -3350,25 +3275,18 @@ function renderRunnableClusterCard(cluster) {
 		    ${renderRunnableClusterTimeline(cluster)}
 		  </div>
 
-		  <div class="runnable-cluster-section">
-		    <div class="runnable-cluster-section-label">Similarity methods used</div>
-		    <div class="runnable-cluster-method-chip-row">
-		      ${breakdownHtml}
-		    </div>
-		  </div>
-
-		  <div class="runnable-cluster-section">
-		    <div class="runnable-cluster-section-label">Representative frames</div>
-		    <div class="runnable-cluster-frames">
-		      ${representativeFrames.length
-            ? representativeFrames.map((frame) => `
-		              <div class="runnable-cluster-frame-line">${escapeHtml(frame)}</div>
-		            `).join('')
-            : `<div class="runnable-cluster-frame-line">${escapeHtml(fallbackTopFrame)}</div>`
-        }
-		    </div>
-		  </div>
-		  
+          <p class="runnable-cluster-explanation">${escapeHtml(getRunnableClusterTrendTooltip(trendRaw))}</p>
+          <details class="runnable-cluster-method-details">
+            <summary>Grouping details · ${similarityPct}% mean stack similarity</summary>
+            <p>Similarity is a heuristic measure of stack resemblance, not a probability of a bug or a CPU measurement. Observations count each matching thread in each snapshot, so the same thread can be counted more than once.</p>
+            <p class="has-tooltip" data-tooltip="${escapeAttr(getClusterRunTooltip(cluster))}">Longest consecutive presence: ${longestConsecutiveRun} snapshots.</p>
+            <p class="has-tooltip" data-tooltip="${escapeAttr(getClusterPrimaryGroupingTooltip(cluster))}">Primary method: ${escapeHtml(getSimilarityMethodLabel(primaryMethod))}.</p>
+            <div class="runnable-cluster-method-chip-row">${breakdownHtml}</div>
+            <div class="runnable-cluster-section-label">Representative normalized frames</div>
+            <div class="runnable-cluster-frames">
+              ${(representativeFrames.length ? representativeFrames : [fallbackTopFrame]).map(frame => `<div class="runnable-cluster-frame-line">${escapeHtml(frame)}</div>`).join('')}
+            </div>
+          </details>
 		  <div class="runnable-cluster-section">
 		    <div class="runnable-cluster-member-actions">
 		      <button

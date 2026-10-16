@@ -17,3 +17,20 @@ test('section shortcuts open lower panels and move keyboard focus to their headi
         await expect(page.locator(heading)).toBeInViewport();
     }
 });
+
+test('recurring cards explain class waits and observations without overflowing a narrow view', async ({ page }) => {
+    await page.setViewportSize({ width: 600, height: 900 });
+    await page.locator('#jumpToClusters').click();
+    const panel = page.locator('#runnableClusterPanel');
+    await expect(panel).toContainText('not proof of CPU usage or livelock');
+    const card = panel.locator('.runnable-cluster-card').filter({ hasText: 'Class initialization wait ·' });
+    await expect(card).toHaveCount(1);
+    await expect(card.locator('.runnable-cluster-card-stats')).toContainText('Observations30');
+    await card.locator('summary').first().click();
+    await expect(card.locator('.runnable-cluster-timeline-value')).toHaveText(['10', '10', '10']);
+    await expect(card.locator('.runnable-cluster-method-details')).not.toHaveAttribute('open', '');
+    await card.getByText(/Grouping details ·/).click();
+    await expect(card).toContainText('not a probability of a bug');
+    expect(await card.evaluate(el => el.scrollWidth <= el.clientWidth + 2)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
+});
