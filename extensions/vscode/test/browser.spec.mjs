@@ -151,6 +151,30 @@ test('TDA analysis columns keep evidence reachable and preserve sort when switch
     await expect(host.page.locator('#threadModal')).toBeVisible();
 });
 
+test('CPU comparison exposes interval scope, durations and an explicit selection reset',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#jumpToCpu').click();
+    await expect(host.page.locator('#cpuTimelineSummary')).toContainText('no preceding CPU interval');
+    const rows=host.page.locator('.tda-cpu-ranking tbody tr');
+    await expect(rows).toHaveCount(10);
+    await expect(rows.first().locator('td').nth(1)).toHaveText('— unavailable');
+    const thread=host.page.locator('.cpu-timeline-legend-item').first();
+    await thread.click();
+    await expect(thread).toHaveAttribute('aria-pressed','true');
+    await expect(host.page.locator('#cpuTimelineSelection')).toContainText('Peak interval');
+    await expect(host.page.locator('#cpuTimelineSelection')).toContainText('Rate basis:');
+    await host.page.locator('#cpuTimelineClear').click();
+    await expect(thread).toHaveAttribute('aria-pressed','false');
+    await expect(host.page.locator('.cpu-timeline-series.is-muted')).toHaveCount(0);
+    // Select the series before clicking an overlapping point, as a user would.
+    await thread.click();
+    await host.page.locator('#cpuTimelineChart .cpu-timeline-series.is-highlighted .cpu-timeline-point').first().click();
+    await expect(host.page.locator('#dumpSelect')).toHaveValue('1');
+    await expect(host.page.locator('#cpuTimelineSelection')).toContainText('Selected interval D1→D2');
+    await expect(rows.first().locator('td').nth(1)).toContainText('%');
+});
+
 const rawThreadName='waiter<script>window.rawInjected=1</script>';
 const rawEvidence=`2026-10-16 12:00:00
 Full thread dump OpenJDK 64-Bit Server VM (25+35 mixed mode, sharing):

@@ -73,3 +73,17 @@
 }
 .tda-page .tda-table-options { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; }
 .tda-page #threadTable th:focus-visible { outline: 2px solid var(--host-link, #75beff); outline-offset: -2px; }
+.tda-page .tda-cpu-selection { display: flex; align-items: flex-start; gap: 14px; margin: 12px 0; font-size: 13px; }
+.tda-page .tda-cpu-selection output { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.6; max-height: 120px; overflow-y: auto; }
+.tda-page #cpuTimelineLegend { display: block; max-height: 320px; overflow: auto; }
+.tda-page .tda-cpu-ranking { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+.tda-page .tda-cpu-ranking caption { text-align: left; font-weight: 600; padding: 8px 0; }
+.tda-page .tda-cpu-ranking :is(th,td) { padding: 7px 9px; white-space: normal; overflow-wrap: anywhere; border-bottom: 1px solid var(--tda-panel-border, #35404c); }
+.tda-page .tda-cpu-ranking :is(th,td):first-child { width: 46%; }
+.tda-page .tda-cpu-ranking .cpu-timeline-legend-item { width: 100%; max-width: none; background: transparent; border: 0; text-align: left; display: flex; align-items: center; gap: 8px; padding: 6px; }
+.tda-page .tda-cpu-ranking .cpu-timeline-legend-name { white-space: normal; overflow-wrap: anywhere; }
+@media(max-width:800px) {
+ .tda-page .tda-cpu-selection { flex-direction: column; gap: 8px; }
+ .tda-page .tda-cpu-ranking :is(th,td) { padding: 6px 4px; }
+ .tda-page .tda-cpu-ranking :is(th,td):first-child { width: 38%; }
+}

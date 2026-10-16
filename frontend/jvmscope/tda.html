@@ -585,7 +585,7 @@
 					<div class="thread-state-chart-header cpu-timeline-header">
 						<div>
 							<div class="thread-state-chart-title">Thread CPU timeline</div>
-							<div class="thread-state-chart-subtitle">Measured CPU percentage for reliable intervals between exact adjacent snapshots</div>
+							<div class="thread-state-chart-subtitle">Average thread CPU during each sampled interval · whole capture</div>
 						</div>
 						<div class="cpu-timeline-controls">
 							<label class="cpu-timeline-search-wrap" for="cpuTimelineSearch">
@@ -605,8 +605,9 @@
 					</div>
 					<output id="cpuTimelineSummary" class="cpu-timeline-summary"
 						aria-live="polite" aria-atomic="true"></output>
+					<div class="tda-cpu-selection"><output id="cpuTimelineSelection" aria-live="polite">Select a thread to inspect its intervals.</output><button type="button" id="cpuTimelineClear" class="btn btn-sm" disabled>Clear selection</button></div>
 					<div id="cpuTimelineChart" class="cpu-timeline-chart"></div>
-					<p class="hint-muted">Each point measures the preceding interval. Hover or select a thread below to highlight it; select again to clear. Click a point to open its ending snapshot.</p>
+					<p class="hint-muted">Intervals are equally spaced, not a continuous time axis. Gaps mean unavailable evidence. Select a thread below to highlight it; click a point to open its ending snapshot.</p>
 					<div id="cpuTimelineLegend" class="cpu-timeline-legend"></div>
 				</div>
 

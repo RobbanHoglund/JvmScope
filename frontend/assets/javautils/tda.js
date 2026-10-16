@@ -2202,7 +2202,7 @@ function renderCpuTimelineChart() {
     }
     container.innerHTML = '';
     legend.innerHTML = '';
-    container.closest('.cpu-timeline-card')?.classList.toggle('hidden', model.measuredSeriesCount === 0);
+    container.closest('.cpu-timeline-card')?.classList.remove('hidden');
     const hasTimelineFilter = Boolean(model.query);
     let summaryText = 'No measured CPU series are available';
     if (model.availableSeriesCount) {
@@ -2210,7 +2210,9 @@ function renderCpuTimelineChart() {
     } else if (hasTimelineFilter) {
         summaryText = 'No measured CPU series match the current filter';
     }
-    summary.textContent = summaryText;
+    summary.textContent = `${summaryText} · Selected snapshot ${selectedDumpIndex + 1}/${model.snapshots.length}${selectedDumpIndex === 0 ? ': no preceding CPU interval' : `: interval D${selectedDumpIndex}→D${selectedDumpIndex + 1}`}`;
+    document.getElementById('cpuTimelineSelection').textContent = 'Select a thread to inspect its measured intervals.';
+    document.getElementById('cpuTimelineClear').disabled = !model.selectedSeriesKey;
 
     if (model.snapshots.length < 2) {
         container.innerHTML = '<div class="thread-state-empty">At least two correlated snapshots with CPU counters are required.</div>';
@@ -2224,7 +2226,7 @@ function renderCpuTimelineChart() {
     }
 
     const width = Math.max(720, container.clientWidth || 1100);
-    const height = 280;
+    const height = 240;
     const margin = { top: 18, right: 26, bottom: 48, left: 62 };
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
@@ -2329,17 +2331,16 @@ function renderCpuTimelineChart() {
             .attr('r', (point) => point.dumpIndex === selectedDumpIndex ? 5 : 3.5)
             .attr('fill', color);
 
-        legend.insertAdjacentHTML('beforeend', `
-            <button type="button" class="cpu-timeline-legend-item"
-                data-timeline-series-key="${escapeAttr(item.seriesKey)}"
-                data-timeline-thread-name="${escapeAttr(item.name)}"
-                aria-pressed="false"
-                title="Highlight ${escapeAttr(item.name)}; click again to clear. Peak CPU ${escapeAttr(item.maximumRatePercent.toFixed(1))}%">
-                <span class="cpu-timeline-legend-swatch" style="background:${escapeAttr(color)}"></span>
-                <span class="cpu-timeline-legend-name">${escapeHtml(item.name)}</span>
-                <span class="cpu-timeline-legend-peak">Peak ${escapeHtml(item.maximumRatePercent.toFixed(1))}%</span>
-            </button>`);
     });
+    legend.innerHTML = `<table class="tda-cpu-ranking"><caption>Threads ranked by peak interval CPU</caption>
+      <thead><tr><th>Thread</th><th>Selected interval</th><th>Peak CPU</th><th>Measured intervals</th></tr></thead>
+      <tbody>${model.series.map((item,index) => {
+        const point = item.points.find(point => point.dumpIndex === selectedDumpIndex);
+        return `<tr><td><button type="button" class="cpu-timeline-legend-item" data-timeline-series-key="${escapeAttr(item.seriesKey)}" data-timeline-thread-name="${escapeAttr(item.name)}" aria-pressed="false" title="Highlight ${escapeAttr(item.name)}">
+          <span class="cpu-timeline-legend-swatch" style="background:${escapeAttr(colors[index])}"></span><span class="cpu-timeline-legend-name">${escapeHtml(item.name)}</span></button></td>
+          <td>${point ? `${point.ratePercent.toFixed(1)}% · ${(point.intervalMs / 1000).toFixed(2)} s` : '— unavailable'}</td>
+          <td>Peak ${item.maximumRatePercent.toFixed(1)}%</td><td>${item.points.length}/${model.intervals.length}</td></tr>`;
+      }).join('')}</tbody></table>`;
     updateCpuTimelineEmphasis();
 }
 
@@ -2361,6 +2362,14 @@ function updateCpuTimelineEmphasis(previewKey = '') {
         button.classList.toggle('is-highlighted', Boolean(key) && button.dataset.timelineSeriesKey === key);
         button.setAttribute('aria-pressed', String(button.dataset.timelineSeriesKey === cpuTimelineState.selectedSeriesKey));
     });
+    const selected = cpuTimelineModelCache?.model.series.find(series => series.seriesKey === key);
+    const selection = document.getElementById('cpuTimelineSelection');
+    if (selected) {
+        const current = selected.points.find(point => point.dumpIndex === selectedDumpIndex);
+        const point = current || selected.points.reduce((peak, item) => item.ratePercent > peak.ratePercent ? item : peak);
+        selection.textContent = `${selected.name} · ${current ? 'Selected' : 'Peak'} interval D${point.dumpIndex}→D${point.dumpIndex + 1}: ${point.ratePercent.toFixed(1)}% over ${(point.intervalMs / 1000).toFixed(2)} s · ${compactSnapshotTime(parsedDumps[point.dumpIndex - 1]?.timestamp)} → ${compactSnapshotTime(parsedDumps[point.dumpIndex]?.timestamp)} · Rate basis: ${cpuRateBasisLabel(point.rateBasis)}`;
+    } else selection.textContent = 'Select a thread to inspect its measured intervals.';
+    document.getElementById('cpuTimelineClear').disabled = !cpuTimelineState.selectedSeriesKey;
 }
 
 function activateCpuTimelinePoint(container, seriesKey, dumpIndex) {
@@ -4823,6 +4832,11 @@ UI.cpuTimelineLegend?.addEventListener('click', (event) => {
     const key = String(item.dataset.timelineSeriesKey || '');
     cpuTimelineState.selectedSeriesKey = cpuTimelineState.selectedSeriesKey === key ? '' : key;
     updateCpuTimelineEmphasis();
+});
+document.getElementById('cpuTimelineClear').addEventListener('click', () => {
+    cpuTimelineState.selectedSeriesKey = '';
+    updateCpuTimelineEmphasis();
+    UI.cpuTimelineSearch.focus({preventScroll: true});
 });
 
 // A closed details element has no usable width. Redraw when opened or resized
