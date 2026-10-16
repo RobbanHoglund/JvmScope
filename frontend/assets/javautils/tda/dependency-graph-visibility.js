@@ -100,13 +100,18 @@ export function buildContentionVisibility({
     }));
     const eligibleLocks = typeVisibleLocks.filter((node) => showUnresolved || (node.ownerIds?.length || 0) > 0 || node.deadlocked);
 
-    const selectedLocks = [...eligibleLocks]
+    const rankedLocks = [...eligibleLocks]
         .sort((left, right) => {
             const scoreDelta = lockPriority(right) - lockPriority(left);
             if (scoreDelta) return scoreDelta;
             return text(left?.lockId).localeCompare(text(right?.lockId));
-        })
-        .slice(0, profile.maxLocks);
+        });
+    // Confirmed cycles are evidence, not optional hotspots. Keep their resources
+    // outside the ordinary budget so they cannot be cut or crowd out other waits.
+    const selectedLocks = [
+        ...rankedLocks.filter(node => node.deadlocked),
+        ...rankedLocks.filter(node => !node.deadlocked).slice(0, profile.maxLocks),
+    ];
 
     const selectedLockIds = new Set(selectedLocks.map((node) => node.id));
     const visibleWaiterIdsByLock = new Map();
@@ -128,6 +133,11 @@ export function buildContentionVisibility({
                 return text(left?.label || leftId).localeCompare(text(right?.label || rightId));
             });
         const visibleWaiterIds = new Set(waiterIds.slice(0, profile.maxWaitersPerLock));
+        if (lockNode.deadlocked) {
+            for (const id of waiterIds) {
+                if (threadById.get(id)?.deadlocked) visibleWaiterIds.add(id);
+            }
+        }
         const hiddenCount = Math.max(0, waiterIds.length - visibleWaiterIds.size);
         visibleWaiterIdsByLock.set(lockNode.id, visibleWaiterIds);
         hiddenWaiterCountByLock.set(lockNode.id, hiddenCount);

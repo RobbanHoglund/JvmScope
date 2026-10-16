@@ -111,6 +111,20 @@ test('waiter compaction prioritizes deadlocked and BLOCKED threads', () => {
     assert.ok(visible.has('thread:deadlocked'));
 });
 
+test('confirmed resources and cycle waiters do not consume the ordinary compact budget', () => {
+    const threads = Array.from({ length: 8 }, (_, i) => thread(`cycle-${i}`, 'BLOCKED', { deadlocked: true }));
+    const confirmed = threads.map((node, i) => lock(`cycle-${i}`, 'monitor', [node.id], [], { deadlocked: true }));
+    // Even unusually large confirmed groups must retain every cycle participant.
+    confirmed[0].waiterIds = threads.map(node => node.id);
+    const ordinary = Array.from({ length: 6 }, (_, i) => lock(`other-${i}`, 'monitor', ['thread:other']));
+    const result = buildContentionVisibility({ lockNodes: [...confirmed, ...ordinary], threadNodes: threads });
+    assert.equal(result.selectedLocks.length, 13);
+    assert.ok(confirmed.every(node => result.selectedLockIds.has(node.id)));
+    assert.equal(result.visibleWaiterIdsByLock.get(confirmed[0].id).size, 8);
+    assert.equal(result.hiddenLockCount, 1);
+    assert.equal(result.hiddenWaiterObservationCount, 1);
+});
+
 test('builds exact synchronized and synchronizer waiter/holder roles', () => {
     const threads = [thread('monitor-both'), thread('sync-waiter'), thread('notification-only')];
     const monitor = lock('m', 'monitor', [], []);

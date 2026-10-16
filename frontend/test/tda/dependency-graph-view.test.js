@@ -5,6 +5,30 @@ import { createThreadDependencyGraphView } from '../../assets/javautils/tda/depe
 import { buildThreadDependencyGraph } from '../../assets/javautils/tda/dependency-graph.js';
 import { parseThreadDump } from '../../assets/javautils/tda/parser.js';
 
+test('compact projection keeps a six-thread confirmed cycle complete alongside other contention', () => {
+    const threads = Array.from({ length: 6 }, (_, i) => ({
+        sourceKey: `t${i}`, threadName: `cycle-${i}`, javaState: 'BLOCKED',
+    }));
+    const deadlocks = [{ id: 1, threads: threads.map((thread, i) => ({
+        sourceKey: thread.sourceKey, threadName: thread.threadName,
+        heldBy: threads[(i + 1) % threads.length].threadName, waitingLockId: `0x${i + 1}`,
+    })) }];
+    const view = createThreadDependencyGraphView();
+    view.model = buildThreadDependencyGraph([
+        ...threads,
+        { sourceKey: 'init', initializingClasses: [{ className: 'example.Slow' }] },
+        { sourceKey: 'wait', classInitializationWaits: [{ className: 'example.Slow' }] },
+    ], deadlocks);
+    view.fullNodeById = new Map(view.model.nodes.map(node => [node.id, node]));
+    const projection = view.projectionData();
+    assert.equal(projection.edges.filter(edge => edge.confirmedDeadlock).length, 12);
+    assert.equal(projection.nodes.filter(node => node.deadlocked).length, 12);
+    assert.ok(projection.edges.some(edge => edge.type === 'class-init-wait'));
+    assert.equal(projection.meta.hiddenLockCount, 0);
+    view.options.view = 'dependency';
+    assert.equal(view.projectionData().edges.filter(edge => edge.confirmedDeadlock).length, 6);
+});
+
 test('graph search finds deeper frames without attributing mounted frames to their carrier', () => {
     const threads = parseThreadDump(`Full thread dump OpenJDK 64-Bit Server VM (25 mixed mode):
 
