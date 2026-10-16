@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.10 — Focused thread investigation
+
+- Lead with the strongest finding and explicit counts for cycles, threads and CPU measurement coverage. Keep full metadata in a disclosure.
+- Compact deadlock relationships show the JVM-reported owner for every participant; missing mappings remain unknown.
+- Default to analysis columns, retain technical columns and sort context, and keep Details reachable in narrow editors.
+- Compare CPU intervals in a ranked table with selected-snapshot scope, duration, timing basis and Clear selection.
+- Simplify Annotated filters, label wait/lock evidence as investigation candidates, clarify Copy/search/print scope and show only relevant Display settings.
+- Keep secondary panels compact, prevent header overlap and correct selected CPU hover contrast across host themes. Add related unit and browser regressions; parsing and diagnostic rules are unchanged.
+
 ## 0.3.9 — Exact-first raw evidence
 
 - Put Exact before Annotated and start every new raw evidence view in Exact, including upgrades with an old Annotated preference. Keep the current mode when returning to an existing view.
