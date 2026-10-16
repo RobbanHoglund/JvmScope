@@ -244,6 +244,25 @@ test('TDA unresolved participants show reported dependencies without invented cy
     await expect(panel).toContainText('no return path is assumed');
 });
 
+test('TDA lock counts retain Java 27 acquisition waits without a matched held-lock owner',async({host})=>{
+    const {page}=host;
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:'jdk27.json',text:await capture('frontend/test/tda/fixtures/runtime/jdk27-dump-to-file.json')}]);
+    await expect(page.locator('.tda-priority')).toContainText('2 threads are waiting to acquire 2');
+    const panel=page.locator('#contentionPanel');
+    await panel.locator('summary').first().click();
+    await expect(panel.locator('.contention-panel-summary')).toContainText('2 contended locks · 2 waiting thread–lock relationships');
+    await expect(panel.locator('.contention-panel-summary')).toContainText('1 lock without a matched held-lock owner');
+    await expect(panel.locator('.relationship-figure')).toHaveCount(2);
+    const unresolved=panel.locator('.relationship-figure').filter({hasText:'Owner unresolved'});
+    await expect(unresolved).toBeVisible();
+    await expect(unresolved).toContainText('JVM-reported owner ID: 36');
+    await expect(unresolved.locator('.relationship-edge')).toHaveCount(1);
+    await expect(unresolved.locator('.relationship-edge.is-owner')).toHaveCount(0);
+    await unresolved.getByRole('button',{name:'Details for sample-sync-waiter',exact:true}).click();
+    await expect(page.locator('#threadModalTitle')).toHaveText('sample-sync-waiter');
+});
+
 test('TDA analysis columns keep evidence reachable and preserve sort when switching columns',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.page.locator('#loadSampleBtn').click();

@@ -309,7 +309,8 @@ function addObservedContentionFinding(findings, threads) {
     const contendedThreads = threads.filter(isObservedContentionThread);
     if (!contendedThreads.length) return;
 
-    const resourceIds = contendedThreads.flatMap(lockIdsForThread);
+    const resourceIds = contendedThreads.flatMap(thread =>
+        thread.lockAssessment.observedContentions.map(lock => lock.lockId));
     const distinctResources = uniqueValues(resourceIds).length;
     const severity = contendedThreads.length >= 3 ? 'high' : 'medium';
     const temporal = ACQUISITION_CONTENTION_DIAGNOSTICS

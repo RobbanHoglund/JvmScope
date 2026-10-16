@@ -1323,9 +1323,16 @@ function buildLockContentionChains(threads) {
         const waiterEntry = waitersByLockId.get(lockId);
 
         const owners = ownerEntry?.owners || [];
-        const waiters = waiterEntry?.waiters || [];
+        const waiters = (waiterEntry?.waiters || []).filter(thread => {
+            if (owners.length) return true;
+            if ((thread.waitingLocks || []).some(lock => lock.lockId === lockId && lock.kind === 'monitor-enter')) return true;
+            // An ownerless park can be a condition, latch or ordinary parking.
+            // Reuse the existing acquisition classification before calling it contention.
+            return ['reentrant-lock-contention', 'rwlock-reader-wait', 'rwlock-writer-lock']
+                .includes(evaluateSynchronizationPatterns(thread).primary?.key);
+        });
 
-        if (owners.length === 0 || waiters.length === 0) continue;
+        if (waiters.length === 0) continue;
 
         const lockType = ownerEntry?.lockType || waiterEntry?.lockType || null;
 
@@ -1343,6 +1350,9 @@ function buildLockContentionChains(threads) {
             lockType,
             owners: uniqueOwners,
             waiters: uniqueWaiters,
+            reportedOwnerJvmIds: [...new Set(uniqueWaiters.flatMap(thread => (thread.waitingLocks || [])
+                .filter(lock => lock.lockId === lockId && lock.ownerJvmId != null)
+                .map(lock => String(lock.ownerJvmId))))],
         });
     }
 

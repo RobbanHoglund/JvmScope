@@ -53,10 +53,17 @@ function groupNode(threads, role, emptyLabel) {
 
 export function contentionDiagram(chain, confirmed = false) {
     const owners = chain.owners || [];
+    const ownerNode = groupNode(owners, 'Observed owners', 'Owner not observed');
+    if (!owners.length) {
+        ownerNode.role = 'Owner unresolved';
+        ownerNode.detail = chain.reportedOwnerJvmIds?.length
+            ? `JVM-reported owner ID: ${chain.reportedOwnerJvmIds.join(', ')}` : 'No matched owner';
+        if (chain.reportedOwnerJvmIds?.length) ownerNode.label = 'No matching held-lock entry';
+    }
     return { closed: false, tone: confirmed ? 'deadlock' : 'contention', label: `Lock dependency ${chain.lockId}`,
         nodes: [groupNode(chain.waiters, 'Waiting threads', 'No waiters observed'),
             resourceNode(chain.lockId, chain.lockType),
-            groupNode(owners, 'Observed owners', 'Owner not observed')],
+            ownerNode],
         edges: [{ from: 0, to: 1, kind: 'wait', label: 'waits for' },
             ...(owners.length ? [{ from: 1, to: 2, kind: 'owner', label: 'held by' }] : [])],
     };

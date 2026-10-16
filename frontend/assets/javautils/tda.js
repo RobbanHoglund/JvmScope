@@ -2016,6 +2016,7 @@ function renderContentionPanel() {
     UI.contentionPanel.classList.remove('hidden');
 
     const waiterCount = contentionChains.reduce((sum, c) => sum + (c.waiters?.length || 0), 0);
+    const ownerlessCount = contentionChains.filter(chain => !chain.owners?.length).length;
     const chains = [...contentionChains].sort((a, b) => (b.waiters?.length || 0) - (a.waiters?.length || 0)
         || String(a.lockId).localeCompare(String(b.lockId)));
     const graphCard = chain => `<article class="relationship-contention-card">
@@ -2031,6 +2032,8 @@ function renderContentionPanel() {
 	        <div class="app-section-summary-title">Lock contention chains</div>
 	        <div class="app-section-summary-subtitle">
 	          ${contentionChains.length} contended lock${contentionChains.length === 1 ? '' : 's'} · ${waiterCount} waiting thread–lock relationships · most waiters first.
+              ${ownerlessCount ? `${ownerlessCount} lock${ownerlessCount === 1 ? '' : 's'} without a matched held-lock owner.` : ''}
+              ${deadlocks.length ? 'Includes JVM-reported deadlock participants.' : ''}
 	        </div>
 	      </div>
 	    </summary>
