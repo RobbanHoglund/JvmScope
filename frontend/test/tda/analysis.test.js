@@ -24,7 +24,8 @@ test('the worker preserves real snapshot counts, graph data and shared thread re
     assert.equal(result.parserResult.status, 'success');
     assert.equal(result.parsedDumps.length, 3);
     assert.equal(result.parsedDumps[0].threads.length, 67);
-    assert.equal(result.runnableStackClusters.length, 3);
+    assert.equal(result.runnableStackClusters.length, 4);
+    assert.equal(result.runnableStackClusters.find(cluster => cluster.observationKind === 'class-initialization-wait').totalOccurrences, 30);
     const dump = result.parsedDumps[0];
     assert.ok(buildThreadDependencyGraph(dump.threads, dump.deadlocks).dependencyEdges.length > 0);
     for (const chain of dump.contentionChains) {
