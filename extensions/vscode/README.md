@@ -29,7 +29,9 @@ in this first version.
 - Use the **blue thread-tree** and **teal shield** buttons at the top-right of an
   editor's tab bar to open or focus the Java thread dump and TLS analyzers.
   Their tooltips name each tool; the icons adapt to light and dark themes.
-- Right-click a capture in Explorer and choose **🧵 Analyze as Java Thread Dump** or **🔒 Analyze as Java TLS Log**.
+- Right-click a capture in Explorer and choose **Analyze as Java Thread Dump** or **Analyze as Java TLS Log**.
+  Context menus and the Command Palette use plain text labels; the thread-tree and
+  shield icons identify the analyzers on toolbar buttons.
 - Select several thread dump files to compare snapshots. TLS analysis opens one log at a time.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
 - Inside an analyzer, use **Choose dumps / Choose log** to open the native file picker, or try the bundled examples.

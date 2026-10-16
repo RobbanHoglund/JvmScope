@@ -2,6 +2,7 @@
 
 ## 0.3.10 — Focused thread investigation
 
+- Remove emoji prefixes from the Analyze commands. Reuse the toolbar's themed thread-tree and shield SVGs in their command definitions; native context menus and the Command Palette retain plain text labels.
 - Lead with the strongest finding and explicit counts for cycles, threads and CPU measurement coverage. Keep full metadata in a disclosure.
 - Compact deadlock relationships show the JVM-reported owner for every participant; missing mappings remain unknown.
 - Default to analysis columns, retain technical columns and sort context, and keep Details reachable in narrow editors.
@@ -65,7 +66,7 @@
 
 ## 0.3.1 — Analyzer menu symbols
 
-- Prefix Analyze as Java Thread Dump with 🧵 and Analyze as Java TLS Log with 🔒 so the two actions are easier to distinguish in context menus and the Command Palette.
+- Add emoji prefixes to the two Analyze commands in context menus and the Command Palette (removed in 0.3.10).
 
 ## 0.3.0 — Native analysis sidebar preview
 
