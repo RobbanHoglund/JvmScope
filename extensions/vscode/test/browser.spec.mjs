@@ -151,6 +151,26 @@ test('TDA analysis columns keep evidence reachable and preserve sort when switch
     await expect(host.page.locator('#threadModal')).toBeVisible();
 });
 
+test('TDA overview fits the viewport without brand overlap and expanded evidence spans the grid',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    for(const width of [1560,1366,780,600]) {
+        await host.page.setViewportSize({width,height:900});
+        const boxes=await host.page.locator('.analyzer-brand').evaluate(el=>{
+            const a=el.querySelector('h1').getBoundingClientRect(),b=el.querySelector('.analyzer-file-name').getBoundingClientRect();
+            return {overlap:a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top,overflow:document.documentElement.scrollWidth>innerWidth};
+        });
+        expect(boxes).toEqual({overlap:false,overflow:false});
+        expect((await host.page.locator('.tda-priority').boundingBox()).y).toBeLessThan(650);
+    }
+    await host.page.setViewportSize({width:1366,height:900});
+    await host.page.locator('#deadlockPanel summary').click();
+    const [panel,grid]=await Promise.all([host.page.locator('#deadlockPanel').boundingBox(),host.page.locator('.tda-secondary-panels').boundingBox()]);
+    expect(Math.abs(panel.width-grid.width)).toBeLessThan(2);
+    await host.page.locator('#deadlockPanel summary').click();
+    await expect(host.page.locator('.tda-priority .smart-analysis-focus-btn')).toBeVisible();
+});
+
 test('CPU comparison exposes interval scope, durations and an explicit selection reset',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.page.locator('#loadSampleBtn').click();

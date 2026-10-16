@@ -351,6 +351,7 @@
 			<div id="smartAnalysisPanelBody"></div>
 		</section>
 
+		<div class="tda-secondary-panels">
 		<section id="deadlockPanel"
 			class="deadlock-panel panel-host panel-host-danger hidden"
 			aria-live="polite">
@@ -370,6 +371,130 @@
 		</section>
 
 
+		<section id="threadStateChartPanel" class="thread-state-chart-panel hidden">
+			<details class="thread-state-chart-details">
+				<summary class="thread-state-chart-summary app-section-summary">
+					<div class="app-section-summary-inner">
+						<div class="app-section-summary-title">Charts and
+							distributions</div>
+						<div class="app-section-summary-subtitle">CPU activity across
+							snapshots, plus state, elapsed time, and allocation distributions.</div>
+					</div>
+				</summary>
+
+				<div class="cpu-timeline-card">
+					<div class="thread-state-chart-header cpu-timeline-header">
+						<div>
+							<div class="thread-state-chart-title">Thread CPU timeline</div>
+							<div class="thread-state-chart-subtitle">Average thread CPU during each sampled interval · whole capture</div>
+						</div>
+						<div class="cpu-timeline-controls">
+							<label class="cpu-timeline-search-wrap" for="cpuTimelineSearch">
+								<span class="sr-only">Filter CPU timeline by thread name</span>
+								<input id="cpuTimelineSearch" class="cpu-timeline-search" type="search"
+									placeholder="Filter thread name" autocomplete="off" />
+							</label>
+							<label class="cpu-timeline-limit-wrap" for="cpuTimelineLimit">
+						<span>Show</span>
+								<select id="cpuTimelineLimit" class="dump-select">
+									<option value="5">5 hottest</option>
+									<option value="10" selected>10 hottest</option>
+									<option value="20">20 hottest</option>
+								</select>
+							</label>
+						</div>
+					</div>
+					<output id="cpuTimelineSummary" class="cpu-timeline-summary"
+						aria-live="polite" aria-atomic="true"></output>
+					<div class="tda-cpu-selection"><output id="cpuTimelineSelection" aria-live="polite">Select a thread to inspect its intervals.</output><button type="button" id="cpuTimelineClear" class="btn btn-sm" disabled>Clear selection</button></div>
+					<div id="cpuTimelineChart" class="cpu-timeline-chart"></div>
+					<p class="hint-muted">Intervals are equally spaced, not a continuous time axis. Gaps mean unavailable evidence. Select a thread below to highlight it; click a point to open its ending snapshot.</p>
+					<div id="cpuTimelineLegend" class="cpu-timeline-legend"></div>
+				</div>
+
+				<div class="thread-state-chart-grid">
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Thread state
+									distribution</div>
+								<div class="thread-state-chart-subtitle">Current state mix
+									across parsed threads</div>
+							</div>
+							<button id="openThreadStateChartBtn" class="btn btn-sm"
+								type="button">Expand</button>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="threadStateChart"></div>
+							<div id="threadStateLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Cumulative CPU time</div>
+								<div class="thread-state-chart-subtitle">Bucketed JVM CPU
+									counters for the selected snapshot</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="cpuTimeChart"></div>
+							<div id="cpuTimeLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Elapsed</div>
+								<div class="thread-state-chart-subtitle">Bucketed elapsed
+									distribution</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="elapsedChart"></div>
+							<div id="elapsedLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Allocated</div>
+								<div class="thread-state-chart-subtitle">Bucketed cumulative heap allocation;
+									not retained/live heap</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="allocatedChart"></div>
+							<div id="allocatedLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+
+					<div class="thread-state-chart-card">
+						<div class="thread-state-chart-header">
+							<div>
+								<div class="thread-state-chart-title">Allocation rate</div>
+								<div class="thread-state-chart-subtitle">Measured allocated-byte delta per second
+									between exact adjacent snapshots</div>
+							</div>
+						</div>
+
+						<div class="thread-state-chart-body">
+							<div id="allocationRateChart"></div>
+							<div id="allocationRateLegend" class="thread-state-legend"></div>
+						</div>
+					</div>
+				</div>
+			</details>
+		</section>
+
+		</div>
         <section id="findingReportHost" class="findings-report-host" aria-label="Selected findings report"></section>
 		<section id="dependencyGraphPanel" class="dependency-graph-panel hidden"
 			aria-label="Thread and lock dependency graph">
@@ -570,128 +695,6 @@
 			</details>
 		</section>
 
-		<section id="threadStateChartPanel" class="thread-state-chart-panel hidden">
-			<details class="thread-state-chart-details">
-				<summary class="thread-state-chart-summary app-section-summary">
-					<div class="app-section-summary-inner">
-						<div class="app-section-summary-title">Charts and
-							distributions</div>
-						<div class="app-section-summary-subtitle">CPU activity across
-							snapshots, plus state, elapsed time, and allocation distributions.</div>
-					</div>
-				</summary>
-
-				<div class="cpu-timeline-card">
-					<div class="thread-state-chart-header cpu-timeline-header">
-						<div>
-							<div class="thread-state-chart-title">Thread CPU timeline</div>
-							<div class="thread-state-chart-subtitle">Average thread CPU during each sampled interval · whole capture</div>
-						</div>
-						<div class="cpu-timeline-controls">
-							<label class="cpu-timeline-search-wrap" for="cpuTimelineSearch">
-								<span class="sr-only">Filter CPU timeline by thread name</span>
-								<input id="cpuTimelineSearch" class="cpu-timeline-search" type="search"
-									placeholder="Filter thread name" autocomplete="off" />
-							</label>
-							<label class="cpu-timeline-limit-wrap" for="cpuTimelineLimit">
-						<span>Show</span>
-								<select id="cpuTimelineLimit" class="dump-select">
-									<option value="5">5 hottest</option>
-									<option value="10" selected>10 hottest</option>
-									<option value="20">20 hottest</option>
-								</select>
-							</label>
-						</div>
-					</div>
-					<output id="cpuTimelineSummary" class="cpu-timeline-summary"
-						aria-live="polite" aria-atomic="true"></output>
-					<div class="tda-cpu-selection"><output id="cpuTimelineSelection" aria-live="polite">Select a thread to inspect its intervals.</output><button type="button" id="cpuTimelineClear" class="btn btn-sm" disabled>Clear selection</button></div>
-					<div id="cpuTimelineChart" class="cpu-timeline-chart"></div>
-					<p class="hint-muted">Intervals are equally spaced, not a continuous time axis. Gaps mean unavailable evidence. Select a thread below to highlight it; click a point to open its ending snapshot.</p>
-					<div id="cpuTimelineLegend" class="cpu-timeline-legend"></div>
-				</div>
-
-				<div class="thread-state-chart-grid">
-					<div class="thread-state-chart-card">
-						<div class="thread-state-chart-header">
-							<div>
-								<div class="thread-state-chart-title">Thread state
-									distribution</div>
-								<div class="thread-state-chart-subtitle">Current state mix
-									across parsed threads</div>
-							</div>
-							<button id="openThreadStateChartBtn" class="btn btn-sm"
-								type="button">Expand</button>
-						</div>
-
-						<div class="thread-state-chart-body">
-							<div id="threadStateChart"></div>
-							<div id="threadStateLegend" class="thread-state-legend"></div>
-						</div>
-					</div>
-
-					<div class="thread-state-chart-card">
-						<div class="thread-state-chart-header">
-							<div>
-								<div class="thread-state-chart-title">Cumulative CPU time</div>
-								<div class="thread-state-chart-subtitle">Bucketed JVM CPU
-									counters for the selected snapshot</div>
-							</div>
-						</div>
-
-						<div class="thread-state-chart-body">
-							<div id="cpuTimeChart"></div>
-							<div id="cpuTimeLegend" class="thread-state-legend"></div>
-						</div>
-					</div>
-
-					<div class="thread-state-chart-card">
-						<div class="thread-state-chart-header">
-							<div>
-								<div class="thread-state-chart-title">Elapsed</div>
-								<div class="thread-state-chart-subtitle">Bucketed elapsed
-									distribution</div>
-							</div>
-						</div>
-
-						<div class="thread-state-chart-body">
-							<div id="elapsedChart"></div>
-							<div id="elapsedLegend" class="thread-state-legend"></div>
-						</div>
-					</div>
-
-					<div class="thread-state-chart-card">
-						<div class="thread-state-chart-header">
-							<div>
-								<div class="thread-state-chart-title">Allocated</div>
-								<div class="thread-state-chart-subtitle">Bucketed cumulative heap allocation;
-									not retained/live heap</div>
-							</div>
-						</div>
-
-						<div class="thread-state-chart-body">
-							<div id="allocatedChart"></div>
-							<div id="allocatedLegend" class="thread-state-legend"></div>
-						</div>
-					</div>
-
-					<div class="thread-state-chart-card">
-						<div class="thread-state-chart-header">
-							<div>
-								<div class="thread-state-chart-title">Allocation rate</div>
-								<div class="thread-state-chart-subtitle">Measured allocated-byte delta per second
-									between exact adjacent snapshots</div>
-							</div>
-						</div>
-
-						<div class="thread-state-chart-body">
-							<div id="allocationRateChart"></div>
-							<div id="allocationRateLegend" class="thread-state-legend"></div>
-						</div>
-					</div>
-				</div>
-			</details>
-		</section>
 
 		<div class="table-container drop-zone" id="tableContainer" data-capture-only
 			aria-live="polite">
