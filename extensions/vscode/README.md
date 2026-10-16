@@ -49,8 +49,9 @@ its file picker and Paste actions.
 ## Browse analyses in the sidebar
 
 Use **View → Open View…**, type **JvmScope**, and select **JvmScope Analyses**.
-You can also open **JvmScope** in the Activity Bar or run
+You can also select the **JvmScope avatar** in the Activity Bar or run
 **JvmScope: Open Analysis Sidebar** from the Command Palette.
+The monochrome avatar follows the current theme, including high-contrast themes.
 
 The **JvmScope Analyses** view's **…** menu offers **Open Java Thread Dump Analyzer**,
 **Open Java TLS Log Analyzer** and **Open Knowledge Base**. The toolbar's blue tree and
