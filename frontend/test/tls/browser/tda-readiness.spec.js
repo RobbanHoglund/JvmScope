@@ -46,11 +46,12 @@ test('TDA partial snapshots cannot claim fading, growth or exact missing counts'
     const lastCount = panel.locator('.runnable-cluster-timeline-value').last();
     await expect(lastCount).toHaveText('≥1');
     await expect(panel.locator('[data-trend="fading"], [data-trend="growing"]')).toHaveCount(0);
-    await page.locator('#runnableGrowingOnlyToggle').check();
+    await page.locator('#runnableTrendSelect').selectOption('growing');
     await expect(panel.locator('.runnable-cluster-card')).toHaveCount(0);
-    await page.locator('#runnableGrowingOnlyToggle').uncheck();
-    await page.locator('#runnablePersistentOnlyToggle').check();
+    await page.locator('#runnableTrendSelect').selectOption('persistent');
     await expect(panel.locator('.runnable-cluster-card')).toHaveCount(0);
+    await page.locator('#runnableTrendSelect').selectOption('unavailable');
+    await expect(panel.locator('.runnable-cluster-card')).toHaveCount(1);
 });
 
 test('TDA history does not bridge a changed JVM process through a classic dump', async ({ page }) => {
@@ -66,6 +67,22 @@ test('TDA history does not bridge a changed JVM process through a classic dump',
     await expect(panel).toContainText('Observed 1/1');
     await expect(panel).not.toContainText('Observed 3/3');
     await expect(panel).toContainText('At least two exact adjacent snapshot occurrences');
+});
+
+test('TDA recurring-stack trend filters are exclusive and recover from empty results', async ({ page }) => {
+    await sample(page);
+    const panel = page.locator('#runnableClusterPanelBody');
+    await panel.locator('.runnable-cluster-panel-summary').click();
+    const trend = panel.getByLabel('Trend', { exact: true });
+    await expect(trend).toHaveValue('all');
+    await expect(panel.locator('.runnable-cluster-card')).toHaveCount(4);
+    await trend.selectOption('growing');
+    await expect(panel.locator('.runnable-cluster-card')).toHaveCount(0);
+    await trend.selectOption('persistent');
+    await expect(panel.locator('.runnable-cluster-card')).toHaveCount(4);
+    await trend.selectOption('all');
+    await expect(panel.locator('.runnable-cluster-card')).toHaveCount(4);
+    await expect(panel.locator('#runnableMinDumpsSeenSelect option')).toHaveText(['2 snapshots', '3 snapshots']);
 });
 
 test('TDA adding valid input to an existing partial session does not reopen the previous warning', async ({ page }) => {

@@ -555,8 +555,7 @@ const sessionInputQueue = createSessionInputQueue(busy => {
 let cpuThresholdProfileId = runnableCpuThresholdProfileFromSearch(window.location.search);
 let cpuThresholdProfile = getRunnableCpuThresholdProfile(cpuThresholdProfileId);
 let runnableClusterFilterState = {
-    persistentOnly: false,
-    growingOnly: false,
+    trend: 'all',
     minDumpsSeen: 2
 };
 
@@ -2698,43 +2697,25 @@ function renderRunnableClusterTimeline(cluster) {
 
 
 function renderRunnableClusterFilterBar() {
-    const persistentChecked = runnableClusterFilterState?.persistentOnly ? 'checked' : '';
-    const growingChecked = runnableClusterFilterState?.growingOnly ? 'checked' : '';
-    const minSeen = Number(runnableClusterFilterState?.minDumpsSeen || 2);
+    const trend = runnableClusterFilterState.trend;
+    const minSeen = Number(runnableClusterFilterState.minDumpsSeen || 2);
+    const minSeenOptions = Array.from({ length: Math.max(1, Math.min(parsedDumps.length, 10) - 1) }, (_, i) => i + 2);
+    const trends = ['all', 'persistent', 'growing', 'fading', 'bursty', 'intermittent', 'stable', 'unavailable'];
 
     return `
       <div class="runnable-cluster-filterbar">
-        <label class="toggle has-tooltip" data-tooltip="Only show clusters that appear in more than one dump">
-          <input
-            id="runnablePersistentOnlyToggle"
-            type="checkbox"
-            ${persistentChecked}
-          />
-          Persistent only
-        </label>
-
-        <label class="toggle has-tooltip" data-tooltip="Only show clusters whose presence grows over time">
-          <input
-            id="runnableGrowingOnlyToggle"
-            type="checkbox"
-            ${growingChecked}
-          />
-          Growing only
-        </label>
-
-        <label class="dump-select-wrap" for="runnableMinDumpsSeenSelect">
-          <span class="dump-select-label">Min dumps seen</span>
-          <select id="runnableMinDumpsSeenSelect" class="dump-select">
-            ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                .map((value) => `
-                    <option value="${value}" ${value === minSeen ? 'selected' : ''}>
-                      ${value}+
-                    </option>
-                `)
-                .join('')}
+        <label class="dump-select-wrap" for="runnableTrendSelect">
+          <span class="dump-select-label">Trend</span>
+          <select id="runnableTrendSelect" class="dump-select" aria-label="Trend">
+            ${trends.map(value => `<option value="${value}" ${value === trend ? 'selected' : ''}>${value === 'all' ? 'All trends' : value[0].toUpperCase() + value.slice(1)}</option>`).join('')}
           </select>
         </label>
-
+        <label class="dump-select-wrap" for="runnableMinDumpsSeenSelect">
+          <span class="dump-select-label">Seen in at least</span>
+          <select id="runnableMinDumpsSeenSelect" class="dump-select" aria-label="Seen in at least">
+            ${minSeenOptions.map(value => `<option value="${value}" ${value === minSeen ? 'selected' : ''}>${value} snapshots</option>`).join('')}
+          </select>
+        </label>
       </div>
     `;
 }
@@ -2759,19 +2740,8 @@ function renderRunnableClusterPanel() {
             return false;
         }
 
-        if (runnableClusterFilterState?.persistentOnly) {
-            const trend = String(cluster.trend || '').toLowerCase();
-            if (trend !== 'persistent') {
-                return false;
-            }
-        }
-
-        if (runnableClusterFilterState?.growingOnly) {
-            const trend = String(cluster.trend || '').toLowerCase();
-            if (trend !== 'growing') {
-                return false;
-            }
-        }
+        const trend = runnableClusterFilterState.trend;
+        if (trend !== 'all' && String(cluster.trend || '').toLowerCase() !== trend) return false;
 
         return true;
     });
@@ -4237,8 +4207,7 @@ function resetSessionView() {
     pageState.page = 1;
     selectedDumpIndex = 0;
     runnableClusterFilterState = {
-        persistentOnly: false,
-        growingOnly: false,
+        trend: 'all',
         minDumpsSeen: 2
     };
     runnableClusterPage = 1;
@@ -4678,8 +4647,7 @@ UI.clearBtn?.addEventListener('click', () => {
     clearRunnableClusterTableFocus();
 
     runnableClusterFilterState = {
-        persistentOnly: false,
-        growingOnly: false,
+        trend: 'all',
         minDumpsSeen: 2
     };
     resetRunnableClusterUiState();
@@ -5044,16 +5012,9 @@ UI.runnableClusterPanelBody?.addEventListener('change', (e) => {
     const target = e.target;
     if (!target) return;
 
-    if (target.id === 'runnablePersistentOnlyToggle') {
+    if (target.id === 'runnableTrendSelect') {
         runnableClusterPage = 1;
-        runnableClusterFilterState.persistentOnly = Boolean(target.checked);
-        render();
-        return;
-    }
-
-    if (target.id === 'runnableGrowingOnlyToggle') {
-        runnableClusterPage = 1;
-        runnableClusterFilterState.growingOnly = Boolean(target.checked);
+        runnableClusterFilterState.trend = target.value;
         render();
         return;
     }
