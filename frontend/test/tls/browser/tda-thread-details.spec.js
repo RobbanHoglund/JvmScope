@@ -314,6 +314,7 @@ test('TDA thread rows open Details from cells, badges and empty space with mouse
     const row = page.locator('#threadTableBody tr').first();
     await expect(row).toHaveAttribute('aria-label', 'Open details for review-worker');
     expect(await row.evaluate(node => getComputedStyle(node).cursor)).toBe('pointer');
+    await page.locator('#threadColumns').selectOption('all');
     for (const target of [row.locator('.thread-cell-name'), row.locator('.tda-state-badge'), row.locator('.badge-locks'), row.locator('td').nth(8)]) {
         await target.click();
         await expect(page.locator('#threadModalTitle')).toHaveText('review-worker');

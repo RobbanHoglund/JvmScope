@@ -594,7 +594,7 @@
 									placeholder="Filter thread name" autocomplete="off" />
 							</label>
 							<label class="cpu-timeline-limit-wrap" for="cpuTimelineLimit">
-								<span>Show</span>
+						<span>Show</span>
 								<select id="cpuTimelineLimit" class="dump-select">
 									<option value="5">5 hottest</option>
 									<option value="10" selected>10 hottest</option>
@@ -771,7 +771,9 @@
 				<div id="pager"></div>
 			</div>
 
-			<table id="threadTable">
+			<div class="tda-table-options"><span id="threadSortSummary"></span><label class="tda-column-choice">Columns <select id="threadColumns" aria-label="Thread table columns"><option value="analysis">Analysis</option><option value="all">All technical columns</option></select></label></div>
+			<p class="tda-table-scope">Selected snapshot · Search and filters apply to this table. CPU interval is measured between adjacent snapshots; — means unavailable.</p>
+			<table id="threadTable" data-view="analysis">
 				<thead>
 					<tr>
 
@@ -813,6 +815,7 @@
 						<th data-key="carrierVirtualThreadId" class="sortable">Carrier
 							<span class="sort-indicator"></span>
 						</th>
+						<th data-key="cpuRatePercent" class="sortable">CPU interval <span class="sort-indicator"></span></th>
 						<th>Details</th>
 					</tr>
 

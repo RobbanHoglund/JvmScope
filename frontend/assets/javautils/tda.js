@@ -1410,7 +1410,7 @@ function renderTableRows() {
                   </td>
 
                   <td${tooltipAttr(t.javaState || '—')}>${stateBadge(t.javaState)}</td>
-                  <td${tooltipAttr([describeLockCoverage(t), ...(t.heldLocks || []).map(l => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`)].join('\n'))}>${locksHeldBadge(t)}</td>
+                  <td${tooltipAttr([describeLockCoverage(t), ...(t.heldLocks || []).map(l => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`)].join('\n'))}><span class="tda-technical-locks">${locksHeldBadge(t)}</span><span class="tda-compact-locks">${t.lockDataAvailable ? `${(t.waitingLocks || []).length} waits · ${(t.heldLocks || []).length} held` : 'Not reported'}</span></td>
                   <td${tooltipAttr(t.isDeadlocked ? 'Confirmed Java deadlock' : 'Not confirmed by source; absence is not established')}>${deadlockBadge(t.isDeadlocked)}</td>
                   <td${tooltipAttr(t.daemon == null ? 'Daemon status not provided by this dump format' : t.daemon ? 'Daemon thread' : 'Not daemon')}>${t.daemon == null ? '—' : badgeYesNo(t.daemon)}</td>
 
@@ -1426,6 +1426,7 @@ function renderTableRows() {
                   <td${tooltipAttr(topFrameText)}>${top}</td>
                   <td class="right thread-metadata"${tooltipAttr(stackFrames)}>${escapeHtml(stackFrames)}</td>
                   <td>${carrierBadge(t)}</td>
+                  <td class="right tda-interval-cell"${tooltipAttr(cpuTooltip)}>${escapeHtml(cpuRate)}</td>
 
                   <td>
                     <button
@@ -4753,6 +4754,9 @@ UI.refreshBtn?.addEventListener('click', () => {
     applyFilters();
     render();
 });
+document.getElementById('threadColumns').addEventListener('change', event => {
+    document.getElementById('threadTable').dataset.view = event.target.value;
+});
 document.getElementById('jumpToCpu').addEventListener('click', () => {
     const card = UI.cpuTimelineChart.closest('.cpu-timeline-card');
     card.closest('details').open = true;
@@ -5191,8 +5195,10 @@ function updateSortIndicators() {
         const key = th.getAttribute('data-key');
         const ind = th.querySelector('.sort-indicator');
         if (!ind) return;
+        th.setAttribute('aria-sort', key === sortState.key ? (sortState.dir === 'asc' ? 'ascending' : 'descending') : 'none');
         if (key === sortState.key) {
             ind.textContent = sortState.dir === 'asc' ? '▲' : '▼';
+            document.getElementById('threadSortSummary').textContent = `Sorted by ${th.textContent.trim()}${key === 'cpuMs' ? ' (cumulative)' : ''}`;
         } else {
             ind.textContent = '';
         }
@@ -5200,6 +5206,10 @@ function updateSortIndicators() {
 }
 
 document.querySelectorAll('#threadTable th.sortable').forEach((th) => {
+    th.tabIndex = 0;
+    th.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); th.click(); }
+    });
     th.addEventListener('click', () => {
         const key = th.getAttribute('data-key');
         if (!key) return;

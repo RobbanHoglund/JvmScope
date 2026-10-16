@@ -132,6 +132,25 @@ test('deadlock cycle lists the closing owner relationship and opens mapped evide
     await expect(host.page.locator('#threadModalTitle')).toHaveText(first);
 });
 
+test('TDA analysis columns keep evidence reachable and preserve sort when switching columns',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    await host.page.setViewportSize({width:600,height:900});
+    const table=host.page.locator('#threadTable');
+    await expect(table.locator('th[data-key="cpuMs"]')).toBeHidden();
+    await expect(table.locator('th[data-key="cpuRatePercent"]')).toBeVisible();
+    const row=table.locator('tbody tr').first();
+    const before=await row.getAttribute('data-source-key');
+    await expect(row.getByRole('button',{name:'Details',exact:true})).toBeVisible();
+    expect(await table.evaluate(el=>el.getBoundingClientRect().right)).toBeLessThanOrEqual(600);
+    await host.page.locator('#threadColumns').selectOption('all');
+    await expect(table.locator('th[data-key="cpuMs"]')).toBeVisible();
+    expect(await row.getAttribute('data-source-key')).toBe(before);
+    await host.page.locator('#threadColumns').selectOption('analysis');
+    await row.getByRole('button',{name:'Details',exact:true}).click();
+    await expect(host.page.locator('#threadModal')).toBeVisible();
+});
+
 const rawThreadName='waiter<script>window.rawInjected=1</script>';
 const rawEvidence=`2026-10-16 12:00:00
 Full thread dump OpenJDK 64-Bit Server VM (25+35 mixed mode, sharing):
