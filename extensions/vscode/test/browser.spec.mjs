@@ -143,6 +143,34 @@ test('VS Code new raw evidence defaults to Exact before Annotated despite legacy
     await expect(raw).toContainText('second-holder');
 });
 
+test('raw evidence labels counts by threads and exposes only settings for the current mode',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:'evidence.txt',text:rawEvidence}]);
+    await host.page.locator('#openRawDumpBtn').click();
+    const raw=host.page.locator('#rawDumpDialog');
+    await raw.getByRole('button',{name:'Display settings',exact:true}).click();
+    await expect(raw.getByRole('checkbox',{name:'Show outline',exact:true})).toBeHidden();
+    await expect(raw.getByRole('checkbox',{name:'Wrap long lines',exact:true})).toBeVisible();
+    await expect(raw.locator('.raw-workspace-scope')).toContainText('complete snapshot');
+    await raw.getByRole('button',{name:'Show structured evidence',exact:true}).click();
+    await raw.getByRole('button',{name:'Display settings',exact:true}).click();
+    await expect(raw.getByRole('checkbox',{name:'Show outline',exact:true})).toBeVisible();
+    await raw.getByRole('button',{name:'Display settings',exact:true}).click();
+    await expect(raw.locator('.raw-workspace-counts')).toHaveText(/2Snapshot threads0Deadlocked threads/);
+    const candidates=raw.getByRole('button',{name:'Filter: Investigation candidates',exact:true});
+    await expect(candidates).toContainText('2');
+    await candidates.click();
+    await expect(raw.locator('.raw-workspace-scope')).toContainText('not confirmed faults');
+    const holders=raw.getByRole('button',{name:'Filter: Lock holders',exact:true});
+    await expect(holders).toBeHidden();
+    await raw.locator('.raw-workspace-more-filters > summary').click();
+    await holders.click();
+    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(1);
+    await expect(raw.locator('.raw-workspace-more-filters')).toHaveAttribute('open','');
+    await raw.getByRole('button',{name:'Copy complete canonical raw dump',exact:true}).click();
+    await expect.poll(()=>host.clipboard()).toBe(rawEvidence);
+});
+
 test('VS Code raw dump keeps structured evidence, search, details, graph navigation and exact native copy',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.load([{name:'raw-evidence.txt',text:rawEvidence}]);

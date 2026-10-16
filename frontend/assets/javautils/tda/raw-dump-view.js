@@ -96,6 +96,7 @@ export function createRawDumpWorkspace({
         renderedMatches: new Map(),
         activeMatchIndex: -1,
         expandedSourceKeys: new Set(),
+        moreFiltersOpen: false,
         preferences,
     };
     let visibleBlocks = [];
@@ -132,9 +133,9 @@ export function createRawDumpWorkspace({
     const identity = element(documentRef, 'div', 'raw-workspace-identity');
     const identityText = element(documentRef, 'div');
     identityText.append(
-        element(documentRef, 'span', 'raw-workspace-kicker', 'Raw dump evidence'),
-        element(documentRef, 'h1', '', dump.timestamp || `Snapshot ${snapshotIndex + 1}`),
-        element(documentRef, 'p', 'raw-workspace-meta', `Snapshot ${snapshotIndex + 1} of ${snapshotCount} · ${(dump.threads || []).length} threads · ${sourceLines.length} lines${dump.sourceLabel ? ` · Source: ${dump.sourceLabel}` : ''}`),
+        element(documentRef, 'span', 'raw-workspace-kicker', 'Selected snapshot evidence'),
+        element(documentRef, 'h1', '', `Raw dump · Snapshot ${snapshotIndex + 1} of ${snapshotCount}`),
+        element(documentRef, 'p', 'raw-workspace-meta', `${dump.timestamp || 'Time unavailable'} · ${(dump.threads || []).length} threads · ${sourceLines.length} lines${dump.sourceLabel ? ` · Source: ${dump.sourceLabel}` : ''}`),
     );
     const modeControl = element(documentRef, 'div', 'raw-workspace-segmented');
     modeControl.setAttribute('role', 'group');
@@ -159,10 +160,10 @@ export function createRawDumpWorkspace({
     const previousButton = button(documentRef, '↑', 'Previous search match', () => selectMatch(-1));
     const nextButton = button(documentRef, '↓', 'Next search match', () => selectMatch(1));
     const displayButton = button(documentRef, 'Display', 'Display settings', () => setDisplayMenu(displayMenu.hidden));
-    const copyButton = button(documentRef, 'Copy', 'Copy complete canonical raw dump', copyRawDump);
+    const copyButton = button(documentRef, 'Copy snapshot', 'Copy complete canonical raw dump', copyRawDump);
     const closeButton = button(documentRef, 'Close', 'Close raw dump evidence workspace', onClose);
     toolbar.append(searchGroup, previousButton, nextButton, displayButton, copyButton);
-    if (onPrint) toolbar.append(button(documentRef, 'Print', 'Print raw dump evidence', onPrint));
+    if (onPrint) toolbar.append(button(documentRef, 'Print current view', 'Print raw dump evidence', onPrint));
     if (onOpenText) toolbar.append(button(documentRef, 'Open as text', 'Open complete raw dump in text editor', async () => {
         try { await onOpenText(); }
         catch (error) { if (!destroyed) actionStatus.textContent = error.message || 'Could not open the text editor.'; }
@@ -183,7 +184,10 @@ export function createRawDumpWorkspace({
     );
     const actionStatus = element(documentRef, 'div', 'raw-workspace-action-status');
     actionStatus.setAttribute('role', 'status');
-    header.append(identity, toolbar, displayMenu, actionStatus);
+    const searchScope = element(documentRef, 'p', 'raw-workspace-scope');
+    searchScope.id = 'rawSearchScope';
+    searchInput.setAttribute('aria-describedby', searchScope.id);
+    header.append(identity, toolbar, searchScope, displayMenu, actionStatus);
 
     const layout = element(documentRef, 'div', 'raw-workspace-layout');
     const outline = element(documentRef, 'aside', 'raw-workspace-outline');
@@ -209,6 +213,7 @@ export function createRawDumpWorkspace({
 
     function checkbox(key, label) {
         const wrapper = element(documentRef, 'label', 'raw-workspace-checkbox');
+        wrapper.dataset.preference = key;
         const input = element(documentRef, 'input');
         input.type = 'checkbox';
         input.checked = Boolean(preferences[key]);
@@ -234,6 +239,9 @@ export function createRawDumpWorkspace({
         body.classList.toggle('hide-annotations', !preferences.annotations);
         body.classList.toggle('hide-outline', !preferences.outline || preferences.mode === 'exact');
         body.classList.toggle('hide-inspector', !preferences.inspector || preferences.mode === 'exact');
+        for (const wrapper of displayMenu.querySelectorAll('[data-preference]')) {
+            wrapper.hidden = preferences.mode === 'exact' && ['annotations', 'outline', 'inspector'].includes(wrapper.dataset.preference);
+        }
         savePreferences(popup.localStorage, preferences);
     }
 
@@ -242,11 +250,8 @@ export function createRawDumpWorkspace({
         outline.append(element(documentRef, 'h2', '', 'Evidence outline'));
         const counts = element(documentRef, 'div', 'raw-workspace-counts');
         const countItems = [
-            ['Threads', model.counts.all],
-            ['Problems', model.counts.problems],
-            ['Deadlocks', model.counts.deadlocks],
-            ['Class init waits', model.counts.classInitializationWaiters],
-            ['Unresolved', model.counts.unresolved],
+            ['Snapshot threads', model.counts.all],
+            ['Deadlocked threads', model.counts.deadlocks],
         ];
         for (const [label, value] of countItems) {
             const item = element(documentRef, 'div', 'raw-workspace-count');
@@ -257,6 +262,13 @@ export function createRawDumpWorkspace({
 
         const filterHeading = element(documentRef, 'h3', '', 'Thread filters');
         const filterList = element(documentRef, 'div', 'raw-workspace-filter-list');
+        const commonFilters = new Set(['everything', 'problems', 'deadlocks', 'blocked', 'classInitialization', 'unresolved', 'selectedLock']);
+        const moreFilters = element(documentRef, 'details', 'raw-workspace-more-filters');
+        moreFilters.open = state.moreFiltersOpen || !commonFilters.has(preferences.filter);
+        moreFilters.append(element(documentRef, 'summary', '', 'More lock filters'));
+        moreFilters.addEventListener('toggle', () => { if (moreFilters.isConnected) state.moreFiltersOpen = moreFilters.open; });
+        const secondaryFilters = element(documentRef, 'div', 'raw-workspace-filter-list');
+        moreFilters.append(secondaryFilters);
         for (const [filterId, label] of Object.entries(RAW_DUMP_FILTERS)) {
             if (filterId === 'selectedLock' && !state.selectedLockId) continue;
             const filterButton = button(documentRef, label, `Filter: ${label}`, () => {
@@ -266,7 +278,10 @@ export function createRawDumpWorkspace({
             }, 'raw-workspace-filter');
             filterButton.classList.toggle('is-active', preferences.filter === filterId);
             filterButton.setAttribute('aria-pressed', String(preferences.filter === filterId));
-            filterList.appendChild(filterButton);
+            const count = filterRawDumpThreadBlocks(model, filterId, state.selectedLockId).length;
+            filterButton.append(element(documentRef, 'span', 'raw-workspace-filter-count', String(count)));
+            filterButton.title = `${label}: ${count} threads in this snapshot`;
+            (commonFilters.has(filterId) ? filterList : secondaryFilters).appendChild(filterButton);
         }
         const expansionControls = element(documentRef, 'div', 'raw-workspace-expansion-controls');
         expansionControls.append(
@@ -281,7 +296,7 @@ export function createRawDumpWorkspace({
                 render();
             }),
         );
-        outline.append(filterHeading, filterList, element(documentRef, 'h3', '', 'Threads'), expansionControls);
+        outline.append(filterHeading, element(documentRef, 'p', 'raw-workspace-filter-hint', 'Choose one filter · counts are threads'), filterList, moreFilters, element(documentRef, 'h3', '', 'Threads'), expansionControls);
 
         const threadList = element(documentRef, 'div', 'raw-workspace-thread-list');
         for (const block of visibleBlocks) {
@@ -644,7 +659,7 @@ export function createRawDumpWorkspace({
         if (destroyed || popup.closed) return;
         copyButton.textContent = copied ? 'Copied' : 'Copy failed';
         popup.clearTimeout(copyResetTimer);
-        copyResetTimer = popup.setTimeout(() => (copyButton.textContent = 'Copy'), 1000);
+        copyResetTimer = popup.setTimeout(() => (copyButton.textContent = 'Copy snapshot'), 1000);
     }
 
     function render() {
@@ -657,6 +672,9 @@ export function createRawDumpWorkspace({
         exactButton.classList.toggle('is-active', preferences.mode === 'exact');
         annotatedButton.setAttribute('aria-pressed', String(preferences.mode === 'annotated'));
         exactButton.setAttribute('aria-pressed', String(preferences.mode === 'exact'));
+        searchScope.textContent = preferences.mode === 'exact'
+            ? 'Search: complete snapshot · Copy snapshot always includes every source line.'
+            : `Search: ${RAW_DUMP_FILTERS[preferences.filter]} · Copy snapshot includes every source line. Candidates are wait/lock evidence, not confirmed faults.`;
         applyPreferences();
         lineRenderer?.destroy();
         state.renderedMatches.clear();

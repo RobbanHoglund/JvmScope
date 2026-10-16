@@ -281,7 +281,8 @@ body[data-jvmscope-host="vscode"] #rawDumpDialog {
     color: var(--host-error) !important; background: color-mix(in srgb, var(--host-error) 10%, var(--host-bg));
   }
   & .raw-workspace-state.is-runnable { color: var(--host-success) !important; background: color-mix(in srgb, var(--host-success) 10%, var(--host-bg)); }
-  & :is(.raw-workspace-role:not(.is-deadlock), .raw-workspace-state.is-waiting, .raw-workspace-state.is-timed-waiting) {
+  & .raw-workspace-role:not(.is-deadlock) { color: var(--host-fg) !important; background: transparent; }
+  & :is(.raw-workspace-state.is-waiting, .raw-workspace-state.is-timed-waiting) {
     color: var(--host-warning) !important; background: color-mix(in srgb, var(--host-warning) 10%, var(--host-bg));
   }
   & .raw-workspace-line.is-lock .raw-workspace-line-content { color: var(--host-warning) !important; }
@@ -296,7 +297,7 @@ body[data-jvmscope-host="vscode"] #rawDumpDialog {
 }
 @media (max-width: 1000px) {
   body[data-jvmscope-host="vscode"] #rawDumpDialog {
-    & .raw-workspace-page { --raw-outline-width: 170px; }
+    & .raw-workspace-page { --raw-outline-width: 190px; }
     & .raw-workspace-layout { grid-template-columns: var(--raw-outline-width) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
     & .raw-workspace-page.hide-outline { --raw-outline-width: 0px; }
     & .raw-workspace-inspector { grid-column: 1 / -1; grid-row: 2; max-height: 220px; }
