@@ -218,3 +218,21 @@ body[data-jvmscope-host="vscode"] .tls-event[aria-current="true"] {
   outline-offset: -2px;
   border-radius: 4px;
 }
+
+/* Evidence qualifiers and timestamps must be as readable as the records they
+   qualify. Retain host colors, including high-contrast themes. */
+body[data-jvmscope-host="vscode"].tls-page {
+  & :is(.tls-row-context, .tls-event-clock, .tls-event-flow, .tls-grouping-note, .tls-sequence-note, .tls-coverage) {
+    color: var(--host-fg) !important;
+  }
+  & .tls-selected-row .tls-row-context {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+  }
+  &:not(.analyzer-empty) .tls-file-actions :is(label[for="fileInput"], #loadSampleBtn, #chooseExampleBtn) {
+    color: var(--vscode-button-secondaryForeground, var(--host-fg)) !important;
+    background: var(--vscode-button-secondaryBackground, var(--host-raised)) !important;
+  }
+  &:not(.analyzer-empty) .tls-file-actions :is(label[for="fileInput"], #loadSampleBtn, #chooseExampleBtn):hover {
+    background: var(--vscode-button-secondaryHoverBackground, var(--host-surface)) !important;
+  }
+}

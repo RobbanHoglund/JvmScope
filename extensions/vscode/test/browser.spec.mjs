@@ -269,6 +269,14 @@ for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live theme
             await host.page.locator('#threadModalClose2').click();
         }else {
             await expectReadable(host.page.locator('.tls-event-title').first());
+            for(const selector of ['.tls-grouping-note','.tls-sequence-note','.tls-coverage','.tls-event-clock time','.tls-event-flow','.tls-row-context']) {
+                const text=host.page.locator(selector).first();
+                await expectReadable(text);
+                expect(await text.evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(12);
+            }
+            const actions=host.page.locator('.tls-file-actions');
+            expect(await actions.locator('label[for="fileInput"]').evaluate(el=>getComputedStyle(el).backgroundColor))
+                .toBe(await actions.locator('#howToUseBtn').evaluate(el=>getComputedStyle(el).backgroundColor));
             const clock=await host.page.locator('.tls-event-clock time').first().boundingBox();
             const content=await host.page.locator('.tls-event-content').first().boundingBox();
             expect(clock.x+clock.width).toBeLessThanOrEqual(content.x);
