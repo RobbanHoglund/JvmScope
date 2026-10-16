@@ -16,8 +16,10 @@ function text(value) {
     return value == null ? '' : String(value).trim();
 }
 
-function normalized(value) {
-    return text(value).toLowerCase();
+/** JVM addresses are case-insensitive; class names and other resource IDs are not. */
+export function graphResourceIdentity(value) {
+    const identity = text(value);
+    return /^0x[0-9a-f]+$/i.test(identity) ? identity.toLowerCase() : identity;
 }
 
 function finiteNumber(value) {
@@ -27,7 +29,7 @@ function finiteNumber(value) {
 }
 
 function lockIdentity(lock) {
-    const lockId = normalized(lock?.lockId);
+    const lockId = graphResourceIdentity(lock?.lockId);
     return lockId || null;
 }
 
@@ -205,8 +207,8 @@ function addDependencyObservation(dependencyByPair, observation) {
     const edge = dependencyByPair.get(key);
     const lockId = text(observation.lockId);
     const lockType = text(observation.lockType);
-    const lockKey = `${normalized(lockId)}|${normalized(lockType)}`;
-    if (lockId && !edge.locks.some((lock) => `${normalized(lock.lockId)}|${normalized(lock.lockType)}` === lockKey)) {
+    const lockKey = `${graphResourceIdentity(lockId)}|${text(lockType)}`;
+    if (lockId && !edge.locks.some((lock) => `${graphResourceIdentity(lock.lockId)}|${text(lock.lockType)}` === lockKey)) {
         edge.locks.push({ lockId, lockType: lockType || null });
     }
     pushUnique(edge.waitKinds, text(observation.waitKind) || 'wait');
@@ -429,7 +431,7 @@ export function buildThreadDependencyGraph(threads, deadlocks = []) {
             pushUnique(node.heldLockIds, lockNode.id);
 
             const deadlocked = Boolean(
-                node.deadlocked && normalized(thread?.deadlockHoldingLockId) === identity,
+                node.deadlocked && graphResourceIdentity(thread?.deadlockHoldingLockId) === identity,
             );
             lockNode.deadlocked ||= deadlocked;
             if (deadlocked && node.deadlockCycleId != null) pushUnique(lockNode.deadlockCycleIds, node.deadlockCycleId);
@@ -534,7 +536,7 @@ export function buildThreadDependencyGraph(threads, deadlocks = []) {
             const identity = lockIdentity(lock);
             const relationType = relationTypeForWait(lock);
             const deadlocked = Boolean(
-                node.deadlocked && normalized(thread?.deadlockWaitingLockId) === identity,
+                node.deadlocked && graphResourceIdentity(thread?.deadlockWaitingLockId) === identity,
             );
 
             pushUnique(node.waitingLockIds, lockNode.id);
@@ -597,7 +599,7 @@ export function buildThreadDependencyGraph(threads, deadlocks = []) {
             const lockType = text(item?.waitingLockType || sourceNode?.rawThread?.deadlockWaitingLockType);
 
             const parsedWait = (sourceNode?.rawThread?.waitingLocks || [])
-                .find((lock) => lockIdentity(lock) === normalized(lockId));
+                .find((lock) => lockIdentity(lock) === graphResourceIdentity(lockId));
             const waitKind = text(parsedWait?.kind) || 'monitor-enter';
             const waitRelationType = relationTypeForWait({ kind: waitKind });
 
@@ -638,7 +640,7 @@ export function buildThreadDependencyGraph(threads, deadlocks = []) {
 
                 if (targetNode) {
                     const parsedHold = (targetNode.rawThread?.heldLocks || [])
-                        .find((lock) => lockIdentity(lock) === normalized(lockId));
+                        .find((lock) => lockIdentity(lock) === graphResourceIdentity(lockId));
                     const holdKind = text(parsedHold?.kind) || (waitKind === 'synchronizer-park' ? 'ownable-synchronizer' : 'monitor');
                     pushUnique(lockNode.ownerIds, target);
                     pushUnique(targetNode.heldLockIds, lockNode.id);
@@ -740,7 +742,7 @@ export function buildThreadDependencyGraph(threads, deadlocks = []) {
     const contendedWaitEdges = resourceEdges.filter((edge) =>
         edge.type === 'wait' || edge.type === 'park' || edge.type === 'class-init-wait');
     const ownersObservedByWait = contendedWaitEdges.map((edge) => {
-        const lockNode = lockNodesByIdentity.get(normalized(edge.lockId));
+        const lockNode = lockNodesByIdentity.get(graphResourceIdentity(edge.lockId));
         return lockNode?.ownerIds?.length || 0;
     });
     const unresolvedWaitCount = ownersObservedByWait.filter((count) => count === 0).length;

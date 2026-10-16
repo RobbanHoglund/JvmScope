@@ -2,6 +2,23 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createThreadDependencyGraphView } from '../../assets/javautils/tda/dependency-graph-view.js';
+import { buildThreadDependencyGraph } from '../../assets/javautils/tda/dependency-graph.js';
+
+test('class resources retain their exact identities in dependency projection and reveal', () => {
+    const view = createThreadDependencyGraphView();
+    view.model = buildThreadDependencyGraph(['example.Target', 'example.target'].flatMap((className, index) => [
+        { sourceKey: `o${index}`, initializingClasses: [{ className }] },
+        { sourceKey: `w${index}`, classInitializationWaits: [{ className }] },
+    ]));
+    view.fullNodeById = new Map(view.model.nodes.map(node => [node.id, node]));
+    view.options.view = 'dependency';
+    assert.equal(view.projectionData().edges.length, 2);
+    const selected = [];
+    view.selectNode = id => selected.push(id);
+    assert.equal(view.revealLock('class-init:example.Target', { focus: false, center: false }), true);
+    assert.equal(view.revealLock('class-init:example.target', { focus: false, center: false }), true);
+    assert.deepEqual(selected, ['lock:class-init:example.Target', 'lock:class-init:example.target']);
+});
 
 function createClassList() {
     const values = new Set();

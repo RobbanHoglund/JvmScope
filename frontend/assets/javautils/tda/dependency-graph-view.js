@@ -1,6 +1,6 @@
 import { describeLockCoverage } from './lock-coverage.js';
 import { saveBlob } from '../host/platform.js';
-import { buildThreadDependencyGraph } from './dependency-graph.js';
+import { buildThreadDependencyGraph, graphResourceIdentity } from './dependency-graph.js';
 import {
     DEFAULT_DEPENDENCY_GRAPH_OPTIONS,
     projectionDensity,
@@ -646,7 +646,7 @@ class ThreadDependencyGraphView {
         const resourceView = this.options.view === 'resource';
         const lockNodeById = new Map(this.model.lockNodes.map((node) => [node.id, node]));
         const lockNodeIdForReference = (lock) => {
-            const lockId = text(lock?.lockId).toLowerCase();
+            const lockId = graphResourceIdentity(lock?.lockId);
             return lockId ? `lock:${lockId}` : null;
         };
         const allowedLockIds = new Set(
@@ -1973,10 +1973,10 @@ class ThreadDependencyGraphView {
     }
 
     revealLock(lockId, { focus = true, center = true } = {}) {
-        const normalizedLockId = text(lockId).toLocaleLowerCase();
+        const normalizedLockId = graphResourceIdentity(lockId);
         if (!normalizedLockId) return false;
         const node = [...this.fullNodeById.values()].find((candidate) =>
-            candidate.type === 'lock' && text(candidate.lockId).toLocaleLowerCase() === normalizedLockId);
+            candidate.type === 'lock' && graphResourceIdentity(candidate.lockId) === normalizedLockId);
         return this.revealNode(node, { focus, center });
     }
 
