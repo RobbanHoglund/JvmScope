@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.11 — Identifiable diagram update
+
+- Give the inline deadlock, lock-contention and class-initialization diagrams a distinct extension version and VSIX filename, so the installed update can be verified.
+- Run webview browser regressions against the modules and assets extracted from the actual VSIX in CI.
+
 ## 0.3.10 — Focused thread investigation
 
 - Restore deadlock diagrams as the primary view, with clickable thread cards, explicit lock nodes and complete return arrows based on resolved JVM-reported owners. Retain relationship details below each graph.

@@ -90,7 +90,9 @@ meaning belongs in the shared models with JVM-fixture and UI regression coverage
   documents, packaged asset paths, CSP and route restrictions. Sidebar tests cover
   pagination, duplicate names, revision changes, disposal and invalid replies.
 - Browser tests load the production extension assets with the same CSP, inline
-  workers and a simulated host transport; they cover TDA/TLS results, host actions,
+  workers and a simulated host transport. CI extracts the validated VSIX and sets
+  `VSCODE_TEST_EXTENSION_ROOT` to its `extension` directory, so these tests use
+  the delivered host modules and webview assets. They cover TDA/TLS results, host actions,
   exact sidebar selections, hidden filters, bundled examples and stale requests.
 - Extension-host tests run inside a real isolated VS Code, activating commands,
   loading real captures in both webviews, comparing snapshots, reading an

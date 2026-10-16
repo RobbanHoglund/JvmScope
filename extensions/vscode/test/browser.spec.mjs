@@ -3,10 +3,14 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import webview from '../src/webview.cjs';
-import protocol from '../src/protocol.cjs';
+import {createRequire} from 'node:module';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
-const media=resolve(root,'extensions/vscode/media');
+// CI points this at an extracted VSIX so the delivered code and assets are exercised.
+const extensionRoot=resolve(root,process.env.VSCODE_TEST_EXTENSION_ROOT||'extensions/vscode');
+const require=createRequire(import.meta.url);
+const webview=require(resolve(extensionRoot,'src/webview.cjs'));
+const protocol=require(resolve(extensionRoot,'src/protocol.cjs'));
+const media=resolve(extensionRoot,'media');
 const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
