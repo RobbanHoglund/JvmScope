@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.9 — Exact-first raw evidence
+
+- Put Exact before Annotated and start every new raw evidence view in Exact, including upgrades with an old Annotated preference. Keep the current mode when returning to an existing view.
+- Preserve wrapping and line-number preferences, structured filtering, search, Details/Graph return and complete-snapshot clipboard/editor actions.
+- Correct selected mode/filter hover contrast, raw-line hover and line-number colors across VS Code theme families.
+- Add browser regressions for default mode, legacy preferences, keyboard order and raw evidence theme states. Record the four-view TDA UI/UX review and remaining design priorities.
+
 ## 0.3.8 — View startup recovery and clearer sidebar icon
 
 - Recreate timed-out views on the next Open command, ignore late messages from failed views, and clean up failed page reads. Preserve healthy analyzer sessions.
