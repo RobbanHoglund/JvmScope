@@ -13,6 +13,92 @@ async function sample(page) {
     await expect(page.locator('#rowCount')).toHaveText('35 / 35 interactions');
 }
 
+test('resizing the investigation panes preserves filtered evidence and can cancel a drag', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await sample(page);
+    await page.locator('#onlyFailuresToggle').check();
+    await select(page, 35);
+    await page.locator('#tlsRawTab').click();
+    const evidence = await inspector(page).locator('.rawline').allTextContents();
+    const divider = page.getByRole('separator', { name: 'TLS interactions' });
+    await expect(divider).toBeVisible();
+    const startWidth = (await page.locator('#tableContainer').boundingBox()).width;
+    const handle = await divider.boundingBox();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + 60);
+    await page.mouse.down();
+    await page.mouse.move(handle.x + handle.width / 2 + 150, handle.y + 60, { steps: 5 });
+    await page.mouse.up();
+    expect((await page.locator('#tableContainer').boundingBox()).width).toBeCloseTo(startWidth + 150, 0);
+    await expect(inspector(page)).toHaveAttribute('data-selected-id', '35');
+    await expect(page.locator('#tlsRawTab')).toHaveAttribute('aria-selected', 'true');
+    expect(await inspector(page).locator('.rawline').allTextContents()).toEqual(evidence);
+    await expect(page.locator('#rowCount')).toHaveText('23 / 35 interactions');
+
+    const saved = await divider.getAttribute('aria-valuenow');
+    const moved = await divider.boundingBox();
+    await page.mouse.move(moved.x + moved.width / 2, moved.y + 60);
+    await page.mouse.down();
+    await page.mouse.move(moved.x - 120, moved.y + 60);
+    await expect(divider).not.toHaveAttribute('aria-valuenow', saved);
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+    await expect(divider).toHaveAttribute('aria-valuenow', saved);
+    await expect(page.locator('#tlsWorkspace')).not.toHaveClass(/is-resizing/);
+    await divider.dblclick();
+    await expect(divider).toHaveAttribute('aria-valuenow', '50.0');
+});
+
+test('the keyboard separator enforces usable widths and restores the preference after stacking and reload', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await sample(page);
+    const divider = page.getByRole('separator', { name: 'TLS interactions' });
+    await divider.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(divider).toHaveAttribute('aria-valuenow', '52.0');
+    await expect(divider).toBeFocused();
+    await page.keyboard.press('Shift+ArrowRight');
+    await expect(divider).toHaveAttribute('aria-valuenow', '62.0');
+    await page.keyboard.press('End');
+    await expect(divider).toHaveAttribute('aria-valuenow', await divider.getAttribute('aria-valuemax'));
+    expect((await inspector(page).boundingBox()).width).toBeGreaterThanOrEqual(499);
+    await page.keyboard.press('Home');
+    await expect(divider).toHaveAttribute('aria-valuenow', await divider.getAttribute('aria-valuemin'));
+    expect((await page.locator('#tableContainer').boundingBox()).width).toBeGreaterThanOrEqual(559);
+    await divider.dblclick();
+    await page.keyboard.press('Shift+ArrowRight');
+    await page.keyboard.press('ArrowLeft');
+    await expect(divider).toHaveAttribute('aria-valuenow', '58.0');
+    await page.setViewportSize({ width: 900, height: 900 });
+    await expect(divider).toBeHidden();
+    const table = await page.locator('#tableContainer').boundingBox();
+    expect((await inspector(page).boundingBox()).y).toBeGreaterThanOrEqual(table.y + table.height);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await expect(divider).toBeVisible();
+    await expect(divider).toHaveAttribute('aria-valuenow', '58.0');
+    await page.locator('#tlsOverviewColumns').click();
+    await expect(divider).toBeHidden();
+    await page.locator('#tlsInvestigateColumns').click();
+    await expect(divider).toHaveAttribute('aria-valuenow', '58.0');
+    await page.reload();
+    await sample(page);
+    await expect(divider).toHaveAttribute('aria-valuenow', '58.0');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('invalid or unavailable saved layout does not break pane resizing', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.evaluate(() => localStorage.setItem('jvmscope.tls.workspace-ratio', 'not-a-number'));
+    await page.reload();
+    await sample(page);
+    const divider = page.getByRole('separator', { name: 'TLS interactions' });
+    await expect(divider).toHaveAttribute('aria-valuenow', '50.0');
+    await page.evaluate(() => { Storage.prototype.setItem = () => { throw new Error('Storage disabled'); }; });
+    await divider.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(divider).toHaveAttribute('aria-valuenow', '52.0');
+    await expect(inspector(page)).toHaveAttribute('data-selected-id', '35');
+});
+
 test('real trust failures present readable explanation sections in the inspector and issue dialog', async ({ page }, testInfo) => {
     const text = readFileSync(new URL('../../../../testdata/tls-logs/java17-temurin-tlsv1.3-untrusted-client.txt', import.meta.url), 'utf8');
     await page.locator('#tlsInvestigateColumns').dispatchEvent('click');

@@ -18,6 +18,7 @@ import { createLatestInputRequestGate } from './tda/input-request.js';
 import { createTlsFilters, selectTlsEntries, facetKey, interactionTime, failureLabel } from './tls-analysis-model.js';
 import { createTlsAnalysisView } from './tls-analysis-view.js';
 import { createTlsInspector } from './tls-inspector-view.js';
+import { bindTlsWorkspace } from './tls-workspace.js';
 import { tlsDiagnosis, tlsObservedSequence, reconcileTlsSelection } from './tls-sequence-model.js';
 
 
@@ -83,6 +84,7 @@ const inspector = createTlsInspector({ root: document.getElementById('tlsInspect
     hasSource: () => isVsCode() && Boolean(lastLoadedSourceId),
     onSource: line => openSourceLocation({ sourceId: lastLoadedSourceId, startLine: line, endLine: line }) });
 const filters = createTlsFilters();
+const workspaceLayout = bindTlsWorkspace(document.getElementById('tlsWorkspace'), document.getElementById('tlsWorkspaceDivider'));
 const analysisView = createTlsAnalysisView({ filters, onChange: () => {
     UI.searchInput.value = filters.search;
     UI.onlyFailuresToggle.checked = filters.outcome === 'failure';
@@ -188,6 +190,7 @@ function applyFiltersSortAndRender() {
     renderMeta(allInteractions);
     analysisView.render();
     renderInspector();
+    workspaceLayout.update();
 }
 
 function renderInspector() {
@@ -874,6 +877,7 @@ function setTableColumns(mode) {
     }
     UI.tableScroll.scrollLeft = 0;
     renderTable(filteredInteractions);
+    workspaceLayout.update();
 }
 document.getElementById('tlsInvestigateColumns').addEventListener('click', () => setTableColumns('investigate'));
 document.getElementById('tlsOverviewColumns').addEventListener('click', () => setTableColumns('overview'));

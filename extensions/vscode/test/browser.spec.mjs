@@ -243,6 +243,27 @@ async function expectReadable(locator) {
         return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
     })).toBeGreaterThanOrEqual(4.5);
 }
+test('VS Code TLS separator is visible across themes and keeps the loaded capture when resized',async({host})=>{
+    await host.page.setViewportSize({width:1600,height:900});
+    await host.open('/jvmscope/tls.html');
+    await host.page.locator('#loadSampleBtn').click();
+    const divider=host.page.getByRole('separator',{name:'TLS interactions'});
+    await expect(divider).toBeVisible();
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(host.page,theme);
+        await expectReadable(divider);
+        await divider.focus();
+        await host.page.keyboard.press('ArrowRight');
+        expect(await divider.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+        await expect(host.page.locator('#tlsInspector')).toHaveAttribute('data-selected-id','35');
+        await expect(host.page.locator('#tlsTableBody tr')).toHaveCount(35);
+        expect(await host.page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(1600);
+    }
+    await host.page.setViewportSize({width:600,height:900});
+    await expect(divider).toBeHidden();
+    await expect(host.page.locator('#tlsInspector')).toBeVisible();
+});
+
 for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} follows live themes and fits a narrow editor`,async({host},testInfo)=>{
     await host.page.setViewportSize({width:600,height:900});
     await host.open(`/jvmscope/${analyzer}.html`);
