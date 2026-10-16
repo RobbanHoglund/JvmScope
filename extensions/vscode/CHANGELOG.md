@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.7 — Recognizable Activity Bar avatar
+
+- Replace the generic connected-node sidebar icon with a simplified outline of the JvmScope avatar.
+- Keep the sidebar icon monochrome and theme-controlled, including high-contrast themes, while retaining the full-color listing and editor-tab avatar.
+
 ## 0.3.6 — Structured raw thread evidence
 
 - Open Raw dump inside the analysis tab with the shared Annotated/Exact workspace, search, thread filters, lock inspection and Details/Graph navigation.
