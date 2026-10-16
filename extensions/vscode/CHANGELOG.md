@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.8 — View startup recovery and clearer sidebar icon
+
+- Recreate timed-out views on the next Open command, ignore late messages from failed views, and clean up failed page reads. Preserve healthy analyzer sessions.
+- Document recovery for VS Code service-worker startup errors; this extension cannot repair the host service-worker cache.
+- Replace the small face outline with a simple J inside a magnifying glass, adapted to the current theme.
+
 ## 0.3.7 — Recognizable Activity Bar avatar
 
 - Replace the generic connected-node sidebar icon with a simplified outline of the JvmScope avatar.
