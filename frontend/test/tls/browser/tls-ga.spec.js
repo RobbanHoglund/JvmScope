@@ -116,6 +116,7 @@ test('a dense capture remains searchable and retains exact evidence for a select
     const start = performance.now();
     await upload(page, text);
     await expect(page.locator('#rowCount')).toHaveText(`1–200 of ${count} / ${count} interactions`);
+    await expect(page.locator('#tlsTableStatus')).toBeVisible();
     await expect(page.locator('#tlsTableBody tr')).toHaveCount(200);
     test.info().annotations.push({ type: 'measurement', description: `6000 records / ${Buffer.byteLength(text)} bytes: load to ready ${Math.round(performance.now() - start)} ms` });
     for (let pageIndex = 1; pageIndex < count / 200; pageIndex++) await page.locator('#tlsNextPage').click();

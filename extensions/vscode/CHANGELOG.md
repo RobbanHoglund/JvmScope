@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.8 — View startup recovery and clearer sidebar icon
+
+- Recreate timed-out views on the next Open command, ignore late messages from failed views, and clean up failed page reads. Preserve healthy analyzer sessions.
+- Document recovery for VS Code service-worker startup errors; this extension cannot repair the host service-worker cache.
+- Replace the small face outline with a simple J inside a magnifying glass, adapted to the current theme.
+
+## 0.3.7 — Recognizable Activity Bar avatar
+
+- Replace the generic connected-node sidebar icon with a simplified outline of the JvmScope avatar.
+- Keep the sidebar icon monochrome and theme-controlled, including high-contrast themes, while retaining the full-color listing and editor-tab avatar.
+
+## 0.3.6 — Structured raw thread evidence
+
+- Open Raw dump inside the analysis tab with the shared Annotated/Exact workspace, search, thread filters, lock inspection and Details/Graph navigation.
+- Keep the complete read-only text editor available through an explicit Open as text action.
+- Follow live host themes, support narrow tabs, preserve native clipboard behavior and retire evidence when its snapshot changes.
+- Add browser regressions for raw evidence, navigation, replacement and theme/layout behavior; correct the compact TLS check for its new Highlights count.
+
+## 0.3.5 — TLS investigation workspace
+
+- Improve small evidence text and selected-row contrast across VS Code themes.
+- Keep capture totals in one place, show filtered counts when relevant, and tone down file actions after loading a capture.
+- Resize the TLS table and inspector by dragging their divider or using arrow keys, with saved widths and stacked panes in narrow editors.
+- Cover filtering, pagination, resizing, keyboard controls and theme behavior with browser regression tests.
+
 ## 0.3.4 — Native navigation
 
 - Remove the repeated website navigation row from VS Code views, while keeping it in the standalone application.

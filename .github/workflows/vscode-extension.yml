@@ -45,7 +45,7 @@ jobs:
         run: python3 extensions/vscode/test/package.py
       - name: Install VSIX and test the minimum VS Code version
         env:
-          VSCODE_VSIX: build/vscode/jvmscope-0.3.4.vsix
+          VSCODE_VSIX: build/vscode/jvmscope-0.3.8.vsix
         run: xvfb-run -a npm run test:integration --prefix extensions/vscode
       - uses: actions/upload-artifact@v4
         with:
@@ -91,7 +91,7 @@ jobs:
         shell: bash
         env:
           VSCODE_VERSION: ${{ matrix.vscode }}
-          VSCODE_VSIX: build/vscode/jvmscope-0.3.4.vsix
+          VSCODE_VSIX: build/vscode/jvmscope-0.3.8.vsix
         run: |
           if [ "$RUNNER_OS" = Linux ]; then
             xvfb-run -a npm run test:integration --prefix extensions/vscode

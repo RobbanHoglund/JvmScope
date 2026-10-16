@@ -218,3 +218,81 @@ body[data-jvmscope-host="vscode"] .tls-event[aria-current="true"] {
   outline-offset: -2px;
   border-radius: 4px;
 }
+
+/* Evidence qualifiers and timestamps must be as readable as the records they
+   qualify. Retain host colors, including high-contrast themes. */
+body[data-jvmscope-host="vscode"].tls-page {
+  & :is(.tls-row-context, .tls-event-clock, .tls-event-flow, .tls-grouping-note, .tls-sequence-note, .tls-coverage) {
+    color: var(--host-fg) !important;
+  }
+  & .tls-selected-row .tls-row-context {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+  }
+  &:not(.analyzer-empty) .tls-file-actions :is(label[for="fileInput"], #loadSampleBtn, #chooseExampleBtn) {
+    color: var(--vscode-button-secondaryForeground, var(--host-fg)) !important;
+    background: var(--vscode-button-secondaryBackground, var(--host-raised)) !important;
+  }
+  &:not(.analyzer-empty) .tls-file-actions :is(label[for="fileInput"], #loadSampleBtn, #chooseExampleBtn):hover {
+    background: var(--vscode-button-secondaryHoverBackground, var(--host-surface)) !important;
+  }
+}
+
+/* Raw evidence shares the analyzer's document, CSP and live host theme. */
+body[data-jvmscope-host="vscode"] #rawDumpDialog {
+  position: fixed; inset: 8px; margin: 0; padding: 0;
+  width: calc(100vw - 16px); height: calc(100dvh - 16px);
+  max-width: none; max-height: none; overflow: hidden;
+  color: var(--host-fg); background: var(--host-bg); border: 1px solid var(--host-border); border-radius: 8px;
+  &::backdrop { background: var(--host-bg); }
+  & .raw-workspace-page {
+    width: 100%; height: 100%; min-width: 0; min-height: 0;
+    color-scheme: inherit; color: var(--host-fg); background: var(--host-bg);
+    font-family: var(--vscode-font-family, system-ui);
+    --tda-surface: var(--host-surface);
+    --tda-surface-raised: var(--host-raised);
+    --tda-surface-inset: var(--host-bg);
+    --tda-panel-border: var(--host-border);
+    --text-strong: var(--host-fg); --text-normal: var(--host-fg);
+    --text-muted: var(--host-muted); --text-soft: var(--host-muted);
+  }
+  & :is(.raw-workspace-header, .raw-workspace-outline, .raw-workspace-inspector,
+      .raw-workspace-thread-block, .raw-workspace-thread-header, .raw-workspace-display-menu,
+      .raw-workspace-source-context, .raw-workspace-source-context > summary,
+      .raw-workspace-search, .raw-workspace-segmented, .raw-workspace-state) {
+    background: var(--host-surface); border-color: var(--host-border); box-shadow: none;
+  }
+  & :is(.raw-workspace-evidence, .raw-workspace-thread-lines, .raw-workspace-exact) { background: var(--host-bg); }
+  & :is(.raw-workspace-line, .raw-workspace-line-content) { font-family: var(--vscode-editor-font-family, monospace); }
+  & .raw-workspace-thread-block.is-selected { border-color: var(--host-link); }
+  & .raw-workspace-thread-link.is-active {
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+  }
+  & :is(.raw-workspace-state.is-blocked, .raw-workspace-role.is-deadlock) {
+    color: var(--host-error) !important; background: color-mix(in srgb, var(--host-error) 10%, var(--host-bg));
+  }
+  & .raw-workspace-state.is-runnable { color: var(--host-success) !important; background: color-mix(in srgb, var(--host-success) 10%, var(--host-bg)); }
+  & :is(.raw-workspace-role:not(.is-deadlock), .raw-workspace-state.is-waiting, .raw-workspace-state.is-timed-waiting) {
+    color: var(--host-warning) !important; background: color-mix(in srgb, var(--host-warning) 10%, var(--host-bg));
+  }
+  & .raw-workspace-line.is-lock .raw-workspace-line-content { color: var(--host-warning) !important; }
+  & :is(.raw-workspace-line.is-header, .raw-workspace-line.is-section) .raw-workspace-line-content { color: var(--host-link) !important; }
+  & .raw-workspace-identity { min-width: 0; flex-wrap: wrap; }
+  & .raw-workspace-identity > div { min-width: 0; }
+  & :is(.raw-workspace-identity h1, .raw-workspace-meta, .raw-workspace-thread-title h2) { overflow-wrap: anywhere; }
+  & .raw-workspace-toolbar { flex-wrap: wrap; }
+  & .raw-workspace-search { min-width: min(260px, 100%); max-width: 100%; }
+  & .raw-workspace-search input { min-width: 0; }
+  & .raw-workspace-action-status { color: var(--host-error) !important; }
+}
+@media (max-width: 1000px) {
+  body[data-jvmscope-host="vscode"] #rawDumpDialog {
+    & .raw-workspace-page { --raw-outline-width: 170px; }
+    & .raw-workspace-layout { grid-template-columns: var(--raw-outline-width) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+    & .raw-workspace-page.hide-outline { --raw-outline-width: 0px; }
+    & .raw-workspace-inspector { grid-column: 1 / -1; grid-row: 2; max-height: 220px; }
+    & .raw-workspace-thread-header { grid-template-columns: 24px minmax(0, 1fr); grid-template-areas: "disclosure title" ". roles" ". actions"; gap: 6px; }
+    & .raw-workspace-role-list { display: flex; flex-wrap: wrap; grid-column: 2; }
+    & .raw-workspace-thread-actions { grid-column: 2; flex-wrap: wrap; }
+  }
+}

@@ -17,7 +17,7 @@ The release is labeled **Preview** while broader desktop feedback is collected.
 For an unpublished build or offline installation:
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
-2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.4.vsix`.
+2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.8.vsix`.
 3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
 
 Alternatively, build the package using the instructions below. Requires VS Code
@@ -33,7 +33,11 @@ in this first version.
 - Select several thread dump files to compare snapshots. TLS analysis opens one log at a time.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
 - Inside an analyzer, use **Choose dumps / Choose log** to open the native file picker, or try the bundled examples.
-- **Raw dump** opens exact snapshot text in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
+- **Raw dump** opens JvmScope's evidence workspace inside the analysis tab: Annotated/Exact modes, search, thread filters, lock inspection and links to Details/Graph. **Open as text** opens the complete snapshot in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
+- In TLS **Investigate**, drag the divider between the table and details to resize them.
+  You can also focus it with Tab and use Left/Right, Shift for larger steps, or Home/End
+  for the limits. Double-click resets the split. The width is remembered; narrow editors
+  stack the panes. Capture totals stay above the timeline, with filtered counts near the table.
 
 Imports are UTF-8 text/JSON, limited to **64 MiB total per import** and **50 files**.
 The limits bound file transfer, not analysis complexity. Choose smaller captures
@@ -45,8 +49,9 @@ its file picker and Paste actions.
 ## Browse analyses in the sidebar
 
 Use **View → Open View…**, type **JvmScope**, and select **JvmScope Analyses**.
-You can also open **JvmScope** in the Activity Bar or run
+You can also select the **JvmScope icon (J in a magnifying glass)** in the Activity Bar or run
 **JvmScope: Open Analysis Sidebar** from the Command Palette.
+The monochrome icon follows the current theme, including high-contrast themes.
 
 The **JvmScope Analyses** view's **…** menu offers **Open Java Thread Dump Analyzer**,
 **Open Java TLS Log Analyzer** and **Open Knowledge Base**. The toolbar's blue tree and
@@ -102,9 +107,32 @@ The sidebar and both analyzers follow VS Code's theme, including light, dark,
 high-contrast dark and high-contrast light. Run **Preferences: Color Theme** to
 switch themes; open analyzers update immediately. Both analyzers also adapt to
 narrow editor splits. The standalone application and exported reports retain
-their own palettes. Raw snapshots still open in the native read-only editor.
+their own palettes. Raw dump opens the structured evidence workspace; its
+**Open as text** action opens the native read-only editor.
 The verified inputs are HotSpot thread dumps and SunJSSE traces; missing fields
 remain unknown. This extension adds no additional JVM/vendor compatibility claim.
+
+## If an analysis view fails to open
+
+If loading times out, run the corresponding **JvmScope: Open…** command again.
+JvmScope recreates a failed view while retaining successfully loaded analyzer views.
+
+The message **Could not register service worker… The document is in an invalid state**
+comes from VS Code's webview startup, before JvmScope's page runs. JvmScope does
+not register a service worker. A fresh analysis panel cannot repair VS Code's
+shared service-worker state.
+
+1. Save your work, close **all** VS Code windows, and start VS Code again.
+2. If the same error persists on a standard Windows installation, close VS Code
+   completely and rename `%APPDATA%\Code\Service Worker` to an unused backup name,
+   such as `Service Worker.backup-20261016`. Then restart VS Code. This resets
+   the shared webview cache, so other extensions' webviews are affected too.
+   Insiders, portable installations and custom user-data directories use different paths.
+3. If it still fails, include **Help → About** and the relevant error from
+   **Developer: Toggle Developer Tools → Console** in a bug report.
+
+The host error and cache workaround are documented in
+[Microsoft's VS Code issue #247035](https://github.com/microsoft/vscode/issues/247035).
 
 ## Develop and test
 
@@ -125,7 +153,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.4.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.8.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

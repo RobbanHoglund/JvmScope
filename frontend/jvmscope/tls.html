@@ -56,7 +56,7 @@
 						<input id="onlySuccessToggle" type="checkbox" /> <span>Success</span>
 					</label>
 					<label class="filter-pill warning">
-						<input id="onlyWarningsToggle" type="checkbox" /> <span>Highlights</span>
+						<input id="onlyWarningsToggle" type="checkbox" /> <span>Highlights <span id="tlsHighlightCount"></span></span>
 					</label>
 				</div>
 
@@ -277,11 +277,11 @@
                 </div>
             </div>
         </dialog>
-		<div class="tls-workspace" data-capture-only>
+		<div id="tlsWorkspace" class="tls-workspace" data-capture-only>
 		<div class="table-container drop-zone" id="tableContainer"
 			aria-live="polite">
 			<div class="tls-table-heading">
-				<h2>TLS interactions</h2>
+				<h2 id="tlsInteractionsTitle">TLS interactions</h2>
 				<p>Select an interaction to follow its evidence.</p>
 			</div>
 			<div class="tls-table-toolbar">
@@ -296,7 +296,7 @@
 				<button id="refreshBtn" class="btn btn-sm" type="button"
 					title="Re-apply filters + sort">Refresh</button>
 			</div>
-			<div class="footer-bar tls-table-status">
+			<div class="footer-bar tls-table-status" id="tlsTableStatus">
 				<span id="rowCount">0 / 0 interactions</span>
                 <nav id="tlsPagination" class="hidden tls-pagination" aria-label="TLS interaction pages">
                     <button id="tlsPreviousPage" class="btn btn-sm" type="button" aria-label="Previous interaction page">←</button>
@@ -377,6 +377,11 @@
 				One row per detected interaction. Grouping uses JVM thread IDs and handshake markers; legacy captures have limited correlation.
 			</div>
 		</div>
+		<div id="tlsWorkspaceDivider" class="tls-workspace-divider" role="separator" tabindex="0"
+			aria-orientation="vertical" aria-labelledby="tlsInteractionsTitle" aria-controls="tableContainer"
+			aria-describedby="tlsDividerHelp" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+			title="Drag to resize panels. Arrow keys resize; double-click resets." hidden></div>
+		<span id="tlsDividerHelp" class="sr-only">Use Left and Right to resize the table and details. Hold Shift for larger steps. Home and End set the limits. Double-click to reset.</span>
 		<aside id="tlsInspector" class="tls-inspector" aria-label="Selected TLS interaction"></aside>
 		</div>
 

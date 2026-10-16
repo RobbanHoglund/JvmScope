@@ -33,7 +33,7 @@ async function activate(context) {
         let session = sessions.get(kind);
         // Documentation owns its query/search state in the page. Reopening it
         // must apply the requested version and fragment, including same-page links.
-        if (session && session.page === name && kind !== 'docs') {
+        if (session && !session.startupFailed && session.page === name && kind !== 'docs') {
             session.panel.reveal();
             if (hash) await session.panel.webview.postMessage({ channel: 'jvmscope', version: 1, type: 'revealHash', hash });
             return session;
@@ -49,8 +49,11 @@ async function activate(context) {
         const ready = new Promise((resolve, reject) => { readyResolve = resolve; readyReject = reject; });
         // A user may close a loading panel before a command starts waiting for it.
         ready.catch(() => {});
-        const readyTimer = setTimeout(() => readyReject(new Error('JvmScope did not finish loading. Close and reopen the view.')), 30_000);
-        session = { panel, page: name, owner: id, sources, ready, disposed: false, loads: new Map(), nextLoad: 0, requests: new Set() };
+        const readyTimer = setTimeout(() => {
+            session.startupFailed = true;
+            readyReject(new Error('JvmScope did not finish loading. Run the Open command again to retry. If VS Code reports a service-worker error, save your work, close all VS Code windows and restart VS Code.'));
+        }, 30_000);
+        session = { panel, page: name, owner: id, sources, ready, disposed: false, startupFailed: false, loads: new Map(), nextLoad: 0, requests: new Set() };
         sessions.set(kind, session);
         if (kind !== 'docs') {
             session.navigation = new NavigationSession(message => panel.webview.postMessage(message), () => sidebar.changed(kind));
@@ -104,7 +107,7 @@ async function activate(context) {
             }
         }
         panel.webview.onDidReceiveMessage(async message => {
-            if (session.disposed || !isMessage(message)) return;
+            if (session.disposed || session.startupFailed || !isMessage(message)) return;
             if (message.type === 'ready') {
                 clearTimeout(readyTimer); readyResolve();
                 if (hash) void reply({ type: 'revealHash', hash });
@@ -123,9 +126,14 @@ async function activate(context) {
                 finally { session.requests.delete(message.id); }
             }
         }, null, context.subscriptions);
-        const html = decoder.decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(media, name)));
-        if (!session.disposed) panel.webview.html = renderWebview(html, { page: name, route, pages, cspSource: panel.webview.cspSource,
-            resourceUri: relative => panel.webview.asWebviewUri(vscode.Uri.joinPath(media, relative)).toString() });
+        try {
+            const html = decoder.decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(media, name)));
+            if (!session.disposed && !session.startupFailed) panel.webview.html = renderWebview(html, { page: name, route, pages, cspSource: panel.webview.cspSource,
+                resourceUri: relative => panel.webview.asWebviewUri(vscode.Uri.joinPath(media, relative)).toString() });
+        } catch (error) {
+            panel.dispose();
+            throw error;
+        }
         return session;
     }
 

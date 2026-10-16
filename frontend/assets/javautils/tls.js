@@ -18,6 +18,7 @@ import { createLatestInputRequestGate } from './tda/input-request.js';
 import { createTlsFilters, selectTlsEntries, facetKey, interactionTime, failureLabel } from './tls-analysis-model.js';
 import { createTlsAnalysisView } from './tls-analysis-view.js';
 import { createTlsInspector } from './tls-inspector-view.js';
+import { bindTlsWorkspace } from './tls-workspace.js';
 import { tlsDiagnosis, tlsObservedSequence, reconcileTlsSelection } from './tls-sequence-model.js';
 
 
@@ -83,6 +84,7 @@ const inspector = createTlsInspector({ root: document.getElementById('tlsInspect
     hasSource: () => isVsCode() && Boolean(lastLoadedSourceId),
     onSource: line => openSourceLocation({ sourceId: lastLoadedSourceId, startLine: line, endLine: line }) });
 const filters = createTlsFilters();
+const workspaceLayout = bindTlsWorkspace(document.getElementById('tlsWorkspace'), document.getElementById('tlsWorkspaceDivider'));
 const analysisView = createTlsAnalysisView({ filters, onChange: () => {
     UI.searchInput.value = filters.search;
     UI.onlyFailuresToggle.checked = filters.outcome === 'failure';
@@ -185,9 +187,10 @@ function applyFiltersSortAndRender() {
     selectedInteraction = reconcileTlsSelection(selectedInteraction, filteredInteractions, autoSelectInteraction);
     autoSelectInteraction = false;
     renderTable(filteredInteractions);
-    renderMeta(allInteractions, filteredInteractions);
+    renderMeta(allInteractions);
     analysisView.render();
     renderInspector();
+    workspaceLayout.update();
 }
 
 function renderInspector() {
@@ -425,6 +428,9 @@ function renderTable(items) {
 
     UI.tbody.innerHTML = rows.join('');
     UI.rowCount.textContent = `${items.length > PAGE_SIZE ? `${offset + 1}–${offset + pageItems.length} of ` : ''}${items.length} / ${allInteractions.length} interactions`;
+    // Totals live in the capture overview. A separate table count is useful
+    // only when filters or pagination change which rows are shown.
+    document.getElementById('tlsTableStatus').hidden = items.length === allInteractions.length && items.length <= PAGE_SIZE;
     document.getElementById('tlsPagination').classList.toggle('hidden', items.length <= PAGE_SIZE);
     document.getElementById('tlsPageLabel').textContent = `Page ${tablePage + 1} of ${pageCount}`;
     document.getElementById('tlsPreviousPage').disabled = tablePage === 0;
@@ -437,8 +443,10 @@ function renderTable(items) {
             : '<p>Load a TLS log to begin</p><span>Choose a file, drop it here, or try the full sample.</span>';
 }
 
-function renderMeta(allItems, shownItems) {
+function renderMeta(allItems) {
     const total = allItems.length;
+    const warnTotal = allItems.reduce((sum, x) => sum + (x.warnCount || 0), 0);
+    document.getElementById('tlsHighlightCount').textContent = total ? `(${warnTotal})` : '';
     if (!total) {
         UI.statsSummary.textContent = lastLoadedText.trim()
             ? 'No interactions detected. Is this a JSSE debug log (javax.net.ssl|...)?'
@@ -451,15 +459,11 @@ function renderMeta(allItems, shownItems) {
     const fail = allItems.filter((x) => x.outcome === 'failure').length;
     const unknown = total - success - fail;
 
-    const warnTotal = allItems.reduce((sum, x) => sum + (x.warnCount || 0), 0);
-
     UI.statsSummary.innerHTML =
-        `<span class="metric-chip">Total <span class="value">${total}</span></span>` +
+        `<span class="metric-chip metric-total">Interactions <span class="value">${total}</span></span>` +
         `<span class="metric-chip metric-success">Success <span class="value">${success}</span></span>` +
         `<span class="metric-chip metric-failure">Failure <span class="value">${fail}</span></span>` +
-        `<span class="metric-chip metric-unknown">Unknown <span class="value">${unknown}</span></span>` +
-        `<span class="metric-chip">Highlights <span class="value">${warnTotal}</span></span>` +
-        `<span class="metric-chip showing">Showing <span class="value">${shownItems.length}</span></span>`;
+        `<span class="metric-chip metric-unknown">Unknown <span class="value">${unknown}</span></span>`;
 
     UI.lastUpdated.textContent = parsedAt ? `Parsed: ${parsedAt.toLocaleString()}` : '';
 }
@@ -873,6 +877,7 @@ function setTableColumns(mode) {
     }
     UI.tableScroll.scrollLeft = 0;
     renderTable(filteredInteractions);
+    workspaceLayout.update();
 }
 document.getElementById('tlsInvestigateColumns').addEventListener('click', () => setTableColumns('investigate'));
 document.getElementById('tlsOverviewColumns').addEventListener('click', () => setTableColumns('overview'));

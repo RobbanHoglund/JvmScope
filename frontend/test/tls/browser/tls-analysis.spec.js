@@ -6,6 +6,39 @@ import { createTlsFilters, prepareTlsAnalysis, selectTlsEntries } from '../../..
 
 test.use({ timezoneId: 'Europe/Stockholm' });
 
+test('capture totals remain stable while filtered counts appear only when needed', async ({page}) => {
+    await page.getByRole('button', {name:/Full sample/}).click();
+    const totals=page.locator('#statsSummary');
+    await expect(totals.locator('.metric-total .value')).toHaveText('35');
+    await expect(totals.locator('.metric-success .value')).toHaveText('9');
+    await expect(totals.locator('.metric-failure .value')).toHaveText('23');
+    await expect(totals.locator('.metric-unknown .value')).toHaveText('3');
+    await expect(page.locator('#tlsHighlightCount')).toHaveText('(32)');
+    const initial=await totals.textContent();
+    await expect(page.locator('#tlsTableStatus')).toBeHidden();
+    await expect(page.locator('#tlsSelectionSummary')).toBeHidden();
+    await expect(page.locator('#tlsAnalysisCount')).toBeHidden();
+    await page.locator('#onlyFailuresToggle').check();
+    await expect(page.locator('#tlsTableStatus')).toBeVisible();
+    await expect(page.locator('#rowCount')).toHaveText('23 / 35 interactions');
+    await expect(page.locator('#tlsSelectionSummary')).toHaveText('Filtered: 0 success · 23 failure · 0 unknown');
+    await expect(page.locator('#tlsSelectionSummary')).toBeVisible();
+    await expect(totals).toHaveText(initial);
+    await page.locator('#tlsAnalysis > summary').click();
+    await expect(page.locator('#tlsAnalysisCount')).toBeVisible();
+    await expect(page.locator('#tlsAnalysisCount')).toHaveText('23 of 35 match filters');
+    await page.locator('#tlsClearFilters').click();
+    await expect(page.locator('#tlsAnalysisCount')).toBeHidden();
+    await expect(page.locator('#tlsTableStatus')).toBeHidden();
+    await page.locator('#searchInput').fill('no-matching-host-for-this-test');
+    await expect(page.locator('#rowCount')).toHaveText('0 / 35 interactions');
+    await expect(page.locator('#tlsTableStatus')).toBeVisible();
+    await expect(totals).toHaveText(initial);
+    await page.locator('#clearBtn').click();
+    await expect(totals).not.toContainText('35');
+    await expect(page.locator('#tlsHighlightCount')).toBeEmpty();
+});
+
 const rows = page => page.locator('#tlsTableBody tr');
 const row = (page, id) => page.locator(`#tlsTableBody tr[data-id="${id}"]`);
 const sample = async page => {
@@ -36,7 +69,7 @@ test('exact UTC periods include overlaps, preserve complete evidence and disting
     await expect(rows(page)).toHaveCount(2);
     await expect(row(page, 18)).toBeVisible();
     await expect(row(page, 19)).toBeVisible();
-    await expect(page.locator('#tlsSelectionSummary')).toHaveText('Selection: 1 success · 1 failure · 0 unknown');
+    await expect(page.locator('#tlsSelectionSummary')).toHaveText('Filtered: 1 success · 1 failure · 0 unknown');
     await expect(page.locator('#tlsTimelineNote')).toContainText('2 shown');
     await row(page, 18).getByRole('button', { name: 'Details', exact: true }).click();
     await expect(page.locator('#tlsModalBody')).toContainText('08:01:08.200');
@@ -113,13 +146,13 @@ test('table names and failure categories share selection counts and never count 
     await sample(page);
     await row(page, 1).getByRole('button', { name: 'Filter host: api.example.com', exact: true }).click();
     await expect(rows(page)).toHaveCount(2);
-    await expect(page.locator('#tlsAnalysisCount')).toHaveText('2 / 35 selected');
+    await expect(page.locator('#tlsAnalysisCount')).toHaveText('2 of 35 match filters');
     await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
     await page.locator('#tlsFailureFacet summary').click();
     const group = page.locator('#tlsFailureGroups button[data-key="certificate_unknown"]');
     await group.click();
     await expect(rows(page)).toHaveCount(2);
-    await expect(page.locator('#tlsSelectionSummary')).toHaveText('Selection: 0 success · 2 failure · 0 unknown');
+    await expect(page.locator('#tlsSelectionSummary')).toHaveText('Filtered: 0 success · 2 failure · 0 unknown');
     await expect(page.locator('#rowCount')).toHaveText('2 / 35 interactions');
     await expect(group).toHaveAttribute('aria-pressed', 'true');
     await page.locator('#onlySuccessToggle').check();

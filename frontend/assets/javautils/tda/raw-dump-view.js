@@ -65,6 +65,10 @@ export function createRawDumpWorkspace({
     snapshotIndex = 0,
     snapshotCount = 1,
     stylesheetUrl,
+    container = null,
+    copyText = text => popup.navigator.clipboard.writeText(text),
+    onOpenText = null,
+    onPrint = () => popup.print(),
     onClose = () => popup.close(),
     onOpenThread = () => {},
     onRevealThread = () => false,
@@ -99,26 +103,29 @@ export function createRawDumpWorkspace({
     let populateSourceContext = () => {};
     let printSource = null;
 
-    // Only a constant doctype enters the HTML parser; dump contents are always
-    // inserted through textContent. A blank tab otherwise starts in quirks mode.
-    documentRef.open();
-    documentRef.write('<!doctype html>');
-    documentRef.close();
-    documentRef.replaceChildren();
-    const html = element(documentRef, 'html');
-    html.lang = 'en';
-    const head = element(documentRef, 'head');
-    const title = element(documentRef, 'title', '', `Raw dump evidence - Snapshot ${snapshotIndex + 1}`);
-    const viewport = element(documentRef, 'meta');
-    viewport.name = 'viewport';
-    viewport.content = 'width=device-width,initial-scale=1';
-    const stylesheet = element(documentRef, 'link');
-    stylesheet.rel = 'stylesheet';
-    stylesheet.href = stylesheetUrl;
-    stylesheet.addEventListener('load', () => lineRenderer?.activate());
-    head.append(title, viewport, stylesheet);
-
-    const body = element(documentRef, 'body', 'raw-workspace-page');
+    // A host can mount the same evidence UI without replacing its document,
+    // CSP or theme. Browser tabs still get their own standards-mode document.
+    let html, head, stylesheet;
+    if (!container) {
+        documentRef.open();
+        documentRef.write('<!doctype html>');
+        documentRef.close();
+        documentRef.replaceChildren();
+        html = element(documentRef, 'html');
+        html.lang = 'en';
+        head = element(documentRef, 'head');
+        const title = element(documentRef, 'title', '', `Raw dump evidence - Snapshot ${snapshotIndex + 1}`);
+        const viewport = element(documentRef, 'meta');
+        viewport.name = 'viewport';
+        viewport.content = 'width=device-width,initial-scale=1';
+        stylesheet = element(documentRef, 'link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = stylesheetUrl;
+        stylesheet.addEventListener('load', () => lineRenderer?.activate());
+        head.append(title, viewport, stylesheet);
+    }
+    const body = element(documentRef, container ? 'section' : 'body', 'raw-workspace-page');
+    const eventRoot = container || documentRef;
     const header = element(documentRef, 'header', 'raw-workspace-header');
     const identity = element(documentRef, 'div', 'raw-workspace-identity');
     const identityText = element(documentRef, 'div');
@@ -151,9 +158,14 @@ export function createRawDumpWorkspace({
     const nextButton = button(documentRef, '↓', 'Next search match', () => selectMatch(1));
     const displayButton = button(documentRef, 'Display', 'Display settings', () => setDisplayMenu(displayMenu.hidden));
     const copyButton = button(documentRef, 'Copy', 'Copy complete canonical raw dump', copyRawDump);
-    const printButton = button(documentRef, 'Print', 'Print raw dump evidence', () => popup.print());
     const closeButton = button(documentRef, 'Close', 'Close raw dump evidence workspace', onClose);
-    toolbar.append(searchGroup, previousButton, nextButton, displayButton, copyButton, printButton, closeButton);
+    toolbar.append(searchGroup, previousButton, nextButton, displayButton, copyButton);
+    if (onPrint) toolbar.append(button(documentRef, 'Print', 'Print raw dump evidence', onPrint));
+    if (onOpenText) toolbar.append(button(documentRef, 'Open as text', 'Open complete raw dump in text editor', async () => {
+        try { await onOpenText(); }
+        catch (error) { if (!destroyed) actionStatus.textContent = error.message || 'Could not open the text editor.'; }
+    }));
+    toolbar.append(closeButton);
 
     const displayMenu = element(documentRef, 'div', 'raw-workspace-display-menu');
     displayMenu.hidden = true;
@@ -177,8 +189,11 @@ export function createRawDumpWorkspace({
     const inspector = element(documentRef, 'aside', 'raw-workspace-inspector');
     layout.append(outline, evidence, inspector);
     body.append(header, layout);
-    html.append(head, body);
-    documentRef.append(documentRef.implementation.createDocumentType('html', '', ''), html);
+    if (container) container.replaceChildren(body);
+    else {
+        html.append(head, body);
+        documentRef.append(documentRef.implementation.createDocumentType('html', '', ''), html);
+    }
 
     function revealInGraph(reveal, value, sourceElement) {
         const shown = reveal(value, sourceElement);
@@ -621,7 +636,7 @@ export function createRawDumpWorkspace({
     async function copyRawDump() {
         let copied = false;
         try {
-            await popup.navigator.clipboard.writeText(rawText);
+            await copyText(rawText);
             copied = true;
         } catch {}
         if (destroyed || popup.closed) return;
@@ -647,7 +662,7 @@ export function createRawDumpWorkspace({
         sourceContext = null;
         populateSourceContext = () => {};
         lineRenderer = createRawDumpLineRenderer({ popup, root: evidence, sourceLines, appendLine, removeMatches,
-            ready: Boolean(stylesheet.sheet) });
+            ready: Boolean(container || stylesheet?.sheet) });
         evidence.replaceChildren();
         if (preferences.mode === 'exact') {
             renderExact();
@@ -701,11 +716,11 @@ export function createRawDumpWorkspace({
             }
         }
     };
-    documentRef.addEventListener('keydown', onKeyDown);
+    eventRoot.addEventListener('keydown', onKeyDown);
     const onOutsideClick = (event) => {
         if (!displayMenu.contains(event.target) && !displayButton.contains(event.target)) setDisplayMenu(false);
     };
-    documentRef.addEventListener('click', onOutsideClick);
+    eventRoot.addEventListener('click', onOutsideClick);
 
     // Print from the source instead of materializing decorated rows. Exact mode
     // includes the complete capture; annotated mode retains filters/expansion.
@@ -728,8 +743,10 @@ export function createRawDumpWorkspace({
         body.appendChild(printSource);
     };
     const onAfterPrint = () => { printSource?.remove(); printSource = null; };
-    popup.addEventListener('beforeprint', onBeforePrint);
-    popup.addEventListener('afterprint', onAfterPrint);
+    if (onPrint) {
+        popup.addEventListener('beforeprint', onBeforePrint);
+        popup.addEventListener('afterprint', onAfterPrint);
+    }
 
     render();
     searchInput.focus();
@@ -742,8 +759,8 @@ export function createRawDumpWorkspace({
             state.renderedMatches.clear();
             onAfterPrint();
             if (!popup.closed) popup.clearTimeout(copyResetTimer);
-            documentRef.removeEventListener('keydown', onKeyDown);
-            documentRef.removeEventListener('click', onOutsideClick);
+            eventRoot.removeEventListener('keydown', onKeyDown);
+            eventRoot.removeEventListener('click', onOutsideClick);
             popup.removeEventListener('beforeprint', onBeforePrint);
             popup.removeEventListener('afterprint', onAfterPrint);
         },
