@@ -322,6 +322,27 @@ test('VS Code raw dump keeps structured evidence, search, details, graph navigat
     await expect(host.page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveCount(1);
 });
 
+test('TDA triage, cycle evidence and selected CPU threads stay readable across host themes',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#deadlockPanel summary').click();
+    await host.page.locator('#jumpToCpu').click();
+    const selected=host.page.locator('.cpu-timeline-legend-item').first();
+    await selected.click();
+    for(const width of [1366,600]) {
+        await host.page.setViewportSize({width,height:900});
+        for(const theme of Object.keys(themePalettes)) {
+            await applyTheme(host.page,theme);
+            for(const selector of ['.tda-priority h2','.tda-snapshot-metrics strong','.tda-cycle-thread strong','.tda-cycle-wait code','.tda-cycle-owner strong','.tda-table-scope','.tda-cpu-ranking caption','#cpuTimelineSelection']) {
+                await expectReadable(host.page.locator(selector).first());
+            }
+            await expect(selected).toHaveAttribute('aria-pressed','true');
+            await selected.hover();
+            await expectReadable(selected);
+            expect(await host.page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        }
+    }
+});
 test('VS Code raw evidence retires on snapshot navigation, successful replacement and Clear',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.load([{name:'before.txt',text:rawEvidence},{name:'after.txt',text:rawEvidence.replaceAll('holder','second-holder')}]);

@@ -162,6 +162,12 @@ body[data-jvmscope-host="vscode"] {
   & :is(.dump-select-wrap, .tda-file-actions, .tls-inspector-navigation, .analyzer-start-actions) { flex-wrap: wrap; }
   & .analyzer-file-name { overflow-wrap: anywhere; }
   & .table-container { max-width: 100%; min-width: 0; overflow-x: auto; }
+  /* Keep the selected CPU series' foreground and background paired on hover. */
+  & .tda-cpu-ranking .cpu-timeline-legend-item[aria-pressed="true"] {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+    border-color: var(--vscode-focusBorder, var(--host-link)) !important;
+  }
   & .tls-period-popover { max-width: calc(100vw - 48px); }
   & :is(.modal, #threadModal, #howToUseModal) { max-width: calc(100vw - 24px); }
   & .modal-dialog { max-width: 100%; }
