@@ -42,7 +42,7 @@ body.tls-page {
   flex-shrink: 0;
 }
 
-:is(.tls-page, .tda-page) .analyzer-brand-copy { flex-shrink: 0; }
+:is(.tls-page, .tda-page) .analyzer-brand-copy { flex-shrink: 1; min-width: 0; }
 
 :is(.tls-page, .tda-page) .analyzer-header h1 {
   margin: 0;
@@ -59,11 +59,10 @@ body.tls-page {
 }
 
 :is(.tls-page, .tda-page) .analyzer-file-name {
-  flex: 0 1 330px;
+  grid-column: 1 / -1;
   min-width: 0;
-  max-width: 330px;
-  padding-left: 14px;
-  border-left: 1px solid var(--analyzer-brand-border);
+  max-width: 100%;
+  margin-top: 10px;
   color: #adb8c8;
   font-size: 14px;
 }
@@ -78,15 +77,15 @@ body.tls-page {
 
 :is(.tls-page, .tda-page) .analyzer-file-name strong {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-weight: 500;
 }
 
 :is(.tls-page, .tda-page) .analyzer-header :is(.tls-file-actions, .header-center) {
   flex: 0 0 auto;
   margin-left: auto;
+  max-width: 100%;
 }
 
 :is(.tls-page, .tda-page) .analyzer-header .btn {

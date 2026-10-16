@@ -273,7 +273,7 @@ test('TDA overview fits the viewport without brand overlap and expanded evidence
     await host.page.locator('#loadSampleBtn').click();
     for(const width of [1560,1366,780,600]) {
         await host.page.setViewportSize({width,height:900});
-        const boxes=await host.page.locator('.analyzer-brand').evaluate(el=>{
+        const boxes=await host.page.locator('.analyzer-header').evaluate(el=>{
             const a=el.querySelector('h1').getBoundingClientRect(),b=el.querySelector('.analyzer-file-name').getBoundingClientRect();
             return {overlap:a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top,overflow:document.documentElement.scrollWidth>innerWidth};
         });
@@ -286,6 +286,25 @@ test('TDA overview fits the viewport without brand overlap and expanded evidence
     expect(Math.abs(panel.width-grid.width)).toBeLessThan(2);
     await host.page.locator('#deadlockPanel .deadlock-panel-summary').click();
     await expect(host.page.locator('.tda-priority .smart-analysis-focus-btn')).toBeVisible();
+});
+
+for (const analyzer of ['tda','tls']) test(`${analyzer} shows the entire capture filename below the toolbar, including narrow and zoomed views`,async({host})=>{
+    const {page}=host;
+    await host.open(`/jvmscope/${analyzer}.html`);
+    const name=`production-europe-payments-${'unbrokenfilename'.repeat(7)}-2026-10-16.${analyzer==='tda'?'json':'log'}`;
+    const fixture=analyzer==='tda'?'frontend/test/tda/fixtures/runtime/jdk27-dump-to-file.json':'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt';
+    await host.load([{name,text:await capture(fixture)}]);
+    await expect(page.locator('#fileName')).toHaveText(name);
+    for(const [width,zoom] of [[1920,1],[1366,1],[600,1],[420,1],[1366,2]]) {
+        await page.setViewportSize({width,height:1000});
+        await page.evaluate(zoom=>document.body.style.zoom=String(zoom),zoom);
+        const result=await page.locator('#fileName').evaluate(el=>{
+            const box=el.getBoundingClientRect(),top=document.querySelector('.header-top').getBoundingClientRect();
+            const range=document.createRange();range.selectNodeContents(el);
+            return {below:box.top>=top.bottom,contained:[...range.getClientRects()].every(r=>r.left>=box.left-1&&r.right<=box.right+1&&r.top>=box.top-1&&r.bottom<=box.bottom+1),fits:box.right<=innerWidth};
+        });
+        expect(result).toEqual({below:true,contained:true,fits:true});
+    }
 });
 
 test('CPU comparison exposes interval scope, durations and an explicit selection reset',async({host})=>{
