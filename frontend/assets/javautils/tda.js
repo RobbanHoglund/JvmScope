@@ -1,5 +1,7 @@
 import { createThreadNavigation } from './host/navigation-model.js';
 import { describeLockCoverage } from './tda/lock-coverage.js';
+import { cpuCoverage, compactSnapshotTime } from './tda/presentation.js';
+import './tda/triage.css';
 import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence, syncSourceLinks, bindSourceButton, createHostNavigation } from './host/platform.js';
 import { threadSourceLocation } from './tda/source-location.js';
 import { formatAllocationMetric } from './tda/allocation-metrics.js';
@@ -1504,13 +1506,21 @@ function renderStats() {
             focusText = ` • TABLE FOCUS: ${focusSummary.visibleFocused}/${focusSummary.totalFocused}${hiddenText}`;
         }
 
-		UI.statsSummary.textContent =
-		    snapshotPrefix +
-            `Snapshot totals • Threads: ${total} • RUNNABLE: ${runnable} • BLOCKED: ${blocked} • WAITING: ${waiting} • Daemon: ${daemon} • DEADLOCKED: ${deadlocked} • CLASS INIT WAITERS: ${classInitializationWaiters} • CLASS INIT STALL?: ${classInitializationStalls} • CARRYING VT: ${carriers} • CPU HOT: ${cpuHot} • ALLOCATION HOT: ${allocationHot} • CPU PROFILE: ${cpuThresholdProfile.label} • IDLE EXECUTORS: ${idleExecutors} • STARVATION?: ${starvations} • LIVELOCK?: ${livelocks}` +
-            visibleTableText +
-		    focusText;
-			
-    UI.lastUpdated.textContent = total === 0 ? '' : `Updated: ${new Date().toLocaleString()}`;
+    const coverage = cpuCoverage(allThreads, selectedDumpIndex, cpuHot);
+    const metrics = [['Threads', total], ['Blocked', blocked], ['Deadlocked threads', deadlocked], ['CPU findings', coverage.value]];
+    const expanded = UI.statsSummary.querySelector('details')?.open;
+    UI.statsSummary.innerHTML = `
+      <div class="tda-snapshot-metrics" aria-label="Selected snapshot totals">${metrics.map(([label,value]) =>
+        `<div><strong>${escapeHtml(String(value))}</strong><span>${escapeHtml(label)}</span></div>`).join('')}</div>
+      <details class="tda-snapshot-details" ${expanded ? 'open' : ''}>
+        <summary>Snapshot context &amp; coverage</summary>
+        <p>${escapeHtml(snapshotPrefix)}${escapeHtml(selected?.sourceLabel || '')}</p>
+        <p>${escapeHtml(coverage.detail)} CPU profile: ${escapeHtml(cpuThresholdProfile.label)}.</p>
+        <p>Runnable: ${runnable} · Waiting: ${waiting} · Daemon: ${daemon} · Class initialization waiters: ${classInitializationWaiters} · Initializer stall candidates: ${classInitializationStalls} · Carrying VT: ${carriers} · Allocation findings: ${allocationHot} · Idle executors: ${idleExecutors} · Starvation candidates: ${starvations} · Livelock candidates: ${livelocks}</p>
+        <p>${escapeHtml(visibleTableText + focusText)}</p>
+      </details>`;
+    UI.lastUpdated.textContent = total ? `Snapshot ${selectedDumpIndex + 1}/${parsedDumps.length} · ${compactSnapshotTime(selected?.timestamp)}` : '';
+    UI.lastUpdated.title = selectedTime?.tooltip || '';
 	
 
 }
@@ -1806,6 +1816,7 @@ function renderSmartAnalysisPanel() {
     }
 
     UI.smartAnalysisPanel.classList.remove('hidden');
+    document.getElementById('jumpToDeadlocks').hidden = !deadlocks.length;
     const counts = smartAnalysis.counts || {};
     const countPills = ['critical', 'high', 'medium', 'info']
         .filter((severity) => Number(counts[severity] || 0) > 0)
@@ -1820,11 +1831,23 @@ function renderSmartAnalysisPanel() {
     const findings = (smartAnalysis.findings || []).map(renderSmartAnalysisFinding).join('');
     const hasMaterialFindings = Number(counts.total || 0) > 0;
 
+    const priority = smartAnalysis.findings?.[0];
+    const prioritySummary = priority?.id === 'confirmed-deadlock'
+        ? `${deadlocks.length} JVM-reported cycles · ${allThreads.filter(thread => thread.isDeadlocked).length} mapped thread blocks`
+        : priority?.summary || smartAnalysis.summary;
     UI.smartAnalysisPanelBody.innerHTML = `
+      <div class="tda-priority" data-severity="${escapeAttr(priority?.severity || 'info')}">
+        <div>
+          <p class="tda-eyebrow">${priority ? 'Start here' : 'Analysis coverage'} · Snapshot ${selectedDumpIndex + 1} of ${parsedDumps.length}</p>
+          <h2>${escapeHtml(priority?.title || 'No configured material findings')}</h2>
+          <p>${escapeHtml(prioritySummary)}</p>
+        </div>
+        ${priority?.threads?.length ? `<div class="tda-priority-action"><button type="button" class="btn btn-accent smart-analysis-focus-btn" data-smart-finding-id="${escapeAttr(priority.id)}">Inspect ${priority.threads.length} threads</button><small>Existing table filters still apply</small></div>` : ''}
+      </div>
       <details class="smart-analysis-details">
         <summary class="smart-analysis-summary app-section-summary">
           <div class="app-section-summary-inner">
-            <div class="app-section-summary-title">Smart analysis</div>
+            <div class="app-section-summary-title">All findings (${counts.total || 0})</div>
             <div class="app-section-summary-subtitle">${escapeHtml(smartAnalysis.headline)}</div>
           </div>
           <div class="smart-analysis-counts">${countPills || '<span class="smart-analysis-count smart-analysis-count-clear">NO MATERIAL FINDINGS</span>'}</div>
@@ -4437,7 +4460,7 @@ function formatDumpLabel(dump, idx) {
     const ts = dump?.timestamp || `Dump ${idx + 1}`;
     const count = dump?.threads?.length ?? 0;
     const time = formatSnapshotTime(dump);
-    return `#${idx + 1} · ${ts} · ${time.pillLabel} · ${count} threads${dump.sourceLabel ? ` · ${dump.sourceLabel}` : ''}`;
+    return `#${idx + 1} · ${compactSnapshotTime(ts)} · ${count} threads${dump.sourceLabel ? ` · ${dump.sourceLabel}` : ''}`;
 }
 
 function renderDeltaPill(label, value) {
@@ -4808,6 +4831,12 @@ UI.refreshBtn?.addEventListener('click', () => {
     pageState.page = 1;
     applyFilters();
     render();
+});
+document.getElementById('jumpToCpu').addEventListener('click', () => {
+    const card = UI.cpuTimelineChart.closest('.cpu-timeline-card');
+    card.closest('details').open = true;
+    card.scrollIntoView({block: 'start'});
+    document.getElementById('cpuTimelineSearch').focus({preventScroll: true});
 });
 document.getElementById('clearThreadFiltersBtn').addEventListener('click', () => {
     UI.searchInput.value = '';

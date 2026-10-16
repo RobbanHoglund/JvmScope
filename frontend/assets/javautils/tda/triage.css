@@ -1,0 +1,35 @@
+/* Investigation layout shared by browser and VS Code. Colors inherit host tokens. */
+.tda-page .tda-eyebrow { margin: 0 0 5px; color: var(--text-muted, #aebbc5); font-size: 12px; font-weight: 600; }
+.tda-page .tda-priority { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 20px; border-left: 4px solid var(--host-link, #75beff); }
+.tda-page .tda-priority[data-severity="critical"] { border-left-color: var(--host-error, #ff8d87); }
+.tda-page .tda-priority h2 { margin: 0 0 6px; font-size: 21px; line-height: 1.3; }
+.tda-page .tda-priority p { margin: 3px 0; line-height: 1.5; }
+.tda-page .tda-priority-action { display: grid; gap: 7px; flex-shrink: 0; }
+.tda-page .tda-priority-action small { color: var(--text-muted, #aebbc5); font-size: 11px; }
+.tda-page .smart-analysis-details { border-top: 1px solid var(--tda-panel-border, #35404c); }
+.tda-page .tda-snapshot-metrics { display: flex; gap: 26px; flex-wrap: wrap; }
+.tda-page .tda-snapshot-metrics > div { display: flex; align-items: baseline; gap: 8px; }
+.tda-page .tda-snapshot-metrics strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+.tda-page .tda-snapshot-metrics span { font-size: 12px; font-weight: 400; }
+.tda-page #statsSummary { font-size: 12px; font-weight: 400; line-height: 1.5; text-transform: none; letter-spacing: normal; }
+.tda-page .tda-snapshot-details { margin-top: 8px; }
+.tda-page .tda-snapshot-details summary { cursor: pointer; }
+.tda-page .tda-snapshot-details p { margin: 6px 0; }
+.tda-page #lastUpdated { display: none; }
+.tda-page .tda-section-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.tda-page .tda-section-nav :is(a,button) { font: inherit; padding: 6px 12px; color: var(--host-link, #a9ccff); background: transparent; border: 1px solid var(--tda-panel-border, #35404c); border-radius: 5px; text-decoration: none; cursor: pointer; }
+.tda-page .panel-host { margin-top: 10px; }
+.tda-page .app-section-summary { padding: 12px 14px; }
+.tda-page .table-container .tda-filter-row { padding: 0 0 12px; margin: 0; border: 0; }
+.tda-page .table-search-row { margin-top: 0; }
+.tda-page .tda-column-choice { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-left: auto; }
+.tda-page:not(.analyzer-empty) .analyzer-brand-tagline { display: none; }
+.tda-page:not(.analyzer-empty) .tda-file-actions .btn { font-weight: 500; }
+.tda-page .session-input-help { margin: 0; }
+.tda-page :is(#tableContainer,#smartAnalysisPanel,#deadlockPanel,.cpu-timeline-card) { scroll-margin-top: 12px; }
+@media(max-width: 800px) {
+ .tda-page .tda-priority { align-items: flex-start; flex-direction: column; gap: 10px; padding: 14px; }
+ .tda-page .tda-priority h2 { font-size: 18px; }
+ .tda-page .tda-snapshot-metrics { gap: 12px 20px; }
+ .tda-page .tda-column-choice { margin-left: 0; }
+}

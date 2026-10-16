@@ -96,6 +96,27 @@ test('VS Code TDA uses inline workers, keeps allocation qualifications and opens
     expect(host.messages.some(m=>m.action==='clearRaw')).toBe(true);
 });
 
+test('TDA overview separates CPU coverage from zero and leads to scoped thread evidence',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.locator('#loadSampleBtn').click();
+    const priority=host.page.locator('.tda-priority');
+    await expect(priority).toContainText('Confirmed Java deadlock');
+    await expect(priority).toContainText('2 JVM-reported cycles · 5 mapped thread blocks');
+    await expect(host.page.locator('.tda-snapshot-metrics')).toContainText('Unavailable');
+    await host.page.locator('.tda-snapshot-details summary').click();
+    await expect(host.page.locator('.tda-snapshot-details')).toContainText('No preceding snapshot');
+    await host.page.locator('#onlyBlockedToggle').check();
+    await priority.getByRole('button',{name:'Inspect 5 threads',exact:true}).click();
+    await expect(host.page.locator('#onlyBlockedToggle')).toBeChecked();
+    await expect(host.page.locator('#threadTableBody tr')).toHaveCount(5);
+    await expect(host.page.locator('#focusFilterBar')).toBeVisible();
+    await host.page.locator('#clearFocusFilterBtn').click();
+    await expect(host.page.locator('#threadTableBody tr')).toHaveCount(8);
+    await host.page.locator('#nextDumpBtn').click();
+    await expect(host.page.locator('.tda-snapshot-details')).toContainText('Reliable rates for');
+    await expect(host.page.locator('.tda-snapshot-metrics')).not.toContainText('Unavailable');
+});
+
 const rawThreadName='waiter<script>window.rawInjected=1</script>';
 const rawEvidence=`2026-10-16 12:00:00
 Full thread dump OpenJDK 64-Bit Server VM (25+35 mixed mode, sharing):

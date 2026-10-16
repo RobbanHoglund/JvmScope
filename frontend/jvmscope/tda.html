@@ -79,41 +79,7 @@
 			<output id="dumpNavigationAnnouncement" class="sr-only"
 				aria-live="polite" aria-atomic="true"></output>
 
-			<div class="tda-filter-row" data-capture-only>
-				<div class="toggles-row" role="group" aria-labelledby="tdaFilterLabel">
-					<span id="tdaFilterLabel" class="dump-select-label">Filters</span>
-					<label class="toggle" title="Only show daemon threads"> <input
-						id="onlyDaemonToggle" type="checkbox" /> Daemon only
-					</label> <label class="toggle" title="Show BLOCKED threads. If WAITING is also selected, either state matches."> <input
-						id="onlyBlockedToggle" type="checkbox" aria-describedby="stateFilterHelp" /> BLOCKED
-					</label> <label class="toggle"
-						title="Show WAITING or TIMED_WAITING threads. If BLOCKED is also selected, either state matches."> <input
-						id="onlyWaitingToggle" type="checkbox" aria-describedby="stateFilterHelp" /> WAITING
-					</label> <label class="toggle"
-						title="Only show threads that are part of a confirmed Java deadlock">
-						<input id="onlyDeadlockedToggle" type="checkbox" /> Deadlocked
-						only
-					</label> <label class="toggle"
-						title="Only show platform threads that are carrying a mounted virtual thread">
-						<input id="onlyCarrierToggle" type="checkbox" /> Carrying VT
-						only
-					</label>
-					<span id="stateFilterHelp" class="sr-only">BLOCKED and WAITING are state choices and combine with OR. Daemon, deadlocked, carrier, search, chart, and focused-table filters combine with AND.</span>
-				</div>
-				<a id="jumpToThreads" class="btn btn-sm" href="#tableContainer">Threads ↓</a>
-				<label class="dump-select-wrap cpu-profile-select-wrap" for="cpuThresholdProfile">
-					<span class="dump-select-label">CPU profile</span>
-					<select id="cpuThresholdProfile" class="dump-select"
-						aria-describedby="cpuThresholdProfileHelp">
-						<option value="balanced">Balanced</option>
-						<option value="sensitive">Sensitive</option>
-						<option value="high-throughput">High-throughput</option>
-					</select>
-				</label>
-				<span id="cpuThresholdProfileHelp" class="sr-only">Controls CPU finding,
-					scenario, confidence, and livelock interpretation thresholds. It does
-					not change measured CPU rates.</span>
-			</div>
+
 		</div>
 
 		<div class="meta" id="metaBar" data-capture-only>
@@ -121,8 +87,9 @@
 			<div id="lastUpdated"></div>
 		</div>
 		<output id="rawDumpStatus" class="analysis-input-status hidden" role="status" aria-live="polite"></output>
-		<p id="sessionInputHelp" class="session-input-help" data-capture-only>Files, Paste and Ctrl+V add snapshots to this session in input order. Clear starts over. Sample opens a new session.</p>
+		<p id="sessionInputHelp" class="session-input-help sr-only" data-capture-only>Files, Paste and Ctrl+V add snapshots to this session in input order. Clear starts over. Sample opens a new session.</p>
 		<output id="sessionInputStatus" class="analysis-input-status hidden" role="status" aria-live="polite" aria-atomic="true"></output>
+		<nav class="tda-section-nav" aria-label="Investigation sections" data-capture-only><a href="#smartAnalysisPanel">Findings</a><a id="jumpToThreads" href="#tableContainer">Threads</a><a href="#deadlockPanel" id="jumpToDeadlocks">Deadlocks</a><button type="button" id="jumpToCpu">CPU timeline</button></nav>
 	</header>
 
 	<main>
@@ -731,6 +698,41 @@
 				<div class="drop-message">Drop thread dump files here</div>
 			</div>
 
+						<div class="tda-filter-row" data-capture-only>
+				<div class="toggles-row" role="group" aria-labelledby="tdaFilterLabel">
+					<span id="tdaFilterLabel" class="dump-select-label">Thread filters</span>
+					<label class="toggle" title="Only show daemon threads"> <input
+						id="onlyDaemonToggle" type="checkbox" /> Daemon only
+					</label> <label class="toggle" title="Show BLOCKED threads. If WAITING is also selected, either state matches."> <input
+						id="onlyBlockedToggle" type="checkbox" aria-describedby="stateFilterHelp" /> BLOCKED
+					</label> <label class="toggle"
+						title="Show WAITING or TIMED_WAITING threads. If BLOCKED is also selected, either state matches."> <input
+						id="onlyWaitingToggle" type="checkbox" aria-describedby="stateFilterHelp" /> WAITING
+					</label> <label class="toggle"
+						title="Only show threads that are part of a confirmed Java deadlock">
+						<input id="onlyDeadlockedToggle" type="checkbox" /> Deadlocked
+						only
+					</label> <label class="toggle"
+						title="Only show platform threads that are carrying a mounted virtual thread">
+						<input id="onlyCarrierToggle" type="checkbox" /> Carrying VT
+						only
+					</label>
+					<span id="stateFilterHelp" class="sr-only">BLOCKED and WAITING are state choices and combine with OR. Daemon, deadlocked, carrier, search, chart, and focused-table filters combine with AND.</span>
+				</div>
+				
+				<label class="dump-select-wrap cpu-profile-select-wrap" for="cpuThresholdProfile">
+					<span class="dump-select-label">CPU profile</span>
+					<select id="cpuThresholdProfile" class="dump-select"
+						aria-describedby="cpuThresholdProfileHelp">
+						<option value="balanced">Balanced</option>
+						<option value="sensitive">Sensitive</option>
+						<option value="high-throughput">High-throughput</option>
+					</select>
+				</label>
+				<span id="cpuThresholdProfileHelp" class="sr-only">Controls CPU finding,
+					scenario, confidence, and livelock interpretation thresholds. It does
+					not change measured CPU rates.</span>
+			</div>
 			<div class="table-search-row">
 				<div class="search-wrapper table-search-wrapper">
 					<input id="searchInput" type="search"
@@ -738,7 +740,7 @@
 						aria-label="Search threads, full stack traces, diagnostics, and evidence" autocomplete="off" />
 
 					<button id="refreshBtn" class="btn" type="button"
-						title="Re-apply filters + sort">Refresh</button>
+						title="Reapply the current thread filters and sort; this does not reload the capture">Reapply filters</button>
 				</div>
 			</div>
 

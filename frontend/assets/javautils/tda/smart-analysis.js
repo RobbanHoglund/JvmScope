@@ -566,7 +566,7 @@ export function analyzeSnapshotProblems({
     });
 
     const headline = counts.critical
-        ? `${counts.critical} critical problem${counts.critical === 1 ? '' : 's'} detected`
+        ? `${counts.critical} critical finding${counts.critical === 1 ? '' : 's'} detected`
         : counts.high
             ? `${counts.high} high-severity finding${counts.high === 1 ? '' : 's'} detected`
             : counts.total
