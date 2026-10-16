@@ -150,6 +150,14 @@ body[data-jvmscope-host="vscode"] {
   & .dependency-graph-node-label { fill: var(--host-fg) !important; stroke: var(--host-bg); }
   & .dependency-graph-node-sub-label { fill: var(--host-muted) !important; stroke: var(--host-bg); }
   & .dependency-graph-node-symbol { fill: #fff !important; }
+  & :is(.dependency-graph-edge-wait,.dependency-graph-edge-park,.dependency-graph-edge-class-init-wait) { stroke: var(--host-warning); }
+  & :is(.dependency-graph-edge-hold,.dependency-graph-edge-initialize,.dependency-graph-edge-dependency) { stroke: var(--host-link); }
+  & .dependency-graph-edge.is-confirmed-deadlock { stroke: var(--host-error); }
+  & :is(marker[id$="-arrow-wait"],marker[id$="-arrow-park"],marker[id$="-arrow-class-init-wait"]) path { fill: var(--host-warning); }
+  & :is(marker[id$="-arrow-hold"],marker[id$="-arrow-initialize"],marker[id$="-arrow-dependency"]) path { fill: var(--host-link); }
+  & marker[id$="-arrow-deadlock"] path { fill: var(--host-error); }
+  & .dependency-graph-legend-line.relation-wait { border-color: var(--host-warning); }
+  & :is(.dependency-graph-legend-line.relation-hold,.dependency-graph-legend-line.relation-dependency) { border-color: var(--host-link); }
   & .host-source-status:empty { display: none; }
   & .host-source-status:not(:empty) { display: block; flex-basis: 100%; padding: 8px; overflow-wrap: anywhere; }
   & #hostError { padding: 10px 14px; border: 1px solid; border-radius: 6px; }

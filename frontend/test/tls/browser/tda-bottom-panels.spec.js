@@ -6,7 +6,7 @@ test.beforeEach(async ({ page, appUrl }) => {
     await expect(page.locator('#threadTableBody tr')).toHaveCount(50);
 });
 
-test('section shortcuts open lower panels and move keyboard focus to their headings', async ({ page }) => {
+test('TDA section shortcuts open lower panels and move keyboard focus to their headings', async ({ page }) => {
     for (const [button, heading] of [
         ['Recurring stacks', '#runnableClusterPanelBody > details > summary'],
         ['Dependency map', '#dependencyGraphDetails > summary'],
@@ -18,7 +18,7 @@ test('section shortcuts open lower panels and move keyboard focus to their headi
     }
 });
 
-test('recurring cards explain class waits and observations without overflowing a narrow view', async ({ page }) => {
+test('TDA recurring cards explain class waits and observations without overflowing a narrow view', async ({ page }) => {
     await page.setViewportSize({ width: 600, height: 900 });
     await page.locator('#jumpToClusters').click();
     const panel = page.locator('#runnableClusterPanel');
@@ -35,7 +35,7 @@ test('recurring cards explain class waits and observations without overflowing a
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
 });
 
-test('class initialization waits and owners have visible graph arrowheads', async ({ page }) => {
+test('TDA class initialization waits and owners have visible graph arrowheads', async ({ page }) => {
     await page.locator('#jumpToGraph').click();
     for (const relation of ['class-init-wait', 'initialize']) {
         const paths = page.locator(`.dependency-graph-edge-${relation}`);
@@ -45,4 +45,24 @@ test('class initialization waits and owners have visible graph arrowheads', asyn
             return id && document.getElementById(id)?.querySelector('path');
         }))).toBe(true);
     }
+});
+
+test('TDA graph overview discloses omitted waits and keeps wait and hold edges distinguishable', async ({ page }) => {
+    await page.locator('#jumpToGraph').click();
+    await expect(page.locator('#dependencyGraphDensity')).toBeVisible();
+    const metrics = page.locator('#dependencyGraphMetrics');
+    await expect(metrics).toContainText('Hidden by density: 0 resources · 4 waiter observations');
+    const wait = page.locator('.dependency-graph-edge-wait.is-confirmed-deadlock').first();
+    const hold = page.locator('.dependency-graph-edge-hold.is-confirmed-deadlock').first();
+    await expect(wait).toHaveCSS('stroke-dasharray', 'none');
+    await expect(hold).toHaveCSS('stroke-dasharray', '5px, 3px');
+    const waiter = page.locator('.dependency-graph-node-thread').filter({ has: page.locator('[text-anchor="end"]') }).first();
+    await expect(waiter).toBeVisible();
+    await metrics.getByRole('button', { name: 'Show all matching contention' }).click();
+    await expect(page.locator('#dependencyGraphDensity')).toHaveValue('complete');
+    await expect(metrics).not.toContainText('Hidden by density');
+    await expect(page.locator('.dependency-graph-node-lock')).toHaveCount(10);
+    await expect(page.locator('.dependency-graph-edge-wait, .dependency-graph-edge-park, .dependency-graph-edge-class-init-wait')).toHaveCount(28);
+    await page.locator('#dependencyGraphSearch').fill('lambda$daemon$0');
+    await expect(page.locator('#dependencyGraphSearchCount')).not.toHaveText('0 matches');
 });

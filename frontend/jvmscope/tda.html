@@ -259,7 +259,9 @@
                             <ul class="docs-list">
                                 <li><strong>Resource map</strong> shows waiter → resource → observed owner/initializer. Resources include monitors, ownable synchronizers and class initialization.</li>
                                 <li><strong>Thread dependencies</strong> collapses the resource hop into waiter → blocker edges. Select or hover an edge for supporting lock IDs and wait kinds.</li>
-                                <li>Scope selects connected threads, active contention or confirmed deadlock members. Search accepts names, thread IDs, lock types/IDs and top frames.</li>
+                                <li>Scope selects connected threads, active contention or confirmed deadlock members. Search accepts names, thread IDs, lock types/IDs and any parsed stack frame. Mounted virtual-thread frames belong to the virtual thread, not its carrier.</li>
+                                <li>Compact density includes up to five ordinary contended resources and six waiters per resource, plus confirmed cycle resources and participants. Balanced uses ten and twelve. Explicit type/relation filters still apply. Hidden counts include waits on omitted resources; <strong>Show all matching contention</strong> removes density limits.</li>
+                                <li>Solid arrows show waits; dashed arrows show observed ownership or initialization. Red highlights JVM-confirmed deadlock evidence without changing that direction.</li>
                                 <li>Wheel to zoom; drag the background to pan or a node to pin it. Use the minimap, Fit, Reflow, fullscreen, neighborhood focus and PNG export for navigation.</li>
                                 <li>A graph cycle is a diagnostic signal. It becomes a <strong>confirmed deadlock</strong> only with the JVM’s explicit deadlock evidence.</li>
                                 <li><strong>Follow a blocking pattern</strong> ranks candidates by peak unique observed dependents, then exact recurrence in adjacent comparable snapshots. Direct and indirect dependents are counted once, including cyclic graphs. Ambiguous owners are counted separately. Selecting a pattern focuses the existing graph and keeps that selection while you change snapshots.</li>
@@ -270,7 +272,8 @@
                             </ul>
                             <h3 id="guide-runnable" class="docs-subtitle">Recurring RUNNABLE stack shapes</h3>
                             <ul class="docs-list">
-                                <li>Multiple snapshots reveal recurring RUNNABLE stack shapes. A cluster reports snapshots seen, total occurrences, longest consecutive run and average similarity.</li>
+                                <li>Multiple snapshots reveal recurring RUNNABLE stack shapes. A cluster reports snapshots seen and thread observations. A thread captured in three snapshots contributes three observations. Grouping details contain the consecutive run and heuristic stack similarity; similarity is not a probability of a problem.</li>
+                                <li>Explicit class-initialization waits are grouped separately by the case-sensitive class name, even if the JVM reports RUNNABLE and the caller frames match other work. Use the single Trend selector to choose one category or all trends.</li>
                                 <li>Timeline cells show presence across snapshots. Click a non-empty cell to select that snapshot and focus the table on the cluster’s exact members. Other filters still apply; the focus bar shows the remaining count and a clear action.</li>
                                 <li>Collapsing the cluster panel keeps its table focus. Changing snapshots clears this snapshot-specific focus.</li>
                                 <li>Repeating stacks indicate repeated observations, not continuous execution, CPU consumption or useful progress. Consult measured counters and source evidence.</li>
@@ -537,6 +540,14 @@
 									<option value="all">All nodes (raw / dense)</option>
 								</select>
 							</label>
+							<label class="dependency-graph-select-wrap dependency-graph-density-select-wrap" for="dependencyGraphDensity">
+								<span>Density</span>
+								<select id="dependencyGraphDensity" class="dependency-graph-select" title="Compact: 5 other resources and 6 waiters per resource. Balanced: 10 and 12. Confirmed cycle resources and participants are always retained within the selected filters.">
+									<option value="compact" selected>Compact + confirmed cycles</option>
+									<option value="balanced">Balanced + confirmed cycles</option>
+									<option value="complete">Complete contention</option>
+								</select>
+							</label>
 
 						</div>
 
@@ -564,14 +575,7 @@
                         <summary class="btn btn-sm">Display options</summary>
                         <div class="dependency-graph-display-content">
                             <div class="dependency-graph-advanced-controls">
-							<label class="dependency-graph-select-wrap dependency-graph-density-select-wrap" for="dependencyGraphDensity">
-								<span>Density</span>
-								<select id="dependencyGraphDensity" class="dependency-graph-select" title="Limit hotspots and duplicate waiter threads in the contention overview">
-									<option value="compact" selected>Compact · 5 locks / 6 waiters</option>
-									<option value="balanced">Balanced · 10 / 12</option>
-									<option value="complete">Complete contention</option>
-								</select>
-							</label>
+
 							<label class="dependency-graph-select-wrap" for="dependencyGraphLayout">
 								<span>Layout</span>
 								<select id="dependencyGraphLayout" class="dependency-graph-select">
@@ -649,6 +653,7 @@
 					</div>
 
 					<div id="dependencyGraphMetrics" class="dependency-graph-metrics" aria-label="Dependency graph summary"></div>
+                    <p class="dependency-graph-reading-guide">Read arrows as thread → resource → observed owner. A thread can both wait and own. Resource labels show visible / total waiters (W).</p>
 
 					<div class="dependency-graph-workspace">
 						<div id="dependencyGraphStage" class="dependency-graph-stage" tabindex="0"
@@ -690,12 +695,12 @@
 						</div>
 						<div class="dependency-graph-legend-group">
 							<span class="dependency-graph-legend-title">Flow</span>
-							<span><i class="dependency-graph-legend-line relation-wait"></i>waits for</span>
-							<span><i class="dependency-graph-legend-line relation-hold"></i>held by</span>
+							<span><i class="dependency-graph-legend-line relation-wait"></i>thread → resource: waits for</span>
+							<span><i class="dependency-graph-legend-line relation-hold"></i>resource → thread: held / initialized by</span>
 							<span><i class="dependency-graph-legend-line relation-dependency"></i>depends on</span>
 						</div>
 						<div class="dependency-graph-evidence-note">
-							Wait-for edges are snapshot observations. Only edges backed by the JVM deadlock section are labelled confirmed deadlocks.
+							Solid arrows show waits; dashed arrows show ownership or initialization. Red marks JVM-confirmed deadlock evidence. Counts refer to this snapshot; type and relation filters can hide parts of a cycle.
 						</div>
 					</div>
 				</div>

@@ -294,5 +294,42 @@ VS Code. No private workspace material is included.
 
 The theme measurements cover the tested elements and palettes, not every third-party
 theme. Keyboard focus was exercised; a screen-reader review remains useful. No user
-study was conducted. The analyzer's parsing and diagnostic rules are unchanged;
-this iteration changes presentation, evidence navigation and measurement wording.
+study was conducted. At that stage, parsing and diagnostic rules were unchanged;
+the initial iteration focused on presentation, evidence navigation and measurement wording.
+
+## Lower-panel correctness and usability follow-up
+
+The follow-up changes analysis grouping and graph projection as well as presentation.
+Each correctness fix is committed with its own regression tests.
+
+| Finding | Implemented behavior | Regression evidence |
+| --- | --- | --- |
+| Class names were lowercased in graph identities | Preserve class-name case; normalize only hexadecimal JVM addresses. Projection and resource reveal use the same identity rule. | Distinct `example.Target` / `example.target` owners and waits; mixed-case hex addresses still resolve. |
+| Class-init waiters shared a cluster with other RUNNABLE work | Separate explicit class-initialization waits by exact class context before comparing frames. | Real three-snapshot sample: 30 class-init observations and 15 livelock-example observations in separate clusters. Worker transfer preserves the four resulting clusters. |
+| Persistent and Growing could both be selected | Use one Trend selector, including All and Unavailable. Minimum recurrence starts at two snapshots. | Browser recovery from an empty Growing result to Persistent/All; partial snapshots remain Unavailable. |
+| Compact selection could cut a confirmed cycle and hide other contention | Keep eligible confirmed resources and participants outside the ordinary density budget. Type/relation filters still apply. | Six-thread/six-resource cycle remains complete in both projections; other class-init contention stays visible. |
+| Hidden-wait count omitted whole hidden resources | Count observations on omitted resources as well as capped waiters. Explicit filters are reported separately. | Eight resources with ten waits each: 30 visible and 50 hidden observations. |
+| Stack search stopped at the top frame | Search all parser-owned stack lines without borrowing mounted virtual-thread frames for the carrier. | Deep-frame and carrier/virtual separation regression. |
+| Class-init arrows referenced missing SVG markers | Define wait and initializer markers. | Rendered arrows resolve to actual SVG marker paths. |
+
+Recurring stacks and Dependency map now have header shortcuts that open their
+sections and transfer keyboard focus to the heading. Cluster cards lead with a
+short method/context, snapshots and observation counts. Grouping methods, the
+consecutive run and similarity are disclosed separately. Counts and trends use
+neutral styling; repeated RUNNABLE observations do not imply CPU use or livelock.
+Expanded cards and the standalone header fit a 600px window without page overflow.
+
+The graph exposes density beside View and Scope, reports omitted observations,
+and offers Show all matching contention. Confirmed wait and hold edges retain
+solid/dashed differentiation. Resource labels prioritize recognizable class names
+and visible/total waiters; aligned resources reserve room for those labels.
+Text explaining graph direction sits outside the map so it cannot collide with
+nodes. Search, focus, Details/Raw return, PNG and report export retain their scope.
+
+Validation for this follow-up: 458 TDA Node tests (including real captures and the
+worker boundary), 24 extension unit tests, and 74 standalone browser cases across
+desktop/laptop passed. All 30 extension browser cases passed; the suite checks the lower
+panels at 1366/600px in four representative host palettes, including text contrast
+and resource-label overlap. Browser checks emulate the VS Code webview bridge;
+installed desktop extension integration remains a CI gate. These checks are not a
+claim that every Java dump format or third-party theme has been exhaustively tested.

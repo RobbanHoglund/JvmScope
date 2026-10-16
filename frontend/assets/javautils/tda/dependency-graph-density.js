@@ -49,7 +49,9 @@ export function graphNodePriority(node) {
     if (node.type === 'lock') {
         score += waiterCount * 8_000;
         score += Math.min(awaiterCount, 8) * 180;
-        if (waiterCount > 0) score += 120_000;
+        // Name each contention hotspot before spending the label budget on its
+        // repeated waiters. Individual threads remain searchable and inspectable.
+        if (waiterCount > 0) score += 300_000;
         if (node.ownerIds?.length) score += 3_000;
     } else if (node.type === 'thread') {
         if (node.state === 'BLOCKED') score += 150_000;

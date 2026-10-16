@@ -44,7 +44,7 @@ const EXPORT_STYLES = `
   .dependency-graph-edge-class-init-wait{stroke:#ffd15c;stroke-width:2.05}
   .dependency-graph-edge-initialize{stroke:#52d8ff;stroke-width:1.7;stroke-dasharray:5 3}
   .dependency-graph-edge-await{stroke:#a98cff;stroke-width:1.45;stroke-dasharray:3 5}
-  .dependency-graph-edge-hold{stroke:#52d8ff;stroke-width:1.55}
+  .dependency-graph-edge-hold{stroke:#52d8ff;stroke-width:1.55;stroke-dasharray:5 3}
   .dependency-graph-edge-dependency{stroke:#61b5ff;stroke-width:2.1}
   .dependency-graph-edge-mount{stroke:#44e2c2;stroke-width:1.4;stroke-dasharray:5 4}
   .dependency-graph-edge.is-confirmed-deadlock{stroke:#df7682;stroke-width:2.4;stroke-opacity:1}
@@ -259,7 +259,7 @@ function nodeSymbol(node) {
 function nodeLabel(node) {
     if (node.type === 'lock') {
         return node.resourceKind === 'class-initialization'
-            ? truncate(node.className || node.label, 31)
+            ? truncate(text(node.className || node.label).split(/[.$]/).pop(), 31)
             : shortLockId(node.lockId);
     }
     return truncate(node.label, 31);
@@ -316,7 +316,7 @@ function edgeLabel(edge) {
 }
 
 function markerColor(type, confirmedDeadlock) {
-    if (confirmedDeadlock) return '#ff4f62';
+    if (confirmedDeadlock) return '#df7682';
     if (type === 'wait' || type === 'park') return '#ffad4a';
     if (type === 'class-init-wait') return '#ffd15c';
     if (type === 'initialize') return '#52d8ff';
@@ -1172,12 +1172,17 @@ class ThreadDependencyGraphView {
         this.nodeSelection.select('.dependency-graph-node-symbol')
             .text((node) => nodeSymbol(node));
         this.nodeSelection.select('.dependency-graph-node-label')
-            .attr('x', (node) => nodeRadius(node) + 7)
-            .attr('y', -5)
-            .text((node) => nodeLabel(node));
+            .attr('x', (node) => this.nodeLabelPosition(node).x)
+            .attr('y', (node) => this.nodeLabelPosition(node).y)
+            .attr('text-anchor', (node) => this.nodeLabelPosition(node).anchor)
+            .text((node) => this.isFlowResource(node)
+                ? `${nodeLabel(node)} · ${node._visibleWaiterCount ?? node.waiterIds.length}/${node.waiterIds.length} W`
+                : nodeLabel(node));
         this.nodeSelection.select('.dependency-graph-node-sub-label')
-            .attr('x', (node) => nodeRadius(node) + 7)
-            .attr('y', 11)
+            .attr('x', (node) => this.nodeLabelPosition(node).x)
+            .attr('y', (node) => this.nodeLabelPosition(node).y + 16)
+            .attr('text-anchor', (node) => this.nodeLabelPosition(node).anchor)
+            .attr('display', (node) => this.isFlowResource(node) ? 'none' : null)
             .text((node) => nodeSubLabel(node));
 
         this.nodeSelection.call(this.createDragBehavior());
@@ -1216,7 +1221,7 @@ class ThreadDependencyGraphView {
                 .distanceMax(Math.max(this.width, this.height) * 0.9)
                 .theta(0.9))
             .force('collision', d3.forceCollide()
-                .radius((node) => nodeRadius(node) + (this.visibleNodes.length > 450 ? 6 : this.visibleNodes.length > 180 ? 10 : 16))
+                .radius((node) => nodeRadius(node) + (this.isFlowResource(node) ? 26 : this.visibleNodes.length > 450 ? 6 : this.visibleNodes.length > 180 ? 10 : 16))
                 .strength(0.96)
                 .iterations(this.visibleNodes.length > 500 ? 1 : this.visibleNodes.length > 180 ? 2 : 3));
         this.configureLayoutForces();
@@ -1224,6 +1229,18 @@ class ThreadDependencyGraphView {
         this.simulation.on('end', () => this.scheduleMinimapUpdate());
         this.initializeMinimap();
         this.updateHighlights();
+    }
+
+    isFlowResource(node) {
+        return this.options.layout === 'flow' && this.options.view === 'resource' && node.type === 'lock';
+    }
+
+    nodeLabelPosition(node) {
+        if (this.options.layout === 'flow' && this.options.view === 'resource') {
+            if (node.type === 'lock') return { x: 0, y: -nodeRadius(node) - 11, anchor: 'middle' };
+            if (node._flowRole === 'waiter') return { x: -nodeRadius(node) - 8, y: -5, anchor: 'end' };
+        }
+        return { x: nodeRadius(node) + 8, y: -5, anchor: 'start' };
     }
 
     createDefinitions(svg) {
@@ -1304,19 +1321,10 @@ class ThreadDependencyGraphView {
 
         const hasIsolatedThreads = this.hasVisibleIsolatedThreads;
         const contentBottom = hasIsolatedThreads ? this.height * 0.77 : this.height - 4;
-        const resourceLaneLabel = this.options.showMonitors && this.options.showSynchronizers
-            ? this.options.scope === 'contention'
-                ? `${this.projectionMeta.densityProfile.label.toUpperCase()} JVM RESOURCE HOTSPOTS`
-                : 'MONITORS / CLASS INIT / SYNCHRONIZERS'
-            : this.options.showMonitors
-                ? 'MONITORS · synchronized / class init'
-                : this.options.showSynchronizers
-                    ? 'SYNCHRONIZERS · Lock / AQS'
-                    : 'NO RESOURCE TYPES ENABLED';
         const lanes = this.options.view === 'resource'
             ? [
                 { x: 0, width: this.width * 0.33, label: 'WAITING / DEPENDENT THREADS', className: '' },
-                { x: this.width * 0.33, width: this.width * 0.34, label: resourceLaneLabel, className: 'is-resource' },
+                { x: this.width * 0.33, width: this.width * 0.34, className: 'is-resource' },
                 { x: this.width * 0.67, width: this.width * 0.33, label: 'OBSERVED OWNERS / BLOCKERS', className: '' },
             ]
             : [
@@ -1336,11 +1344,6 @@ class ThreadDependencyGraphView {
             .attr('width', (lane) => Math.max(0, lane.width - 8))
             .attr('height', Math.max(0, contentBottom - 10))
             .attr('rx', 16);
-        laneGroups.append('text')
-            .attr('class', 'dependency-graph-lane-label')
-            .attr('x', (lane) => lane.x + lane.width / 2)
-            .attr('y', 24)
-            .text((lane) => lane.label);
 
         if (!hasIsolatedThreads) return;
         const isolatedStart = this.height * 0.77;
@@ -1425,8 +1428,8 @@ class ThreadDependencyGraphView {
         }
 
         if (this.options.view === 'resource' && Number.isFinite(node._flowFraction)) {
-            const top = 0.065;
-            const span = hasIsolatedThreads ? 0.64 : 0.87;
+            const top = 0.12;
+            const span = hasIsolatedThreads ? 0.59 : 0.80;
             const baseY = height * (top + node._flowFraction * span);
             if (node.type === 'lock') return { x: width * 0.50, y: baseY };
 
@@ -1573,6 +1576,9 @@ class ThreadDependencyGraphView {
     tick() {
         if (!this.nodeSelection || !this.edgeSelection) return;
         this.nodeSelection.attr('transform', (node) => {
+            // Align unpinned resources so diagonal displacement cannot push a
+            // resource label through the resource immediately above it.
+            if (this.isFlowResource(node) && node.fx == null) node.x = this.width * 0.5;
             node.x = Math.max(-this.width * 0.5, Math.min(this.width * 1.5, node.x));
             node.y = Math.max(-this.height * 0.5, Math.min(this.height * 1.5, node.y));
             this.positionCache.set(node.id, { x: node.x, y: node.y, vx: node.vx, vy: node.vy });
@@ -1672,7 +1678,10 @@ class ThreadDependencyGraphView {
             ['Snapshot', `${metrics.contendedLockCount} contended resources · ${metrics.classInitializationResourceCount} class init · ${metrics.unresolvedWaitCount} unresolved waits · ${metrics.confirmedDeadlockCycleCount} confirmed deadlock cycles`],
         ];
         if (this.projectionMeta.hiddenLockCount || this.projectionMeta.hiddenWaiterObservationCount) {
-            values.push(['Compacted', `${this.projectionMeta.hiddenLockCount || 0} resources · ${this.projectionMeta.hiddenWaiterObservationCount || 0} waiter observations`]);
+            values.push(['Hidden by density', `${this.projectionMeta.hiddenLockCount || 0} resources · ${this.projectionMeta.hiddenWaiterObservationCount || 0} waiter observations`]);
+        }
+        if (this.projectionMeta.filteredByTypeCount || this.projectionMeta.filteredUnresolvedCount) {
+            values.push(['Filtered out', `${this.projectionMeta.filteredByTypeCount} resources by type · ${this.projectionMeta.filteredUnresolvedCount} resources without observed owners`]);
         }
         this.elements.metrics.replaceChildren();
         values.forEach(([label, value]) => {
@@ -1680,6 +1689,12 @@ class ThreadDependencyGraphView {
             group.append(createElement('strong', '', `${label}: `), createElement('span', '', value));
             this.elements.metrics.appendChild(group);
         });
+        if (this.projectionMeta.hiddenLockCount || this.projectionMeta.hiddenWaiterObservationCount) {
+            const showAll = createElement('button', 'btn btn-sm', 'Show all matching contention');
+            showAll.type = 'button';
+            showAll.addEventListener('click', () => this.setDensityProfile('complete'));
+            this.elements.metrics.append(showAll);
+        }
     }
 
     renderDensityNotice() {
@@ -2420,9 +2435,12 @@ class ThreadDependencyGraphView {
             const validBox = box && [box.x, box.y, box.width, box.height].every(Number.isFinite) && box.width > 0 && box.height > 0;
             const labelReserve = includeLabels && this.options.labels !== 'none' && (!validBox || box.width <= radius * 2)
                 ? Math.max(260, nodeLabel(node).length * 13) : 0;
-            x0 = Math.min(x0, node.x + (validBox ? Math.min(-radius, box.x) : -radius));
+            const anchor = this.nodeLabelPosition(node).anchor;
+            const leftReserve = anchor === 'end' ? labelReserve : anchor === 'middle' ? labelReserve / 2 : 0;
+            const rightReserve = anchor === 'start' ? labelReserve : anchor === 'middle' ? labelReserve / 2 : 0;
+            x0 = Math.min(x0, node.x + (validBox ? Math.min(-radius - leftReserve, box.x) : -radius - leftReserve));
             y0 = Math.min(y0, node.y + (validBox ? Math.min(-radius, box.y) : -radius));
-            x1 = Math.max(x1, node.x + (validBox ? Math.max(radius + labelReserve, box.x + box.width) : radius + Math.max(260, labelReserve)));
+            x1 = Math.max(x1, node.x + (validBox ? Math.max(radius + rightReserve, box.x + box.width) : radius + rightReserve));
             y1 = Math.max(y1, node.y + (validBox ? Math.max(radius, box.y + box.height) : radius));
         }
         return { x0: x0 - 24, y0: y0 - 24, x1: x1 + 24, y1: y1 + 24 };

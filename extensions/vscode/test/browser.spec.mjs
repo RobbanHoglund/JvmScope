@@ -343,6 +343,45 @@ test('TDA triage, cycle evidence and selected CPU threads stay readable across h
         }
     }
 });
+test('TDA recurring stacks and dependency map fit narrow editors across host themes',async({host},testInfo)=>{
+    await host.open('/jvmscope/tda.html');
+    const {page}=host;
+    await page.locator('#loadSampleBtn').click();
+    for(const width of [1366,600]) {
+        await page.setViewportSize({width,height:1000});
+        for(const theme of Object.keys(themePalettes)) {
+            await applyTheme(page,theme);
+            await page.locator('#jumpToClusters').click();
+            const card=page.locator('.runnable-cluster-card').first();
+            for(const selector of ['.runnable-cluster-card-title','.runnable-cluster-card-signature','.runnable-cluster-stat strong','.runnable-cluster-trend-badge']) {
+                await expectReadable(card.locator(selector).first());
+            }
+            await page.locator('#runnableClusterPanel').screenshot({path:testInfo.outputPath(`clusters-${width}-${theme}.png`)});
+            await card.locator('summary').first().click();
+            await expectReadable(card.locator('.runnable-cluster-explanation'));
+            expect(await card.evaluate(el=>el.scrollWidth<=el.clientWidth+2)).toBe(true);
+            await card.locator('summary').first().click();
+            await page.locator('#jumpToGraph').click();
+            await expectReadable(page.locator('#dependencyGraphMetrics .dependency-graph-stat-group').first());
+            await expectReadable(page.locator('#dependencyGraphDensity'));
+            await expect(page.locator('.dependency-graph-edge-hold.is-confirmed-deadlock').first()).toHaveCSS('stroke-dasharray','5px, 3px');
+            expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+            await expect.poll(()=>page.locator('#dependencyGraphSvg').evaluate(svg=>{
+                const nodes=[...svg.querySelectorAll('.dependency-graph-node-lock')];
+                return nodes.some(node=>{
+                    const label=node.querySelector('.dependency-graph-node-label').getBoundingClientRect();
+                    return label.width>0 && nodes.some(other=>{
+                        if(other===node)return false;
+                        const core=other.querySelector('.dependency-graph-node-core').getBoundingClientRect();
+                        return label.left<core.right && label.right>core.left && label.top<core.bottom && label.bottom>core.top;
+                    });
+                });
+            })).toBe(false);
+            await page.locator('#dependencyGraphPanel').screenshot({path:testInfo.outputPath(`graph-${width}-${theme}.png`)});
+        }
+    }
+});
+
 test('VS Code raw evidence retires on snapshot navigation, successful replacement and Clear',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.load([{name:'before.txt',text:rawEvidence},{name:'after.txt',text:rawEvidence.replaceAll('holder','second-holder')}]);
