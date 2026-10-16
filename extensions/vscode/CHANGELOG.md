@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.5 — TLS investigation workspace
+
+- Improve small evidence text and selected-row contrast across VS Code themes.
+- Keep capture totals in one place, show filtered counts when relevant, and tone down file actions after loading a capture.
+- Resize the TLS table and inspector by dragging their divider or using arrow keys, with saved widths and stacked panes in narrow editors.
+- Cover filtering, pagination, resizing, keyboard controls and theme behavior with browser regression tests.
+
 ## 0.3.4 — Native navigation
 
 - Remove the repeated website navigation row from VS Code views, while keeping it in the standalone application.
