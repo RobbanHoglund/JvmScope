@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.13 — Visible capture names and finding graphs
+
+- Show complete capture names on their own wrapping row in both analyzers, including narrow editors and zoomed views.
+- Retain acquisition waits when held-lock ownership cannot be matched. Show qualified JVM owner IDs without drawing unsupported ownership arrows; keep condition waits, latch waits and generic parks out of ownerless acquisition chains.
+- Open the graph for the priority lock-contention, lock-bottleneck or class-initialization finding automatically. Add a direct Show graph action and preserve intentional panel collapse while filtering the same snapshot.
+
 ## 0.3.12 — Deadlock graphs at first glance
 
 - Open confirmed deadlock evidence automatically for each new snapshot and show the first cycle immediately.

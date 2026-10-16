@@ -536,6 +536,7 @@ let parserResult = null;
 let deadlocks = [];
 let deadlockPanelSnapshot = null;
 let selectedDeadlockCycleId = null;
+let relationshipPanelSnapshot = null;
 let classInitializationChains = [];
 let contentionChains = [];
 let smartAnalysis = null;
@@ -1782,6 +1783,27 @@ function renderSmartAnalysisFinding(finding) {
     `;
 }
 
+function priorityGraphPanelId() {
+    const findingId = smartAnalysis?.findings?.[0]?.id;
+    if (findingId === 'confirmed-deadlock' && deadlocks.length) return 'deadlockPanel';
+    if (findingId === 'class-initialization-stall' && classInitializationChains.length) return 'classInitializationPanel';
+    if (['observed-lock-contention', 'likely-lock-bottleneck'].includes(findingId) && contentionChains.length) return 'contentionPanel';
+    return '';
+}
+
+function relationshipPanelStartsOpen(panel) {
+    if ((parsedDumps[selectedDumpIndex] || null) !== relationshipPanelSnapshot) return panel.id === priorityGraphPanelId();
+    return Boolean(panel.querySelector('details')?.open);
+}
+
+function openAnalysisPanel(panel) {
+    const details = panel?.querySelector('details');
+    if (!details) return;
+    details.open = true;
+    details.querySelector('summary').focus({ preventScroll: true });
+    panel.scrollIntoView({ block: 'start' });
+}
+
 function renderSmartAnalysisPanel() {
     if (!UI.smartAnalysisPanel || !UI.smartAnalysisPanelBody) return;
     if (!smartAnalysis || !allThreads.length) {
@@ -1807,6 +1829,7 @@ function renderSmartAnalysisPanel() {
     const hasMaterialFindings = Number(counts.total || 0) > 0;
 
     const priority = smartAnalysis.findings?.[0];
+    const graphPanelId = priorityGraphPanelId();
     const prioritySummary = priority?.id === 'confirmed-deadlock'
         ? `${deadlocks.length} JVM-reported cycles · ${allThreads.filter(thread => thread.isDeadlocked).length} mapped thread blocks`
         : priority?.summary || smartAnalysis.summary;
@@ -1817,7 +1840,10 @@ function renderSmartAnalysisPanel() {
           <h2>${escapeHtml(priority?.title || 'No configured material findings')}</h2>
           <p>${escapeHtml(prioritySummary)}</p>
         </div>
-        ${priority?.threads?.length ? `<div class="tda-priority-action"><button type="button" class="btn btn-accent smart-analysis-focus-btn" data-smart-finding-id="${escapeAttr(priority.id)}">Inspect ${priority.threads.length} thread${priority.threads.length === 1 ? '' : 's'}</button><small>Existing table filters still apply</small></div>` : ''}
+        ${graphPanelId || priority?.threads?.length ? `<div class="tda-priority-action">
+          ${graphPanelId ? `<button type="button" class="btn btn-accent smart-analysis-graph-btn" aria-controls="${graphPanelId}">Show graph</button>` : ''}
+          ${priority?.threads?.length ? `<button type="button" class="btn ${graphPanelId ? '' : 'btn-accent'} smart-analysis-focus-btn" data-smart-finding-id="${escapeAttr(priority.id)}">Inspect ${priority.threads.length} thread${priority.threads.length === 1 ? '' : 's'}</button><small>Existing table filters still apply</small>` : ''}
+        </div>` : ''}
       </div>
       <details class="smart-analysis-details">
         <summary class="smart-analysis-summary app-section-summary">
@@ -1983,7 +2009,7 @@ function renderClassInitializationPanel() {
         .reduce((total, chain) => total + Number(chain.waiterCount || 0), 0);
     const stallCandidateCount = classInitializationChains.filter((chain) => chain.stallCandidate).length;
     UI.classInitializationPanelBody.innerHTML = `
-      <details class="class-initialization-panel-details">
+      <details class="class-initialization-panel-details" ${relationshipPanelStartsOpen(UI.classInitializationPanel) ? 'open' : ''}>
         <summary class="class-initialization-panel-summary app-section-summary">
           <div class="app-section-summary-inner">
             <div class="app-section-summary-title">Class initialization dependencies</div>
@@ -2026,7 +2052,7 @@ function renderContentionPanel() {
       </article>`;
 
     UI.contentionPanelBody.innerHTML = `
-	  <details class="contention-panel-details">
+	  <details class="contention-panel-details" ${relationshipPanelStartsOpen(UI.contentionPanel) ? 'open' : ''}>
 	    <summary class="contention-panel-summary app-section-summary">
 	      <div class="app-section-summary-inner">
 	        <div class="app-section-summary-title">Lock contention chains</div>
@@ -2056,6 +2082,7 @@ function render() {
     renderDeadlockPanel();
     renderClassInitializationPanel();
     renderContentionPanel();
+    relationshipPanelSnapshot = parsedDumps[selectedDumpIndex] || null;
     relationshipDiagramsView.refresh([UI.deadlockPanelBody, UI.classInitializationPanelBody, UI.contentionPanelBody]);
     renderDependencyGraph();
     renderChartFilterBar();
@@ -4692,11 +4719,7 @@ for (const [buttonId, panel] of [
 ]) {
     document.getElementById(buttonId).addEventListener('click', event => {
         event.preventDefault();
-        const details = panel.querySelector('details');
-        if (!details) return;
-        details.open = true;
-        details.querySelector('summary').focus({ preventScroll: true });
-        panel.scrollIntoView({ block: 'start' });
+        openAnalysisPanel(panel);
     });
 }
 document.getElementById('clearThreadFiltersBtn').addEventListener('click', () => {
@@ -4858,6 +4881,11 @@ function focusSmartAnalysisFinding(finding) {
 }
 
 UI.smartAnalysisPanelBody?.addEventListener('click', (event) => {
+    const graphButton = event.target.closest('.smart-analysis-graph-btn');
+    if (graphButton) {
+        openAnalysisPanel(document.getElementById(graphButton.getAttribute('aria-controls')));
+        return;
+    }
     const focusButton = event.target.closest('.smart-analysis-focus-btn');
     if (focusButton) {
         const finding = (smartAnalysis?.findings || [])

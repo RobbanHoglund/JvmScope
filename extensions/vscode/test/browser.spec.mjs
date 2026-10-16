@@ -250,7 +250,7 @@ test('TDA lock counts retain Java 27 acquisition waits without a matched held-lo
     await host.load([{name:'jdk27.json',text:await capture('frontend/test/tda/fixtures/runtime/jdk27-dump-to-file.json')}]);
     await expect(page.locator('.tda-priority')).toContainText('2 threads are waiting to acquire 2');
     const panel=page.locator('#contentionPanel');
-    await panel.locator('summary').first().click();
+    await expect(panel.locator('.contention-panel-details')).toHaveAttribute('open','');
     await expect(panel.locator('.contention-panel-summary')).toContainText('2 contended locks · 2 waiting thread–lock relationships');
     await expect(panel.locator('.contention-panel-summary')).toContainText('1 lock without a matched held-lock owner');
     await expect(panel.locator('.relationship-figure')).toHaveCount(2);
@@ -261,6 +261,42 @@ test('TDA lock counts retain Java 27 acquisition waits without a matched held-lo
     await expect(unresolved.locator('.relationship-edge.is-owner')).toHaveCount(0);
     await unresolved.getByRole('button',{name:'Details for sample-sync-waiter',exact:true}).click();
     await expect(page.locator('#threadModalTitle')).toHaveText('sample-sync-waiter');
+});
+
+for(const [fixture,panelId,title] of [
+    ['runtime/jdk27-dump-to-file.json','contentionPanel','Observed lock contention'],
+    ['class-initialization-stall.txt','classInitializationPanel','Class initialization may be stalled'],
+]) test(`TDA opens the priority ${panelId} graph and respects intentional collapse within a snapshot`,async({host})=>{
+    const {page}=host;
+    await host.open('/jvmscope/tda.html');
+    await host.load([{name:fixture,text:await capture('frontend/test/tda/fixtures/'+fixture)}]);
+    const panel=page.locator('#'+panelId);
+    const details=panel.locator('details').first();
+    const graph=panel.locator('.relationship-figure').first();
+    await expect(page.locator('.tda-priority h2')).toHaveText(title);
+    await expect(details).toHaveAttribute('open','');
+    await expect(graph).toBeVisible();
+    const action=page.locator('.tda-priority').getByRole('button',{name:'Show graph',exact:true});
+    await expect(action).toHaveAttribute('aria-controls',panelId);
+    await page.locator('#searchInput').fill('no table match');
+    await expect(graph).toBeVisible();
+    await details.locator('summary').first().click();
+    await page.locator('#refreshBtn').click();
+    await expect(details).not.toHaveAttribute('open','');
+    await page.locator('#searchInput').fill('');
+    await expect(details).not.toHaveAttribute('open','');
+    await action.focus();
+    await page.keyboard.press('Enter');
+    await expect(graph).toBeVisible();
+    await expect(details.locator('summary').first()).toBeFocused();
+    await page.locator('#sessionInputMode').selectOption('replace');
+    await host.load([{name:'other.txt',text:await capture('frontend/test/tda/fixtures/ga-regressions/allocation-before.txt')}]);
+    await expect(panel).toBeHidden();
+    await expect(page.locator('.smart-analysis-graph-btn')).toHaveCount(0);
+    await host.load([{name:fixture,text:await capture('frontend/test/tda/fixtures/'+fixture)}]);
+    await expect(graph).toBeVisible();
+    await page.locator('#clearBtn').click();
+    await expect(page.locator('.smart-analysis-graph-btn')).toHaveCount(0);
 });
 
 test('TDA analysis columns keep evidence reachable and preserve sort when switching columns',async({host})=>{
@@ -514,6 +550,7 @@ test('TDA recurring stacks and dependency map fit narrow editors across host the
             }
             await page.locator('#runnableClusterPanel').screenshot({path:testInfo.outputPath(`clusters-${width}-${theme}.png`)});
             await card.locator('summary').first().click();
+            await expect(card).toHaveAttribute('data-details-loaded','true');
             await expectReadable(card.locator('.runnable-cluster-explanation'));
             expect(await card.evaluate(el=>el.scrollWidth<=el.clientWidth+2)).toBe(true);
             await card.locator('summary').first().click();

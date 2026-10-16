@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures.js';
+import { readFileSync } from 'node:fs';
 
 async function expectClearLayout(graph) {
     await expect.poll(() => graph.evaluate(el => {
@@ -82,4 +83,18 @@ test('TDA five-thread cycle with long labels retains every dependency without ov
         await page.setViewportSize({ width, height: 900 });
         await expectClearLayout(graph);
     }
+});
+
+for (const [fixture, panelId] of [
+    ['runtime/jdk27-dump-to-file.json', 'contentionPanel'],
+    ['class-initialization-stall.txt', 'classInitializationPanel'],
+]) test(`TDA priority graph is immediately visible in standalone ${panelId}`, async ({ page, appUrl }) => {
+    await page.goto(`${appUrl}/jvmscope/tda.html`);
+    await page.locator('#fileInput').setInputFiles({ name: 'capture.txt', mimeType: 'text/plain', buffer: readFileSync(new URL('../../tda/fixtures/' + fixture, import.meta.url)) });
+    const panel = page.locator('#' + panelId);
+    await expect(panel.locator('.relationship-figure').first()).toBeVisible();
+    await panel.locator('summary').first().click();
+    await page.locator('.tda-priority').getByRole('button', { name: 'Show graph', exact: true }).click();
+    await expect(panel.locator('.relationship-figure').first()).toBeVisible();
+    await expect(panel.locator('summary').first()).toBeFocused();
 });
