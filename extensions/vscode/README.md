@@ -33,7 +33,7 @@ in this first version.
 - Select several thread dump files to compare snapshots. TLS analysis opens one log at a time.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
 - Inside an analyzer, use **Choose dumps / Choose log** to open the native file picker, or try the bundled examples.
-- **Raw dump** opens JvmScope's evidence workspace inside the analysis tab: Annotated/Exact modes, search, thread filters, lock inspection and links to Details/Graph. **Open as text** opens the complete snapshot in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
+- **Raw dump** opens JvmScope's evidence workspace inside the analysis tab. **Exact** is first and is the default for new evidence views, showing the complete snapshot text. Choose **Annotated** for thread filters, lock inspection and links to Details/Graph. Search works in both modes; returning to an existing view keeps its current mode. **Open as text** opens the complete snapshot in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
 - In TLS **Investigate**, drag the divider between the table and details to resize them.
   You can also focus it with Tab and use Left/Right, Shift for larger steps, or Home/End
   for the limits. Double-click resets the split. The width is remembered; narrow editors
@@ -107,7 +107,7 @@ The sidebar and both analyzers follow VS Code's theme, including light, dark,
 high-contrast dark and high-contrast light. Run **Preferences: Color Theme** to
 switch themes; open analyzers update immediately. Both analyzers also adapt to
 narrow editor splits. The standalone application and exported reports retain
-their own palettes. Raw dump opens the structured evidence workspace; its
+their own palettes. Raw dump opens the evidence workspace in Exact mode; its
 **Open as text** action opens the native read-only editor.
 The verified inputs are HotSpot thread dumps and SunJSSE traces; missing fields
 remain unknown. This extension adds no additional JVM/vendor compatibility claim.

@@ -87,6 +87,9 @@ test('TDA mixed text/JSON sources keep exact source evidence and a malformed bat
     await page.locator('#openRawDumpBtn').click();
     const raw = await opened;
     await expect(raw.locator('.raw-workspace-meta')).toContainText('Source: capture.json');
+    await expect(raw.getByRole('button', { name: 'Show the canonical raw dump', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(raw.locator('.raw-workspace-evidence')).toContainText(JSON.stringify(json));
+    await raw.getByRole('button', { name: 'Show structured evidence', exact: true }).click();
     // Raw thread bodies are populated lazily; exercise the actual disclosure.
     const jsonThread = raw.locator('.raw-workspace-thread-block').filter({ hasText: 'json-worker' });
     await expect(jsonThread.getByRole('button', { name: 'Expand json-worker', exact: true })).toHaveAttribute('aria-expanded', 'false');

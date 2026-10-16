@@ -4065,7 +4065,7 @@ function openEmbeddedRawDump(dump) {
 
 if (isVsCode()) {
     UI.openRawDumpBtn.title = 'Open raw dump evidence with search, thread filters and details';
-    document.getElementById('rawDumpGuide').textContent = 'Raw dump opens the selected snapshot in the analysis tab, with Annotated and Exact modes, search, thread filters and links to Details or the dependency map. Open as text opens a read-only VS Code editor. Snapshot changes, additions, replacement or Clear close the old evidence view.';
+    document.getElementById('rawDumpGuide').textContent = 'Raw dump opens the selected snapshot in the analysis tab. New evidence views start in Exact, showing the complete snapshot text. Switch to Annotated for thread filters and links to Details or the dependency map. Search works in both modes. Returning to an existing evidence view keeps its current mode. Open as text opens a read-only VS Code editor. Snapshot changes, additions, replacement or Clear close the old evidence view.';
 }
 
 rawDumpReturn.addEventListener('click', () => {

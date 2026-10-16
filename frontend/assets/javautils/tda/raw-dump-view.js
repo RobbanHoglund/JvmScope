@@ -11,7 +11,7 @@ const MAX_RENDERED_MATCHES = 500;
 
 const PREFERENCE_KEY = 'tda.rawDumpWorkspace.v1';
 const DEFAULT_PREFERENCES = Object.freeze({
-    mode: 'annotated',
+    mode: 'exact',
     filter: 'everything',
     wrap: false,
     lineNumbers: true,
@@ -39,7 +39,9 @@ function button(documentRef, label, title, onClick, className = 'raw-workspace-b
 
 function loadPreferences(storage) {
     try {
-        return { ...DEFAULT_PREFERENCES, ...JSON.parse(storage?.getItem(PREFERENCE_KEY) || '{}') };
+        // A new workspace always starts with the complete source, including
+        // when an older release persisted Annotated as its default mode.
+        return { ...DEFAULT_PREFERENCES, ...JSON.parse(storage?.getItem(PREFERENCE_KEY) || '{}'), mode: DEFAULT_PREFERENCES.mode };
     } catch {
         return { ...DEFAULT_PREFERENCES };
     }
@@ -47,7 +49,8 @@ function loadPreferences(storage) {
 
 function savePreferences(storage, preferences) {
     try {
-        storage?.setItem(PREFERENCE_KEY, JSON.stringify(preferences));
+        const { mode, ...displayPreferences } = preferences;
+        storage?.setItem(PREFERENCE_KEY, JSON.stringify(displayPreferences));
     } catch {}
 }
 
@@ -83,7 +86,6 @@ export function createRawDumpWorkspace({
     let model = null;
     const getModel = () => model ||= buildRawDumpModel({ rawText, threads: dump.threads || [] });
     const preferences = loadPreferences(popup.localStorage);
-    if (!['annotated', 'exact'].includes(preferences.mode)) preferences.mode = 'annotated';
     if (!Object.hasOwn(RAW_DUMP_FILTERS, preferences.filter)) preferences.filter = 'everything';
     if (preferences.filter === 'selectedLock') preferences.filter = 'everything';
     const state = {
@@ -140,7 +142,7 @@ export function createRawDumpWorkspace({
     const annotatedButton = button(documentRef, 'Annotated', 'Show structured evidence', () => setMode('annotated'), 'raw-workspace-mode');
     const exactButton = button(documentRef, 'Exact', 'Show the canonical raw dump', () => setMode('exact'), 'raw-workspace-mode');
 
-    modeControl.append(annotatedButton, exactButton);
+    modeControl.append(exactButton, annotatedButton);
     identity.append(identityText, modeControl);
 
     const toolbar = element(documentRef, 'div', 'raw-workspace-toolbar');

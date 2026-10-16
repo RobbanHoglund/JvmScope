@@ -23,8 +23,12 @@ an analyzer's current input; the in-view Add/Replace control applies to TDA's fi
 picker and Paste. No source file is modified by analysis.
 
 **Raw dump** opens the shared evidence workspace inside the analyzer webview,
-with Annotated/Exact modes, search, thread filters, lock inspection and links to
-Details or the dependency graph. It retains the webview's CSP and live theme.
+with **Exact** first and selected for every new evidence view. This displays the
+complete selected snapshot text. **Annotated** adds thread filters, lock inspection
+and links to Details or the dependency graph. Search works in both modes. Returning
+to an existing view preserves its current mode, filter and search; display preferences
+such as wrapping survive new views, but the initial mode is always Exact.
+It retains the webview's CSP and live theme.
 Copy uses the native clipboard. **Open as text** is an explicit action for a
 read-only virtual text document. Both views belong to the selected snapshot and
 are invalidated when it changes or the analysis closes. These are captured

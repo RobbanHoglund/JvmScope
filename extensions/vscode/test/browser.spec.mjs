@@ -82,6 +82,7 @@ test('VS Code TDA uses inline workers, keeps allocation qualifications and opens
     await expect(row).not.toContainText('ALLOCATION HOT');await expect(row.locator('td').nth(11)).toContainText('–');
     await host.page.locator('#openRawDumpBtn').click();
     await expect(host.page.getByRole('dialog',{name:'Raw dump evidence',exact:true})).toBeVisible();
+    await expect(host.page.getByRole('button',{name:'Show the canonical raw dump',exact:true})).toHaveAttribute('aria-pressed','true');
     expect(host.messages.some(m=>m.action==='openRaw')).toBe(false);
     await host.page.getByRole('button',{name:'Open complete raw dump in text editor',exact:true}).click();
     await expect.poll(()=>host.messages.find(m=>m.action==='openRaw')).toBeTruthy();
@@ -109,11 +110,45 @@ Full thread dump OpenJDK 64-Bit Server VM (25+35 mixed mode, sharing):
         at example.Waiter.run(Waiter.java:20)
         - waiting to lock <0x000000aa> (a java.lang.Object)`;
 
+test('VS Code new raw evidence defaults to Exact before Annotated despite legacy preferences',async({host})=>{
+    await host.open('/jvmscope/tda.html');
+    await host.page.evaluate(()=>localStorage.setItem('tda.rawDumpWorkspace.v1',JSON.stringify({
+        mode:'annotated',wrap:true,lineNumbers:false,filter:'blocked',
+    })));
+    await host.load([{name:'before.txt',text:rawEvidence},{name:'after.txt',text:rawEvidence.replaceAll('holder','second-holder')}]);
+    await host.page.locator('#openRawDumpBtn').click();
+    const raw=host.page.getByRole('dialog',{name:'Raw dump evidence',exact:true});
+    const modes=raw.getByRole('group',{name:'Evidence display'}).getByRole('button');
+    await expect(modes).toHaveText(['Exact','Annotated']);
+    await expect(modes.nth(0)).toHaveAttribute('aria-pressed','true');
+    await expect(modes.nth(1)).toHaveAttribute('aria-pressed','false');
+    await expect(raw.locator('.raw-workspace-page')).toHaveClass(/is-wrapped/);
+    await expect(raw.locator('.raw-workspace-page')).toHaveClass(/hide-line-numbers/);
+    await expect(raw.locator('.raw-workspace-outline')).toBeHidden();
+    expect((await raw.locator('.raw-workspace-line-content').allTextContents())
+        .map(line=>line===' '?'':line).join('\n')).toBe(rawEvidence);
+    await modes.nth(0).focus();
+    await host.page.keyboard.press('Tab');
+    await expect(modes.nth(1)).toBeFocused();
+    await host.page.keyboard.press('Space');
+    await expect(modes.nth(1)).toHaveAttribute('aria-pressed','true');
+    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(1);
+    await raw.getByRole('button',{name:'Close raw dump evidence workspace',exact:true}).click();
+    await host.page.locator('#openRawDumpBtn').click();
+    await expect(modes.nth(1)).toHaveAttribute('aria-pressed','true'); // Resume the current workspace.
+    await raw.getByRole('button',{name:'Close raw dump evidence workspace',exact:true}).click();
+    await host.page.locator('#nextDumpBtn').click();
+    await host.page.locator('#openRawDumpBtn').click();
+    await expect(modes.nth(0)).toHaveAttribute('aria-pressed','true'); // A new snapshot starts in Exact.
+    await expect(raw).toContainText('second-holder');
+});
+
 test('VS Code raw dump keeps structured evidence, search, details, graph navigation and exact native copy',async({host})=>{
     await host.open('/jvmscope/tda.html');
     await host.load([{name:'raw-evidence.txt',text:rawEvidence}]);
     await host.page.locator('#openRawDumpBtn').click();
     const raw=host.page.getByRole('dialog',{name:'Raw dump evidence',exact:true});
+    await raw.getByRole('button',{name:'Show structured evidence',exact:true}).click();
     await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(2);
     expect(host.messages.some(m=>m.action==='openRaw')).toBe(false);
     expect(host.page.context().pages()).toHaveLength(1);
@@ -171,6 +206,7 @@ test('VS Code raw evidence retires on snapshot navigation, successful replacemen
     await host.page.locator('#inputFeedbackModal').getByRole('button',{name:'Close',exact:true}).click();
     await expect(raw).toBeVisible();
     await expect(raw).toContainText('Snapshot 2 of 2');
+    await raw.getByRole('button',{name:'Show structured evidence',exact:true}).click();
     await raw.getByRole('button',{name:'Open details for second-holder',exact:true}).click();
     await host.load([{name:'replacement.txt',text:rawEvidence.replaceAll('holder','new-holder')}]);
     await expect(raw).toHaveCount(0);
@@ -344,6 +380,7 @@ test('VS Code raw evidence follows live themes and fits a narrow analysis tab',a
     await expect(host.page.locator('#openRawDumpBtn')).toBeEnabled();
     await host.page.locator('#openRawDumpBtn').click();
     const raw=host.page.locator('#rawDumpDialog');
+    await raw.getByRole('button',{name:'Show structured evidence',exact:true}).click();
     await raw.locator('.raw-workspace-thread-title').first().click();
     await raw.locator('.raw-workspace-disclosure').first().click();
     for(const width of [1366,600]) {
