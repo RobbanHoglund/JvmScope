@@ -2,6 +2,7 @@
 
 ## 1.0.0 — General availability
 
+- Use host selection and focus colors for the active knowledge search match, including light and high-contrast themes.
 - Keep knowledge-base section links inside the current VS Code webview, preserving search, Java/format selections and keyboard focus.
 - Remove the Preview badge from the desktop extension and update the listing and installation documentation to describe the GA release.
 - Validate stable release metadata in the actual VSIX, including the Marketplace gallery flags and pre-release channel property.

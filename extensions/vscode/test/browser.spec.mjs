@@ -1079,6 +1079,31 @@ test('home and knowledge surfaces remain readable across host themes',async({hos
     }
 });
 
+test('knowledge active search match stays readable and visibly selected in all host themes',async({host})=>{
+    const {page}=host;
+    await host.open('/knowledge/thread-dumps.html');
+    await page.locator('#articleSearch').fill('jcmd');
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme);
+        await page.getByRole('button',{name:'Next article match',exact:true}).click();
+        const current=page.locator('mark.knowledge-current-match');
+        await expect(current).toHaveAttribute('aria-current','true');
+        await expectReadable(current);
+        // The selected word's outline is drawn outside the mark, on the
+        // surrounding surface. Test its contrast, not merely a CSS token.
+        const contrast=await current.evaluate(el=>{
+            const luminance=value=>value.match(/[\d.]+/g).slice(0,3).map(Number)
+                .map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;})
+                .reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+            let parent=el.parentElement,bg;
+            while(parent){bg=getComputedStyle(parent).backgroundColor;if(bg!=='rgba(0, 0, 0, 0)')break;parent=parent.parentElement;}
+            const a=luminance(getComputedStyle(el).outlineColor),b=luminance(bg);
+            return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+        });
+        expect(contrast,theme+' current match outline contrast').toBeGreaterThanOrEqual(3);
+    }
+});
+
 test('knowledge filters and articles fit narrow VS Code editor splits',async({host},testInfo)=>{
     const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8')).filter(name=>name.startsWith('knowledge/'));
     for(const width of [600,360]) {
