@@ -2,6 +2,7 @@
 
 ## 1.0.0 — General availability
 
+- Keep knowledge-base section links inside the current VS Code webview, preserving search, Java/format selections and keyboard focus.
 - Remove the Preview badge from the desktop extension and update the listing and installation documentation to describe the GA release.
 - Validate stable release metadata in the actual VSIX, including the Marketplace gallery flags and pre-release channel property.
 - Clarify that merging to main builds the release artifact; a new Marketplace version must be published separately.

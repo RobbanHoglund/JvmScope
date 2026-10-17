@@ -1034,6 +1034,31 @@ test('bundled knowledge articles use their packaged route and preserve Java vers
     await expect(host.page.locator('#articleSearch')).toHaveValue(longQuery);
 });
 
+test('knowledge section links stay in the webview and preserve article state and keyboard focus',async({host})=>{
+    const {page}=host;
+    await host.open('/knowledge/thread-dumps.html?java=21');
+    await page.locator('#articleVersion').selectOption('25');
+    await page.locator('#knowledgeFormat').selectOption('json');
+    await page.locator('#articleSearch').fill('jcmd');
+    const address=page.url(),matches=await page.locator('mark[data-article-match]').count();
+    expect(matches).toBeGreaterThan(0);
+    for(const [label,id] of [['Mechanism','does'],['Version scope','versions'],['Inspect','check'],['Measure','measure']]) {
+        await page.getByRole('link',{name:label,exact:true}).click();
+        expect(page.url()).toBe(address);
+        await expect(page.locator('#'+id)).toBeInViewport();
+        await expect(page.locator('#'+id)).toBeFocused();
+        await expect(page.locator('meta[name="jvmscope-page"]')).toHaveAttribute('content',`/knowledge/thread-dumps.html?java=25#${id}`);
+        await expect(page.locator('#articleSearch')).toHaveValue('jcmd');
+        await expect(page.locator('mark[data-article-match]')).toHaveCount(matches);
+        await expect(page.locator('#knowledgeFormat')).toHaveValue('json');
+    }
+    await page.locator('#check .knowledge-anchor').click();
+    await expect(page.locator('#check')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#check .knowledge-anchor')).toBeFocused();
+    expect(host.messages.filter(m=>m.action==='navigate')).toEqual([]);
+});
+
 test('home and knowledge surfaces remain readable across host themes',async({host},testInfo)=>{
     await host.page.setViewportSize({width:600,height:900});
     for(const name of ['index.html','knowledge/thread-dumps.html']) {

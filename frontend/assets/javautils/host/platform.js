@@ -63,12 +63,28 @@ export function initializeHostNavigation() {
         }
     });
     document.addEventListener('click', event => {
+        // Analyzer links can already have revealed a panel and moved focus.
+        if (event.defaultPrevented) return;
         const link = event.target.closest?.('a');
         if (!link || link.hasAttribute('download')) return;
         const route = link.dataset.hostRoute;
         const href = link.getAttribute('href');
         if (route) {
             event.preventDefault(); request('navigate', { route }).catch(showHostError);
+        } else if (href?.startsWith('#')) {
+            // The webview's <base> points to its resource directory, so native
+            // fragment navigation would leave the article instead of scrolling.
+            event.preventDefault();
+            let target;
+            try { target = document.getElementById(decodeURIComponent(href.slice(1))); }
+            catch { return; }
+            if (!target) return;
+            const url = getPageUrl();
+            url.hash = href;
+            replacePageUrl(url);
+            target.scrollIntoView({ block: 'start' });
+            if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+            target.focus({ preventScroll: true });
         } else if (/^https?:\/\//i.test(href || '')) {
             event.preventDefault(); request('external', { url: href }).catch(showHostError);
         } else if (href && !href.startsWith('#') && !/^[a-z][a-z0-9+.-]*:/i.test(href)) {
