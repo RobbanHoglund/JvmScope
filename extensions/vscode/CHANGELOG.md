@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.15 — General availability metadata
+## 1.0.0 — General availability
 
 - Remove the Preview badge from the desktop extension and update the listing and installation documentation to describe the GA release.
 - Validate stable release metadata in the actual VSIX, including the Marketplace gallery flags and pre-release channel property.

@@ -1,6 +1,6 @@
 # VS Code delivery: two stages
 
-The desktop extension is generally available (GA). Version 0.3.15 removes the
+The desktop extension is generally available (GA). Version 1.0.0 removes the
 remaining Preview metadata and listing text. The stages below describe the
 implemented architecture and the remaining integration roadmap.
 
@@ -107,6 +107,13 @@ meaning belongs in the shared models with JVM-fixture and UI regression coverage
   pre-release channel property. The package validator rejects regressions.
 
 ## Release and Marketplace publication
+
+Version 1.0.0 is the stable baseline for
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html). Breaking changes to
+documented commands or the public `getAnalysisItems` API require a new major;
+compatible features use a minor and compatible bug fixes use a patch. Correcting
+incorrect findings is a bug fix, even when the displayed findings change. The
+internal webview message protocol is not a public integration API.
 
 The `preview` manifest field controls the Marketplace Preview badge independently
 of the version number. A stable GA package uses `preview: false` and is built
