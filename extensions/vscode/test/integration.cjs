@@ -48,9 +48,17 @@ exports.run = async () => {
         sendRequest: async () => ({ text: (async function* () { yield 'Native host AI lifecycle fixture.'; })() }),
     };
     const boundary = {
-        ...vscode, extensions: { getExtension: () => ({}) },
+        // Do not spread API namespaces: enumerating window also evaluates
+        // proposal-gated getters such as nativeHandle in real VS Code.
+        CancellationTokenSource: vscode.CancellationTokenSource,
+        ProgressLocation: vscode.ProgressLocation, ViewColumn: vscode.ViewColumn,
+        LanguageModelChatMessage: vscode.LanguageModelChatMessage,
+        workspace: vscode.workspace, extensions: { getExtension: () => ({}) },
         lm: { selectChatModels: async () => { throw new Error('Fixture access denied'); } },
-        window: { ...vscode.window, showQuickPick: async items => items[0],
+        window: {
+            withProgress: (...args) => vscode.window.withProgress(...args),
+            showTextDocument: (...args) => vscode.window.showTextDocument(...args),
+            showQuickPick: async items => items[0],
             showErrorMessage: message => {
                 const pending = vscode.window.showErrorMessage(message);
                 pending.then(() => { notificationDismissed = true; }); return pending;
