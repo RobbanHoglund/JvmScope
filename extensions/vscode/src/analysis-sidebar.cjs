@@ -78,8 +78,9 @@ class AnalysisSidebar {
             return item;
         }
         const vscode=this.vscode,session=this.sessions.get(node.analyzer);
+        const hasChildren=node.root?Boolean(session?.navigation.count):node.children;
         const item=new vscode.TreeItem(node.root?(node.analyzer==='tda'?'Java thread dumps':'Java TLS logs'):node.label,
-            node.root || node.children ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
+            hasChildren ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
         item.id=node.id;item.description=node.root?(session?.navigation.summary || 'No capture loaded'):node.description;
         item.tooltip=node.root?item.description:`${node.label}\n${node.description}`;
         item.iconPath=new vscode.ThemeIcon(node.root?(node.analyzer==='tda'?'list-tree':'shield'):({file:'file',snapshot:'history',thread:'symbol-method',interaction:'plug',event:'arrow-right',page:'ellipsis',notice:'info'})[node.kind]);

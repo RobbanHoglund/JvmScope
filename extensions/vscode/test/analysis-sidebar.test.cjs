@@ -31,6 +31,30 @@ test('knowledge base is a permanent native shortcut, including before a capture 
     sidebar.dispose();
 });
 
+test('empty analyzer roots launch their tool without advertising nonexistent children',async()=>{
+    const opened=[];
+    const sidebar=new AnalysisSidebar(vscode,async analyzer=>opened.push(analyzer));
+    for(const root of sidebar.roots) {
+        assert.equal(sidebar.getTreeItem(root).collapsibleState,vscode.TreeItemCollapsibleState.None);
+        assert.equal(sidebar.getTreeItem(root).command.command,'jvmscope.revealAnalysisItem');
+        assert.deepEqual(await sidebar.getChildren(root),[]);
+        await sidebar.reveal(root.id);
+        assert.equal(opened.at(-1),root.analyzer);
+        const navigation=new NavigationSession(()=>true,()=>sidebar.changed(root.analyzer));
+        const attached={owner:root.analyzer,navigation};
+        sidebar.attach(root.analyzer,attached);
+        assert.equal(sidebar.getTreeItem(root).collapsibleState,vscode.TreeItemCollapsibleState.None);
+        navigation.receive(state());
+        assert.equal(sidebar.getTreeItem(root).collapsibleState,vscode.TreeItemCollapsibleState.Collapsed);
+        navigation.receive(state(2,0));
+        assert.equal(sidebar.getTreeItem(root).collapsibleState,vscode.TreeItemCollapsibleState.None);
+        sidebar.detach(root.analyzer,attached);
+        assert.equal(sidebar.getTreeItem(root).collapsibleState,vscode.TreeItemCollapsibleState.None);
+        navigation.dispose();
+    }
+    sidebar.dispose();
+});
+
 test('navigation validates bounded plain labels, unique identities and complete pages',()=>{
     assert.equal(validatePage({total:1,items:[item(0)]},0).items.length,1);
     for(const value of [
