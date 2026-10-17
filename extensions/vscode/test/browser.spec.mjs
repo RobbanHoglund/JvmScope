@@ -1020,6 +1020,11 @@ test('bundled knowledge articles use their packaged route and preserve Java vers
         await host.open('/knowledge/'+href.slice(2));
         await expect(host.page.locator('#articleIntro h1')).toBeVisible();
         await expect(host.page.locator('#articleVersion')).toHaveValue('21');
+        const source=host.page.locator('#sources a').first();
+        const url=await source.getAttribute('href');
+        await source.click();
+        await expect.poll(()=>host.messages.findLast(m=>m.action==='external')?.url).toBe(url);
+        await expect(host.page.locator('#articleIntro h1')).toBeVisible();
     }
     await host.open('/knowledge/index.html');
     const longQuery=Array(128).fill('cpu').join(' ');
@@ -1061,12 +1066,13 @@ test('knowledge section links stay in the webview and preserve article state and
 
 test('home and knowledge surfaces remain readable across host themes',async({host},testInfo)=>{
     await host.page.setViewportSize({width:600,height:900});
-    for(const name of ['index.html','knowledge/thread-dumps.html']) {
+    const articles=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8')).filter(name=>name.startsWith('knowledge/'));
+    for(const name of ['index.html',...articles]) {
         await host.open('/'+name);
         for(const theme of Object.keys(themePalettes)) {
             await applyTheme(host.page,theme);
             await expectReadable(host.page.locator('h1'));
-            const surfaces=host.page.locator(name==='index.html'?'.hero, .utility-card a, .knowledge a':'.knowledge-find, .knowledge-callout');
+            const surfaces=host.page.locator(name==='index.html'?'.hero, .utility-card a, .knowledge a':'.knowledge-card, .knowledge-find, .knowledge-callout, .knowledge-unavailable');
             for(const surface of await surfaces.all()) {
                 // Solid host palette surfaces make the contrast calculation meaningful;
                 // the old dark gradients remained behind light-theme foregrounds.

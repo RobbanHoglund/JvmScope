@@ -82,8 +82,9 @@ rank above incidental body text. Source URLs, object keys and verification dates
 are not searched. JVM -XX flag prefixes are normalized without equating compact
 headers and compressed references. Quoted/parenthesized JVM flags use the same
 prefix normalization, preserving the actual flag name and AND filtering.
-Search is local and is not put in URLs,
-storage or requests. An explicit page Java version initializes the comparison
+Search is local. Result links can include the query in a URL fragment, as
+described above; it is not included in HTTP requests or browser storage.
+An explicit page Java version initializes the comparison
 source and support inspection; later article-filter changes preserve the chosen
 upgrade pair. Section navigation precedes the capability table; anchors preserve
 the Java query on direct links/reload.
@@ -147,3 +148,10 @@ The change affects knowledge metadata/search/rendering and frontend delivery.
 Analyzer engines, workers and user-data handling are unchanged; diagnostic data
 and search stay local. Existing published content is only corrected after a
 separate publication of the new revision. No stored user diagnostics need repair.
+
+## VS Code 1.0.0 review, 2026-10-17
+
+See [the GA review](KNOWLEDGE-GA-REVIEW.md) for the article-by-article source
+review, webview navigation and search-contrast fixes, verification scope and
+remaining delivery limitations. Historical capture results and source-check
+dates above remain historical evidence; they have not been relabeled as new runs.
