@@ -69,6 +69,8 @@ export function createHelpSearch(dialog) {
         const heading = entry.topic.querySelector('.docs-subtitle');
         if (!body || !heading) return;
         body.scrollTo({ top: body.scrollTop + heading.getBoundingClientRect().top - body.getBoundingClientRect().top - 16 });
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
     });
     function render() {
         const terms = searchTerms(input.value);

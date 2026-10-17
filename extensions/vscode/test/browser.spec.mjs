@@ -693,8 +693,16 @@ for(const analyzer of ['tda','tls'])test(`VS Code ${analyzer} keeps capture acti
     if(analyzer==='tda')await expect(host.page.locator('#pasteClipboardBtn')).toBeVisible();
     await host.page.locator('#howToUseBtn').click();
     await expect(host.page.locator('#howToUseModal')).toBeVisible();
+    const helpUrl=host.page.url();
+    const topicLink=host.page.locator('.docs-nav a[href="#guide-input-formats"]');
+    await topicLink.focus();
+    await host.page.keyboard.press('Enter');
+    await expect(host.page.locator('#guide-input-formats')).toBeFocused();
+    await expect(host.page.locator('#guide-input-formats')).toBeInViewport();
+    expect(host.page.url()).toBe(helpUrl);
     await host.page.keyboard.press('Escape');
     await expect(host.page.locator('#howToUseModal')).toBeHidden();
+    await expect(host.page.locator('#howToUseBtn')).toBeFocused();
     await applyTheme(host.page,'vscode-dark');
     await host.page.screenshot({path:testInfo.outputPath('empty-analyzer.png')});
     await host.page.locator('#loadSampleBtn').click();

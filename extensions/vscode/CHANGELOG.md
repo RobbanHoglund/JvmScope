@@ -2,6 +2,7 @@
 
 ## 1.0.0 — General availability
 
+- Move keyboard focus to the selected Help topic in both analyzers; Escape returns to Help without changing the loaded capture or page URL.
 - Preserve Knowledge Base browsing in one retained tab, with Back/Forward history and restoration of search, version/format choices, result filters, scroll and focus. Reopening Knowledge Base resumes the current article.
 - Use host selection and focus colors for the active knowledge search match, including light and high-contrast themes.
 - Keep knowledge-base section links inside the current VS Code webview, preserving search, Java/format selections and keyboard focus.
