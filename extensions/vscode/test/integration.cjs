@@ -32,6 +32,13 @@ exports.run = async () => {
         assert.equal(extension.packageJSON.version, process.env.JVMSCOPE_TEST_VERSION);
     }
     const { SourceRegistry } = require(path.join(extension.extensionPath, 'src/source-navigation.cjs'));
+    const { AiAnalysis } = require(path.join(extension.extensionPath, 'src/ai-analysis.cjs'));
+    // Discovery is read-only even in the real host; CI never requires an AI
+    // account, submits a prompt or consumes a provider's quota.
+    const ai = new AiAnalysis(vscode);
+    assert.ok(ai.providers().every(provider => ['copilot', 'codex', 'claude'].includes(provider.id)));
+    assert.equal(ai.running, false);
+    ai.dispose();
     // Exercise the contributed view's focus command and editor toolbar commands
     // without explicitly activating the extension, as a user opening the view would.
     await vscode.commands.executeCommand('jvmscope.analysis.focus');

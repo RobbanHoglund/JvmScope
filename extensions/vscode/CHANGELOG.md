@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 — Optional AI analysis
+
+- Add an editable AI evidence preview for the selected thread snapshot or TLS interaction, preserving analyzer qualifications and marking excerpt limits.
+- Analyze through installed Copilot Chat using its available models, token budgets and cancellation support; open the response in a separate Markdown editor.
+- Detect installed Codex and Claude Code and offer explicit Copy and open handoff, with manual copy available for other assistants.
+- Keep raw evidence optional, clear reviewed prompts when captures change, and explain provider sharing separately from local parsing.
+
 ## 1.0.0 — General availability
 
 - Show sidebar expand arrows only when an analyzer has captured items; empty roots remain direct tool launchers.

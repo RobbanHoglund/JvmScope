@@ -15,7 +15,9 @@ const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
         const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8'));
-        let origin, clipboard='', sourceError='', nextNavigation=0; const messages=[];
+        let origin, clipboard='', sourceError='', nextNavigation=0;
+        let aiProviders=[{id:'copilot',label:'Copilot'},{id:'codex',label:'Codex'},{id:'claude',label:'Claude Code'}];
+        const messages=[];
         const server=createServer(async(req,res)=>{
             try {
                 const url=new URL(req.url,origin);
@@ -46,6 +48,11 @@ const test=base.extend({
                 try {
                     protocol.validateRequest(message);
                     if(message.action==='navigate')webview.resolveRoute(message.route,pages);
+                    if(message.action==='aiProviders')value=aiProviders;
+                    if(message.action==='analyzeAi') {
+                        if(message.provider!=='copilot')clipboard=message.prompt;
+                        value={message:message.provider==='copilot'?'Choose a Copilot model in VS Code.':'Prompt copied. Paste into the assistant, review and send.'};
+                    }
                 } catch(cause) { error=cause.message; }
                 await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
             }
@@ -55,7 +62,7 @@ const test=base.extend({
             window.acquireVsCodeApi=()=>({postMessage:message=>window.testHostMessage(message)});
             document.addEventListener('securitypolicyviolation',event=>window.testCspViolation(`${event.violatedDirective}: ${event.blockedURI}`));
         });
-        await use({page,origin,messages,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},open:async name=>{
+        await use({page,origin,messages,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},setAiProviders:items=>{aiProviders=items;},open:async name=>{
             const previous=messages.filter(m=>m.type==='ready').length;
             await page.goto(`${origin}/view?page=${encodeURIComponent(name)}`);
             await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(previous);
@@ -76,9 +83,81 @@ const test=base.extend({
     },
 });
 
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} reviews exact evidence, hands off edits and restores focus`, async({host},testInfo)=>{
+    const {page}=host;
+    await host.open(`/jvmscope/${analyzer}.html`);
+    await expect(page.locator('#analyzeAiBtn')).toBeHidden();
+    expect(host.messages.some(m=>m.action==='aiProviders'||m.action==='analyzeAi')).toBe(false);
+    await page.locator('#loadSampleBtn').click();
+    await expect(page.locator('#analyzeAiBtn')).toBeVisible();
+    if(analyzer==='tda') await page.locator('#dumpSelect').selectOption('1');
+    else await page.locator('.tls-select-btn').first().click();
+    await page.locator('#analyzeAiBtn').click();
+    const dialog=page.getByRole('dialog',{name:'Analyze with AI',exact:true});
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#aiProvider option')).toHaveCount(3);
+    await expect(page.locator('#aiIncludeRaw')).not.toBeChecked();
+    const initial=await page.locator('#aiPrompt').inputValue();
+    expect(initial).toContain('Full raw text is not included');
+    expect(initial).toContain(analyzer==='tda'?'Snapshot 2 of 3':'Only the selected interaction');
+    expect(host.messages.some(m=>m.action==='analyzeAi'||m.action==='copy')).toBe(false);
+    await page.locator('#aiIncludeRaw').check();
+    expect((await page.locator('#aiPrompt').inputValue()).length).toBeGreaterThan(initial.length);
+    await page.locator('#aiPrompt').fill('Reviewed and redacted evidence ✓\nPlease analyze this only.');
+    await page.locator('#aiProvider').selectOption(analyzer==='tda'?'codex':'claude');
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('Prompt copied');
+    const sent=host.messages.find(m=>m.action==='analyzeAi');
+    expect(sent.prompt).toBe('Reviewed and redacted evidence ✓\nPlease analyze this only.');
+    expect(sent.provider).toBe(analyzer==='tda'?'codex':'claude');
+    await page.setViewportSize({width:600,height:900});
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme);
+        await expectReadable(dialog); await expectReadable(page.locator('#aiPrompt')); await expectReadable(page.locator('#aiProvider'));
+        expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+        await page.screenshot({path:testInfo.outputPath(`${analyzer}-ai-${theme}.png`)});
+    }
+    await page.setViewportSize({width:360,height:700});
+    expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible(); await expect(page.locator('#analyzeAiBtn')).toBeFocused();
+    await expect(page.locator('#aiPrompt')).toHaveValue('');
+    await page.locator('#clearBtn').click(); await expect(page.locator('#analyzeAiBtn')).toBeHidden();
+});
+
+test('AI copy fallback works without installed assistants and sends nothing on cancel',async({host})=>{
+    host.setAiProviders([]);
+    await host.open('/jvmscope/tda.html'); await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiProviderHelp')).toContainText('No supported assistant');
+    await expect(host.page.locator('#aiRun')).toBeDisabled();
+    await host.page.locator('#aiPrompt').fill('Manually reviewed evidence');
+    await host.page.locator('#aiCopy').click();
+    await expect.poll(()=>host.clipboard()).toBe('Manually reviewed evidence');
+    await host.page.keyboard.press('Escape');
+    expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
+});
+
+test('AI capture replacement invalidates a previous review before any handoff',async({host})=>{
+    await host.open('/jvmscope/tda.html'); await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiAnalysisDialog')).toBeVisible();
+    await host.navigation('select','snapshot:1');
+    await expect(host.page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiScope')).toContainText('Snapshot 2');
+    const text=await capture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt');
+    await host.load([{name:'replacement.txt',text}]);
+    await expect(host.page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    await expect(host.page.locator('#aiPrompt')).toHaveValue('');
+    expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiScope')).toContainText('replacement.txt');
+});
+
 test('VS Code TDA uses inline workers, keeps allocation qualifications and opens exact native evidence',async({host})=>{
     await host.open('/jvmscope/tda.html');
-    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Capture analysis stays local. Optional AI sharing is controlled by you.');
     const sources=await Promise.all(['allocation-before.txt','allocation-after.txt'].map(async name=>({name,text:await capture('frontend/test/tda/fixtures/ga-regressions/'+name)})));
     const result=await host.load(sources);expect(result.snapshots).toBe(2);
     await host.page.locator('#dumpSelect').selectOption('1');
@@ -606,7 +685,7 @@ test('VS Code raw evidence retires on snapshot navigation, successful replacemen
 
 test('VS Code TLS analyzes real JSSE input and uses native copy without network upload',async({host})=>{
     await host.open('/jvmscope/tls.html');
-    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Capture analysis stays local. Optional AI sharing is controlled by you.');
     const source={name:'TLS sample.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt')};
     const result=await host.load([source]);expect(result.interactions).toBeGreaterThan(0);
     await expect(host.page.locator('#fileName')).toHaveText(source.name);
@@ -1145,7 +1224,7 @@ test('home and knowledge surfaces remain readable across host themes',async({hos
                 expect(await surface.evaluate(el=>getComputedStyle(el).backgroundImage)).toBe('none');
                 await expectReadable(surface);
             }
-            if(name==='index.html')await expect(host.page.locator('.privacy strong')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+            if(name==='index.html')await expect(host.page.locator('.privacy strong')).toHaveText('Capture analysis stays local. Optional AI sharing is controlled by you.');
             await host.page.screenshot({path:testInfo.outputPath(name.replaceAll('/','-')+'-'+theme+'.png')});
         }
     }

@@ -4,10 +4,13 @@ const { renderWebview, resolveRoute } = require('./webview.cjs');
 const { MAX_BYTES, isMessage, validateRequest, readSources } = require('./protocol.cjs');
 const { SourceRegistry } = require('./source-navigation.cjs');
 const { AnalysisSidebar, NavigationSession } = require('./analysis-sidebar.cjs');
+const { AiAnalysis } = require('./ai-analysis.cjs');
 const decoder = new TextDecoder();
 const titles = { tda: 'JvmScope · Thread dumps', tls: 'JvmScope · TLS logs', docs: 'JvmScope · Knowledge' };
 
 async function activate(context) {
+    const ai = new AiAnalysis(vscode);
+    context.subscriptions.push(ai);
     const media = vscode.Uri.joinPath(context.extensionUri, 'media');
     const pages = JSON.parse(decoder.decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(media, 'pages.json'))));
     const sessions = new Map(), sequences = new Map(), evidence = new Map();
@@ -76,6 +79,11 @@ async function activate(context) {
         async function handleRequest(message) {
             validateRequest(message);
             switch (message.action) {
+                case 'aiProviders': return kind === 'docs' ? [] : ai.providers();
+                case 'analyzeAi': {
+                    if (kind === 'docs' || !session.navigation?.count) throw new Error('Load a capture in an analyzer before using AI analysis.');
+                    return ai.run(message.provider, message.prompt);
+                }
                 case 'chooseFiles': {
                     if (kind === 'docs') throw new Error('Open an analyzer before choosing captures.');
                     const uris = await vscode.window.showOpenDialog({ canSelectMany: kind === 'tda', canSelectFolders: false,

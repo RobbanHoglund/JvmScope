@@ -1,4 +1,6 @@
 import { createThreadNavigation } from './host/navigation-model.js';
+import { createAiAnalysisView } from './ai-analysis-view.js';
+import { threadAiEvidence } from './ai-evidence.js';
 import { describeLockCoverage } from './tda/lock-coverage.js';
 import { cpuCoverage, compactSnapshotTime } from './tda/presentation.js';
 import './tda/triage.css';
@@ -525,6 +527,8 @@ function tooltipAttr(value) {
 
 // ---- model/state ----
 let parsedDumps = [];
+const aiAnalysis = createAiAnalysisView(() => threadAiEvidence({ dump: parsedDumps[selectedDumpIndex],
+    snapshotIndex: selectedDumpIndex, snapshotCount: parsedDumps.length, name: UI.fileName.textContent }));
 let threadSeries = [];
 let selectedDumpIndex = 0;
 
@@ -4089,6 +4093,7 @@ async function pasteThreadDumpFromClipboard() {
 
 // ---- events & UI wiring ----
 function beginInputRequest() {
+    aiAnalysis.invalidate();
     const requestId = inputRequestGate.begin();
     analysisClient.cancel();
     return requestId;
@@ -4103,6 +4108,7 @@ const hostNavigation = createHostNavigation(({snapshotIndex,thread}) => {
 });
 
 function applySessionAnalysis(result) {
+    aiAnalysis.invalidate();
     reportDatasetRevision++;
     blockingPatterns = result.blockingPatterns || [];
     blockingPatternSummary = result.blockingPatternSummary || null;
@@ -4288,6 +4294,7 @@ function renderParserState(result) {
 }
 
 function activateSelectedDump() {
+    aiAnalysis.invalidate();
     if (rawDumpSnapshot && rawDumpSnapshot !== parsedDumps[selectedDumpIndex]) invalidateRawDumpWorkspace();
     const selected = parsedDumps[selectedDumpIndex] || null;
     if (UI.openRawDumpBtn) UI.openRawDumpBtn.disabled = !selected?.rawText;
@@ -4579,6 +4586,7 @@ UI.howToUseModal?.addEventListener('cancel', (event) => {
 
 
 UI.clearBtn?.addEventListener('click', () => {
+    aiAnalysis.invalidate();
     cancelSessionInputs();
     sessionSources = [];
     hostNavigation.publish(null);

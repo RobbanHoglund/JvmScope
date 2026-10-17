@@ -101,13 +101,45 @@ Examples and pasted captures have no original-document link. If the document
 contents change, navigation asks you to analyze it again before selecting lines.
 Clearing/replacing the input or closing the panel revokes its source links.
 
+## Optional AI analysis
+
+Load a capture and choose **Analyze with AI** beside Help. Review or edit the
+prompt and evidence before continuing. TDA uses the current snapshot; TLS uses
+the selected interaction, or a bounded capture overview if none is selected.
+The summary includes JvmScope's findings, qualifications and selected stack or
+event excerpts. Full raw text is excluded by default; **Include raw evidence
+excerpt** adds up to 35,000 characters and rebuilds the prompt.
+
+| Installed assistant | Action |
+| --- | --- |
+| GitHub Copilot Chat | **Analyze with Copilot** offers the models available through VS Code's Language Model API. The response opens in a separate Markdown editor. Cancel from the progress notification. |
+| OpenAI Codex | **Copy and open Codex** copies the reviewed prompt and opens its sidebar. Paste, review and send in Codex. |
+| Claude Code | **Copy and open Claude Code** copies the reviewed prompt and opens a Claude tab. Paste, review and send there. |
+| None / another assistant | **Copy prompt** remains available for manual use. |
+
+JvmScope uses the installed assistant and its account; it does not ask for API
+keys or install assistants. A provider's sign-in, consent, plan, quota or
+organization policy can still restrict access. Reopen the dialog after enabling
+an extension. Codex and Claude handoff does not automatically submit a request or
+return an answer inside JvmScope. Their models are not assumed to be available
+through the Copilot API. Model responses never change parser findings.
+
 ## Privacy and scope
 
-Captures stay in the VS Code extension host and its webviews. There is no upload,
-telemetry, background workspace scan or JVM process execution. A remote workspace
+Capture parsing and rules run in the VS Code extension host and its webviews.
+JvmScope has no telemetry, background workspace scan or JVM process execution. A remote workspace
 can read a selected capture through VS Code's filesystem API; its contents must
 then be transferred to the UI to display and analyze it. Documentation links open
 in your browser only when clicked.
+
+Optional AI analysis is a separate, explicit sharing action. Copilot receives the
+exact reviewed prompt after you choose a model. Codex/Claude receive clipboard
+text when you paste and send it in their chat. The chosen assistant may transmit
+the evidence to its provider under your account settings. Names, hosts, paths,
+stack traces and secrets are **not automatically anonymized**; inspect the
+editable preview. JvmScope does not save prompts to the workspace, logs or browser
+storage. Clipboard contents and assistant chat history follow their own lifetimes.
+The standalone web app does not expose this VS Code integration.
 
 Sessions are held in memory, survive switching editor tabs, and disappear when
 the analyzer panel is closed or VS Code reloads. Raw evidence is invalidated when
@@ -164,7 +196,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.0.0.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.1.0.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

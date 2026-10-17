@@ -46,6 +46,39 @@ not yet covered by that matrix; browser-hosted VS Code (`vscode.dev`) is not sup
 
 ## Stage 2 — deeper editor integration
 
+Version 1.1 adds optional **Analyze with AI** in both analyzer headers. The shared
+evidence builder copies the existing analysis model and its qualifications into
+a bounded, editable preview. It does not run a second rule engine. TDA scopes the
+summary to the selected snapshot; TLS scopes it to the selected interaction (or
+an explicitly limited overview). Full raw text is excluded unless requested.
+
+The host protocol accepts only the fixed provider IDs `copilot`, `codex` and
+`claude`, with a 256 KiB UTF-8 input bound. Discovery does not activate assistants,
+authenticate or request inference. A user-initiated Copilot action selects an
+available model through `vscode.lm`, checks its token budget and supports
+cancellation. Its output goes to a separate Markdown editor and never rewrites
+JvmScope's findings. Only one model request runs at a time.
+
+Codex uses the documented `chatgpt.openSidebar` command after copying the reviewed
+prompt. Claude uses its documented `/open` URI without prompt data in the URL;
+the clipboard avoids platform URL-size limits. Users paste and submit in those
+assistants. No private chat API, shell command, credential reuse or automatic
+submission is assumed. Provider accounts and organizational permissions remain
+the responsibility of the chosen extension. Detection is limited to assistants
+available in the current VS Code window/extension host.
+
+The evidence builders, cancellation/error paths and public launcher boundaries
+have unit coverage; packaged browser journeys cover the preview, exact edited
+payload, themes, narrow layouts and capture replacement. The installed-extension
+CI checks discovery without an account. **Live authenticated Copilot inference
+and interactive Codex/Claude handoff require a manual smoke test with those
+extensions enabled; CI does not submit real diagnostic data or consume quota.**
+
+Integration references (checked 2026-10-17):
+- [VS Code Language Model API](https://code.visualstudio.com/api/extension-guides/ai/language-model)
+- [Codex IDE commands](https://developers.openai.com/codex/ide/commands)
+- [Claude Code VS Code integration](https://code.claude.com/docs/en/vs-code#launch-a-vs-code-tab-from-other-tools)
+
 Version 0.2 introduced source navigation and host theme adaptation.
 Thread details select their original physical range; TLS event/raw links select
 the original log line. Native per-panel registries resolve opaque IDs to captured
