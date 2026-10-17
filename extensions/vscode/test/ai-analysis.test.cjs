@@ -162,3 +162,81 @@ test('closing an owning panel cancels pending discovery without requiring provid
     h.ai.close('tda'); await h.ai.job;
     assert.equal(h.ai.running, false); assert.equal(h.errors.length, 0);
 });
+
+// Real Copilot discovery also returns internal aliases. Stable LanguageModelChat
+// objects do not expose the provider's isUserSelectable flag.
+test('Copilot model picker excludes internal dictation/utility aliases before counting or sending', async () => {
+    const h = host(), rejected = ['copilot-dictation-cleanup-luna', 'copilot-dictation-cleanup-nano', 'copilot-utility', 'copilot-utility-small'];
+    const internal = rejected.map(id => ({ ...h.model, id, family: id,
+        countTokens: async () => { assert.fail('Internal alias must not receive evidence'); },
+        sendRequest: async () => { assert.fail('Internal alias must not be requested'); },
+    }));
+    // A public model can share the same name as an internal alias; filter by ID.
+    // gpt-5.6-luna is only core-only when synthesized as a dictation alias;
+    // the same ID can also be an ordinary model. Do not blanket-block it.
+    h.model.id = 'gpt-5.6-luna';
+    h.vscode.lm.selectChatModels = async () => [...internal, h.model];
+    h.vscode.window.showQuickPick = async items => {
+        assert.deepEqual(items.map(item => item.model.id), [h.model.id]); return items[0];
+    };
+    await h.ai.run('copilot', 'reviewed'); await h.ai.job;
+    assert.equal(h.documents.length, 1); assert.deepEqual(h.errors, []);
+});
+
+test('an internal-only Copilot catalog explains that no suitable chat model is available', async () => {
+    const h = host();
+    h.vscode.lm.selectChatModels = async () => [{ ...h.model, id: 'copilot-dictation-cleanup-luna' }];
+    h.vscode.window.showQuickPick = async () => { assert.fail('Do not show an empty picker'); };
+    await h.ai.run('copilot', 'reviewed'); await h.ai.job;
+    assert.match(h.errors[0], /No Copilot chat models usable by JvmScope/);
+    assert.equal(h.calls.some(call => call[0] === 'send'), false);
+    assert.equal(h.ai.running, false);
+});
+
+for (const streaming of [false, true]) test(`core-only rejection ${streaming ? 'in a stream' : 'at request start'} offers another explicit model choice`, async () => {
+    const h = host(), picks = [], states = []; let rejectedRequests = 0;
+    const restricted = { ...h.model, id: 'gpt-5.6-luna', name: 'A restricted model',
+        sendRequest: async () => {
+            rejectedRequests++;
+            const error = new Error('Model gpt-5.6-luna is only available to VS Code core.');
+            if (!streaming) throw new Error('Provider failed', { cause: error });
+            return { text: (async function* () { throw error; })() };
+        },
+    };
+    h.vscode.lm.selectChatModels = async () => [restricted, h.model];
+    h.vscode.window.showQuickPick = async items => { picks.push(items.map(item => item.model.id)); return items[0]; };
+    await h.ai.run('copilot', 'unchanged reviewed evidence', { onState: state => states.push(state) }); await h.ai.job;
+    assert.deepEqual(picks, [['gpt-5.6-luna', h.model.id], [h.model.id]]);
+    assert.equal(rejectedRequests, 1); assert.equal(h.documents.length, 1);
+    assert.deepEqual(h.calls.find(call => call[0] === 'send')[1], [{ role: 'user', content: 'unchanged reviewed evidence' }]);
+    assert.ok(states.some(state => /reserved for VS Code/.test(state.message)));
+    assert.deepEqual(h.errors, []);
+    await h.ai.run('copilot', 'next review'); await h.ai.job;
+    assert.equal(rejectedRequests, 1, 'Do not keep offering an already confirmed core-only model in this session');
+});
+
+test('rejecting a core-only model never submits to another model until the user chooses it', async () => {
+    const h = host(); let pickCount = 0;
+    const restricted = { ...h.model, id: 'opaque-core-only-model', sendRequest: async () => { throw new Error('Model opaque-core-only-model is only available to VS Code core.'); } };
+    h.vscode.lm.selectChatModels = async () => [restricted, h.model];
+    h.vscode.window.showQuickPick = async items => { pickCount++; return pickCount === 1 ? items[0] : new Promise(() => {}); };
+    const result = await h.ai.run('copilot', 'reviewed', { owner: 'tda' });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(pickCount, 2); assert.equal(h.calls.some(call => call[0] === 'send'), false);
+    h.ai.cancel('tda', result.jobId); await h.ai.job;
+    assert.equal(h.documents.length, 0); assert.equal(h.ai.running, false);
+});
+
+test('consent, quota and network errors do not trigger model fallback or hide available models', async () => {
+    for (const message of ['Permission denied', 'Quota exceeded', 'Network disconnected']) {
+        const h = host(); let picks = 0, otherRequests = 0;
+        const failing = { ...h.model, id: 'selected-model', sendRequest: async () => { throw new Error(message); } };
+        const other = { ...h.model, id: 'another-model', sendRequest: async () => { otherRequests++; } };
+        h.vscode.lm.selectChatModels = async () => [failing, other];
+        h.vscode.window.showQuickPick = async items => { picks++; assert.equal(items.length, 2); return items[0]; };
+        await h.ai.run('copilot', 'reviewed'); await h.ai.job;
+        assert.equal(picks, 1); assert.equal(otherRequests, 0); assert.ok(h.errors[0].includes(message));
+        await h.ai.run('copilot', 'retry'); await h.ai.job;
+        assert.equal(picks, 2); assert.equal(otherRequests, 0);
+    }
+});

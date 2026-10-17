@@ -194,6 +194,42 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} shows live Copilot st
     expect(host.messages.filter(m=>m.action==='analyzeAi')).toHaveLength(2);
 });
 
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} excludes internal aliases and preserves evidence during explicit model reselection`,async({host})=>{
+    const {page,ai}=host, picks=[];
+    let chooseReplacement;
+    const internal={...ai.model,id:'copilot-dictation-cleanup-luna',
+        countTokens:async()=>{throw new Error('Internal alias must not receive evidence');},
+        sendRequest:async()=>{throw new Error('Internal alias must not be requested');},
+    };
+    const restricted={...ai.model,id:'gpt-5.6-luna',sendRequest:async()=>{
+        throw new Error('Model gpt-5.6-luna is only available to VS Code core.');
+    }};
+    ai.vscode.lm.selectChatModels=async()=>[internal,restricted,ai.model];
+    ai.vscode.window.showQuickPick=items=>{
+        picks.push(items.map(item=>item.model.id));
+        if(picks.length===1)return items[0];
+        return new Promise(resolve=>{chooseReplacement=()=>resolve(items[0]);});
+    };
+    await host.open(`/jvmscope/${analyzer}.html`); await page.locator('#loadSampleBtn').click();
+    await page.locator('#analyzeAiBtn').click();
+    const reviewed=`Reviewed ${analyzer} evidence: preserve my redactions.`;
+    await page.locator('#aiPrompt').fill(reviewed); await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('reserved for VS Code');
+    await expect(page.locator('#aiRun')).toBeDisabled();
+    await expect(page.locator('#aiCancel')).toBeVisible();
+    await expect(page.locator('#aiPrompt')).toHaveValue(reviewed);
+    expect(picks).toEqual([[restricted.id,ai.model.id],[ai.model.id]]);
+    expect(ai.calls.some(call=>call[0]==='send')).toBe(false);
+    expect(ai.documents).toHaveLength(0);
+    chooseReplacement();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    await expect(page.locator('#aiCancel')).toBeHidden();
+    expect(ai.documents).toHaveLength(1);
+    expect(ai.calls.find(call=>call[0]==='send')[1][0].content).toBe(reviewed);
+    expect(ai.errors).toEqual([]);
+});
+
 test('AI provider errors appear in the dialog and retry works with an undismissed notification',async({host},testInfo)=>{
     const {page,ai}=host;
     ai.vscode.lm.selectChatModels=async()=>{throw new Error('Copilot access denied');};

@@ -47,6 +47,10 @@ exports.run = async () => {
         countTokens: async () => 10,
         sendRequest: async () => ({ text: (async function* () { yield 'Native host AI lifecycle fixture.'; })() }),
     };
+    const internalModel = { ...model, id: 'copilot-dictation-cleanup-luna',
+        countTokens: async () => { assert.fail('Do not pass evidence to internal Copilot aliases'); },
+        sendRequest: async () => { assert.fail('Do not request internal Copilot aliases'); },
+    };
     const boundary = {
         // Do not spread API namespaces: enumerating window also evaluates
         // proposal-gated getters such as nativeHandle in real VS Code.
@@ -58,7 +62,10 @@ exports.run = async () => {
         window: {
             withProgress: (...args) => vscode.window.withProgress(...args),
             showTextDocument: (...args) => vscode.window.showTextDocument(...args),
-            showQuickPick: async items => items[0],
+            showQuickPick: async items => {
+                assert.deepEqual(items.map(item => item.model.id), [model.id], 'Only the public model is offered');
+                return items[0];
+            },
             showErrorMessage: message => {
                 const pending = vscode.window.showErrorMessage(message);
                 pending.then(() => { notificationDismissed = true; }); return pending;
@@ -77,7 +84,7 @@ exports.run = async () => {
         assert.equal(nativeAi.running, false);
         assert.equal(states.at(-1).state, 'error');
         assert.equal(notificationDismissed, false, 'Job finishes while the real VS Code error notification is still open');
-        boundary.lm.selectChatModels = async () => [model];
+        boundary.lm.selectChatModels = async () => [internalModel, model];
         await nativeAi.run('copilot', 'Synthetic retry evidence'); await completed();
         assert.match(vscode.window.activeTextEditor.document.getText(), /Native host AI lifecycle fixture/);
         await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
@@ -86,7 +93,7 @@ exports.run = async () => {
         assert.equal(nativeAi.cancel('test', job.jobId), true); await completed();
         assert.equal(nativeAi.running, false);
     } finally { nativeAi.dispose(); }
-    console.log('PASS: native AI error notification remains open without locking retries; progress cancellation releases a non-cooperating provider; result editor opens.');
+    console.log('PASS: native AI error notification remains open without locking retries; internal Copilot aliases are excluded; progress cancellation releases a non-cooperating provider; result editor opens.');
     // Exercise the contributed view's focus command and editor toolbar commands
     // without explicitly activating the extension, as a user opening the view would.
     await vscode.commands.executeCommand('jvmscope.analysis.focus');

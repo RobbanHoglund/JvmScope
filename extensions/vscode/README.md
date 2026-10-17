@@ -124,6 +124,13 @@ an extension. Codex and Claude handoff does not automatically submit a request o
 return an answer inside JvmScope. Their models are not assumed to be available
 through the Copilot API. Model responses never change parser findings.
 
+The Copilot picker omits known internal dictation and utility models. If Copilot
+rejects another model as reserved for VS Code, choose another model in the picker;
+your reviewed prompt is preserved. JvmScope never switches models or submits to a
+replacement without your choice. If no usable model remains, use **Copy prompt**
+in Copilot Chat. Sign-in, consent, quota and network errors still require resolving
+the reported problem before retrying.
+
 Copilot requests have a three-minute limit, including time spent choosing a model
 or approving access. **Cancel analysis** releases the request even if the provider
 stops responding. Closing the AI dialog, changing the evidence or closing the
@@ -203,7 +210,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.1.1.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.1.2.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

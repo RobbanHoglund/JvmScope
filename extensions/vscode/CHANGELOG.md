@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.2 — Copilot model selection
+
+- Exclude Copilot's internal dictation and utility aliases from the model picker, fixing the “only available to VS Code core” error for dictation models.
+- If another model rejects an extension request as core-only, preserve the reviewed prompt and offer a new explicit choice. Remember the rejected model for the session; never switch models automatically.
+- Keep consent, quota and network errors visible without retrying another model, and explain when only internal models are available.
+- Add unit regressions, both packaged analyzer journeys and a real VS Code host check for the internal-model catalog.
+
 ## 1.1.1 — Recoverable Copilot requests
 
 - Release failed AI jobs immediately, without waiting for an error notification to be dismissed.
