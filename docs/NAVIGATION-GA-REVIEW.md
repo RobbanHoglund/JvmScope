@@ -41,6 +41,12 @@ Each correction and its tests are in a separate commit.
 - The final VSIX validation and new installed-VS-Code CI results are recorded on
   the PR so they can be tied to the published commit and archive.
 
+The first installed-VS-Code run exposed an integration-test timing assumption:
+it asserted the active tab immediately after `WebviewPanel.reveal()`, which returns
+void. The test now waits for the tab/group activation events with a bounded
+timeout and still requires the requested view to become active. This covers
+retained panels whose startup promise has already resolved.
+
 ## Scope and limits
 
 Knowledge history is bounded to 30 entries, held only in the open VS Code

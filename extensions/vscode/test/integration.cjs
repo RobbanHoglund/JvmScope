@@ -3,6 +3,26 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../../..');
 const fixture = relative => vscode.Uri.file(path.join(root, relative));
+// WebviewPanel.reveal() returns void; the workbench reports activation later.
+// Wait for the real tab event, including retained panels whose ready promise
+// has already resolved, instead of assuming a command return updates the UI.
+async function expectActiveTab(label) {
+    const tabs = vscode.window.tabGroups;
+    const matches = () => tabs.activeTabGroup.activeTab?.label === label;
+    if (!matches()) await new Promise((resolve, reject) => {
+        const listeners = [];
+        const finish = error => {
+            clearTimeout(timer);
+            for (const listener of listeners) listener.dispose();
+            if (error) reject(error); else resolve();
+        };
+        const check = () => { if (matches()) finish(); };
+        const timer = setTimeout(() => finish(new Error(`Expected active tab ${label}; got ${tabs.activeTabGroup.activeTab?.label}`)), 5000);
+        listeners.push(tabs.onDidChangeTabs(check), tabs.onDidChangeTabGroups(check));
+        check();
+    });
+    assert.equal(tabs.activeTabGroup.activeTab?.label, label, 'The requested view is active');
+}
 exports.run = async () => {
     const extension = vscode.extensions.getExtension('RobbanHoglund.jvmscope');
     assert.ok(extension, 'Extension is installed in the real extension host');
@@ -27,8 +47,7 @@ exports.run = async () => {
         // remain a launcher, even when that editor contains the other log format.
         const result = await vscode.commands.executeCommand(command, editorDocument.uri);
         assert.ok(!result?.error, JSON.stringify(result));
-        assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, title,
-            'The native navigation command opens and focuses the requested view');
+        await expectActiveTab(title);
     }
     assert.ok(extension.isActive, 'Opening the view and its tools activates JvmScope');
     const api = extension.exports;
@@ -45,19 +64,19 @@ exports.run = async () => {
     // loaded trees must still navigate back to their exact threads and events.
     const knowledge = await vscode.commands.executeCommand('jvmscope.openKnowledge');
     assert.ok(!knowledge?.error, JSON.stringify(knowledge));
-    assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, 'JvmScope · Knowledge');
+    await expectActiveTab('JvmScope · Knowledge');
     const [tdaFile] = await api.getAnalysisItems('tda');
     const [snapshot] = await api.getAnalysisItems('tda', tdaFile.id);
     const threads = await api.getAnalysisItems('tda', snapshot.id);
     assert.ok(threads.some(item => item.kind === 'thread'));
     assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem', threads[0].id), true);
-    assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, 'JvmScope · Thread dumps');
+    await expectActiveTab('JvmScope · Thread dumps');
     const [tlsFile] = await api.getAnalysisItems('tls');
     const [interaction] = await api.getAnalysisItems('tls', tlsFile.id);
     const events = await api.getAnalysisItems('tls', interaction.id);
     assert.ok(events.some(item => item.kind === 'event'));
     assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem', events[0].id), true);
-    assert.equal(vscode.window.tabGroups.activeTabGroup.activeTab?.label, 'JvmScope · TLS logs');
+    await expectActiveTab('JvmScope · TLS logs');
     const pair = ['allocation-before.txt', 'allocation-after.txt'].map(name => fixture('frontend/test/tda/fixtures/ga-regressions/' + name));
     const series = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump', pair[0], pair);
     assert.equal(series?.snapshots, 2, JSON.stringify(series));
