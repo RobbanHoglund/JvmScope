@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.14 — Compact TLS capture header
+
+- Keep the complete TLS capture filename beside its label on a dedicated wrapping row, with tighter header spacing. Restore at least six complete interaction rows at 1366 × 768 with capture analysis collapsed.
+- Extend the layout regression to an uploaded capture with a long filename and count only rows fully inside both the table and the browser viewport.
+
 ## 0.3.13 — Visible capture names and finding graphs
 
 - Show complete capture names on their own wrapping row in both analyzers, including narrow editors and zoomed views.

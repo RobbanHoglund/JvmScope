@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { test, expect } from './fixtures.js';
+import { buildComprehensiveTlsSampleLog } from '../../../assets/javautils/tls-sample.js';
 
 const fixture = name => readFileSync(new URL(`../fixtures/${name}`, import.meta.url), 'utf8');
 async function upload(page, text, name) {
@@ -56,15 +57,27 @@ test('TLS laptop starts compact, keeps at least six complete rows, and remembers
     await expect(page.locator('#rowCount')).toHaveText('35 / 35 interactions');
     const panel = page.locator('#tlsAnalysis');
     await expect(panel).not.toHaveAttribute('open', '');
-    const completeRows = await page.evaluate(() => {
+    const completeRows = () => page.evaluate(() => {
         const viewport = document.getElementById('tlsTableScroll').getBoundingClientRect();
         const header = document.querySelector('#tlsTable thead').getBoundingClientRect();
         return [...document.querySelectorAll('#tlsTableBody tr')].filter(row => {
             const box = row.getBoundingClientRect();
-            return box.top >= header.bottom && box.bottom <= viewport.bottom;
+            return box.top >= Math.max(header.bottom, viewport.top)
+                && box.bottom <= Math.min(viewport.bottom, innerHeight);
         }).length;
     });
-    expect(completeRows).toBeGreaterThanOrEqual(6);
+    expect(await completeRows()).toBeGreaterThanOrEqual(6);
+    const name = 'production-payments-jdk25-tls-client-2026-10-17T03-20-00.000000000Z-success-failure-and-mtls.log';
+    await upload(page, buildComprehensiveTlsSampleLog(), name);
+    await expect(page.locator('#rowCount')).toHaveText('35 / 35 interactions');
+    expect(await completeRows()).toBeGreaterThanOrEqual(6);
+    expect(await page.locator('#fileName').evaluate(el => {
+        const box = el.getBoundingClientRect();
+        const range = document.createRange(); range.selectNodeContents(el);
+        return box.top >= document.querySelector('.header-top').getBoundingClientRect().bottom
+            && [...range.getClientRects()].every(r => r.left >= box.left - 1 && r.right <= box.right + 1 && r.bottom <= box.bottom + 1)
+            && box.right <= innerWidth;
+    })).toBe(true);
     await panel.locator(':scope > summary').focus();
     await page.keyboard.press('Enter');
     await expect(panel).toHaveAttribute('open', '');

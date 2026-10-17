@@ -82,6 +82,19 @@ body.tls-page {
   font-weight: 500;
 }
 
+/* Keep TLS capture identity on its own row without taking a second line for
+   the label. The filename can still wrap; the linked panes retain their space. */
+.tls-page .analyzer-file-name {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+  margin-top: 4px;
+}
+
+.tls-page .analyzer-header .tls-filter-row,
+.tls-page.tls-investigating .tls-meta { margin-top: 4px; }
+
 :is(.tls-page, .tda-page) .analyzer-header :is(.tls-file-actions, .header-center) {
   flex: 0 0 auto;
   margin-left: auto;
