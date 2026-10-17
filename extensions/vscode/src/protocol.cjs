@@ -1,7 +1,7 @@
 const MAX_BYTES = 64 * 1024 * 1024;
 const MAX_FILES = 50;
 const { validateAiInput } = require('./ai-analysis.cjs');
-const actions = new Set(['chooseFiles', 'copy', 'paste', 'openRaw', 'clearRaw', 'save', 'navigate', 'external', 'syncSources', 'openSource', 'aiProviders', 'analyzeAi']);
+const actions = new Set(['chooseFiles', 'copy', 'paste', 'openRaw', 'clearRaw', 'save', 'navigate', 'external', 'syncSources', 'openSource', 'aiProviders', 'analyzeAi', 'aiStatus', 'cancelAi']);
 const sourceId = value => typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value);
 const text = value => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= MAX_BYTES;
 function isMessage(message) {
@@ -12,6 +12,7 @@ function validateRequest(message) {
         || !/^web:\d{1,12}$/.test(message.id) || !actions.has(message.action)) throw new Error('Unsupported extension request.');
     if (['copy', 'openRaw'].includes(message.action) && !text(message.text)) throw new Error('Text exceeds the 64 MiB limit.');
     if (message.action === 'openRaw' && (typeof message.name !== 'string' || message.name.length > 240)) throw new Error('Invalid evidence name.');
+    if (message.action === 'cancelAi' && (typeof message.jobId !== 'string' || !/^ai:\d{1,12}$/.test(message.jobId))) throw new Error('Invalid AI job.');
     if (message.action === 'analyzeAi') validateAiInput(message.provider, message.prompt);
     if (message.action === 'save') {
         if (typeof message.name !== 'string' || !/^[\w.-]{1,180}\.(?:md|html|txt|json|png)$/.test(message.name)

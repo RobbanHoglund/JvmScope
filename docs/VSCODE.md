@@ -57,7 +57,13 @@ The host protocol accepts only the fixed provider IDs `copilot`, `codex` and
 authenticate or request inference. A user-initiated Copilot action selects an
 available model through `vscode.lm`, checks its token budget and supports
 cancellation. Its output goes to a separate Markdown editor and never rewrites
-JvmScope's findings. Only one model request runs at a time.
+JvmScope's findings. Only one model request runs at a time. The dialog polls
+per-panel job state and exposes Cancel, progress and provider errors. Job IDs
+scope cancellation to the owning panel and request. Closing the dialog or
+invalidating its evidence cancels the pending work. Every provider await races
+against cancellation, with a three-minute total deadline; late results cannot
+open an editor or clear a newer job. Error notification dismissal never holds
+the job lock.
 
 Codex uses the documented `chatgpt.openSidebar` command after copying the reviewed
 prompt. Claude uses its documented `/open` URI without prompt data in the URL;
@@ -70,7 +76,7 @@ available in the current VS Code window/extension host.
 The evidence builders, cancellation/error paths and public launcher boundaries
 have unit coverage; packaged browser journeys cover the preview, exact edited
 payload, themes, narrow layouts and capture replacement. The installed-extension
-CI checks discovery without an account. **Live authenticated Copilot inference
+CI also exercises real native notification promises, progress cancellation and the response editor with a deterministic provider boundary, without an account. **Live authenticated Copilot inference
 and interactive Codex/Claude handoff require a manual smoke test with those
 extensions enabled; CI does not submit real diagnostic data or consume quota.**
 

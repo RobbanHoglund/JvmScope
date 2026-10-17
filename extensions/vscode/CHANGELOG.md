@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 — Recoverable Copilot requests
+
+- Release failed AI jobs immediately, without waiting for an error notification to be dismissed.
+- Show Copilot progress and provider errors in the AI dialog, keep Analyze disabled during the request and add Cancel analysis.
+- Release cancelled or timed-out requests even when a provider does not respond, ignore late results and cancel when the reviewed evidence changes or its dialog closes.
+- Add regressions using the packaged controller in both analyzer dialogs and real VS Code notification/progress APIs.
+
 ## 1.1.0 — Optional AI analysis
 
 - Add an editable AI evidence preview for the selected thread snapshot or TLS interaction, preserving analyzer qualifications and marking excerpt limits.

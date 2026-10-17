@@ -11,6 +11,8 @@ const require=createRequire(import.meta.url);
 const webview=require(resolve(extensionRoot,'src/webview.cjs'));
 const protocol=require(resolve(extensionRoot,'src/protocol.cjs'));
 const media=resolve(extensionRoot,'media');
+const {AiAnalysis}=require(resolve(extensionRoot,'src/ai-analysis.cjs'));
+const {createAiHost}=require('./ai-host.cjs');
 const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
@@ -18,6 +20,8 @@ const test=base.extend({
         let origin, clipboard='', sourceError='', nextNavigation=0;
         let aiProviders=[{id:'copilot',label:'Copilot'},{id:'codex',label:'Codex'},{id:'claude',label:'Claude Code'}];
         const messages=[];
+        const ai=createAiHost(AiAnalysis);
+        let aiState={state:'idle',running:false,message:''};
         const server=createServer(async(req,res)=>{
             try {
                 const url=new URL(req.url,origin);
@@ -49,9 +53,11 @@ const test=base.extend({
                     protocol.validateRequest(message);
                     if(message.action==='navigate')webview.resolveRoute(message.route,pages);
                     if(message.action==='aiProviders')value=aiProviders;
+                    if(message.action==='aiStatus')value=aiState;
+                    if(message.action==='cancelAi')value=ai.ai.cancel('browser',message.jobId);
                     if(message.action==='analyzeAi') {
                         if(message.provider!=='copilot')clipboard=message.prompt;
-                        value={message:message.provider==='copilot'?'Choose a Copilot model in VS Code.':'Prompt copied. Paste into the assistant, review and send.'};
+                        value=await ai.ai.run(message.provider,message.prompt,{owner:'browser',onState:state=>{aiState=state;}});
                     }
                 } catch(cause) { error=cause.message; }
                 await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
@@ -62,7 +68,7 @@ const test=base.extend({
             window.acquireVsCodeApi=()=>({postMessage:message=>window.testHostMessage(message)});
             document.addEventListener('securitypolicyviolation',event=>window.testCspViolation(`${event.violatedDirective}: ${event.blockedURI}`));
         });
-        await use({page,origin,messages,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},setAiProviders:items=>{aiProviders=items;},open:async name=>{
+        await use({page,origin,messages,ai,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},setAiProviders:items=>{aiProviders=items;},open:async name=>{
             const previous=messages.filter(m=>m.type==='ready').length;
             await page.goto(`${origin}/view?page=${encodeURIComponent(name)}`);
             await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(previous);
@@ -78,6 +84,7 @@ const test=base.extend({
             const response=messages.find(m=>m.type==='loaded'&&m.id===id);
             expect(response.error).toBeUndefined();return response.value;
         }});
+        ai.ai.dispose(); if(ai.ai.job)await ai.ai.job;
         await new Promise(resolve=>server.close(resolve));
         expect(errors).toEqual([]);expect(violations).toEqual([]);
     },
@@ -153,6 +160,72 @@ test('AI capture replacement invalidates a previous review before any handoff',a
     expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
     await host.page.locator('#analyzeAiBtn').click();
     await expect(host.page.locator('#aiScope')).toContainText('replacement.txt');
+});
+
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} shows live Copilot status, cancels a hung request and allows retry`,async({host},testInfo)=>{
+    const {page,ai}=host;
+    ai.vscode.lm.selectChatModels=()=>new Promise(()=>{});
+    await host.open(`/jvmscope/${analyzer}.html`); await page.locator('#loadSampleBtn').click();
+    await page.locator('#analyzeAiBtn').click();
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('Connecting to Copilot');
+    await expect(page.locator('#aiRun')).toBeDisabled();
+    await expect(page.locator('#aiCancel')).toBeVisible();
+    await expect(page.locator('#aiPrompt')).toHaveAttribute('readonly','');
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme); await page.setViewportSize({width:360,height:700});
+        await expectReadable(page.locator('#aiStatus')); await expectReadable(page.locator('#aiCancel'));
+        expect(await page.locator('#aiAnalysisDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    }
+    await page.setViewportSize({width:1100,height:900}); await applyTheme(page,'vscode-dark');
+    await page.screenshot({path:testInfo.outputPath(`${analyzer}-copilot-running.png`)});
+    await page.locator('#aiCancel').click();
+    await expect(page.locator('#aiStatus')).toContainText('cancelled');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    await expect(page.locator('#aiCancel')).toBeHidden();
+    expect(ai.ai.running).toBe(false);
+    ai.vscode.lm.selectChatModels=async()=>[ai.model];
+    await page.locator('#aiPrompt').fill('Reviewed retry evidence');
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    expect(ai.documents).toHaveLength(1);
+    expect(ai.calls.find(c=>c[0]==='send')[1][0].content).toBe('Reviewed retry evidence');
+    expect(host.messages.filter(m=>m.action==='analyzeAi')).toHaveLength(2);
+});
+
+test('AI provider errors appear in the dialog and retry works with an undismissed notification',async({host},testInfo)=>{
+    const {page,ai}=host;
+    ai.vscode.lm.selectChatModels=async()=>{throw new Error('Copilot access denied');};
+    ai.vscode.window.showErrorMessage=()=>new Promise(()=>{});
+    await host.open('/jvmscope/tda.html'); await page.locator('#loadSampleBtn').click();
+    await page.locator('#analyzeAiBtn').click(); await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('Copilot access denied');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    await page.screenshot({path:testInfo.outputPath('copilot-error-retry.png')});
+    ai.vscode.lm.selectChatModels=async()=>[ai.model];
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    expect(ai.documents).toHaveLength(1);
+});
+
+test('AI close and snapshot replacement cancel pending work and preserve a fresh review',async({host})=>{
+    const {page,ai}=host;
+    ai.vscode.lm.selectChatModels=()=>new Promise(()=>{});
+    await host.open('/jvmscope/tda.html'); await page.locator('#loadSampleBtn').click();
+    for(const replacement of [false,true]) {
+        await page.locator('#analyzeAiBtn').click(); await page.locator('#aiRun').click();
+        await expect(page.locator('#aiCancel')).toBeVisible();
+        if(replacement) await host.navigation('select','snapshot:1');
+        else await page.keyboard.press('Escape');
+        await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
+        await expect.poll(()=>ai.ai.running).toBe(false);
+        await expect(page.locator('#aiPrompt')).toHaveValue('');
+    }
+    await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiScope')).toContainText('Snapshot 2');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    expect(ai.documents).toHaveLength(0);
 });
 
 test('VS Code TDA uses inline workers, keeps allocation qualifications and opens exact native evidence',async({host})=>{

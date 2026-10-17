@@ -123,6 +123,8 @@ export const invalidateHostEvidence = () => { if (vscode) request('clearRaw').ca
 export const syncSourceLinks = sourceIds => { if (vscode) request('syncSources', { sourceIds: sourceIds.filter(Boolean) }).catch(showHostError); };
 export const openSourceLocation = location => request('openSource', location);
 export const getAiProviders = () => request('aiProviders');
+export const getAiStatus = () => request('aiStatus');
+export const cancelAi = jobId => request('cancelAi', { jobId });
 export const analyzeWithAi = (provider, prompt) => request('analyzeAi', { provider, prompt });
 
 export function bindSourceButton(button, location) {

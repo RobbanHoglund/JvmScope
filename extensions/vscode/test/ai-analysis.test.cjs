@@ -2,40 +2,8 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { AiAnalysis, MAX_AI_BYTES, validateAiInput } = require('../src/ai-analysis.cjs');
 
-function host({ installed = ['GitHub.copilot-chat', 'openai.chatgpt', 'anthropic.claude-code'], tokens = 50, maxInputTokens = 1000, choose = true, deny = false, failOpen = false } = {}) {
-    const calls = [], errors = [], documents = [];
-    let cancel;
-    class CancellationTokenSource {
-        constructor() { this.token = { isCancellationRequested: false }; }
-        cancel() { this.token.isCancellationRequested = true; }
-        dispose() {}
-    }
-    const model = { name: 'Available model', vendor: 'copilot', id: 'model-from-provider', maxInputTokens,
-        countTokens: async message => { calls.push(['count', message]); return tokens; },
-        sendRequest: async messages => { calls.push(['send', messages]); return { text: (async function* () { yield 'Observed '; yield 'evidence.'; })() }; },
-    };
-    const vscode = {
-        extensions: { getExtension: id => installed.includes(id) ? { activate: async () => calls.push(['activate', id]) } : undefined },
-        lm: { selectChatModels: async selector => { calls.push(['models', selector]); if (deny) throw new Error('Access denied'); return [model]; } },
-        commands: { getCommands: async () => ['chatgpt.openSidebar'], executeCommand: async (...args) => { calls.push(['command', ...args]); if (failOpen) throw new Error('Unavailable'); } },
-        env: { uriScheme: 'vscode-insiders', clipboard: { writeText: async text => calls.push(['copy', text]) },
-            openExternal: async uri => { calls.push(['external', uri]); return !failOpen; } },
-        Uri: { from: value => value },
-        CancellationTokenSource, ProgressLocation: { Notification: 15 }, ViewColumn: { Beside: 2 },
-        LanguageModelChatMessage: { User: content => ({ role: 'user', content }) },
-        window: {
-            withProgress: async (options, action) => { calls.push(['progress', options]); return action({ report() {} }, {
-                isCancellationRequested: false, onCancellationRequested: callback => { cancel = callback; return { dispose() {} }; },
-            }); },
-            showQuickPick: async options => choose ? options[0] : undefined,
-            showTextDocument: async document => calls.push(['document', document]),
-            showErrorMessage: async text => errors.push(text),
-        },
-        workspace: { openTextDocument: async document => { documents.push(document); return document; } },
-    };
-    const ai = new AiAnalysis(vscode);
-    return { ai, vscode, model, calls, errors, documents, cancel: () => cancel() };
-}
+const { createAiHost } = require('./ai-host.cjs');
+const host = options => createAiHost(AiAnalysis, options);
 
 test('discovery only reports installed providers, without activation, auth or inference', () => {
     const h = host();
@@ -109,7 +77,7 @@ test('one AI job at a time and disposal cancel model work without opening stale 
     };
     await h.ai.run('copilot', 'reviewed');
     await new Promise(resolve => setImmediate(resolve));
-    await assert.rejects(h.ai.run('copilot', 'another'), /already running/);
+    await assert.rejects(h.ai.run('copilot', 'another'), /analysis is running/);
     h.ai.dispose(); complete(); await h.ai.job;
     assert.equal(h.documents.length, 0); assert.deepEqual(h.errors, []);
 });
@@ -138,4 +106,59 @@ test('failed Copilot requests release the job while the error notification is st
     h.vscode.lm.selectChatModels = async () => [h.model];
     await h.ai.run('copilot', 'retry'); await h.ai.job;
     assert.equal(h.documents.length, 1);
+});
+
+for (const stage of ['discovery', 'picker', 'tokens', 'request', 'stream']) {
+    test(`dialog cancellation releases an unresponsive ${stage} and ignores its late completion`, async () => {
+        const h = host(); let release;
+        const stuck = () => new Promise(resolve => { release = resolve; });
+        if (stage === 'discovery') h.vscode.lm.selectChatModels = stuck;
+        if (stage === 'picker') h.vscode.window.showQuickPick = stuck;
+        if (stage === 'tokens') h.model.countTokens = stuck;
+        if (stage === 'request') h.model.sendRequest = stuck;
+        if (stage === 'stream') h.model.sendRequest = async () => ({ text: { [Symbol.asyncIterator]: () => ({ next: stuck, return: stuck }) } });
+        const states = [];
+        const result = await h.ai.run('copilot', 'reviewed', { owner: 'tda', onState: state => states.push(state) });
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(typeof release, 'function', 'The requested boundary is awaiting the provider');
+        assert.equal(h.ai.cancel('tls', result.jobId), false, 'Another panel cannot cancel this job');
+        assert.equal(h.ai.cancel('tda', 'ai:999'), false, 'A stale button cannot cancel a newer job');
+        assert.equal(h.ai.cancel('tda', result.jobId), true);
+        await h.ai.job;
+        assert.equal(h.ai.running, false);
+        assert.equal(states.at(-1).state, 'cancelled');
+        assert.equal(h.documents.length, 0);
+        // Start a new job while the old provider still has not cooperated.
+        h.vscode.lm.selectChatModels = () => new Promise(() => {});
+        const next = await h.ai.run('copilot', 'retry', { owner: 'tda' });
+        assert.notEqual(next.jobId, result.jobId);
+        release(stage === 'discovery' ? [h.model] : stage === 'picker' ? { model: h.model } : stage === 'tokens' ? 50 : { done: true });
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(h.ai.running, true, 'Late provider completion cannot clear the new job');
+        assert.equal(h.documents.length, 0);
+        assert.equal(states.at(-1).state, 'cancelled');
+        h.ai.cancel('tda', next.jobId); await h.ai.job;
+        assert.deepEqual(h.errors, []);
+    });
+}
+
+test('an unresponsive provider times out with a visible, retryable error', async () => {
+    const h = host({ timeoutMs: 20 }), states = [];
+    h.vscode.lm.selectChatModels = () => new Promise(() => {});
+    await h.ai.run('copilot', 'reviewed', { onState: state => states.push(state) }); await h.ai.job;
+    assert.equal(h.ai.running, false);
+    assert.equal(states.at(-1).state, 'error');
+    assert.match(states.at(-1).message, /did not finish/);
+    assert.equal(h.errors.length, 1);
+    h.vscode.lm.selectChatModels = async () => [h.model];
+    await h.ai.run('copilot', 'retry'); await h.ai.job;
+    assert.equal(h.documents.length, 1);
+});
+
+test('closing an owning panel cancels pending discovery without requiring provider cooperation', async () => {
+    const h = host(); h.vscode.lm.selectChatModels = () => new Promise(() => {});
+    await h.ai.run('copilot', 'reviewed', { owner: 'tda' });
+    h.ai.close('tls'); assert.equal(h.ai.running, true);
+    h.ai.close('tda'); await h.ai.job;
+    assert.equal(h.ai.running, false); assert.equal(h.errors.length, 0);
 });

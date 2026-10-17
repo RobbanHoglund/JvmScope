@@ -54,3 +54,12 @@ test('a file growing after stat is checked again, and input errors do not yield 
     await assert.rejects(readSources(vscode, [uri('growing.txt')], 'tda'), /64 MiB/); assert.equal(reads, 1);
     await assert.rejects(readSources(vscode, [], 'tda'), /between 1 and 50/);
 });
+
+
+test('AI cancellation requires a bounded job ID, never a provider command', () => {
+    assert.equal(validateRequest(request('aiStatus')).action, 'aiStatus');
+    assert.equal(validateRequest(request('cancelAi', { jobId: 'ai:12' })).jobId, 'ai:12');
+    for (const jobId of [undefined, '', 'web:1', 'command:cancel', 'ai:' + '1'.repeat(13), {}]) {
+        assert.throws(() => validateRequest(request('cancelAi', { jobId })), /Invalid AI job/);
+    }
+});
