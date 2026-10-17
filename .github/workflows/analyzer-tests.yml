@@ -17,7 +17,9 @@ concurrency:
 jobs:
   analyzers:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Standalone and packaged browser suites each take about nine minutes;
+    # leave room for dependency setup, Java packaging and runner variation.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
