@@ -314,6 +314,7 @@ test('TDA thread rows open Details from cells, badges and empty space with mouse
     const row = page.locator('#threadTableBody tr').first();
     await expect(row).toHaveAttribute('aria-label', 'Open details for review-worker');
     expect(await row.evaluate(node => getComputedStyle(node).cursor)).toBe('pointer');
+    await page.locator('#threadColumns').selectOption('all');
     for (const target of [row.locator('.thread-cell-name'), row.locator('.tda-state-badge'), row.locator('.badge-locks'), row.locator('td').nth(8)]) {
         await target.click();
         await expect(page.locator('#threadModalTitle')).toHaveText('review-worker');
@@ -379,7 +380,7 @@ test('TDA row activation follows exact thread identity after paging, sorting, fi
     const inspectRow = async (row, snapshot) => {
         const id = (await row.locator('td').nth(13).textContent()).trim();
         const name = await row.locator('.thread-cell-name').textContent();
-        await row.locator('td').first().click();
+        await row.locator('.thread-cell-name').click();
         await expect(page.locator('#threadModalTitle')).toHaveText(name);
         await expect(page.locator('#threadModalSummary')).toContainText(`JVM ID #${id}`);
         await expect(page.locator('#threadModal .thread-details-code')).toContainText(`example.Snapshot${snapshot}.run(Worker.java:${id})`);

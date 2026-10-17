@@ -596,6 +596,14 @@ function shouldExcludeFromRunnableClusters(thread) {
     );
 }
 
+function runnableStackContext(thread) {
+    // HotSpot may report RUNNABLE while waiting for class initialization.
+    // Shared caller frames must not merge that explicit wait with other work.
+    const classes = [...new Set((thread.classInitializationWaits || [])
+        .map(wait => wait.className).filter(Boolean))].sort();
+    return classes.length ? JSON.stringify(classes) : '';
+}
+
 function buildRunnableStackClusters(dumps) {
     if (!Array.isArray(dumps) || dumps.length <= 1) return [];
 
@@ -623,11 +631,13 @@ function buildRunnableStackClusters(dumps) {
     const ASSIGNMENT_SIMILARITY_THRESHOLD = 0.42;
 
     for (const thread of candidates) {
+        const contextKey = runnableStackContext(thread);
         let bestCluster = null;
         let bestScore = -1;
         let bestMatch = null;
 
         for (const cluster of candidateIndex.matching(thread)) {
+            if (cluster.contextKey !== contextKey) continue;
             const representative = cluster.representative;
 
             const prefilterMatch =
@@ -668,6 +678,8 @@ function buildRunnableStackClusters(dumps) {
 
             clusters.push({
                 id: `runnable-cluster-${clusters.length + 1}`,
+                contextKey,
+                observationKind: contextKey ? 'class-initialization-wait' : 'runnable-stack',
                 representative: thread,
                 members: [thread],
                 seenDumpIndexes: new Set([thread.dumpIndex]),
@@ -1311,9 +1323,16 @@ function buildLockContentionChains(threads) {
         const waiterEntry = waitersByLockId.get(lockId);
 
         const owners = ownerEntry?.owners || [];
-        const waiters = waiterEntry?.waiters || [];
+        const waiters = (waiterEntry?.waiters || []).filter(thread => {
+            if (owners.length) return true;
+            if ((thread.waitingLocks || []).some(lock => lock.lockId === lockId && lock.kind === 'monitor-enter')) return true;
+            // An ownerless park can be a condition, latch or ordinary parking.
+            // Reuse the existing acquisition classification before calling it contention.
+            return ['reentrant-lock-contention', 'rwlock-reader-wait', 'rwlock-writer-lock']
+                .includes(evaluateSynchronizationPatterns(thread).primary?.key);
+        });
 
-        if (owners.length === 0 || waiters.length === 0) continue;
+        if (waiters.length === 0) continue;
 
         const lockType = ownerEntry?.lockType || waiterEntry?.lockType || null;
 
@@ -1331,6 +1350,9 @@ function buildLockContentionChains(threads) {
             lockType,
             owners: uniqueOwners,
             waiters: uniqueWaiters,
+            reportedOwnerJvmIds: [...new Set(uniqueWaiters.flatMap(thread => (thread.waitingLocks || [])
+                .filter(lock => lock.lockId === lockId && lock.ownerJvmId != null)
+                .map(lock => String(lock.ownerJvmId))))],
         });
     }
 

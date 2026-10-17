@@ -4,9 +4,9 @@ const CONTENDED_WAIT_KINDS = new Set(['monitor-enter', 'synchronizer-park']);
 
 export const RAW_DUMP_FILTERS = Object.freeze({
     everything: 'Everything',
-    problems: 'Problems only',
+    problems: 'Investigation candidates',
     contended: 'Contended only',
-    deadlocks: 'Confirmed deadlocks',
+    deadlocks: 'Deadlocked threads',
     blocked: 'BLOCKED threads',
     holders: 'Lock holders',
     holdingAndWaiting: 'Holding and waiting',

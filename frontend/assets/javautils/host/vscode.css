@@ -96,6 +96,10 @@ body[data-jvmscope-host="vscode"] {
     background: var(--vscode-list-activeSelectionBackground, #094771) !important;
     border-color: var(--vscode-focusBorder, var(--host-link)) !important;
   }
+  & .deadlock-cycle-btn[aria-pressed="true"]:hover {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+  }
   & :focus-visible { outline: 2px solid var(--vscode-focusBorder, #8ddcff) !important; outline-offset: 2px; }
   & :is(th, td) { border-color: var(--host-border) !important; }
   & :is(thead, th) { background: var(--host-raised) !important; }
@@ -150,6 +154,14 @@ body[data-jvmscope-host="vscode"] {
   & .dependency-graph-node-label { fill: var(--host-fg) !important; stroke: var(--host-bg); }
   & .dependency-graph-node-sub-label { fill: var(--host-muted) !important; stroke: var(--host-bg); }
   & .dependency-graph-node-symbol { fill: #fff !important; }
+  & :is(.dependency-graph-edge-wait,.dependency-graph-edge-park,.dependency-graph-edge-class-init-wait) { stroke: var(--host-warning); }
+  & :is(.dependency-graph-edge-hold,.dependency-graph-edge-initialize,.dependency-graph-edge-dependency) { stroke: var(--host-link); }
+  & .dependency-graph-edge.is-confirmed-deadlock { stroke: var(--host-error); }
+  & :is(marker[id$="-arrow-wait"],marker[id$="-arrow-park"],marker[id$="-arrow-class-init-wait"]) path { fill: var(--host-warning); }
+  & :is(marker[id$="-arrow-hold"],marker[id$="-arrow-initialize"],marker[id$="-arrow-dependency"]) path { fill: var(--host-link); }
+  & marker[id$="-arrow-deadlock"] path { fill: var(--host-error); }
+  & .dependency-graph-legend-line.relation-wait { border-color: var(--host-warning); }
+  & :is(.dependency-graph-legend-line.relation-hold,.dependency-graph-legend-line.relation-dependency) { border-color: var(--host-link); }
   & .host-source-status:empty { display: none; }
   & .host-source-status:not(:empty) { display: block; flex-basis: 100%; padding: 8px; overflow-wrap: anywhere; }
   & #hostError { padding: 10px 14px; border: 1px solid; border-radius: 6px; }
@@ -162,6 +174,12 @@ body[data-jvmscope-host="vscode"] {
   & :is(.dump-select-wrap, .tda-file-actions, .tls-inspector-navigation, .analyzer-start-actions) { flex-wrap: wrap; }
   & .analyzer-file-name { overflow-wrap: anywhere; }
   & .table-container { max-width: 100%; min-width: 0; overflow-x: auto; }
+  /* Keep the selected CPU series' foreground and background paired on hover. */
+  & .tda-cpu-ranking .cpu-timeline-legend-item[aria-pressed="true"] {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+    border-color: var(--vscode-focusBorder, var(--host-link)) !important;
+  }
   & .tls-period-popover { max-width: calc(100vw - 48px); }
   & :is(.modal, #threadModal, #howToUseModal) { max-width: calc(100vw - 24px); }
   & .modal-dialog { max-width: 100%; }
@@ -263,6 +281,15 @@ body[data-jvmscope-host="vscode"] #rawDumpDialog {
   }
   & :is(.raw-workspace-evidence, .raw-workspace-thread-lines, .raw-workspace-exact) { background: var(--host-bg); }
   & :is(.raw-workspace-line, .raw-workspace-line-content) { font-family: var(--vscode-editor-font-family, monospace); }
+  & .raw-workspace-line-number { color: var(--host-muted) !important; background: var(--host-bg); border-color: var(--host-border); }
+  & .raw-workspace-line:hover { background: var(--vscode-list-hoverBackground, var(--host-raised)); }
+  /* Keep selected controls legible while the pointer is over them. The generic
+     button hover background must not replace only half of the selection pair. */
+  & :is(.raw-workspace-mode, .raw-workspace-filter).is-active {
+    color: var(--vscode-list-activeSelectionForeground, var(--host-fg)) !important;
+    background: var(--vscode-list-activeSelectionBackground, #094771) !important;
+    border-color: var(--vscode-focusBorder, var(--host-link)) !important;
+  }
   & .raw-workspace-thread-block.is-selected { border-color: var(--host-link); }
   & .raw-workspace-thread-link.is-active {
     background: var(--vscode-list-activeSelectionBackground, #094771) !important;
@@ -272,7 +299,8 @@ body[data-jvmscope-host="vscode"] #rawDumpDialog {
     color: var(--host-error) !important; background: color-mix(in srgb, var(--host-error) 10%, var(--host-bg));
   }
   & .raw-workspace-state.is-runnable { color: var(--host-success) !important; background: color-mix(in srgb, var(--host-success) 10%, var(--host-bg)); }
-  & :is(.raw-workspace-role:not(.is-deadlock), .raw-workspace-state.is-waiting, .raw-workspace-state.is-timed-waiting) {
+  & .raw-workspace-role:not(.is-deadlock) { color: var(--host-fg) !important; background: transparent; }
+  & :is(.raw-workspace-state.is-waiting, .raw-workspace-state.is-timed-waiting) {
     color: var(--host-warning) !important; background: color-mix(in srgb, var(--host-warning) 10%, var(--host-bg));
   }
   & .raw-workspace-line.is-lock .raw-workspace-line-content { color: var(--host-warning) !important; }
@@ -287,7 +315,7 @@ body[data-jvmscope-host="vscode"] #rawDumpDialog {
 }
 @media (max-width: 1000px) {
   body[data-jvmscope-host="vscode"] #rawDumpDialog {
-    & .raw-workspace-page { --raw-outline-width: 170px; }
+    & .raw-workspace-page { --raw-outline-width: 190px; }
     & .raw-workspace-layout { grid-template-columns: var(--raw-outline-width) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
     & .raw-workspace-page.hide-outline { --raw-outline-width: 0px; }
     & .raw-workspace-inspector { grid-column: 1 / -1; grid-row: 2; max-height: 220px; }

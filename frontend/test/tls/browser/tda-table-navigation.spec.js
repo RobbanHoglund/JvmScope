@@ -3,7 +3,7 @@ test('TDA thread-table shortcut is visible without scrolling and preserves analy
     await page.goto(`${appUrl}/jvmscope/tda.html`);
     await page.locator('#loadSampleBtn').click();
     await expect(page.locator('#threadTableBody tr').first()).toBeAttached();
-    const jump=page.getByRole('link',{name:'Threads ↓',exact:true});
+    const jump=page.getByRole('link',{name:'Threads',exact:true});
     await expect(jump).toBeVisible({timeout:1000});
     const shortcut=await jump.boundingBox();
     expect(shortcut.height).toBeLessThanOrEqual(36);

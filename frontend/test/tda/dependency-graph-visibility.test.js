@@ -67,7 +67,8 @@ test('compact contention selects top locks and caps visible waiters without losi
     assert.equal(result.selectedLocks.length, 5);
     assert.equal(result.hiddenLockCount, 3);
     assert.ok([...result.visibleWaiterIdsByLock.values()].every((ids) => ids.size <= 6));
-    assert.equal(result.hiddenWaiterObservationCount, 20);
+    assert.equal(result.hiddenWaiterObservationCount, 50);
+    assert.equal(result.visibleWaiterObservationCount + result.hiddenWaiterObservationCount, 80);
     assert.equal(result.contendedLockCount, 8);
 });
 
@@ -88,6 +89,7 @@ test('contention visibility can hide synchronizers and unresolved waits', () => 
     assert.deepEqual(result.selectedLocks.map((node) => node.id), ['lock:monitor']);
     assert.equal(result.filteredByTypeCount, 1);
     assert.equal(result.filteredUnresolvedCount, 1);
+    assert.equal(result.hiddenWaiterObservationCount, 0, 'explicit filters are not density compaction');
 });
 
 test('waiter compaction prioritizes deadlocked and BLOCKED threads', () => {
@@ -107,6 +109,20 @@ test('waiter compaction prioritizes deadlocked and BLOCKED threads', () => {
     assert.equal(visible.size, 6);
     assert.ok(visible.has('thread:blocked'));
     assert.ok(visible.has('thread:deadlocked'));
+});
+
+test('confirmed resources and cycle waiters do not consume the ordinary compact budget', () => {
+    const threads = Array.from({ length: 8 }, (_, i) => thread(`cycle-${i}`, 'BLOCKED', { deadlocked: true }));
+    const confirmed = threads.map((node, i) => lock(`cycle-${i}`, 'monitor', [node.id], [], { deadlocked: true }));
+    // Even unusually large confirmed groups must retain every cycle participant.
+    confirmed[0].waiterIds = threads.map(node => node.id);
+    const ordinary = Array.from({ length: 6 }, (_, i) => lock(`other-${i}`, 'monitor', ['thread:other']));
+    const result = buildContentionVisibility({ lockNodes: [...confirmed, ...ordinary], threadNodes: threads });
+    assert.equal(result.selectedLocks.length, 13);
+    assert.ok(confirmed.every(node => result.selectedLockIds.has(node.id)));
+    assert.equal(result.visibleWaiterIdsByLock.get(confirmed[0].id).size, 8);
+    assert.equal(result.hiddenLockCount, 1);
+    assert.equal(result.hiddenWaiterObservationCount, 1);
 });
 
 test('builds exact synchronized and synchronizer waiter/holder roles', () => {

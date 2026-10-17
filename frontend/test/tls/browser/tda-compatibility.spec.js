@@ -28,7 +28,7 @@ test('TLS branding leaves TDA capture, filtering, details and raw-dump styles wo
     const opened = page.waitForEvent('popup');
     await page.locator('#openRawDumpBtn').click();
     const raw = await opened;
-    await expect(raw.locator('body')).toHaveClass('raw-workspace-page');
+    await expect(raw.locator('body')).toHaveClass(/raw-workspace-page/);
     await expect(raw.getByRole('button', { name: 'Show the canonical raw dump', exact: true })).toBeVisible();
     expect(await raw.locator('body').evaluate(body => getComputedStyle(body).getPropertyValue('--tls-accent'))).toBe('');
     await raw.getByRole('button', { name: 'Close raw dump evidence workspace', exact: true }).click().catch(error => {

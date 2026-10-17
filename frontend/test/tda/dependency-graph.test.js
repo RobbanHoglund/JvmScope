@@ -24,6 +24,31 @@ function thread(sourceKey, threadName, overrides = {}) {
     };
 }
 
+test('class initialization resources preserve Java case-sensitive identity', () => {
+    const threads = ['example.Target', 'example.target'].flatMap((className, index) => [
+        thread(`owner-${index}`, `owner-${index}`, { initializingClasses: [{ className }] }),
+        thread(`waiter-${index}`, `waiter-${index}`, { classInitializationWaits: [{ className }] }),
+    ]);
+    const graph = buildThreadDependencyGraph(threads);
+    assert.equal(graph.metrics.classInitializationResourceCount, 2);
+    assert.equal(graph.metrics.ambiguousWaitCount, 0);
+    graph.lockNodes.forEach((resource, index) => {
+        assert.deepEqual(resource.ownerIds, [`thread:owner-${index}`]);
+        assert.deepEqual(resource.waiterIds, [`thread:waiter-${index}`]);
+    });
+    assert.equal(graph.dependencyEdges.length, 2);
+});
+
+test('hexadecimal JVM addresses still match across letter case', () => {
+    const graph = buildThreadDependencyGraph([
+        thread('owner', 'owner', { heldLocks: [lock('0xAaBb')] }),
+        thread('waiter', 'waiter', { waitingLocks: [lock('0XAABB', 'monitor-enter')] }),
+    ]);
+    assert.equal(graph.lockNodes.length, 1);
+    assert.equal(graph.dependencyEdges.length, 1);
+    assert.equal(graph.metrics.unresolvedWaitCount, 0);
+});
+
 test('builds an explicit waiter -> synchronizer -> owner resource path and a direct dependency', async () => {
     const threads = parseThreadDump(await fixtures('ownable-synchronizer-contention.txt'));
     const graph = buildThreadDependencyGraph(threads);

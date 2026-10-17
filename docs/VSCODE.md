@@ -23,8 +23,12 @@ an analyzer's current input; the in-view Add/Replace control applies to TDA's fi
 picker and Paste. No source file is modified by analysis.
 
 **Raw dump** opens the shared evidence workspace inside the analyzer webview,
-with Annotated/Exact modes, search, thread filters, lock inspection and links to
-Details or the dependency graph. It retains the webview's CSP and live theme.
+with **Exact** first and selected for every new evidence view. This displays the
+complete selected snapshot text. **Annotated** adds thread filters, lock inspection
+and links to Details or the dependency graph. Search works in both modes. Returning
+to an existing view preserves its current mode, filter and search; display preferences
+such as wrapping survive new views, but the initial mode is always Exact.
+It retains the webview's CSP and live theme.
 Copy uses the native clipboard. **Open as text** is an explicit action for a
 read-only virtual text document. Both views belong to the selected snapshot and
 are invalidated when it changes or the analysis closes. These are captured
@@ -86,7 +90,9 @@ meaning belongs in the shared models with JVM-fixture and UI regression coverage
   documents, packaged asset paths, CSP and route restrictions. Sidebar tests cover
   pagination, duplicate names, revision changes, disposal and invalid replies.
 - Browser tests load the production extension assets with the same CSP, inline
-  workers and a simulated host transport; they cover TDA/TLS results, host actions,
+  workers and a simulated host transport. CI extracts the validated VSIX and sets
+  `VSCODE_TEST_EXTENSION_ROOT` to its `extension` directory, so these tests use
+  the delivered host modules and webview assets. They cover TDA/TLS results, host actions,
   exact sidebar selections, hidden filters, bundled examples and stale requests.
 - Extension-host tests run inside a real isolated VS Code, activating commands,
   loading real captures in both webviews, comparing snapshots, reading an

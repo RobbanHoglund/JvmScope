@@ -31,7 +31,7 @@ test('only a lock explicitly present in a reported cycle gets a deadlock marker'
     assert.equal(isConfirmedContentionDeadlock({ lockId: '0xdef', owners: [{ isDeadlocked: true }] }, cycles), false);
     assert.equal(isConfirmedContentionDeadlock({ lockId: '' }, [{ threads: [{}] }]), false);
     const html = renderContentionTable([{ lockId: '0xABC' }, { lockId: '0xDEF' }], cycles);
-    assert.equal((html.match(/💀 Deadlock/g) || []).length, 1);
+    assert.equal((html.match(/contention-deadlock/g) || []).length, 1);
 });
 
 test('full addresses and types survive abbreviation and untrusted names are escaped', () => {

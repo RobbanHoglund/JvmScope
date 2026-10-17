@@ -17,7 +17,7 @@ The release is labeled **Preview** while broader desktop feedback is collected.
 For an unpublished build or offline installation:
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
-2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.8.vsix`.
+2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.10.vsix`.
 3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
 
 Alternatively, build the package using the instructions below. Requires VS Code
@@ -29,11 +29,17 @@ in this first version.
 - Use the **blue thread-tree** and **teal shield** buttons at the top-right of an
   editor's tab bar to open or focus the Java thread dump and TLS analyzers.
   Their tooltips name each tool; the icons adapt to light and dark themes.
-- Right-click a capture in Explorer and choose **🧵 Analyze as Java Thread Dump** or **🔒 Analyze as Java TLS Log**.
+- Right-click a capture in Explorer and choose **Analyze as Java Thread Dump** or **Analyze as Java TLS Log**.
+  Context menus and the Command Palette use plain text labels; the thread-tree and
+  shield icons identify the analyzers on toolbar buttons.
 - Select several thread dump files to compare snapshots. TLS analysis opens one log at a time.
 - Run either **Analyze as…** command from the Command Palette to analyze the active editor, including unsaved changes and untitled documents.
 - Inside an analyzer, use **Choose dumps / Choose log** to open the native file picker, or try the bundled examples.
-- **Raw dump** opens JvmScope's evidence workspace inside the analysis tab: Annotated/Exact modes, search, thread filters, lock inspection and links to Details/Graph. **Open as text** opens the complete snapshot in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
+- **Raw dump** opens JvmScope's evidence workspace inside the analysis tab. **Exact** is first and is the default for new evidence views, showing the complete snapshot text. Choose **Annotated** for thread filters, lock inspection and links to Details/Graph. Search works in both modes; returning to an existing view keeps its current mode. **Open as text** opens the complete snapshot in a read-only VS Code editor. Copy controls use the VS Code clipboard. Findings and graph exports use a Save dialog.
+- TDA leads with the highest-priority finding and an **Inspect threads** action. Snapshot totals distinguish missing CPU measurements from measured zero; **Snapshot context & coverage** retains full timing and measurement details.
+- **Columns: Analysis** keeps thread evidence and Details within a narrow editor. **All technical columns** exposes counters, IDs and priorities without changing the sort. **Reapply filters** updates the table, not the source file.
+- The CPU timeline covers the whole capture. Its ranked table compares the selected interval with peak CPU and measured-interval counts. Select a thread for duration and timing details; **Clear selection** resets the highlight.
+- In Annotated raw evidence, **Investigation candidates** means threads with wait/lock evidence, not proven faults. Filter counts are threads; search follows the selected view. **Copy snapshot** always copies the complete selected snapshot, including when filtered.
 - In TLS **Investigate**, drag the divider between the table and details to resize them.
   You can also focus it with Tab and use Left/Right, Shift for larger steps, or Home/End
   for the limits. Double-click resets the split. The width is remembered; narrow editors
@@ -107,7 +113,7 @@ The sidebar and both analyzers follow VS Code's theme, including light, dark,
 high-contrast dark and high-contrast light. Run **Preferences: Color Theme** to
 switch themes; open analyzers update immediately. Both analyzers also adapt to
 narrow editor splits. The standalone application and exported reports retain
-their own palettes. Raw dump opens the structured evidence workspace; its
+their own palettes. Raw dump opens the evidence workspace in Exact mode; its
 **Open as text** action opens the native read-only editor.
 The verified inputs are HotSpot thread dumps and SunJSSE traces; missing fields
 remain unknown. This extension adds no additional JVM/vendor compatibility claim.
@@ -153,7 +159,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.8.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.10.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

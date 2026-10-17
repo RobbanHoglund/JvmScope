@@ -29,6 +29,7 @@ analyzers. It describes goals, not shipped or verified functionality.
 
 These are dated records, not the current support matrix or release verdict:
 
+- [TDA UI/UX review](TDA-UX-REVIEW-2026-10-16.md): four-view review, Exact-first evidence, host-theme fixes and prioritized design recommendations.
 - [Initial public-release review](PUBLICATION-REVIEW-2026-10-03.md): former Spring baseline and historical test gaps.
 - [Initial migration](INITIAL-MIGRATION.md): clean snapshot and package migration.
 - [Pages feasibility study](GITHUB-PAGES-FEASIBILITY.md): isolated prototype before implementation.

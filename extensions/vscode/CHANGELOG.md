@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.3.14 — Compact TLS capture header
+
+- Keep the complete TLS capture filename beside its label on a dedicated wrapping row, with tighter header spacing. Restore at least six complete interaction rows at 1366 × 768 with capture analysis collapsed.
+- Extend the layout regression to an uploaded capture with a long filename and count only rows fully inside both the table and the browser viewport.
+
+## 0.3.13 — Visible capture names and finding graphs
+
+- Show complete capture names on their own wrapping row in both analyzers, including narrow editors and zoomed views.
+- Retain acquisition waits when held-lock ownership cannot be matched. Show qualified JVM owner IDs without drawing unsupported ownership arrows; keep condition waits, latch waits and generic parks out of ownerless acquisition chains.
+- Open the graph for the priority lock-contention, lock-bottleneck or class-initialization finding automatically. Add a direct Show graph action and preserve intentional panel collapse while filtering the same snapshot.
+
+## 0.3.12 — Deadlock graphs at first glance
+
+- Open confirmed deadlock evidence automatically for each new snapshot and show the first cycle immediately.
+- Select other cycles through separate buttons with participant counts; show one graph at a time and retain the selected cycle while filtering or refreshing the current snapshot.
+- Make the Deadlocks shortcut open the panel and move keyboard focus there in one action. Keep lock addresses and relationship details collapsed until requested.
+
+## 0.3.11 — Identifiable diagram update
+
+- Give the inline deadlock, lock-contention and class-initialization diagrams a distinct extension version and VSIX filename, so the installed update can be verified.
+- Run webview browser regressions against the modules and assets extracted from the actual VSIX in CI.
+
+## 0.3.10 — Focused thread investigation
+
+- Restore deadlock diagrams as the primary view, with clickable thread cards, explicit lock nodes and complete return arrows based on resolved JVM-reported owners. Retain relationship details below each graph.
+- Show lock-contention and class-initialization dependencies inline. Keep unknown owners unresolved, expose every waiter through disclosure, and adapt graph layout to narrow editors and all VS Code theme families.
+- Keep explicit class-initialization waits separate in recurring stack clusters and preserve case-sensitive Java class identities in the dependency graph.
+- Preserve complete confirmed deadlock cycles in compact graphs, retain room for other contention, count all omitted waits, search every parsed frame, and render class-initialization arrowheads.
+- Add Recurring stacks and Dependency map shortcuts, exclusive trend filtering, readable responsive cluster cards, visible density controls and a reveal-all action. Distinguish waiting from ownership with solid/dashed edges and place flow labels outside the main arrows.
+- Remove emoji prefixes from the Analyze commands. Reuse the toolbar's themed thread-tree and shield SVGs in their command definitions; native context menus and the Command Palette retain plain text labels.
+- Lead with the strongest finding and explicit counts for cycles, threads and CPU measurement coverage. Keep full metadata in a disclosure.
+- Deadlock relationships show the JVM-reported owner for every participant; missing mappings remain unknown.
+- Default to analysis columns, retain technical columns and sort context, and keep Details reachable in narrow editors.
+- Compare CPU intervals in a ranked table with selected-snapshot scope, duration, timing basis and Clear selection.
+- Simplify Annotated filters, label wait/lock evidence as investigation candidates, clarify Copy/search/print scope and show only relevant Display settings.
+- Keep secondary panels compact, prevent header overlap and correct selected CPU hover contrast across host themes. Add related unit, real-sample and browser regressions.
+
+## 0.3.9 — Exact-first raw evidence
+
+- Put Exact before Annotated and start every new raw evidence view in Exact, including upgrades with an old Annotated preference. Keep the current mode when returning to an existing view.
+- Preserve wrapping and line-number preferences, structured filtering, search, Details/Graph return and complete-snapshot clipboard/editor actions.
+- Correct selected mode/filter hover contrast, raw-line hover and line-number colors across VS Code theme families.
+- Add browser regressions for default mode, legacy preferences, keyboard order and raw evidence theme states. Record the four-view TDA UI/UX review and remaining design priorities.
+
 ## 0.3.8 — View startup recovery and clearer sidebar icon
 
 - Recreate timed-out views on the next Open command, ignore late messages from failed views, and clean up failed page reads. Preserve healthy analyzer sessions.
@@ -49,7 +93,7 @@
 
 ## 0.3.1 — Analyzer menu symbols
 
-- Prefix Analyze as Java Thread Dump with 🧵 and Analyze as Java TLS Log with 🔒 so the two actions are easier to distinguish in context menus and the Command Palette.
+- Add emoji prefixes to the two Analyze commands in context menus and the Command Palette (removed in 0.3.10).
 
 ## 0.3.0 — Native analysis sidebar preview
 

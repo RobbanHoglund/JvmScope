@@ -73,6 +73,7 @@ test('prioritizes deadlocks, blocked threads, blockers, and contended resources'
     };
 
     assert.ok(graphNodePriority(contendedLock) > graphNodePriority(routineLock));
+    assert.ok(graphNodePriority(contendedLock) > graphNodePriority(blockedThread));
     assert.ok(graphNodePriority(blockedThread) > graphNodePriority(routineLock));
     assert.ok(graphNodePriority(deadlockedThread) > graphNodePriority(blockedThread));
 });

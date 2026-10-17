@@ -15,7 +15,8 @@ test('TDA hides missing charts and restores them for measured zero values and la
     await page.locator('#threadStateChartPanel details > summary').first().click();
     await expect(card(page, 'threadStateChart')).toBeVisible();
     for (const id of ['cpuTimeChart', 'elapsedChart', 'allocatedChart', 'allocationRateChart']) await expect(card(page, id)).not.toBeVisible();
-    await expect(page.locator('.cpu-timeline-card')).not.toBeVisible();
+    await expect(page.locator('.cpu-timeline-card')).toContainText('At least two correlated snapshots');
+    await expect(page.locator('#cpuTimelineChart svg')).toHaveCount(0);
     const gridBounds = await page.locator('.thread-state-chart-grid').boundingBox();
     const stateBounds = await card(page, 'threadStateChart').boundingBox();
     expect(Math.abs(stateBounds.width - gridBounds.width)).toBeLessThan(2);
@@ -42,7 +43,7 @@ test('TDA hides missing charts and restores them for measured zero values and la
     await upload(page, dump(0));
     await expect(page.locator('#rowCount')).toHaveText('1–1 of 1 threads');
     await expect(card(page, 'cpuTimeChart')).not.toBeVisible();
-    await expect(page.locator('.cpu-timeline-card')).not.toBeVisible();
+    await expect(page.locator('.cpu-timeline-card')).toContainText('At least two correlated snapshots');
 });
 
 test('canonical analyzer URLs and legacy bookmarks work with query parameters', async ({ page, appUrl }) => {

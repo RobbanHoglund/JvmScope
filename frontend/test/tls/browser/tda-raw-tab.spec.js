@@ -39,6 +39,29 @@ test.beforeEach(async ({ page, appUrl }) => {
     await load(page);
 });
 
+test('TDA new raw tabs start in Exact before Annotated, including legacy preferences', async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem('tda.rawDumpWorkspace.v1', JSON.stringify({
+        mode: 'annotated', wrap: true, lineNumbers: false, filter: 'blocked',
+    })));
+    const raw = await openRaw(page);
+    const modes = raw.getByRole('group', { name: 'Evidence display' }).getByRole('button');
+    await expect(modes).toHaveText(['Exact', 'Annotated']);
+    await expect(modes.nth(0)).toHaveAttribute('aria-pressed', 'true');
+    await expect(modes.nth(1)).toHaveAttribute('aria-pressed', 'false');
+    await expect(raw.locator('body')).toHaveClass(/is-wrapped/);
+    await expect(raw.locator('body')).toHaveClass(/hide-line-numbers/);
+    await expect(raw.locator('.raw-workspace-outline')).toBeHidden();
+    expect((await raw.locator('.raw-workspace-line-content').allTextContents())
+        .map(line => line === ' ' ? '' : line).join('\n')).toBe(source);
+    await modes.nth(0).focus();
+    await raw.keyboard.press('Tab');
+    await expect(modes.nth(1)).toBeFocused();
+    await raw.keyboard.press('Space');
+    await expect(modes.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(1);
+    await raw.close();
+});
+
 test('TDA raw evidence opens a reusable tab with exact text, copy, search and filters', async ({ page, context }) => {
     const raw = await openRaw(page);
     await expect(page.locator('#rawDumpDialog, #rawDumpFrame')).toHaveCount(0);
@@ -46,6 +69,8 @@ test('TDA raw evidence opens a reusable tab with exact text, copy, search and fi
     expect(await raw.evaluate(() => document.compatMode)).toBe('CSS1Compat');
     await expect(raw.locator('script')).toHaveCount(0);
     expect(await raw.evaluate(() => window.rawInjected)).toBeUndefined();
+    await expect(raw.getByRole('button', { name: 'Show the canonical raw dump', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await raw.getByRole('button', { name: 'Show structured evidence', exact: true }).click();
     await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(2);
 
     // The parent stays usable, and its table filter does not hide raw evidence.
@@ -97,6 +122,9 @@ test('TDA large raw captures build visible lines while searching, copying and pr
     const largeSource = lines.join('\n');
     await load(page, largeSource);
     const raw = await openRaw(page);
+    await expect(raw.locator('.raw-workspace-exact')).toBeVisible();
+    await expect.poll(() => raw.locator('.raw-workspace-line').count()).toBeLessThan(1000);
+    await raw.getByRole('button', { name: 'Show structured evidence', exact: true }).click();
     await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(300);
     await expect(raw.locator('.raw-workspace-line')).toHaveCount(0);
     await raw.getByRole('button', { name: 'Expand worker-000', exact: true }).click();
@@ -144,6 +172,7 @@ test('TDA large raw captures build visible lines while searching, copying and pr
 
 test('TDA raw-tab details and thread/lock graph links return to the same evidence tab', async ({ page }) => {
     const raw = await openRaw(page);
+    await raw.getByRole('button', { name: 'Show structured evidence', exact: true }).click();
     const details = raw.getByRole('button', { name: 'Open details for holder', exact: true });
     await details.click();
     await expect(page.locator('#threadModal')).toBeVisible();
@@ -169,10 +198,13 @@ test('TDA raw-tab details and thread/lock graph links return to the same evidenc
 
 test('TDA raw tab can be closed natively and reopened with display preferences', async ({ page }) => {
     const first = await openRaw(page);
-    await first.getByRole('button', { name: 'Show the canonical raw dump', exact: true }).click();
+    await first.getByRole('button', { name: 'Show structured evidence', exact: true }).click();
+    await first.getByRole('button', { name: 'Display settings', exact: true }).click();
+    await first.getByRole('checkbox', { name: 'Wrap long lines', exact: true }).check();
     await first.close();
     const second = await openRaw(page);
     await expect(second.getByRole('button', { name: 'Show the canonical raw dump', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(second.locator('body')).toHaveClass(/is-wrapped/);
     await second.getByRole('searchbox', { name: 'Search raw dump evidence' }).fill('holder');
     await second.keyboard.press('Escape');
     await expect(second.getByRole('searchbox', { name: 'Search raw dump evidence' })).toHaveValue('');
@@ -231,7 +263,7 @@ test('TDA blocked raw tabs show recovery guidance without replacing parse diagno
     await page.evaluate(() => { window.open = window.savedOpen; delete window.savedOpen; });
     const raw = await openRaw(page);
     await expect(page.locator('#rawDumpStatus')).toBeHidden();
-    await expect(raw.locator('.raw-workspace-thread-block')).toHaveCount(2);
+    await expect(raw.locator('.raw-workspace-exact')).toContainText('Holder.java:10');
 });
 
 test('TDA pending clipboard writes settle safely after raw-tab close or navigation', async ({ page, appUrl }) => {

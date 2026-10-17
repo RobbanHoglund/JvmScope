@@ -5,7 +5,7 @@ export function renderBlockingPatternView(root, { patterns, summary, selectedKey
     const pattern = patterns.find(p => p.key === selectedKey);
     const selectedObservation = patternSnapshot(pattern, dumps, snapshotIndex).observation;
     root.innerHTML = `<h3>Follow a blocking pattern</h3><p>Rank: peak unique observed dependents, then comparable recurrence. Snapshot observations only.</p>
-        <label>Pattern <select id="blockingPatternSelect"><option value="">Full snapshot graph</option>${patterns.map(p => `<option value="${a(p.key)}"${p.key === selectedKey ? ' selected' : ''}>${h(p.title)} · peak ${p.peakDependents} · recurrence ${p.comparableRecurrences}</option>`).join('')}</select></label>
+        <label>Pattern <select id="blockingPatternSelect"><option value="">Snapshot overview</option>${patterns.map(p => `<option value="${a(p.key)}"${p.key === selectedKey ? ' selected' : ''}>${h(p.title)} · peak ${p.peakDependents} · recurrence ${p.comparableRecurrences}</option>`).join('')}</select></label>
         ${summary?.status === 'limited' ? `<p role="status">${h(summary.reason)}</p>` : !patterns.length ? '<p>No identified blocker with observed dependents. Unresolved owners remain available in the full graph.</p>' : ''}
         ${pattern ? `<p>${h(pattern.priorityReason)}</p><div class="blocking-snapshots">${dumps.map(d => {
             const view = patternSnapshot(pattern, dumps, d.index), o = view.observation;

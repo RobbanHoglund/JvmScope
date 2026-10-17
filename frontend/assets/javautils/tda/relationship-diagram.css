@@ -1,0 +1,56 @@
+.tda-page .relationship-figure {
+    --rel-wait: var(--host-warning, #e4b05d);
+    --rel-owner: var(--host-link, #80b9e9);
+    margin: 14px 0 0;
+    border: 1px solid var(--tda-panel-border, #35404c);
+    border-radius: 10px;
+    background: var(--tda-surface-inset, #10151d);
+    overflow: hidden;
+}
+.tda-page .relationship-figure.is-deadlock { --rel-wait: var(--host-error, #f49a9a); }
+.tda-page .relationship-canvas { position: relative; min-height: 150px; width: 100%; }
+.tda-page .relationship-connectors { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.tda-page .relationship-edge > path { stroke: var(--rel-wait); stroke-width: 2; fill: none; stroke-linejoin: round; }
+.tda-page .relationship-edge.is-owner > path { stroke: var(--rel-owner); stroke-dasharray: 5 4; }
+.tda-page .relationship-arrow-wait { fill: var(--rel-wait); }
+.tda-page .relationship-arrow-owner { fill: var(--rel-owner); }
+.tda-page .relationship-edge text { fill: var(--text-normal, #e0e8f2); text-anchor: middle; font: 11px var(--analyzer-ui-font, system-ui); }
+.tda-page .relationship-node {
+    position: absolute; display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+    box-sizing: border-box; min-height: 104px; padding: 14px 16px; margin: 0;
+    border: 1px solid var(--tda-panel-border, #35404c); border-top: 3px solid var(--rel-owner);
+    border-radius: 9px; background: var(--tda-surface-raised, #1a202a);
+    color: var(--text-normal, #e0e8f2); text-align: left; font: inherit; overflow-wrap: anywhere;
+}
+.tda-page .relationship-node.is-resource { border-top-color: var(--rel-wait); }
+.tda-page .relationship-node.is-thread { border-top-color: var(--rel-owner) !important; }
+.tda-page .relationship-node-role { font-size: 10px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; }
+.tda-page .relationship-node-name { font-size: 13px; font-weight: 650; line-height: 1.45; }
+.tda-page .relationship-node-detail { font: 11px/1.5 var(--mono, ui-monospace, monospace); }
+.tda-page .relationship-node-action { font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
+.tda-page .relationship-node-count { font-size: 18px; font-weight: 650; }
+.tda-page .relationship-thread-list { display: flex; flex-direction: column; gap: 6px; }
+.tda-page .relationship-thread-btn { cursor: pointer; }
+.tda-page .relationship-thread-list .relationship-thread-btn {
+    border: 1px solid var(--tda-panel-border, #35404c); border-radius: 5px; padding: 6px 8px;
+    background: var(--tda-surface-inset, #10151d); color: inherit; text-align: left; font: inherit;
+    font-size: 12px; white-space: normal; overflow-wrap: anywhere;
+}
+.tda-page .relationship-thread-btn:hover { border-color: var(--rel-owner); }
+.tda-page .relationship-thread-btn:focus-visible { outline: 2px solid var(--vscode-focusBorder, #80b9e9); outline-offset: 3px; }
+.tda-page .relationship-more { font-size: 12px; }
+.tda-page .relationship-more summary { cursor: pointer; padding: 4px 0; }
+.tda-page .relationship-legend {
+    border-top: 1px solid var(--tda-panel-border, #35404c); padding: 10px 14px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; font-size: 11px; line-height: 1.5;
+}
+.tda-page .relationship-legend > span::before { content: ''; width: 22px; display: inline-block; border-top: 2px solid var(--rel-wait); margin-right: 7px; vertical-align: middle; }
+.tda-page .relationship-legend > .relationship-legend-owner::before { border-top-style: dashed; border-color: var(--rel-owner); }
+.tda-page .relationship-legend strong { font-weight: 600; }
+.tda-page .relationship-evidence { margin-top: 12px; }
+.tda-page .relationship-evidence > summary { cursor: pointer; padding: 8px 0; font-size: 12px; }
+.tda-page .relationship-contention-card { margin: 12px; }
+.tda-page .relationship-contention-card > header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.tda-page .relationship-contention-card h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.tda-page .relationship-contention-more { margin: 12px; }
+.tda-page .relationship-contention-more > summary { padding: 8px 0; cursor: pointer; }

@@ -178,7 +178,10 @@ test('TDA elapsed regression across files cannot enter measured charts or thread
     })));
     await expect(page.locator('#dumpSelect option')).toHaveCount(2);
     await page.locator('#threadStateChartPanel details > summary').first().click();
-    await expect(page.locator('.cpu-timeline-card')).not.toBeVisible();
+    await expect(page.locator('.cpu-timeline-card')).toBeVisible();
+    await expect(page.locator('#cpuTimelineChart')).toContainText('No exact adjacent thread snapshots have reliable CPU rates');
+    await expect(page.locator('#cpuTimelineChart .cpu-timeline-point')).toHaveCount(0);
+    await expect(page.locator('.cpu-timeline-legend-item')).toHaveCount(0);
     await page.locator('#dumpSelect').selectOption('1');
     await page.locator('#threadTableBody tr').getByRole('button', { name: 'Details', exact: true }).click();
     await expect(page.locator('#threadModal')).toContainText('Thread elapsed counter decreased');
@@ -204,7 +207,10 @@ test('TDA jcmd process prefixes prevent CPU correlation across known and unknown
     await upload(page, `${snapshots[0]}\n${snapshots[2]}`, 'different-processes.txt');
     await expect(page.locator('#dumpSelect option')).toHaveCount(2);
     await page.locator('#threadStateChartPanel details > summary').first().click();
-    await expect(page.locator('.cpu-timeline-card')).not.toBeVisible();
+    await expect(page.locator('.cpu-timeline-card')).toBeVisible();
+    await expect(page.locator('#cpuTimelineChart')).toContainText('No exact adjacent thread snapshots have reliable CPU rates');
+    await expect(page.locator('#cpuTimelineChart .cpu-timeline-point')).toHaveCount(0);
+    await expect(page.locator('.cpu-timeline-legend-item')).toHaveCount(0);
 });
 
 test('TDA coarse CPU estimates never enter the measured chart or its peak ranking', async ({page,appUrl}) => {
@@ -213,7 +219,10 @@ test('TDA coarse CPU estimates never enter the measured chart or its peak rankin
     await upload(page,[dump(0,100),dump(1,1600)].join('\n'),'coarse.txt');
     await expect(page.locator('#dumpSelect option')).toHaveCount(2);
     await page.locator('#threadStateChartPanel details > summary').first().click();
-    await expect(page.locator('.cpu-timeline-card')).not.toBeVisible();
+    await expect(page.locator('.cpu-timeline-card')).toBeVisible();
+    await expect(page.locator('#cpuTimelineChart')).toContainText('No exact adjacent thread snapshots have reliable CPU rates');
+    await expect(page.locator('#cpuTimelineChart .cpu-timeline-point')).toHaveCount(0);
+    await expect(page.locator('.cpu-timeline-legend-item')).toHaveCount(0);
     await page.locator('#dumpSelect').selectOption('1');
     await page.locator('#threadTableBody tr').getByRole('button',{name:'Details',exact:true}).click();
     await expect(page.locator('#threadModal')).toContainText('≈ 150.0%');

@@ -2,6 +2,71 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createThreadDependencyGraphView } from '../../assets/javautils/tda/dependency-graph-view.js';
+import { buildThreadDependencyGraph } from '../../assets/javautils/tda/dependency-graph.js';
+import { parseThreadDump } from '../../assets/javautils/tda/parser.js';
+
+test('compact projection keeps a six-thread confirmed cycle complete alongside other contention', () => {
+    const threads = Array.from({ length: 6 }, (_, i) => ({
+        sourceKey: `t${i}`, threadName: `cycle-${i}`, javaState: 'BLOCKED',
+    }));
+    const deadlocks = [{ id: 1, threads: threads.map((thread, i) => ({
+        sourceKey: thread.sourceKey, threadName: thread.threadName,
+        heldBy: threads[(i + 1) % threads.length].threadName, waitingLockId: `0x${i + 1}`,
+    })) }];
+    const view = createThreadDependencyGraphView();
+    view.model = buildThreadDependencyGraph([
+        ...threads,
+        { sourceKey: 'init', initializingClasses: [{ className: 'example.Slow' }] },
+        { sourceKey: 'wait', classInitializationWaits: [{ className: 'example.Slow' }] },
+    ], deadlocks);
+    view.fullNodeById = new Map(view.model.nodes.map(node => [node.id, node]));
+    const projection = view.projectionData();
+    assert.equal(projection.edges.filter(edge => edge.confirmedDeadlock).length, 12);
+    assert.equal(projection.nodes.filter(node => node.deadlocked).length, 12);
+    assert.ok(projection.edges.some(edge => edge.type === 'class-init-wait'));
+    assert.equal(projection.meta.hiddenLockCount, 0);
+    view.options.view = 'dependency';
+    assert.equal(view.projectionData().edges.filter(edge => edge.confirmedDeadlock).length, 6);
+});
+
+test('graph search finds deeper frames without attributing mounted frames to their carrier', () => {
+    const threads = parseThreadDump(`Full thread dump OpenJDK 64-Bit Server VM (25 mixed mode):
+
+"carrier" #10 [10] prio=5 os_prio=0 tid=0x10 [0x1000]
+   Carrying virtual thread #20
+    at jdk.internal.vm.Continuation.run(Continuation.java:1)
+    at example.Carrier.dispatch(Carrier.java:20)
+   Mounted virtual thread #20
+    at example.Service.handle(Service.java:1)
+    at example.Request.deepFrame(Request.java:42)
+`);
+    const view = createThreadDependencyGraphView();
+    const model = buildThreadDependencyGraph(threads);
+    view.fullNodeById = new Map(model.nodes.map(node => [node.id, node]));
+    view.searchTerm = 'request.deepframe';
+    view.updateSearchState();
+    assert.equal(view.searchMatches.length, 1);
+    assert.equal(view.searchMatches[0].rawThread.isVirtualThread, true);
+    view.searchTerm = 'carrier.dispatch';
+    view.updateSearchState();
+    assert.deepEqual(view.searchMatches.map(node => node.threadName), ['carrier']);
+});
+
+test('class resources retain their exact identities in dependency projection and reveal', () => {
+    const view = createThreadDependencyGraphView();
+    view.model = buildThreadDependencyGraph(['example.Target', 'example.target'].flatMap((className, index) => [
+        { sourceKey: `o${index}`, initializingClasses: [{ className }] },
+        { sourceKey: `w${index}`, classInitializationWaits: [{ className }] },
+    ]));
+    view.fullNodeById = new Map(view.model.nodes.map(node => [node.id, node]));
+    view.options.view = 'dependency';
+    assert.equal(view.projectionData().edges.length, 2);
+    const selected = [];
+    view.selectNode = id => selected.push(id);
+    assert.equal(view.revealLock('class-init:example.Target', { focus: false, center: false }), true);
+    assert.equal(view.revealLock('class-init:example.target', { focus: false, center: false }), true);
+    assert.deepEqual(selected, ['lock:class-init:example.Target', 'lock:class-init:example.target']);
+});
 
 function createClassList() {
     const values = new Set();

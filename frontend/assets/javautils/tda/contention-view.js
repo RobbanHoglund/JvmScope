@@ -40,7 +40,7 @@ export function renderContentionTable(chains = [], cycles = []) {
                 <td><details class="contention-lock-details">
                     <summary><span><code title="${escapeAttr(lockId)}">${escapeHtml(shortId)}</code>
                         <span class="contention-lock-type">${escapeHtml(shortType)}</span></span>
-                        ${deadlock ? '<span class="badge badge-failure contention-deadlock">💀 Deadlock</span>' : ''}
+                        ${deadlock ? '<span class="badge badge-failure contention-deadlock">Deadlock</span>' : ''}
                     </summary>
                     <div class="contention-lock-evidence"><span>Full lock address</span><code>${escapeHtml(lockId)}</code>
                         <span>Type</span><code>${escapeHtml(lockType)}</code>

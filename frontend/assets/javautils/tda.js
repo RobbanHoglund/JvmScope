@@ -1,5 +1,10 @@
 import { createThreadNavigation } from './host/navigation-model.js';
 import { describeLockCoverage } from './tda/lock-coverage.js';
+import { cpuCoverage, compactSnapshotTime } from './tda/presentation.js';
+import './tda/triage.css';
+import { deadlockDiagrams, renderRelationshipDiagram, classInitializationDiagram, contentionDiagram } from './tda/relationship-diagram.js';
+import { createRelationshipDiagramsView } from './tda/relationship-diagram-view.js';
+import './tda/relationship-diagram.css';
 import { bindHostInputs, isVsCode, openRawEvidence, readClipboard, writeClipboard, showHostError, invalidateHostEvidence, syncSourceLinks, bindSourceButton, createHostNavigation } from './host/platform.js';
 import { threadSourceLocation } from './tda/source-location.js';
 import { formatAllocationMetric } from './tda/allocation-metrics.js';
@@ -13,7 +18,7 @@ import { createExamplePicker } from './example-picker.js';
 
 import { observedVirtualThreadIds } from './tda/dump-to-file.js';
 import { getChartFilterView, getChartLegendItemView } from './tda/chart-filter-view.js';
-import { renderContentionTable } from './tda/contention-view.js';
+import { renderContentionTable, isConfirmedContentionDeadlock } from './tda/contention-view.js';
 import { buildCpuTimelineModel, buildSnapshotTickIndexes } from './tda/cpu-timeline.js';
 import { getRunnableCpuThresholdProfile, runnableCpuThresholdProfileFromSearch, resolveRunnableCpuThresholdProfileId, updateRunnableCpuThresholdProfileSearch } from './tda/classification.js';
 import { diagnosticEvidenceFor, hasThreadDiagnostic } from './tda/diagnostics.js';
@@ -39,6 +44,7 @@ import { patternSnapshot } from './tda/blocking-patterns.js';
 import { createBlockingFinding, inputDigest } from './findings-report.js';
 import { createFindingsReportView } from './findings-report-view.js';
 const findingsReport = createFindingsReportView(document.getElementById('findingReportHost'));
+const relationshipDiagramsView = createRelationshipDiagramsView();
 let reportDatasetRevision = 0;
 
 let blockingPatterns = [];
@@ -528,6 +534,9 @@ let sessionSources = [];
 let nextSessionSourceId = 0;
 let parserResult = null;
 let deadlocks = [];
+let deadlockPanelSnapshot = null;
+let selectedDeadlockCycleId = null;
+let relationshipPanelSnapshot = null;
 let classInitializationChains = [];
 let contentionChains = [];
 let smartAnalysis = null;
@@ -553,8 +562,7 @@ const sessionInputQueue = createSessionInputQueue(busy => {
 let cpuThresholdProfileId = runnableCpuThresholdProfileFromSearch(window.location.search);
 let cpuThresholdProfile = getRunnableCpuThresholdProfile(cpuThresholdProfileId);
 let runnableClusterFilterState = {
-    persistentOnly: false,
-    growingOnly: false,
+    trend: 'all',
     minDumpsSeen: 2
 };
 
@@ -667,15 +675,6 @@ function getClusterRunTooltip(cluster) {
 
     return compactTooltip(
         `Longest consecutive snapshot streak: ${run}. This shows for how many snapshots in a row this stack shape kept appearing without a gap.`
-    );
-}
-
-function getClusterSimilarityTooltip(cluster) {
-    const avg = Number(cluster?.quality?.averageSimilarity || 0);
-    const pct = Math.round(avg * 100);
-
-    return compactTooltip(
-        `Average similarity inside this cluster: ${pct}%. Higher means the grouped stacks are more alike. Lower means the cluster contains more variation.`
     );
 }
 
@@ -963,28 +962,6 @@ function getRunnableClusterTrendTooltip(trendRaw) {
             );
     }
 }
-
-function getRunnableClusterMixedMethodsTooltip(cluster) {
-    const breakdown = Array.isArray(cluster?.methodBreakdown) ? cluster.methodBreakdown : [];
-
-    if (!breakdown.length) {
-        return compactTooltip(
-            'Mixed methods means the cluster was grouped using more than one similarity rule.'
-        );
-    }
-
-    const methodsText = breakdown
-        .map((entry) => `${getSimilarityMethodLabel(entry.method)}: ${entry.count}`)
-        .join(', ');
-
-    return compactTooltip(
-        'Mixed methods means the threads in this cluster were not all grouped in exactly the same way. ' +
-        'Some matched by exact or very close stack similarity, while others matched by looser similarity rules. ' +
-        `Breakdown: ${methodsText}.`
-    );
-}
-
-
 
 function renderChartFilterBar() {
     if (!UI.chartFilterSummary) return;
@@ -1408,7 +1385,7 @@ function renderTableRows() {
                   </td>
 
                   <td${tooltipAttr(t.javaState || '—')}>${stateBadge(t.javaState)}</td>
-                  <td${tooltipAttr([describeLockCoverage(t), ...(t.heldLocks || []).map(l => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`)].join('\n'))}>${locksHeldBadge(t)}</td>
+                  <td${tooltipAttr([describeLockCoverage(t), ...(t.heldLocks || []).map(l => `${l.lockId || '—'}${l.lockType ? ` (${l.lockType})` : ''}`)].join('\n'))}><span class="tda-technical-locks">${locksHeldBadge(t)}</span><span class="tda-compact-locks">${t.lockDataAvailable ? `${(t.waitingLocks || []).length} waits · ${(t.heldLocks || []).length} held` : 'Not reported'}</span></td>
                   <td${tooltipAttr(t.isDeadlocked ? 'Confirmed Java deadlock' : 'Not confirmed by source; absence is not established')}>${deadlockBadge(t.isDeadlocked)}</td>
                   <td${tooltipAttr(t.daemon == null ? 'Daemon status not provided by this dump format' : t.daemon ? 'Daemon thread' : 'Not daemon')}>${t.daemon == null ? '—' : badgeYesNo(t.daemon)}</td>
 
@@ -1424,6 +1401,7 @@ function renderTableRows() {
                   <td${tooltipAttr(topFrameText)}>${top}</td>
                   <td class="right thread-metadata"${tooltipAttr(stackFrames)}>${escapeHtml(stackFrames)}</td>
                   <td>${carrierBadge(t)}</td>
+                  <td class="right tda-interval-cell"${tooltipAttr(cpuTooltip)}>${escapeHtml(cpuRate)}</td>
 
                   <td>
                     <button
@@ -1504,13 +1482,21 @@ function renderStats() {
             focusText = ` • TABLE FOCUS: ${focusSummary.visibleFocused}/${focusSummary.totalFocused}${hiddenText}`;
         }
 
-		UI.statsSummary.textContent =
-		    snapshotPrefix +
-            `Snapshot totals • Threads: ${total} • RUNNABLE: ${runnable} • BLOCKED: ${blocked} • WAITING: ${waiting} • Daemon: ${daemon} • DEADLOCKED: ${deadlocked} • CLASS INIT WAITERS: ${classInitializationWaiters} • CLASS INIT STALL?: ${classInitializationStalls} • CARRYING VT: ${carriers} • CPU HOT: ${cpuHot} • ALLOCATION HOT: ${allocationHot} • CPU PROFILE: ${cpuThresholdProfile.label} • IDLE EXECUTORS: ${idleExecutors} • STARVATION?: ${starvations} • LIVELOCK?: ${livelocks}` +
-            visibleTableText +
-		    focusText;
-			
-    UI.lastUpdated.textContent = total === 0 ? '' : `Updated: ${new Date().toLocaleString()}`;
+    const coverage = cpuCoverage(allThreads, selectedDumpIndex, cpuHot);
+    const metrics = [['Threads', total], ['Blocked', blocked], ['Deadlocked threads', deadlocked], ['CPU findings', coverage.value]];
+    const expanded = UI.statsSummary.querySelector('details')?.open;
+    UI.statsSummary.innerHTML = `
+      <div class="tda-snapshot-metrics" aria-label="Selected snapshot totals">${metrics.map(([label,value]) =>
+        `<div><strong>${escapeHtml(String(value))}</strong><span>${escapeHtml(label)}</span></div>`).join('')}</div>
+      <details class="tda-snapshot-details" ${expanded ? 'open' : ''}>
+        <summary>Snapshot context &amp; coverage</summary>
+        <p>${escapeHtml(snapshotPrefix)}${escapeHtml(selected?.sourceLabel || '')}</p>
+        <p>${escapeHtml(coverage.detail)} CPU profile: ${escapeHtml(cpuThresholdProfile.label)}.</p>
+        <p>Runnable: ${runnable} · Waiting: ${waiting} · Daemon: ${daemon} · Class initialization waiters: ${classInitializationWaiters} · Initializer stall candidates: ${classInitializationStalls} · Carrying VT: ${carriers} · Allocation findings: ${allocationHot} · Idle executors: ${idleExecutors} · Starvation candidates: ${starvations} · Livelock candidates: ${livelocks}</p>
+        <p>${escapeHtml(visibleTableText + focusText)}</p>
+      </details>`;
+    UI.lastUpdated.textContent = total ? `Snapshot ${selectedDumpIndex + 1}/${parsedDumps.length} · ${compactSnapshotTime(selected?.timestamp)}` : '';
+    UI.lastUpdated.title = selectedTime?.tooltip || '';
 	
 
 }
@@ -1797,6 +1783,27 @@ function renderSmartAnalysisFinding(finding) {
     `;
 }
 
+function priorityGraphPanelId() {
+    const findingId = smartAnalysis?.findings?.[0]?.id;
+    if (findingId === 'confirmed-deadlock' && deadlocks.length) return 'deadlockPanel';
+    if (findingId === 'class-initialization-stall' && classInitializationChains.length) return 'classInitializationPanel';
+    if (['observed-lock-contention', 'likely-lock-bottleneck'].includes(findingId) && contentionChains.length) return 'contentionPanel';
+    return '';
+}
+
+function relationshipPanelStartsOpen(panel) {
+    if ((parsedDumps[selectedDumpIndex] || null) !== relationshipPanelSnapshot) return panel.id === priorityGraphPanelId();
+    return Boolean(panel.querySelector('details')?.open);
+}
+
+function openAnalysisPanel(panel) {
+    const details = panel?.querySelector('details');
+    if (!details) return;
+    details.open = true;
+    details.querySelector('summary').focus({ preventScroll: true });
+    panel.scrollIntoView({ block: 'start' });
+}
+
 function renderSmartAnalysisPanel() {
     if (!UI.smartAnalysisPanel || !UI.smartAnalysisPanelBody) return;
     if (!smartAnalysis || !allThreads.length) {
@@ -1806,6 +1813,7 @@ function renderSmartAnalysisPanel() {
     }
 
     UI.smartAnalysisPanel.classList.remove('hidden');
+    document.getElementById('jumpToDeadlocks').hidden = !deadlocks.length;
     const counts = smartAnalysis.counts || {};
     const countPills = ['critical', 'high', 'medium', 'info']
         .filter((severity) => Number(counts[severity] || 0) > 0)
@@ -1820,11 +1828,27 @@ function renderSmartAnalysisPanel() {
     const findings = (smartAnalysis.findings || []).map(renderSmartAnalysisFinding).join('');
     const hasMaterialFindings = Number(counts.total || 0) > 0;
 
+    const priority = smartAnalysis.findings?.[0];
+    const graphPanelId = priorityGraphPanelId();
+    const prioritySummary = priority?.id === 'confirmed-deadlock'
+        ? `${deadlocks.length} JVM-reported cycles · ${allThreads.filter(thread => thread.isDeadlocked).length} mapped thread blocks`
+        : priority?.summary || smartAnalysis.summary;
     UI.smartAnalysisPanelBody.innerHTML = `
+      <div class="tda-priority" data-severity="${escapeAttr(priority?.severity || 'info')}">
+        <div>
+          <p class="tda-eyebrow">${priority ? 'Start here' : 'Analysis coverage'} · Snapshot ${selectedDumpIndex + 1} of ${parsedDumps.length}</p>
+          <h2>${escapeHtml(priority?.title || 'No configured material findings')}</h2>
+          <p>${escapeHtml(prioritySummary)}</p>
+        </div>
+        ${graphPanelId || priority?.threads?.length ? `<div class="tda-priority-action">
+          ${graphPanelId ? `<button type="button" class="btn btn-accent smart-analysis-graph-btn" aria-controls="${graphPanelId}">Show graph</button>` : ''}
+          ${priority?.threads?.length ? `<button type="button" class="btn ${graphPanelId ? '' : 'btn-accent'} smart-analysis-focus-btn" data-smart-finding-id="${escapeAttr(priority.id)}">Inspect ${priority.threads.length} thread${priority.threads.length === 1 ? '' : 's'}</button><small>Existing table filters still apply</small>` : ''}
+        </div>` : ''}
+      </div>
       <details class="smart-analysis-details">
         <summary class="smart-analysis-summary app-section-summary">
           <div class="app-section-summary-inner">
-            <div class="app-section-summary-title">Smart analysis</div>
+            <div class="app-section-summary-title">All findings (${counts.total || 0})</div>
             <div class="app-section-summary-subtitle">${escapeHtml(smartAnalysis.headline)}</div>
           </div>
           <div class="smart-analysis-counts">${countPills || '<span class="smart-analysis-count smart-analysis-count-clear">NO MATERIAL FINDINGS</span>'}</div>
@@ -1863,25 +1887,39 @@ function renderDeadlockPanel() {
     if (!deadlocks.length) {
         UI.deadlockPanel.classList.add('hidden');
         UI.deadlockPanelBody.innerHTML = '';
+        deadlockPanelSnapshot = null;
+        selectedDeadlockCycleId = null;
         return;
     }
 
     UI.deadlockPanel.classList.remove('hidden');
 
     const deadlockedThreadCount = allThreads.filter((t) => t.isDeadlocked).length;
+    const snapshot = parsedDumps[selectedDumpIndex];
+    const sameSnapshot = snapshot === deadlockPanelSnapshot;
+    const panelOpen = !sameSnapshot || UI.deadlockPanelBody.querySelector('.deadlock-panel-details')?.open !== false;
+    if (!sameSnapshot || !deadlocks.some(cycle => String(cycle.id) === selectedDeadlockCycleId)) {
+        selectedDeadlockCycleId = String(deadlocks[0].id);
+    }
+    deadlockPanelSnapshot = snapshot;
 
     UI.deadlockPanelBody.innerHTML = `
-	  <details class="deadlock-panel-details">
+	  <details class="deadlock-panel-details" ${panelOpen ? 'open' : ''}>
 	    <summary class="deadlock-panel-summary app-section-summary">
 	      <div class="app-section-summary-inner">
 	        <div class="app-section-summary-title">Java Deadlock Detected</div>
 	        <div class="app-section-summary-subtitle">
-	          Found ${deadlocks.length} deadlock cycle${deadlocks.length === 1 ? '' : 's'} involving ${deadlockedThreadCount} thread${deadlockedThreadCount === 1 ? '' : 's'}.
+	          ${deadlocks.length} JVM-reported cycle${deadlocks.length === 1 ? '' : 's'} · ${deadlockedThreadCount} mapped thread blocks.
 	        </div>
 	      </div>
 	    </summary>
 
-	    <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;margin-bottom:14px;">
+        ${deadlocks.length > 1 ? `<div class="deadlock-cycle-picker" role="group" aria-label="Deadlock cycles">
+          ${deadlocks.map(cycle => `<button type="button" class="btn deadlock-cycle-btn"
+            data-cycle-id="${escapeAttr(String(cycle.id))}" aria-controls="deadlock-cycle-${escapeAttr(String(cycle.id))}"
+            aria-pressed="${String(cycle.id) === selectedDeadlockCycleId}">Cycle ${escapeHtml(String(cycle.id))} · ${(cycle.threads || []).length} participants</button>`).join('')}
+        </div>` : ''}
+	    <div class="deadlock-cycle-content">
 	      ${deadlocks.map(renderDeadlockCard).join('')}
 	    </div>
 	  </details>
@@ -1890,101 +1928,27 @@ function renderDeadlockPanel() {
 
 function renderDeadlockCard(cycle) {
     const items = cycle.threads || [];
-
-    const nodesHtml = items.map((item, idx) => {
-        const thread = item.sourceKey ? allThreads.find((t) => t.sourceKey === item.sourceKey) : null;
-        const buttonAttrs = thread
-            ? `type="button" class="btn btn-sm deadlock-thread-btn" data-source-key="${escapeAttr(thread.sourceKey)}"`
-            : `type="button" class="btn btn-sm" disabled`;
-
-        const arrow = idx < items.length - 1
-            ? `<div style="align-self:center;font-size:22px;opacity:0.9;">→</div>`
-            : `<div style="align-self:center;font-size:22px;opacity:0.9;">↺</div>`;
-
-        return `
-      <div style="display:contents;">
-        <div style="
-		min-width:250px;
-		     padding:14px;
-          border-radius:14px;
-          border:1px solid var(--tda-panel-border, rgba(255,107,107,0.22));
-          background:var(--tda-surface-raised, rgba(255,255,255,0.04));
-          display:flex;
-          flex-direction:column;
-          gap:8px;
-        ">
-		<div style="font-weight:800;">${escapeHtml(item.threadName)}</div>
-
-		<div class="deadlock-lock-lines">
-		  <div class="deadlock-lock-line">
-		    <span class="deadlock-lock-label">waiting for</span>
-		    <span class="deadlock-lock-pill deadlock-lock-pill-waiting"
-		          title="${escapeAttr(thread?.deadlockWaitingLockType || item.waitingLockType || '')}">
-		      ${escapeHtml(item.waitingLockId || '—')}
-		    </span>
-		  </div>
-
-		  <div class="deadlock-lock-line">
-		    <span class="deadlock-lock-label">holding</span>
-		    <span class="deadlock-lock-pill deadlock-lock-pill-holding"
-		          title="${escapeAttr(thread?.deadlockHoldingLockType || '')}">
-		      ${escapeHtml(thread?.deadlockHoldingLockId || '—')}
-		    </span>
-		  </div>
-
-		  <div class="deadlock-lock-line">
-		    <span class="deadlock-lock-label">blocked by</span>
-		    <span class="deadlock-thread-pill">
-		      ${escapeHtml(item.heldBy || '—')}
-		    </span>
-		  </div>
-		</div>
-
-		<div>
-		  <button ${buttonAttrs}>Details</button>
-		</div>
-        </div>
-        ${arrow}
-      </div>
-    `;
+    const diagrams = deadlockDiagrams(cycle, allThreads);
+    const rows = items.map(item => {
+        const thread = item.sourceKey ? allThreads.find(t => t.sourceKey === item.sourceKey) : null;
+        return `<li class="tda-cycle-edge">
+          <div class="tda-cycle-thread"><strong>${escapeHtml(item.threadName || 'Unnamed participant')}</strong>
+            <small>Holding: <code>${escapeHtml(thread?.deadlockHoldingLockId || 'Not mapped')}</code></small></div>
+          <div class="tda-cycle-wait"><span>waits for</span><code>${escapeHtml(item.waitingLockId || 'Lock not reported')}</code></div>
+          <div class="tda-cycle-owner"><span aria-hidden="true">→ </span><small>JVM-reported owner</small><strong>${escapeHtml(item.heldBy || 'Not reported')}</strong></div>
+          <button type="button" class="btn btn-sm deadlock-thread-btn" ${thread ? `data-source-key="${escapeAttr(thread.sourceKey)}"` : 'disabled'} aria-label="Details for ${escapeAttr(item.threadName || 'unmapped participant')}">Details</button>
+        </li>`;
     }).join('');
-
-    const cycleBtn = `
-	  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-	    <button
-	      type="button"
-	      class="btn btn-sm show-deadlocked-threads-btn"
-	      data-cycle-id="${escapeAttr(String(cycle.id))}">
-	      Show deadlocked threads
-	    </button>
-	  </div>
-	`;
-
-    return `
-	  <div style="
-	    padding:14px 16px;
-	    border-radius:16px;
-	    border:1px solid var(--tda-panel-border, rgba(255,255,255,0.10));
-	    background:var(--tda-surface, rgba(255,255,255,0.03));
-	  ">
-	    <div style="font-size:16px;font-weight:800;margin-bottom:10px;">
-	      Cycle ${cycle.id} • ${items.length} thread${items.length === 1 ? '' : 's'}
-	    </div>
-
-	    ${cycleBtn}
-
-	    <div style="
-	      display:grid;
-	      grid-template-columns:repeat(${Math.max(1, items.length * 2)}, max-content);
-	      gap:10px;
-	      align-items:stretch;
-	      overflow:auto;
-	      padding-bottom:4px;
-	    ">
-	      ${nodesHtml}
-	    </div>
-	  </div>
-	`;
+    return `<section class="tda-cycle" id="deadlock-cycle-${escapeAttr(String(cycle.id))}" data-deadlock-cycle="${escapeAttr(String(cycle.id))}"
+      aria-label="Deadlock cycle ${escapeAttr(String(cycle.id))}" ${String(cycle.id) === selectedDeadlockCycleId ? '' : 'hidden'}>
+      <header><h3>Cycle ${escapeHtml(String(cycle.id))} <span>· ${items.length} reported participants</span></h3>
+        <button type="button" class="btn btn-sm show-deadlocked-threads-btn" data-cycle-id="${escapeAttr(String(cycle.id))}">Inspect cycle</button></header>
+      <p>${diagrams[0]?.closed ? 'Follow the arrows around the circular wait. Select a thread to inspect its stack.' : 'JVM-reported dependencies. Some thread identities are unresolved; no return path is assumed.'}</p>
+      ${diagrams.map(renderRelationshipDiagram).join('')}
+      <details class="relationship-evidence"><summary>Relationship details and lock addresses</summary>
+        <ol class="tda-cycle-edges">${rows}</ol>
+      </details>
+    </section>`;
 }
 
 function classInitializationStatusLabel(chain) {
@@ -2000,29 +1964,7 @@ function classInitializationResourceText(resource) {
     return identity || 'JVM wait resource';
 }
 
-function renderClassInitializationThreadButton(thread, roleClass = '') {
-    if (!thread) return '<span class="class-initialization-missing">Not observed</span>';
-    return `
-      <button type="button"
-              class="btn btn-sm class-initialization-thread-btn ${escapeAttr(roleClass)}"
-              data-source-key="${escapeAttr(thread.sourceKey)}">
-        ${escapeHtml(thread.threadName || 'unknown')}
-      </button>
-    `;
-}
-
 function renderClassInitializationCard(chain) {
-    const initializerHtml = chain.initializer
-        ? renderClassInitializationThreadButton(chain.initializer, 'class-initialization-initializer-btn')
-        : (chain.initializers || []).length
-            ? chain.initializers.map((thread) => renderClassInitializationThreadButton(
-                thread,
-                'class-initialization-initializer-btn',
-            )).join('')
-            : '<span class="class-initialization-missing">Initializer not present in this dump</span>';
-    const waitersHtml = (chain.waiters || [])
-        .map((thread) => renderClassInitializationThreadButton(thread, 'class-initialization-waiter-btn'))
-        .join('');
     const waitingResources = chain.initializerWaitingResources || [];
     const currentWait = `${chain.initializerState || 'UNKNOWN'}; no JVM wait resource parsed`;
 
@@ -2042,21 +1984,13 @@ function renderClassInitializationCard(chain) {
             <span class="class-initialization-status is-snapshot">SNAPSHOT ONLY</span>
           </div>
         </header>
-        <div class="class-initialization-chain-grid">
-          <section class="class-initialization-chain-node">
-            <div class="class-initialization-chain-label">Initializer via &lt;clinit&gt;</div>
-            <div class="class-initialization-chip-wrap">${initializerHtml}</div>
+        ${renderRelationshipDiagram(classInitializationDiagram(chain))}
+        ${chain.initializer ? `
             <dl class="class-initialization-facts">
               <dt>Java state</dt><dd>${chain.initializerState ? stateBadge(chain.initializerState) : 'Not observed'}</dd>
               <dt>Current wait</dt><dd class="mono-small">${waitingResources.length ? waitingResources.map((resource) => escapeHtml(classInitializationResourceText(resource))).join('<br>') : escapeHtml(currentWait)}</dd>
             </dl>
-          </section>
-          <div class="class-initialization-chain-arrow" aria-hidden="true">⟵</div>
-          <section class="class-initialization-chain-node">
-            <div class="class-initialization-chain-label">Waiting for class initialization</div>
-            <div class="class-initialization-chip-wrap">${waitersHtml}</div>
-          </section>
-        </div>
+        ` : '<p class="class-initialization-qualification">No initializer edge is drawn because a unique initializer could not be resolved.</p>'}
         <p class="class-initialization-qualification">${escapeHtml(chain.qualification)}</p>
       </article>
     `;
@@ -2075,7 +2009,7 @@ function renderClassInitializationPanel() {
         .reduce((total, chain) => total + Number(chain.waiterCount || 0), 0);
     const stallCandidateCount = classInitializationChains.filter((chain) => chain.stallCandidate).length;
     UI.classInitializationPanelBody.innerHTML = `
-      <details class="class-initialization-panel-details">
+      <details class="class-initialization-panel-details" ${relationshipPanelStartsOpen(UI.classInitializationPanel) ? 'open' : ''}>
         <summary class="class-initialization-panel-summary app-section-summary">
           <div class="app-section-summary-inner">
             <div class="app-section-summary-title">Class initialization dependencies</div>
@@ -2108,19 +2042,33 @@ function renderContentionPanel() {
     UI.contentionPanel.classList.remove('hidden');
 
     const waiterCount = contentionChains.reduce((sum, c) => sum + (c.waiters?.length || 0), 0);
+    const ownerlessCount = contentionChains.filter(chain => !chain.owners?.length).length;
+    const chains = [...contentionChains].sort((a, b) => (b.waiters?.length || 0) - (a.waiters?.length || 0)
+        || String(a.lockId).localeCompare(String(b.lockId)));
+    const graphCard = chain => `<article class="relationship-contention-card">
+        <header><h3>${escapeHtml(String(chain.lockType || 'Lock').replace(/^(?:a|an)\s+/, ''))}</h3>
+          <button type="button" class="btn btn-sm contention-graph-btn" data-lock-id="${escapeAttr(chain.lockId)}">Explore in dependency map</button></header>
+        ${renderRelationshipDiagram(contentionDiagram(chain, isConfirmedContentionDeadlock(chain, deadlocks)))}
+      </article>`;
 
     UI.contentionPanelBody.innerHTML = `
-	  <details class="contention-panel-details">
+	  <details class="contention-panel-details" ${relationshipPanelStartsOpen(UI.contentionPanel) ? 'open' : ''}>
 	    <summary class="contention-panel-summary app-section-summary">
 	      <div class="app-section-summary-inner">
 	        <div class="app-section-summary-title">Lock contention chains</div>
 	        <div class="app-section-summary-subtitle">
 	          ${contentionChains.length} contended lock${contentionChains.length === 1 ? '' : 's'} · ${waiterCount} waiting thread–lock relationships · most waiters first.
+              ${ownerlessCount ? `${ownerlessCount} lock${ownerlessCount === 1 ? '' : 's'} without a matched held-lock owner.` : ''}
+              ${deadlocks.length ? 'Includes JVM-reported deadlock participants.' : ''}
 	        </div>
 	      </div>
 	    </summary>
 
-        ${renderContentionTable(contentionChains, deadlocks)}
+        ${chains.slice(0, 3).map(graphCard).join('')}
+        ${chains.length > 3 ? `<details class="relationship-contention-more"><summary>Show ${chains.length - 3} more lock graphs</summary>${chains.slice(3).map(graphCard).join('')}</details>` : ''}
+        <details class="relationship-evidence"><summary>All lock details and addresses</summary>
+          ${renderContentionTable(contentionChains, deadlocks)}
+        </details>
         <div class="contention-action-status" role="status"></div>
 	  </details>
 	`;
@@ -2134,12 +2082,19 @@ function render() {
     renderDeadlockPanel();
     renderClassInitializationPanel();
     renderContentionPanel();
+    relationshipPanelSnapshot = parsedDumps[selectedDumpIndex] || null;
+    relationshipDiagramsView.refresh([UI.deadlockPanelBody, UI.classInitializationPanelBody, UI.contentionPanelBody]);
     renderDependencyGraph();
     renderChartFilterBar();
     renderFocusFilterBar();
     renderTableRows();
     updateSortIndicators();
     renderRunnableClusterPanel();
+    document.getElementById('jumpToClusters').disabled = !runnableStackClusters.length;
+    document.getElementById('jumpToClusters').title = runnableStackClusters.length
+        ? 'Explore stack shapes observed in two or more snapshots'
+        : 'No recurring RUNNABLE stacks observed in two or more snapshots';
+    document.getElementById('jumpToGraph').disabled = !allThreads.length;
     document.getElementById('threadEmptyState').hidden = !parsedDumps.length || filtered.length > 0;
 }
 function renderDependencyGraph() {
@@ -2257,7 +2212,7 @@ function renderCpuTimelineChart() {
     }
     container.innerHTML = '';
     legend.innerHTML = '';
-    container.closest('.cpu-timeline-card')?.classList.toggle('hidden', model.measuredSeriesCount === 0);
+    container.closest('.cpu-timeline-card')?.classList.remove('hidden');
     const hasTimelineFilter = Boolean(model.query);
     let summaryText = 'No measured CPU series are available';
     if (model.availableSeriesCount) {
@@ -2265,7 +2220,9 @@ function renderCpuTimelineChart() {
     } else if (hasTimelineFilter) {
         summaryText = 'No measured CPU series match the current filter';
     }
-    summary.textContent = summaryText;
+    summary.textContent = `${summaryText} · Selected snapshot ${selectedDumpIndex + 1}/${model.snapshots.length}${selectedDumpIndex === 0 ? ': no preceding CPU interval' : `: interval D${selectedDumpIndex}→D${selectedDumpIndex + 1}`}`;
+    document.getElementById('cpuTimelineSelection').textContent = 'Select a thread to inspect its measured intervals.';
+    document.getElementById('cpuTimelineClear').disabled = !model.selectedSeriesKey;
 
     if (model.snapshots.length < 2) {
         container.innerHTML = '<div class="thread-state-empty">At least two correlated snapshots with CPU counters are required.</div>';
@@ -2279,7 +2236,7 @@ function renderCpuTimelineChart() {
     }
 
     const width = Math.max(720, container.clientWidth || 1100);
-    const height = 280;
+    const height = 240;
     const margin = { top: 18, right: 26, bottom: 48, left: 62 };
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
@@ -2384,17 +2341,16 @@ function renderCpuTimelineChart() {
             .attr('r', (point) => point.dumpIndex === selectedDumpIndex ? 5 : 3.5)
             .attr('fill', color);
 
-        legend.insertAdjacentHTML('beforeend', `
-            <button type="button" class="cpu-timeline-legend-item"
-                data-timeline-series-key="${escapeAttr(item.seriesKey)}"
-                data-timeline-thread-name="${escapeAttr(item.name)}"
-                aria-pressed="false"
-                title="Highlight ${escapeAttr(item.name)}; click again to clear. Peak CPU ${escapeAttr(item.maximumRatePercent.toFixed(1))}%">
-                <span class="cpu-timeline-legend-swatch" style="background:${escapeAttr(color)}"></span>
-                <span class="cpu-timeline-legend-name">${escapeHtml(item.name)}</span>
-                <span class="cpu-timeline-legend-peak">Peak ${escapeHtml(item.maximumRatePercent.toFixed(1))}%</span>
-            </button>`);
     });
+    legend.innerHTML = `<table class="tda-cpu-ranking"><caption>Threads ranked by peak interval CPU</caption>
+      <thead><tr><th>Thread</th><th>Selected interval</th><th>Peak CPU</th><th>Measured intervals</th></tr></thead>
+      <tbody>${model.series.map((item,index) => {
+        const point = item.points.find(point => point.dumpIndex === selectedDumpIndex);
+        return `<tr><td><button type="button" class="cpu-timeline-legend-item" data-timeline-series-key="${escapeAttr(item.seriesKey)}" data-timeline-thread-name="${escapeAttr(item.name)}" aria-pressed="false" title="Highlight ${escapeAttr(item.name)}">
+          <span class="cpu-timeline-legend-swatch" style="background:${escapeAttr(colors[index])}"></span><span class="cpu-timeline-legend-name">${escapeHtml(item.name)}</span></button></td>
+          <td>${point ? `${point.ratePercent.toFixed(1)}% · ${(point.intervalMs / 1000).toFixed(2)} s` : '— unavailable'}</td>
+          <td>Peak ${item.maximumRatePercent.toFixed(1)}%</td><td>${item.points.length}/${model.intervals.length}</td></tr>`;
+      }).join('')}</tbody></table>`;
     updateCpuTimelineEmphasis();
 }
 
@@ -2416,6 +2372,14 @@ function updateCpuTimelineEmphasis(previewKey = '') {
         button.classList.toggle('is-highlighted', Boolean(key) && button.dataset.timelineSeriesKey === key);
         button.setAttribute('aria-pressed', String(button.dataset.timelineSeriesKey === cpuTimelineState.selectedSeriesKey));
     });
+    const selected = cpuTimelineModelCache?.model.series.find(series => series.seriesKey === key);
+    const selection = document.getElementById('cpuTimelineSelection');
+    if (selected) {
+        const current = selected.points.find(point => point.dumpIndex === selectedDumpIndex);
+        const point = current || selected.points.reduce((peak, item) => item.ratePercent > peak.ratePercent ? item : peak);
+        selection.textContent = `${selected.name} · ${current ? 'Selected' : 'Peak'} interval D${point.dumpIndex}→D${point.dumpIndex + 1}: ${point.ratePercent.toFixed(1)}% over ${(point.intervalMs / 1000).toFixed(2)} s · ${compactSnapshotTime(parsedDumps[point.dumpIndex - 1]?.timestamp)} → ${compactSnapshotTime(parsedDumps[point.dumpIndex]?.timestamp)} · Rate basis: ${cpuRateBasisLabel(point.rateBasis)}`;
+    } else selection.textContent = 'Select a thread to inspect its measured intervals.';
+    document.getElementById('cpuTimelineClear').disabled = !cpuTimelineState.selectedSeriesKey;
 }
 
 function activateCpuTimelinePoint(container, seriesKey, dumpIndex) {
@@ -2744,43 +2708,25 @@ function renderRunnableClusterTimeline(cluster) {
 
 
 function renderRunnableClusterFilterBar() {
-    const persistentChecked = runnableClusterFilterState?.persistentOnly ? 'checked' : '';
-    const growingChecked = runnableClusterFilterState?.growingOnly ? 'checked' : '';
-    const minSeen = Number(runnableClusterFilterState?.minDumpsSeen || 2);
+    const trend = runnableClusterFilterState.trend;
+    const minSeen = Number(runnableClusterFilterState.minDumpsSeen || 2);
+    const minSeenOptions = Array.from({ length: Math.max(1, Math.min(parsedDumps.length, 10) - 1) }, (_, i) => i + 2);
+    const trends = ['all', 'persistent', 'growing', 'fading', 'bursty', 'intermittent', 'stable', 'unavailable'];
 
     return `
       <div class="runnable-cluster-filterbar">
-        <label class="toggle has-tooltip" data-tooltip="Only show clusters that appear in more than one dump">
-          <input
-            id="runnablePersistentOnlyToggle"
-            type="checkbox"
-            ${persistentChecked}
-          />
-          Persistent only
-        </label>
-
-        <label class="toggle has-tooltip" data-tooltip="Only show clusters whose presence grows over time">
-          <input
-            id="runnableGrowingOnlyToggle"
-            type="checkbox"
-            ${growingChecked}
-          />
-          Growing only
-        </label>
-
-        <label class="dump-select-wrap" for="runnableMinDumpsSeenSelect">
-          <span class="dump-select-label">Min dumps seen</span>
-          <select id="runnableMinDumpsSeenSelect" class="dump-select">
-            ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                .map((value) => `
-                    <option value="${value}" ${value === minSeen ? 'selected' : ''}>
-                      ${value}+
-                    </option>
-                `)
-                .join('')}
+        <label class="dump-select-wrap" for="runnableTrendSelect">
+          <span class="dump-select-label">Trend</span>
+          <select id="runnableTrendSelect" class="dump-select" aria-label="Trend">
+            ${trends.map(value => `<option value="${value}" ${value === trend ? 'selected' : ''}>${value === 'all' ? 'All trends' : value[0].toUpperCase() + value.slice(1)}</option>`).join('')}
           </select>
         </label>
-
+        <label class="dump-select-wrap" for="runnableMinDumpsSeenSelect">
+          <span class="dump-select-label">Seen in at least</span>
+          <select id="runnableMinDumpsSeenSelect" class="dump-select" aria-label="Seen in at least">
+            ${minSeenOptions.map(value => `<option value="${value}" ${value === minSeen ? 'selected' : ''}>${value} snapshots</option>`).join('')}
+          </select>
+        </label>
       </div>
     `;
 }
@@ -2805,19 +2751,8 @@ function renderRunnableClusterPanel() {
             return false;
         }
 
-        if (runnableClusterFilterState?.persistentOnly) {
-            const trend = String(cluster.trend || '').toLowerCase();
-            if (trend !== 'persistent') {
-                return false;
-            }
-        }
-
-        if (runnableClusterFilterState?.growingOnly) {
-            const trend = String(cluster.trend || '').toLowerCase();
-            if (trend !== 'growing') {
-                return false;
-            }
-        }
+        const trend = runnableClusterFilterState.trend;
+        if (trend !== 'all' && String(cluster.trend || '').toLowerCase() !== trend) return false;
 
         return true;
     });
@@ -2862,6 +2797,7 @@ function renderRunnableClusterPanel() {
 	  </summary>
 
 	    <section class="runnable-cluster-panel-shell">
+          <p class="runnable-cluster-explanation">Repeated RUNNABLE stacks are observations, not proof of CPU usage or livelock. Explicit class-initialization waits are grouped separately.</p>
 	      ${renderRunnableClusterFilterBar()}
 
 	      ${paging}
@@ -3156,6 +3092,11 @@ function summarizeDumpOccurrences(groupMembers) {
         .join(', ');
 }
 
+function shortRunnableFrame(frame) {
+    const method = String(frame).replace(/^at\s+/, '').split('(')[0].split('/').pop();
+    return method.split('.').slice(-2).join('.');
+}
+
 function renderRunnableClusterCard(cluster) {
     const representativeFrames = Array.isArray(cluster.representativeFrames)
         ? cluster.representativeFrames.filter(Boolean).slice(0, 3)
@@ -3167,6 +3108,14 @@ function renderRunnableClusterCard(cluster) {
         'RUNNABLE stack';
 
     const title = representativeFrames[0] || fallbackTopFrame;
+    const classWaits = cluster.representative?.classInitializationWaits || [];
+    const isClassWait = cluster.observationKind === 'class-initialization-wait';
+    const shortTitle = isClassWait
+        ? `Class initialization wait · ${classWaits.map(wait => wait.className.split('.').pop()).join(', ')}`
+        : shortRunnableFrame(title);
+    const contextText = isClassWait
+        ? `Waiting for ${classWaits.map(wait => wait.className).join(', ')}. Reported RUNNABLE by the JVM.`
+        : 'Similar RUNNABLE stacks observed across snapshots.';
 
     const averageSimilarity = Number(cluster.quality?.averageSimilarity || 0);
     const similarityPct = Number.isFinite(averageSimilarity)
@@ -3175,7 +3124,6 @@ function renderRunnableClusterCard(cluster) {
 
     const primaryMethod = String(cluster.primaryMethod || 'Unknown');
     const methodBreakdown = Array.isArray(cluster.methodBreakdown) ? cluster.methodBreakdown : [];
-    const hasMixedMethods = methodBreakdown.length > 1;
     const dumpCountSeen = Number(cluster.dumpCountSeen || 0);
     const totalOccurrences = Number(cluster.totalOccurrences || 0);
     const longestConsecutiveRun = Number(cluster.longestConsecutiveRun || 0);
@@ -3188,9 +3136,7 @@ function renderRunnableClusterCard(cluster) {
     const members = Array.isArray(cluster.members) ? cluster.members : [];
     
 
-    const signatureText = representativeFrames.length
-        ? representativeFrames.join(' → ')
-        : fallbackTopFrame;
+
 
     const breakdownHtml = methodBreakdown.length
         ? methodBreakdown.map((entry) => {
@@ -3340,79 +3286,24 @@ function renderRunnableClusterCard(cluster) {
                   data-details-loaded="${detailsLoaded}"
 				  ${isRunnableClusterOpen(cluster.id) ? 'open' : ''}
 				>
-				    <summary class="runnable-cluster-card-summary">
-				      <div class="runnable-cluster-card-head">
-				        <div class="runnable-cluster-card-titlewrap">
-				          <div class="runnable-cluster-card-title has-tooltip"
-				               data-tooltip="${escapeAttr(title)}">
-				            ${escapeHtml(title)}
-				          </div>
-
-				          <div class="runnable-cluster-card-signature has-tooltip"
-				               data-tooltip="${escapeAttr(signatureText)}">
-				            ${escapeHtml(signatureText)}
-				          </div>
-				        </div>
-
-				        <div class="runnable-cluster-card-stats">
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterSeenTooltip(cluster))}"
-				          >
-				            <label>Seen</label>
-				            <strong>${dumpCountSeen}/${parsedDumps.length}</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterTotalTooltip(cluster))}"
-				          >
-				            <label>Total</label>
-				            <strong>${totalOccurrences}</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterRunTooltip(cluster))}"
-				          >
-				            <label>Run</label>
-				            <strong>${longestConsecutiveRun}</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterSimilarityTooltip(cluster))}"
-				          >
-				            <label>Similarity</label>
-				            <strong>${similarityPct}%</strong>
-				          </span>
-
-				          <span
-				            class="runnable-cluster-stat runnable-cluster-stat-help has-tooltip"
-				            data-tooltip="${escapeAttr(getClusterPrimaryGroupingTooltip(cluster))}"
-				          >
-				            <label>Primary</label>
-				            <strong>${escapeHtml(getSimilarityMethodLabel(primaryMethod))}</strong>
-				          </span>
-				        </div>
-
-						<div class="runnable-cluster-card-badges">
-						  <span
-						    class="runnable-cluster-trend-badge runnable-cluster-trend-${escapeAttr(trendKey)} has-tooltip"
-						    data-tooltip="${escapeAttr(getRunnableClusterTrendTooltip(trendRaw))}">
-						    ${escapeHtml(trendRaw)}
-						  </span>
-
-						  ${hasMixedMethods ? `
-						    <span
-						      class="runnable-cluster-trend-badge runnable-cluster-trend-intermittent has-tooltip"
-						      data-tooltip="${escapeAttr(getRunnableClusterMixedMethodsTooltip(cluster))}">
-						      Mixed
-						    </span>
-						  ` : ''}
-						</div>
-				      </div>
-				    </summary>
+                <summary class="runnable-cluster-card-summary">
+                  <div class="runnable-cluster-card-head">
+                    <div class="runnable-cluster-card-titlewrap">
+                      <div class="runnable-cluster-card-title" title="${escapeAttr(title)}">${escapeHtml(shortTitle)}</div>
+                      <div class="runnable-cluster-card-signature">${escapeHtml(contextText)}</div>
+                    </div>
+                    <div class="runnable-cluster-card-stats">
+                      <span class="runnable-cluster-stat has-tooltip" data-tooltip="${escapeAttr(getClusterSeenTooltip(cluster))}">
+                        <span>Snapshots</span><strong>${dumpCountSeen}/${parsedDumps.length}</strong>
+                      </span>
+                      <span class="runnable-cluster-stat has-tooltip" data-tooltip="${escapeAttr(getClusterTotalTooltip(cluster))}">
+                        <span>Observations</span><strong>${totalOccurrences}</strong>
+                      </span>
+                    </div>
+                    <span class="runnable-cluster-trend-badge runnable-cluster-trend-${escapeAttr(trendKey)} has-tooltip"
+                      data-tooltip="${escapeAttr(getRunnableClusterTrendTooltip(trendRaw))}">${escapeHtml(trendRaw)}</span>
+                  </div>
+                </summary>
 
 			    <div class="runnable-cluster-card-body">
 				
@@ -3421,25 +3312,18 @@ function renderRunnableClusterCard(cluster) {
 		    ${renderRunnableClusterTimeline(cluster)}
 		  </div>
 
-		  <div class="runnable-cluster-section">
-		    <div class="runnable-cluster-section-label">Similarity methods used</div>
-		    <div class="runnable-cluster-method-chip-row">
-		      ${breakdownHtml}
-		    </div>
-		  </div>
-
-		  <div class="runnable-cluster-section">
-		    <div class="runnable-cluster-section-label">Representative frames</div>
-		    <div class="runnable-cluster-frames">
-		      ${representativeFrames.length
-            ? representativeFrames.map((frame) => `
-		              <div class="runnable-cluster-frame-line">${escapeHtml(frame)}</div>
-		            `).join('')
-            : `<div class="runnable-cluster-frame-line">${escapeHtml(fallbackTopFrame)}</div>`
-        }
-		    </div>
-		  </div>
-		  
+          <p class="runnable-cluster-explanation">${escapeHtml(getRunnableClusterTrendTooltip(trendRaw))}</p>
+          <details class="runnable-cluster-method-details">
+            <summary>Grouping details · ${similarityPct}% mean stack similarity</summary>
+            <p>Similarity is a heuristic measure of stack resemblance, not a probability of a bug or a CPU measurement. Observations count each matching thread in each snapshot, so the same thread can be counted more than once.</p>
+            <p class="has-tooltip" data-tooltip="${escapeAttr(getClusterRunTooltip(cluster))}">Longest consecutive presence: ${longestConsecutiveRun} snapshots.</p>
+            <p class="has-tooltip" data-tooltip="${escapeAttr(getClusterPrimaryGroupingTooltip(cluster))}">Primary method: ${escapeHtml(getSimilarityMethodLabel(primaryMethod))}.</p>
+            <div class="runnable-cluster-method-chip-row">${breakdownHtml}</div>
+            <div class="runnable-cluster-section-label">Representative normalized frames</div>
+            <div class="runnable-cluster-frames">
+              ${(representativeFrames.length ? representativeFrames : [fallbackTopFrame]).map(frame => `<div class="runnable-cluster-frame-line">${escapeHtml(frame)}</div>`).join('')}
+            </div>
+          </details>
 		  <div class="runnable-cluster-section">
 		    <div class="runnable-cluster-member-actions">
 		      <button
@@ -4065,7 +3949,7 @@ function openEmbeddedRawDump(dump) {
 
 if (isVsCode()) {
     UI.openRawDumpBtn.title = 'Open raw dump evidence with search, thread filters and details';
-    document.getElementById('rawDumpGuide').textContent = 'Raw dump opens the selected snapshot in the analysis tab, with Annotated and Exact modes, search, thread filters and links to Details or the dependency map. Open as text opens a read-only VS Code editor. Snapshot changes, additions, replacement or Clear close the old evidence view.';
+    document.getElementById('rawDumpGuide').textContent = 'Raw dump opens the selected snapshot in the analysis tab. New evidence views start in Exact, showing the complete snapshot text. Switch to Annotated for thread filters and links to Details or the dependency map. Search works in both modes. Returning to an existing evidence view keeps its current mode. Open as text opens a read-only VS Code editor. Snapshot changes, additions, replacement or Clear close the old evidence view.';
 }
 
 rawDumpReturn.addEventListener('click', () => {
@@ -4283,8 +4167,7 @@ function resetSessionView() {
     pageState.page = 1;
     selectedDumpIndex = 0;
     runnableClusterFilterState = {
-        persistentOnly: false,
-        growingOnly: false,
+        trend: 'all',
         minDumpsSeen: 2
     };
     runnableClusterPage = 1;
@@ -4356,7 +4239,7 @@ function queueSessionImport(read, mode = UI.inputMode?.value || 'append') {
             applySessionAnalysis(result);
             const count = additions.reduce((total, source) => total + source.snapshotCount, 0);
             showSessionInputStatus([
-                `${count} snapshot${count === 1 ? '' : 's'} ${mode === 'replace' || !oldCount ? 'loaded' : 'added'} · ${parsedDumps.length} in this session from ${sessionSources.length} source${sessionSources.length === 1 ? '' : 's'}.`,
+                `${count} snapshot${count === 1 ? '' : 's'} ${mode === 'replace' || !oldCount ? 'loaded' : `added · ${parsedDumps.length} in this session`} from ${sessionSources.length} source${sessionSources.length === 1 ? '' : 's'}.`,
                 ...failures, ...rejected,
             ].join(' '));
             inputFeedbackDialog.show(feedback);
@@ -4437,7 +4320,7 @@ function formatDumpLabel(dump, idx) {
     const ts = dump?.timestamp || `Dump ${idx + 1}`;
     const count = dump?.threads?.length ?? 0;
     const time = formatSnapshotTime(dump);
-    return `#${idx + 1} · ${ts} · ${time.pillLabel} · ${count} threads${dump.sourceLabel ? ` · ${dump.sourceLabel}` : ''}`;
+    return `#${idx + 1} · ${compactSnapshotTime(ts)} · ${count} threads${dump.sourceLabel ? ` · ${dump.sourceLabel}` : ''}`;
 }
 
 function renderDeltaPill(label, value) {
@@ -4724,8 +4607,7 @@ UI.clearBtn?.addEventListener('click', () => {
     clearRunnableClusterTableFocus();
 
     runnableClusterFilterState = {
-        persistentOnly: false,
-        growingOnly: false,
+        trend: 'all',
         minDumpsSeen: 2
     };
     resetRunnableClusterUiState();
@@ -4773,6 +4655,18 @@ UI.runnableClusterCompareModal?.addEventListener('click', (e) => {
 });
 
 UI.deadlockPanelBody?.addEventListener('click', (e) => {
+    const cycleButton = e.target.closest('.deadlock-cycle-btn');
+    if (cycleButton) {
+        selectedDeadlockCycleId = cycleButton.dataset.cycleId;
+        for (const button of UI.deadlockPanelBody.querySelectorAll('.deadlock-cycle-btn')) {
+            button.setAttribute('aria-pressed', String(button.dataset.cycleId === selectedDeadlockCycleId));
+        }
+        for (const card of UI.deadlockPanelBody.querySelectorAll('[data-deadlock-cycle]')) {
+            card.hidden = card.dataset.deadlockCycle !== selectedDeadlockCycleId;
+        }
+        return;
+    }
+
     const showBtn = e.target.closest('.show-deadlocked-threads-btn');
     if (showBtn) {
         const cycleId = Number(showBtn.dataset.cycleId);
@@ -4784,7 +4678,7 @@ UI.deadlockPanelBody?.addEventListener('click', (e) => {
     const btn = e.target.closest('.deadlock-thread-btn');
     if (btn) {
         const t = allThreads.find((x) => x.sourceKey === btn.dataset.sourceKey);
-        if (t) openThreadModal(t);
+        if (t) openThreadModal(t, btn);
     }
 });
 
@@ -4809,6 +4703,25 @@ UI.refreshBtn?.addEventListener('click', () => {
     applyFilters();
     render();
 });
+document.getElementById('threadColumns').addEventListener('change', event => {
+    document.getElementById('threadTable').dataset.view = event.target.value;
+});
+document.getElementById('jumpToCpu').addEventListener('click', () => {
+    const card = UI.cpuTimelineChart.closest('.cpu-timeline-card');
+    card.closest('details').open = true;
+    card.scrollIntoView({block: 'start'});
+    document.getElementById('cpuTimelineSearch').focus({preventScroll: true});
+});
+for (const [buttonId, panel] of [
+    ['jumpToDeadlocks', UI.deadlockPanel],
+    ['jumpToClusters', UI.runnableClusterPanel],
+    ['jumpToGraph', UI.dependencyGraphPanel],
+]) {
+    document.getElementById(buttonId).addEventListener('click', event => {
+        event.preventDefault();
+        openAnalysisPanel(panel);
+    });
+}
 document.getElementById('clearThreadFiltersBtn').addEventListener('click', () => {
     UI.searchInput.value = '';
     for (const toggle of [UI.onlyDaemonToggle, UI.onlyBlockedToggle, UI.onlyWaitingToggle, UI.onlyDeadlockedToggle, UI.onlyCarrierToggle]) toggle.checked = false;
@@ -4869,6 +4782,11 @@ UI.cpuTimelineLegend?.addEventListener('click', (event) => {
     const key = String(item.dataset.timelineSeriesKey || '');
     cpuTimelineState.selectedSeriesKey = cpuTimelineState.selectedSeriesKey === key ? '' : key;
     updateCpuTimelineEmphasis();
+});
+document.getElementById('cpuTimelineClear').addEventListener('click', () => {
+    cpuTimelineState.selectedSeriesKey = '';
+    updateCpuTimelineEmphasis();
+    UI.cpuTimelineSearch.focus({preventScroll: true});
 });
 
 // A closed details element has no usable width. Redraw when opened or resized
@@ -4963,6 +4881,11 @@ function focusSmartAnalysisFinding(finding) {
 }
 
 UI.smartAnalysisPanelBody?.addEventListener('click', (event) => {
+    const graphButton = event.target.closest('.smart-analysis-graph-btn');
+    if (graphButton) {
+        openAnalysisPanel(document.getElementById(graphButton.getAttribute('aria-controls')));
+        return;
+    }
     const focusButton = event.target.closest('.smart-analysis-focus-btn');
     if (focusButton) {
         const finding = (smartAnalysis?.findings || [])
@@ -5016,17 +4939,18 @@ UI.contentionPanelBody?.addEventListener('click', async (event) => {
 
 contentionGraphReturn.addEventListener('click', () => {
     if (!contentionGraphOrigin?.isConnected) return;
-    contentionGraphOrigin.closest('tr').scrollIntoView({ block: 'center' });
+    (contentionGraphOrigin.closest('tr, .relationship-contention-card') || contentionGraphOrigin).scrollIntoView({ block: 'center' });
     contentionGraphOrigin.focus({ preventScroll: true });
 });
 
-UI.classInitializationPanelBody?.addEventListener('click', (e) => {
-    const btn = e.target.closest('.class-initialization-thread-btn');
-    if (!btn) return;
-
-    const thread = allThreads.find((item) => item.sourceKey === btn.dataset.sourceKey);
-    if (thread) openThreadModal(thread, btn);
-});
+for (const panel of [UI.deadlockPanelBody, UI.classInitializationPanelBody, UI.contentionPanelBody]) {
+    panel?.addEventListener('click', event => {
+        const button = event.target.closest('.relationship-thread-btn');
+        if (!button) return;
+        const thread = allThreads.find(item => item.sourceKey === button.dataset.sourceKey);
+        if (thread) openThreadModal(thread, button);
+    });
+}
 
 function openThreadRowDetails(row, sourceElement = row) {
     const thread = allThreads.find((item) => item.sourceKey === row.dataset.sourceKey);
@@ -5076,16 +5000,9 @@ UI.runnableClusterPanelBody?.addEventListener('change', (e) => {
     const target = e.target;
     if (!target) return;
 
-    if (target.id === 'runnablePersistentOnlyToggle') {
+    if (target.id === 'runnableTrendSelect') {
         runnableClusterPage = 1;
-        runnableClusterFilterState.persistentOnly = Boolean(target.checked);
-        render();
-        return;
-    }
-
-    if (target.id === 'runnableGrowingOnlyToggle') {
-        runnableClusterPage = 1;
-        runnableClusterFilterState.growingOnly = Boolean(target.checked);
+        runnableClusterFilterState.trend = target.value;
         render();
         return;
     }
@@ -5241,8 +5158,10 @@ function updateSortIndicators() {
         const key = th.getAttribute('data-key');
         const ind = th.querySelector('.sort-indicator');
         if (!ind) return;
+        th.setAttribute('aria-sort', key === sortState.key ? (sortState.dir === 'asc' ? 'ascending' : 'descending') : 'none');
         if (key === sortState.key) {
             ind.textContent = sortState.dir === 'asc' ? '▲' : '▼';
+            document.getElementById('threadSortSummary').textContent = `Sorted by ${th.textContent.trim()}${key === 'cpuMs' ? ' (cumulative)' : ''}`;
         } else {
             ind.textContent = '';
         }
@@ -5250,6 +5169,10 @@ function updateSortIndicators() {
 }
 
 document.querySelectorAll('#threadTable th.sortable').forEach((th) => {
+    th.tabIndex = 0;
+    th.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); th.click(); }
+    });
     th.addEventListener('click', () => {
         const key = th.getAttribute('data-key');
         if (!key) return;
