@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.15 — General availability metadata
+
+- Remove the Preview badge from the desktop extension and update the listing and installation documentation to describe the GA release.
+- Validate stable release metadata in the actual VSIX, including the Marketplace gallery flags and pre-release channel property.
+- Clarify that merging to main builds the release artifact; a new Marketplace version must be published separately.
+
 ## 0.3.14 — Compact TLS capture header
 
 - Keep the complete TLS capture filename beside its label on a dedicated wrapping row, with tighter header spacing. Restore at least six complete interaction rows at 1366 × 768 with capture analysis collapsed.

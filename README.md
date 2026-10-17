@@ -44,12 +44,12 @@ without supplying a private capture. [Example guide and provenance](docs/EXAMPLE
 For files to open directly in either the application or VS Code, see the
 [real TLS logs from eight Java versions](testdata/tls-logs/README.md).
 
-## VS Code preview
+## VS Code extension
 
-Both analyzers are also available as an offline desktop VS Code extension.
+Both analyzers are generally available as an offline desktop VS Code extension.
 Open captures from Explorer or the active editor, compare thread snapshots, and
 use native clipboard, raw-evidence and export actions. No Java server is required.
-[Install/build the stage 1 VSIX](extensions/vscode/README.md) ·
+[Install/build the VS Code extension](extensions/vscode/README.md) ·
 [Two-stage integration plan](docs/VSCODE.md).
 
 ## Privacy and scope

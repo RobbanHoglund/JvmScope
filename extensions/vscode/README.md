@@ -4,7 +4,7 @@ Investigate **Java thread dumps** and **Java TLS/SSL logs (JSSE)** inside VS Cod
 same analysis engines as JvmScope's browser application. No Java installation,
 server, account or external analysis service is needed.
 
-This is the **0.3 native sidebar preview**. The two analyzers are bundled webviews with native
+The desktop extension is **generally available (GA)**. The two analyzers are bundled webviews with native
 file opening, clipboard, read-only raw evidence and export dialogs. The package
 also contains the searchable help, examples and knowledge base.
 
@@ -12,17 +12,16 @@ also contains the searchable help, examples and knowledge base.
 
 In VS Code, open Extensions and search for **`RobbanHoglund.jvmscope`**. Install
 the extension, then run **JvmScope: Open Analysis Sidebar** from the Command Palette.
-The release is labeled **Preview** while broader desktop feedback is collected.
 
 For an unpublished build or offline installation:
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
-2. In VS Code, run **Extensions: Install from VSIX…** and select `jvmscope-0.3.10.vsix`.
+2. In VS Code, run **Extensions: Install from VSIX…** and select the downloaded `jvmscope-<version>.vsix`.
 3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
 
 Alternatively, build the package using the instructions below. Requires VS Code
-**1.110 or later** on desktop. Browser-hosted VS Code (`vscode.dev`) is not included
-in this first version.
+**1.110 or later** on desktop (Windows, macOS or Linux). Browser-hosted VS Code
+(`vscode.dev`) is not supported.
 
 ## Analyze captures
 
@@ -159,7 +158,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.10.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-0.3.15.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or
@@ -175,8 +174,8 @@ code --extensionDevelopmentPath="$PWD/extensions/vscode"
 The `.vsix` is written under `build/vscode/`. Generated webview assets are excluded
 from git and rebuilt from the shared frontend. The package has no production npm
 dependencies. No Marketplace publication is performed by these commands or CI.
-The manifest's publisher identifier must be verified against the actual publisher
-account before a public release.
+Merging to main does not update the Marketplace listing or installed extensions.
+See [release and Marketplace publication](https://github.com/RobbanHoglund/JvmScope/blob/main/docs/VSCODE.md#release-and-marketplace-publication).
 
 ## Next stage
 

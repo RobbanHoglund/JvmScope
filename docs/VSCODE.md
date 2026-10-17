@@ -1,10 +1,14 @@
 # VS Code delivery: two stages
 
+The desktop extension is generally available (GA). Version 0.3.15 removes the
+remaining Preview metadata and listing text. The stages below describe the
+implemented architecture and the remaining integration roadmap.
+
 ## Stage 1 — working offline extension
 
 Implemented in `extensions/vscode` on top of the existing frontend. One extension
-opens separate TDA and TLS panels. It is packaged as an installable VSIX; the first
-iteration does not publish to Marketplace or start a Java/HTTP server.
+opens separate TDA and TLS panels. It is packaged as an installable VSIX. Building
+does not publish to Marketplace or start a Java/HTTP server.
 
 | Area | Implementation |
 | --- | --- |
@@ -36,13 +40,13 @@ evidence, not a live source editor; source navigation validates original-file
 coordinates separately.
 
 The package is a desktop extension. Remote/virtual file providers are accessed
-through VS Code APIs without assuming a local filesystem path. Real remote
-SSH/Codespaces environments and all operating systems are not yet certified by
-this initial Linux integration run.
+through VS Code APIs without assuming a local filesystem path. Installed-package
+CI covers Windows, macOS and Linux. Real remote SSH/Codespaces environments are
+not yet covered by that matrix; browser-hosted VS Code (`vscode.dev`) is not supported.
 
 ## Stage 2 — deeper editor integration
 
-The 0.2 preview implements source navigation and host theme adaptation.
+Version 0.2 introduced source navigation and host theme adaptation.
 Thread details select their original physical range; TLS event/raw links select
 the original log line. Native per-panel registries resolve opaque IDs to captured
 URIs and compare normalized content digests before highlighting. They recheck
@@ -55,7 +59,7 @@ theme families at 600px with contrast/focus checks; these use representative
 palettes rather than certifying every third-party theme. The standalone website
 and report export palettes remain independent.
 
-The 0.3 preview adds a native Activity Bar tree: files → snapshots → threads and
+Version 0.3 added a native Activity Bar tree: files → snapshots → threads and
 file → TLS interactions → observed events. Branches request at most 100 labels
 and opaque keys at a time from the existing webviews. Clicking a node reveals its
 owning panel and selects the exact object. Every successful analysis publishes a
@@ -77,8 +81,8 @@ Remaining roadmap:
 5. **Accessibility:** extend real VS Code keyboard and screen-reader coverage.
 6. **Session handling:** restore view preferences separately from sensitive capture
    contents; persistence of raw logs requires an explicit design and user choice.
-7. **Release matrix:** exercise Windows/macOS/Linux and remote workspaces; verify
-   the Marketplace publisher, icon, listing, release channels and signed artifacts.
+7. **Release matrix:** extend the installed-package checks to real remote workspaces
+   and verify Marketplace installation and signed artifacts after publication.
 
 Avoid duplicating analysis logic in the extension host. Any new rule or change of
 meaning belongs in the shared models with JVM-fixture and UI regression coverage.
@@ -99,8 +103,23 @@ meaning belongs in the shared models with JVM-fixture and UI regression coverage
   unsaved editor, selecting original evidence, rejecting a changed document and
   navigating the native sidebar across hidden retained webviews. This catches webview-resource/CSP differences that mocks cannot.
 - `VS Code extension checks` builds and uploads the VSIX without publishing it.
+- The actual VSIX must have `preview: false`, no `Preview` gallery flag and no
+  pre-release channel property. The package validator rejects regressions.
+
+## Release and Marketplace publication
+
+The `preview` manifest field controls the Marketplace Preview badge independently
+of the version number. A stable GA package uses `preview: false` and is built
+without `--pre-release`.
+
+After merging a release, download and unzip the `jvmscope-vscode` artifact from the
+successful **VS Code extension checks** run on main. Publish that validated VSIX as
+a new stable version of the existing **RobbanHoglund.jvmscope** extension using the
+publisher account. Building or merging alone does not update Marketplace metadata.
+Users must then install the new version to receive the updated package metadata.
 
 Primary API references:
+- https://code.visualstudio.com/api/references/extension-manifest
 - https://code.visualstudio.com/api/extension-guides/webview
 - https://code.visualstudio.com/api/working-with-extensions/testing-extension
 - https://code.visualstudio.com/api/working-with-extensions/publishing-extension
