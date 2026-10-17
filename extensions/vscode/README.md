@@ -67,6 +67,12 @@ or run **JvmScope: Open Knowledge Base** from the Command Palette. The website's
 row is omitted inside VS Code; the standalone app keeps it. Capture actions and Help
 remain inside each analyzer, and opening the knowledge base preserves loaded analyses.
 
+Knowledge articles share one tab. **Back / Forward** (or **Alt+Left / Alt+Right**)
+restore the previous page's search, choices and reading position. **Knowledge base**
+returns to the previous article results when available. Reopening Knowledge Base
+from the sidebar or Command Palette resumes the current article. Reading history
+is held only in the open webview's memory and is discarded when that tab closes.
+
 - **Java thread dumps:** expand a source file, then a snapshot, then its threads.
   Select a thread to open its details in the correct snapshot, even when names repeat.
 - **Java TLS logs:** expand the file, an interaction, then its observed events.

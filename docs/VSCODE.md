@@ -59,6 +59,14 @@ theme families at 600px with contrast/focus checks; these use representative
 palettes rather than certifying every third-party theme. The standalone website
 and report export palettes remain independent.
 
+The Knowledge Base retains a single webview with an in-memory Back/Forward
+history. Returning restores each page's controls, search, scroll and focus;
+the article's Knowledge base link restores prior results when available.
+The native Open Knowledge Base command resumes the current reading session.
+Explicit article links still apply their requested route/version/fragment, and
+readiness is reported only after the knowledge navigation listener is installed.
+History is bounded to 30 entries and is discarded when the tab closes.
+
 Version 0.3 added a native Activity Bar tree: files → snapshots → threads and
 file → TLS interactions → observed events. Branches request at most 100 labels
 and opaque keys at a time from the existing webviews. Clicking a node reveals its

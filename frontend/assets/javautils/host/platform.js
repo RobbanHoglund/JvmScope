@@ -20,6 +20,7 @@ export function replacePageUrl(url) {
 }
 
 function send(message) { vscode?.postMessage({ channel, version: 1, ...message }); }
+export function notifyHostReady() { send({ type: 'ready' }); }
 function request(action, payload = {}) {
     return new Promise((resolve, reject) => {
         const id = `web:${++nextId}`;
@@ -95,7 +96,7 @@ export function initializeHostNavigation() {
             }
         }
     });
-    if (!['tda', 'tls'].includes(document.body.dataset.jvmscopePage)) send({ type: 'ready' });
+    if (!['tda', 'tls', 'knowledge'].includes(document.body.dataset.jvmscopePage)) notifyHostReady();
 }
 
 export function bindHostInputs({ fileInput, onSources }) {
@@ -112,7 +113,7 @@ export function bindHostInputs({ fileInput, onSources }) {
         event.preventDefault();
         request('chooseFiles').then(sources => sources?.length && onSources(sources)).catch(showHostError);
     });
-    send({ type: 'ready' });
+    notifyHostReady();
 }
 
 export const writeClipboard = text => vscode ? request('copy', { text }) : navigator.clipboard.writeText(text);

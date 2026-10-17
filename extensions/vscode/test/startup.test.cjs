@@ -21,7 +21,7 @@ async function host(t) {
         workspace: {
             registerTextDocumentContentProvider: disposable,
             fs: { readFile: async resource => {
-                if (resource.path.endsWith('/pages.json')) return Buffer.from(JSON.stringify(['jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html']));
+                if (resource.path.endsWith('/pages.json')) return Buffer.from(JSON.stringify(['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html', 'knowledge/thread-dumps.html']));
                 if (failRead) { failRead = false; throw new Error('Cannot read packaged page'); }
                 return Buffer.from('<!doctype html><html><head></head><body></body></html>');
             } },
@@ -32,10 +32,10 @@ async function host(t) {
             createWebviewPanel: () => {
                 let onDispose, onMessage;
                 const panel = {
-                    disposed: false, reveals: 0,
+                    disposed: false, reveals: 0, messages: [],
                     webview: {
                         cspSource: 'https://test.invalid', asWebviewUri: resource => resource,
-                        postMessage: async () => !panel.disposed,
+                        postMessage: async message => { panel.messages.push(message); return !panel.disposed; },
                         onDidReceiveMessage: handler => { onMessage = handler; return disposable(); },
                     },
                     onDidDispose: handler => { onDispose = handler; return disposable(); },
@@ -118,4 +118,49 @@ test('a packaged-page read failure disposes the incomplete session and allows a 
     assert.equal(h.panels.length, 2);
     await h.panels[1].receive(ready);
     assert.equal(await retry, undefined);
+});
+
+test('reopening Knowledge Base reveals its retained page instead of resetting the reading session', async t => {
+    const h = await host(t);
+    const first = h.run('jvmscope.openKnowledge');
+    await tick(); await h.panels[0].receive(ready); await first;
+    const panel = h.panels[0], html = panel.webview.html;
+    const tda = h.run('jvmscope.openTda');
+    await tick(); await h.panels[1].receive(ready); await tda;
+    const reopen = h.run('jvmscope.openKnowledge');
+    await tick();
+    assert.equal(h.panels.length, 2, 'Switching tools must reuse the existing knowledge tab');
+    assert.equal(panel.disposed, false);
+    assert.equal(panel.webview.html, html, 'Retain article, filters and reading position');
+    assert.equal(panel.reveals, 1);
+    assert.equal(await reopen, undefined);
+});
+
+test('explicit knowledge links change the reading route in the same tab and reject unknown pages', async t => {
+    const h = await host(t);
+    const first = h.run('jvmscope.openKnowledge');
+    await tick(); await h.panels[0].receive(ready); await first;
+    const panel = h.panels[0], html = panel.webview.html;
+    const request = route => ({ channel: 'jvmscope', version: 1, type: 'request', id: 'web:1', action: 'navigate', route });
+    const route = '/knowledge/thread-dumps.html?java=25#check';
+    await panel.receive(request(route));
+    assert.equal(h.panels.length, 1);
+    assert.equal(panel.webview.html, html, 'The document must retain its browsing history');
+    assert.ok(panel.messages.some(message => message.type === 'knowledgeRoute' && message.route === route));
+    const before = panel.messages.filter(message => message.type === 'knowledgeRoute').length;
+    for (const invalid of ['/knowledge/missing.html', '/knowledge/index.html?java=999', '//evil.invalid/knowledge/index.html']) {
+        await panel.receive(request(invalid));
+        assert.match(panel.messages.at(-1).error, /Unknown JvmScope page/);
+    }
+    assert.equal(panel.messages.filter(message => message.type === 'knowledgeRoute').length, before);
+    await h.run('jvmscope.openKnowledge');
+    assert.equal(panel.messages.filter(message => message.type === 'knowledgeRoute').length, before, 'Launcher resumes rather than navigating to the index');
+    await panel.receive(request('/index.html'));
+    assert.equal(h.panels.length, 2, 'The bundled home page has its own renderer');
+    assert.equal(panel.disposed, true);
+    await h.panels[1].receive(ready);
+    const reopen = h.run('jvmscope.openKnowledge');
+    await tick();
+    assert.equal(h.panels.length, 3, 'The knowledge launcher must not resume the home page');
+    await h.panels[2].receive(ready); await reopen;
 });

@@ -992,15 +992,14 @@ test('bundled knowledge articles use their packaged route and preserve Java vers
     await host.open('/knowledge/index.html');
     await host.page.locator('#knowledgeVersion').selectOption('21');
     await host.page.locator('.knowledge-card').filter({hasText:'Collect the right thread dump'}).first().click();
-    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/thread-dumps.html?java=21');
-    await host.open('/knowledge/thread-dumps.html?java=21');
     await expect(host.page.locator('#articleIntro h1')).toHaveText('Collect the right thread dump');
     await expect(host.page.locator('#articleVersion')).toHaveValue('21');
     await host.page.locator('#articleVersion').selectOption('25');
     await host.page.locator('#relatedGuides a[href*="thread-counters"]').click();
-    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/thread-counters.html?java=25');
+    await expect(host.page.locator('#articleIntro h1')).toHaveText('CPU, elapsed and allocation: evidence and limits');
+    await expect(host.page.locator('#articleVersion')).toHaveValue('25');
     await host.page.locator('#knowledgeBack').click();
-    await expect.poll(()=>host.messages.findLast(m=>m.action==='navigate')?.route).toBe('/knowledge/index.html?java=25');
+    await expect(host.page.locator('#knowledgeVersion')).toHaveValue('21');
     await host.open('/knowledge/thread-counters.html?java=21#find=CPU&section=check');
     await expect(host.page.locator('#articleIntro h1')).toHaveText('CPU, elapsed and allocation: evidence and limits');
     await expect(host.page.locator('#articleVersion')).toHaveValue('21');
@@ -1009,9 +1008,6 @@ test('bundled knowledge articles use their packaged route and preserve Java vers
     await host.page.locator('#articleSearchClear').click();
     await expect(host.page.locator('mark[data-article-match]')).toHaveCount(0);
     await host.page.locator('#knowledgeBack').click();
-    const back=host.messages.findLast(m=>m.action==='navigate')?.route;
-    expect(back).toBe('/knowledge/index.html?java=21#find=CPU&section=articleIntro');
-    await host.open(back);
     await expect(host.page.locator('#knowledgeSearch')).toHaveValue('CPU');
     await expect(host.page.locator('#knowledgeVersion')).toHaveValue('21');
     await host.page.locator('#knowledgeSearchClear').click();
@@ -1030,13 +1026,75 @@ test('bundled knowledge articles use their packaged route and preserve Java vers
     const longQuery=Array(128).fill('cpu').join(' ');
     await host.page.locator('#knowledgeSearch').fill(longQuery);
     await host.page.locator('.knowledge-card').first().click();
-    const route=host.messages.findLast(m=>m.action==='navigate').route;
+    const route=await host.page.locator('meta[name="jvmscope-page"]').getAttribute('content');
     expect(route.length).toBeGreaterThan(500);
-    // Requests above are checked by the real host validator, including their size.
+    // The same long route remains valid when opened through the native host.
     await expect(host.page.locator('#hostError')).toHaveCount(0);
     protocol.validateRequest({channel:'jvmscope',version:1,type:'request',id:'web:1',action:'navigate',route});
     await host.open(route);
     await expect(host.page.locator('#articleSearch')).toHaveValue(longQuery);
+});
+
+test('knowledge browsing restores results, article choices, scroll and focus without replacing the webview',async({host})=>{
+    const {page}=host;
+    await host.open('/knowledge/index.html');
+    const webviewUrl=page.url();
+    await expect(page.getByRole('button',{name:'Back',exact:true})).toBeDisabled();
+    await page.locator('#knowledgeVersion').selectOption('21');
+    await page.locator('#knowledgeTopic').selectOption('threads');
+    await page.locator('#knowledgeSearch').fill('virtual');
+    await page.locator('#compareFrom').selectOption('21');
+    await page.locator('#compareTo').selectOption('25');
+    await page.locator('#capabilityVersion').selectOption('17');
+    await page.locator('#knowledgeFormat').selectOption('json');
+    const result=page.locator('.knowledge-card').filter({hasText:'Collect the right thread dump'});
+    await result.click();
+    await expect(page.locator('#articleIntro h1')).toHaveText('Collect the right thread dump');
+    await page.locator('#articleVersion').selectOption('25');
+    await page.locator('#knowledgeFormat').selectOption('plain');
+    await page.locator('#articleSearch').fill('jcmd');
+    await page.getByRole('link',{name:'Inspect',exact:true}).click();
+    const articleScroll=await page.evaluate(()=>scrollY);
+    await page.keyboard.press('Alt+ArrowLeft');
+    await expect(page.locator('#knowledgeSearch')).toHaveValue('virtual');
+    await expect(page.locator('#knowledgeTopic')).toHaveValue('threads');
+    await expect(page.locator('#knowledgeVersion')).toHaveValue('21');
+    await expect(page.locator('#compareFrom')).toHaveValue('21');
+    await expect(page.locator('#compareTo')).toHaveValue('25');
+    await expect(page.locator('#capabilityVersion')).toHaveValue('17');
+    await expect(page.locator('#knowledgeFormat')).toHaveValue('json');
+    await expect(result).toBeFocused();
+    await page.keyboard.press('Alt+ArrowRight');
+    await expect(page.locator('#articleVersion')).toHaveValue('25');
+    await expect(page.locator('#knowledgeFormat')).toHaveValue('plain');
+    await expect(page.locator('#articleSearch')).toHaveValue('jcmd');
+    await expect(page.locator('#check')).toBeFocused();
+    expect(Math.abs(await page.evaluate(()=>scrollY)-articleScroll)).toBeLessThan(3);
+    await page.keyboard.press('Control+f');
+    await expect(page.locator('#articleSearch')).toBeFocused();
+    await page.locator('#relatedGuides a[href*="thread-counters"]').click();
+    await expect(page.locator('#articleIntro h1')).toContainText('CPU, elapsed');
+    await page.getByRole('button',{name:'Back',exact:true}).click();
+    await expect(page.locator('#articleSearch')).toHaveValue('jcmd');
+    await page.locator('#knowledgeBack').click();
+    await expect(result).toBeFocused();
+    await page.locator('.knowledge-card').filter({hasText:'Virtual threads, carriers and pinning'}).click();
+    await expect(page.getByRole('button',{name:'Forward',exact:true})).toBeDisabled();
+    await page.keyboard.press('Control+f');
+    await expect(page.locator('#articleSearch')).toBeFocused();
+    expect(page.url()).toBe(webviewUrl);
+    expect(host.messages.filter(m=>m.action==='navigate')).toEqual([]);
+    await page.evaluate(()=>window.postMessage({channel:'jvmscope',version:1,type:'knowledgeRoute',route:'/knowledge/object-headers.html?java=24#check'},'*'));
+    await expect(page.locator('#articleIntro h1')).toContainText('Compact headers');
+    await expect(page.locator('#articleVersion')).toHaveValue('24');
+    await expect(page.locator('#check')).toBeFocused();
+    await page.getByRole('button',{name:'Back',exact:true}).click();
+    await expect(page.locator('#articleIntro h1')).toHaveText('Virtual threads, carriers and pinning');
+    await page.evaluate(()=>{
+        for(const route of ['https://evil.invalid/knowledge/index.html','/knowledge/missing.html','/knowledge/index.html?java=999','https://[invalid'])
+            window.postMessage({channel:'jvmscope',version:1,type:'knowledgeRoute',route},'*');
+    });
+    await expect(page.locator('#articleIntro h1')).toHaveText('Virtual threads, carriers and pinning');
 });
 
 test('knowledge section links stay in the webview and preserve article state and keyboard focus',async({host})=>{
