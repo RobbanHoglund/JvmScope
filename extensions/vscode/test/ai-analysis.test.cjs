@@ -126,3 +126,16 @@ test('progress cancellation and stream failures do not present incomplete output
         assert.equal(h.documents.length, 0); assert.equal(h.errors.length, cancelled ? 0 : 1);
     }
 });
+
+// VS Code notification promises stay pending until the user dismisses them.
+test('failed Copilot requests release the job while the error notification is still open', async () => {
+    const h = host({ deny: true });
+    h.vscode.window.showErrorMessage = text => { h.errors.push(text); return new Promise(() => {}); };
+    await h.ai.run('copilot', 'reviewed');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(h.errors.length, 1);
+    assert.equal(h.ai.running, false, 'An undismissed notification must not lock further analysis');
+    h.vscode.lm.selectChatModels = async () => [h.model];
+    await h.ai.run('copilot', 'retry'); await h.ai.job;
+    assert.equal(h.documents.length, 1);
+});

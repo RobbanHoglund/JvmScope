@@ -31,7 +31,9 @@ class AiAnalysis {
             if (this.running) throw new Error('An AI analysis is already running. Finish or cancel it in the progress notification first.');
             this.running = true;
             this.job = this.analyze(prompt).catch(error => {
-                if (!this.disposed) return v.window.showErrorMessage(`AI analysis failed: ${String(error.message || error).slice(0, 500)}. Your local JvmScope analysis is unchanged.`);
+                // Notification promises resolve only after dismissal. They must
+                // not keep a failed provider request holding the running lock.
+                if (!this.disposed) void Promise.resolve(v.window.showErrorMessage(`AI analysis failed: ${String(error.message || error).slice(0, 500)}. Your local JvmScope analysis is unchanged.`)).catch(() => {});
             }).finally(() => { this.running = false; this.cancellation = null; });
             return { message: 'Choose a Copilot model in VS Code. The response will open in a Markdown editor; cancel from the progress notification.' };
         }
