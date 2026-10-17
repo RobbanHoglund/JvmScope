@@ -1,4 +1,6 @@
 import { createTlsNavigation } from './host/navigation-model.js';
+import { createAiAnalysisView } from './ai-analysis-view.js';
+import { tlsAiEvidence } from './ai-evidence.js';
 // Java TLS Log Analyzer 
 import { bindHostInputs, writeClipboard, isVsCode, syncSourceLinks, openSourceLocation, createHostNavigation } from './host/platform.js';
 
@@ -78,6 +80,7 @@ let directionFilter = 'all';
 let analysisEntries = [];
 let parsedAt = null;
 let selectedInteraction = null;
+const aiAnalysis = createAiAnalysisView(() => tlsAiEvidence({ interactions: allInteractions, selected: selectedInteraction, name: UI.fileName.textContent }));
 let autoSelectInteraction = false;
 const inspector = createTlsInspector({ root: document.getElementById('tlsInspector'),
     onDetails: openModalForInteraction, onStep: stepInteraction, copy: copyToClipboard,
@@ -110,6 +113,7 @@ analysisPanel.querySelector('summary')?.addEventListener('click', () => {
 let tablePage = 0;
 let exampleReadController = null;
 function beginInputRequest() {
+    aiAnalysis.invalidate();
     analysisClient.cancel();
     exampleReadController?.abort();
     exampleReadController = null;
@@ -198,6 +202,7 @@ function renderInspector() {
 }
 
 const hostNavigation = createHostNavigation(({interaction,eventIndex}) => {
+    aiAnalysis.invalidate();
     closeDialog(UI.modal);
     closeDialog(UI.helpModal);
     closeIssueModal();
@@ -212,6 +217,7 @@ const hostNavigation = createHostNavigation(({interaction,eventIndex}) => {
 });
 
 function selectInteraction(id) {
+    aiAnalysis.invalidate();
     selectedInteraction = filteredInteractions.find(item => item.id === id) || null;
     const index = filteredInteractions.indexOf(selectedInteraction);
     if (index >= 0 && Math.floor(index / PAGE_SIZE) !== tablePage) {
@@ -444,6 +450,7 @@ function renderTable(items) {
 }
 
 function renderMeta(allItems) {
+    if (!allItems.length) aiAnalysis.invalidate();
     const total = allItems.length;
     const warnTotal = allItems.reduce((sum, x) => sum + (x.warnCount || 0), 0);
     document.getElementById('tlsHighlightCount').textContent = total ? `(${warnTotal})` : '';

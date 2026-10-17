@@ -46,6 +46,80 @@ not yet covered by that matrix; browser-hosted VS Code (`vscode.dev`) is not sup
 
 ## Stage 2 — deeper editor integration
 
+Version 1.1 adds optional **Analyze with AI** in both analyzer headers. The shared
+evidence builder copies the existing analysis model and its qualifications into
+a bounded, editable preview. It does not run a second rule engine. TDA scopes the
+summary to the selected snapshot; TLS scopes it to the selected interaction (or
+an explicitly limited overview). Full raw text is excluded unless requested.
+
+The host protocol accepts only the fixed provider IDs `copilot`, `codex` and
+`claude`, with a 256 KiB UTF-8 input bound. Discovery does not activate assistants,
+authenticate or request inference. A user-initiated Copilot action selects an
+available model through `vscode.lm`, checks its token budget and supports
+cancellation. Its output goes to a separate Markdown editor and never rewrites
+JvmScope's findings. Only one model request runs at a time. The dialog polls
+per-panel job state and exposes Cancel, progress and provider errors. Job IDs
+scope cancellation to the owning panel and request. Closing the dialog or
+invalidating its evidence cancels the pending work. Every provider await races
+against cancellation, with a three-minute total deadline; late results cannot
+open an editor or clear a newer job. Error notification dismissal never holds
+the job lock.
+
+Codex uses the documented `chatgpt.openSidebar` command after copying the reviewed
+prompt. Claude uses its documented `/open` URI without prompt data in the URL;
+the clipboard avoids platform URL-size limits. Users paste and submit in those
+assistants. No private chat API, shell command, credential reuse or automatic
+submission is assumed. Provider accounts and organizational permissions remain
+the responsibility of the chosen extension. Detection is limited to assistants
+available in the current VS Code window/extension host.
+
+The evidence builders, cancellation/error paths and public launcher boundaries
+have unit coverage; packaged browser journeys cover the preview, exact edited
+payload, themes, narrow layouts, capture replacement and explicit model reselection
+after a core-only rejection. The installed-extension CI also exercises real native
+notification promises, progress cancellation, internal-alias filtering and the
+response editor with a deterministic provider boundary, without an account. **Live authenticated Copilot inference
+and interactive Codex/Claude handoff require a manual smoke test with those
+extensions enabled; CI does not submit real diagnostic data or consume quota.**
+
+Integration references (checked 2026-10-17):
+- [VS Code Language Model API](https://code.visualstudio.com/api/extension-guides/ai/language-model)
+- [Codex IDE commands](https://developers.openai.com/codex/ide/commands)
+- [Claude Code VS Code integration](https://code.claude.com/docs/en/vs-code#launch-a-vs-code-tab-from-other-tools)
+
+### Copilot model selection
+
+The stable `selectChatModels({ vendor: 'copilot' })` API can return internal
+models as well as user-facing chat models. Its consumer `LanguageModelChat`
+objects do not expose the provider-side `isUserSelectable` flag. JvmScope excludes
+the known `copilot-dictation-cleanup-nano`, `copilot-dictation-cleanup-luna`,
+`copilot-utility-small` and `copilot-utility` aliases. These are internal helpers;
+the dictation aliases reject extension requests with “only available to VS Code core”.
+
+There is deliberately no model-name or family allowlist. In particular, Copilot
+can publish `gpt-5.6-luna` either as an ordinary model or as a core-only dictation
+alias, so its ID alone cannot establish access. If a selected model explicitly
+rejects access as core-only, JvmScope removes that vendor/ID/version from the
+picker for the current session and offers another choice with the reviewed prompt
+unchanged. It never sends to the replacement model until the user chooses it.
+This handles errors at request start, in the response stream and wrapped causes.
+Consent, quota, policy and network failures remain ordinary visible errors and
+never trigger a model switch. An internal-only catalog explains the limitation
+and leaves Copy prompt available. The implementation neither probes models with
+background requests nor impersonates the VS Code core request initiator.
+
+Compatibility source (checked 2026-10-17):
+[Copilot model registration and core-only request checks](https://github.com/microsoft/vscode/blob/main/extensions/copilot/src/extension/conversation/vscode-node/languageModelAccess.ts),
+[extension-host consumer model API](https://github.com/microsoft/vscode/blob/main/src/vs/workbench/api/common/extHostLanguageModels.ts),
+and [stable API declarations](https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.d.ts).
+Provider IDs and error wording are not a public compatibility contract; recheck
+these boundaries when updating Copilot support. The authenticated release smoke
+test must verify that the actual account's picker excludes the internal aliases,
+an allowed model opens a response editor, and cancellation and access-denied
+retries leave the prompt usable in both analyzers.
+
+### Existing editor integration
+
 Version 0.2 introduced source navigation and host theme adaptation.
 Thread details select their original physical range; TLS event/raw links select
 the original log line. Native per-panel registries resolve opaque IDs to captured

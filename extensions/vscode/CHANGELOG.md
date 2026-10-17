@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.1.2 — Copilot model selection
+
+- Exclude Copilot's internal dictation and utility aliases from the model picker, fixing the “only available to VS Code core” error for dictation models.
+- If another model rejects an extension request as core-only, preserve the reviewed prompt and offer a new explicit choice. Remember the rejected model for the session; never switch models automatically.
+- Keep consent, quota and network errors visible without retrying another model, and explain when only internal models are available.
+- Add unit regressions, both packaged analyzer journeys and a real VS Code host check for the internal-model catalog.
+
+## 1.1.1 — Recoverable Copilot requests
+
+- Release failed AI jobs immediately, without waiting for an error notification to be dismissed.
+- Show Copilot progress and provider errors in the AI dialog, keep Analyze disabled during the request and add Cancel analysis.
+- Release cancelled or timed-out requests even when a provider does not respond, ignore late results and cancel when the reviewed evidence changes or its dialog closes.
+- Add regressions using the packaged controller in both analyzer dialogs and real VS Code notification/progress APIs.
+
+## 1.1.0 — Optional AI analysis
+
+- Add an editable AI evidence preview for the selected thread snapshot or TLS interaction, preserving analyzer qualifications and marking excerpt limits.
+- Analyze through installed Copilot Chat using its available models, token budgets and cancellation support; open the response in a separate Markdown editor.
+- Detect installed Codex and Claude Code and offer explicit Copy and open handoff, with manual copy available for other assistants.
+- Keep raw evidence optional, clear reviewed prompts when captures change, and explain provider sharing separately from local parsing.
+
 ## 1.0.0 — General availability
 
 - Show sidebar expand arrows only when an analyzer has captured items; empty roots remain direct tool launchers.

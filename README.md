@@ -52,11 +52,14 @@ use native clipboard, raw-evidence and export actions. No Java server is require
 [Install/build the VS Code extension](extensions/vscode/README.md) ·
 [Two-stage integration plan](docs/VSCODE.md).
 
+The VS Code extension also offers optional AI analysis using installed Copilot Chat,
+Codex or Claude Code. Review the evidence before sharing; see [AI analysis](extensions/vscode/README.md#optional-ai-analysis).
+
 ## Privacy and scope
 
 Your dump/log contents stay in the browser. Both analyzers run in disposable browser
 workers; Clear or replacement inputs terminate pending analysis. The Java server delivers static
-files and health checks; it has no upload or analysis API. There is no AI service,
+files and health checks; it has no upload or analysis API. The standalone application has no AI service,
 analytics SDK, database, or remote CDN required by the analyzers. Example files
 are downloaded from the application server and then analyzed locally.
 

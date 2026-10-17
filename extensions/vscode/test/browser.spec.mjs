@@ -11,11 +11,17 @@ const require=createRequire(import.meta.url);
 const webview=require(resolve(extensionRoot,'src/webview.cjs'));
 const protocol=require(resolve(extensionRoot,'src/protocol.cjs'));
 const media=resolve(extensionRoot,'media');
+const {AiAnalysis}=require(resolve(extensionRoot,'src/ai-analysis.cjs'));
+const {createAiHost}=require('./ai-host.cjs');
 const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
         const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8'));
-        let origin, clipboard='', sourceError='', nextNavigation=0; const messages=[];
+        let origin, clipboard='', sourceError='', nextNavigation=0;
+        let aiProviders=[{id:'copilot',label:'Copilot'},{id:'codex',label:'Codex'},{id:'claude',label:'Claude Code'}];
+        const messages=[];
+        const ai=createAiHost(AiAnalysis);
+        let aiState={state:'idle',running:false,message:''};
         const server=createServer(async(req,res)=>{
             try {
                 const url=new URL(req.url,origin);
@@ -46,6 +52,13 @@ const test=base.extend({
                 try {
                     protocol.validateRequest(message);
                     if(message.action==='navigate')webview.resolveRoute(message.route,pages);
+                    if(message.action==='aiProviders')value=aiProviders;
+                    if(message.action==='aiStatus')value=aiState;
+                    if(message.action==='cancelAi')value=ai.ai.cancel('browser',message.jobId);
+                    if(message.action==='analyzeAi') {
+                        if(message.provider!=='copilot')clipboard=message.prompt;
+                        value=await ai.ai.run(message.provider,message.prompt,{owner:'browser',onState:state=>{aiState=state;}});
+                    }
                 } catch(cause) { error=cause.message; }
                 await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
             }
@@ -55,7 +68,7 @@ const test=base.extend({
             window.acquireVsCodeApi=()=>({postMessage:message=>window.testHostMessage(message)});
             document.addEventListener('securitypolicyviolation',event=>window.testCspViolation(`${event.violatedDirective}: ${event.blockedURI}`));
         });
-        await use({page,origin,messages,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},open:async name=>{
+        await use({page,origin,messages,ai,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},setAiProviders:items=>{aiProviders=items;},open:async name=>{
             const previous=messages.filter(m=>m.type==='ready').length;
             await page.goto(`${origin}/view?page=${encodeURIComponent(name)}`);
             await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(previous);
@@ -71,14 +84,189 @@ const test=base.extend({
             const response=messages.find(m=>m.type==='loaded'&&m.id===id);
             expect(response.error).toBeUndefined();return response.value;
         }});
+        ai.ai.dispose(); if(ai.ai.job)await ai.ai.job;
         await new Promise(resolve=>server.close(resolve));
         expect(errors).toEqual([]);expect(violations).toEqual([]);
     },
 });
 
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} reviews exact evidence, hands off edits and restores focus`, async({host},testInfo)=>{
+    const {page}=host;
+    await host.open(`/jvmscope/${analyzer}.html`);
+    await expect(page.locator('#analyzeAiBtn')).toBeHidden();
+    expect(host.messages.some(m=>m.action==='aiProviders'||m.action==='analyzeAi')).toBe(false);
+    await page.locator('#loadSampleBtn').click();
+    await expect(page.locator('#analyzeAiBtn')).toBeVisible();
+    if(analyzer==='tda') await page.locator('#dumpSelect').selectOption('1');
+    else await page.locator('.tls-select-btn').first().click();
+    await page.locator('#analyzeAiBtn').click();
+    const dialog=page.getByRole('dialog',{name:'Analyze with AI',exact:true});
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#aiProvider option')).toHaveCount(3);
+    await expect(page.locator('#aiIncludeRaw')).not.toBeChecked();
+    const initial=await page.locator('#aiPrompt').inputValue();
+    expect(initial).toContain('Full raw text is not included');
+    expect(initial).toContain(analyzer==='tda'?'Snapshot 2 of 3':'Only the selected interaction');
+    expect(host.messages.some(m=>m.action==='analyzeAi'||m.action==='copy')).toBe(false);
+    await page.locator('#aiIncludeRaw').check();
+    expect((await page.locator('#aiPrompt').inputValue()).length).toBeGreaterThan(initial.length);
+    await page.locator('#aiPrompt').fill('Reviewed and redacted evidence ✓\nPlease analyze this only.');
+    await page.locator('#aiProvider').selectOption(analyzer==='tda'?'codex':'claude');
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('Prompt copied');
+    const sent=host.messages.find(m=>m.action==='analyzeAi');
+    expect(sent.prompt).toBe('Reviewed and redacted evidence ✓\nPlease analyze this only.');
+    expect(sent.provider).toBe(analyzer==='tda'?'codex':'claude');
+    await page.setViewportSize({width:600,height:900});
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme);
+        await expectReadable(dialog); await expectReadable(page.locator('#aiPrompt')); await expectReadable(page.locator('#aiProvider'));
+        expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+        await page.screenshot({path:testInfo.outputPath(`${analyzer}-ai-${theme}.png`)});
+    }
+    await page.setViewportSize({width:360,height:700});
+    expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible(); await expect(page.locator('#analyzeAiBtn')).toBeFocused();
+    await expect(page.locator('#aiPrompt')).toHaveValue('');
+    await page.locator('#clearBtn').click(); await expect(page.locator('#analyzeAiBtn')).toBeHidden();
+});
+
+test('AI copy fallback works without installed assistants and sends nothing on cancel',async({host})=>{
+    host.setAiProviders([]);
+    await host.open('/jvmscope/tda.html'); await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiProviderHelp')).toContainText('No supported assistant');
+    await expect(host.page.locator('#aiRun')).toBeDisabled();
+    await host.page.locator('#aiPrompt').fill('Manually reviewed evidence');
+    await host.page.locator('#aiCopy').click();
+    await expect.poll(()=>host.clipboard()).toBe('Manually reviewed evidence');
+    await host.page.keyboard.press('Escape');
+    expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
+});
+
+test('AI capture replacement invalidates a previous review before any handoff',async({host})=>{
+    await host.open('/jvmscope/tda.html'); await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiAnalysisDialog')).toBeVisible();
+    await host.navigation('select','snapshot:1');
+    await expect(host.page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiScope')).toContainText('Snapshot 2');
+    const text=await capture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt');
+    await host.load([{name:'replacement.txt',text}]);
+    await expect(host.page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    await expect(host.page.locator('#aiPrompt')).toHaveValue('');
+    expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiScope')).toContainText('replacement.txt');
+});
+
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} shows live Copilot status, cancels a hung request and allows retry`,async({host},testInfo)=>{
+    const {page,ai}=host;
+    ai.vscode.lm.selectChatModels=()=>new Promise(()=>{});
+    await host.open(`/jvmscope/${analyzer}.html`); await page.locator('#loadSampleBtn').click();
+    await page.locator('#analyzeAiBtn').click();
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('Connecting to Copilot');
+    await expect(page.locator('#aiRun')).toBeDisabled();
+    await expect(page.locator('#aiCancel')).toBeVisible();
+    await expect(page.locator('#aiPrompt')).toHaveAttribute('readonly','');
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme); await page.setViewportSize({width:360,height:700});
+        await expectReadable(page.locator('#aiStatus')); await expectReadable(page.locator('#aiCancel'));
+        expect(await page.locator('#aiAnalysisDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    }
+    await page.setViewportSize({width:1100,height:900}); await applyTheme(page,'vscode-dark');
+    await page.screenshot({path:testInfo.outputPath(`${analyzer}-copilot-running.png`)});
+    await page.locator('#aiCancel').click();
+    await expect(page.locator('#aiStatus')).toContainText('cancelled');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    await expect(page.locator('#aiCancel')).toBeHidden();
+    expect(ai.ai.running).toBe(false);
+    ai.vscode.lm.selectChatModels=async()=>[ai.model];
+    await page.locator('#aiPrompt').fill('Reviewed retry evidence');
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    expect(ai.documents).toHaveLength(1);
+    expect(ai.calls.find(c=>c[0]==='send')[1][0].content).toBe('Reviewed retry evidence');
+    expect(host.messages.filter(m=>m.action==='analyzeAi')).toHaveLength(2);
+});
+
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} excludes internal aliases and preserves evidence during explicit model reselection`,async({host})=>{
+    const {page,ai}=host, picks=[];
+    let chooseReplacement;
+    const internal={...ai.model,id:'copilot-dictation-cleanup-luna',
+        countTokens:async()=>{throw new Error('Internal alias must not receive evidence');},
+        sendRequest:async()=>{throw new Error('Internal alias must not be requested');},
+    };
+    const restricted={...ai.model,id:'gpt-5.6-luna',sendRequest:async()=>{
+        throw new Error('Model gpt-5.6-luna is only available to VS Code core.');
+    }};
+    ai.vscode.lm.selectChatModels=async()=>[internal,restricted,ai.model];
+    ai.vscode.window.showQuickPick=items=>{
+        picks.push(items.map(item=>item.model.id));
+        if(picks.length===1)return items[0];
+        return new Promise(resolve=>{chooseReplacement=()=>resolve(items[0]);});
+    };
+    await host.open(`/jvmscope/${analyzer}.html`); await page.locator('#loadSampleBtn').click();
+    await page.locator('#analyzeAiBtn').click();
+    const reviewed=`Reviewed ${analyzer} evidence: preserve my redactions.`;
+    await page.locator('#aiPrompt').fill(reviewed); await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('reserved for VS Code');
+    await expect(page.locator('#aiRun')).toBeDisabled();
+    await expect(page.locator('#aiCancel')).toBeVisible();
+    await expect(page.locator('#aiPrompt')).toHaveValue(reviewed);
+    expect(picks).toEqual([[restricted.id,ai.model.id],[ai.model.id]]);
+    expect(ai.calls.some(call=>call[0]==='send')).toBe(false);
+    expect(ai.documents).toHaveLength(0);
+    chooseReplacement();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    await expect(page.locator('#aiCancel')).toBeHidden();
+    expect(ai.documents).toHaveLength(1);
+    expect(ai.calls.find(call=>call[0]==='send')[1][0].content).toBe(reviewed);
+    expect(ai.errors).toEqual([]);
+});
+
+test('AI provider errors appear in the dialog and retry works with an undismissed notification',async({host},testInfo)=>{
+    const {page,ai}=host;
+    ai.vscode.lm.selectChatModels=async()=>{throw new Error('Copilot access denied');};
+    ai.vscode.window.showErrorMessage=()=>new Promise(()=>{});
+    await host.open('/jvmscope/tda.html'); await page.locator('#loadSampleBtn').click();
+    await page.locator('#analyzeAiBtn').click(); await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('Copilot access denied');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    await page.screenshot({path:testInfo.outputPath('copilot-error-retry.png')});
+    ai.vscode.lm.selectChatModels=async()=>[ai.model];
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    expect(ai.documents).toHaveLength(1);
+});
+
+test('AI close and snapshot replacement cancel pending work and preserve a fresh review',async({host})=>{
+    const {page,ai}=host;
+    ai.vscode.lm.selectChatModels=()=>new Promise(()=>{});
+    await host.open('/jvmscope/tda.html'); await page.locator('#loadSampleBtn').click();
+    for(const replacement of [false,true]) {
+        await page.locator('#analyzeAiBtn').click(); await page.locator('#aiRun').click();
+        await expect(page.locator('#aiCancel')).toBeVisible();
+        if(replacement) await host.navigation('select','snapshot:1');
+        else await page.keyboard.press('Escape');
+        await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
+        await expect.poll(()=>ai.ai.running).toBe(false);
+        await expect(page.locator('#aiPrompt')).toHaveValue('');
+    }
+    await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiScope')).toContainText('Snapshot 2');
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    expect(ai.documents).toHaveLength(0);
+});
+
 test('VS Code TDA uses inline workers, keeps allocation qualifications and opens exact native evidence',async({host})=>{
     await host.open('/jvmscope/tda.html');
-    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Capture analysis stays local. Optional AI sharing is controlled by you.');
     const sources=await Promise.all(['allocation-before.txt','allocation-after.txt'].map(async name=>({name,text:await capture('frontend/test/tda/fixtures/ga-regressions/'+name)})));
     const result=await host.load(sources);expect(result.snapshots).toBe(2);
     await host.page.locator('#dumpSelect').selectOption('1');
@@ -606,7 +794,7 @@ test('VS Code raw evidence retires on snapshot navigation, successful replacemen
 
 test('VS Code TLS analyzes real JSSE input and uses native copy without network upload',async({host})=>{
     await host.open('/jvmscope/tls.html');
-    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+    await expect(host.page.locator('.analyzer-start-privacy')).toHaveText('Capture analysis stays local. Optional AI sharing is controlled by you.');
     const source={name:'TLS sample.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt')};
     const result=await host.load([source]);expect(result.interactions).toBeGreaterThan(0);
     await expect(host.page.locator('#fileName')).toHaveText(source.name);
@@ -1145,7 +1333,7 @@ test('home and knowledge surfaces remain readable across host themes',async({hos
                 expect(await surface.evaluate(el=>getComputedStyle(el).backgroundImage)).toBe('none');
                 await expectReadable(surface);
             }
-            if(name==='index.html')await expect(host.page.locator('.privacy strong')).toHaveText('Analyzed locally in VS Code. Nothing is uploaded.');
+            if(name==='index.html')await expect(host.page.locator('.privacy strong')).toHaveText('Capture analysis stays local. Optional AI sharing is controlled by you.');
             await host.page.screenshot({path:testInfo.outputPath(name.replaceAll('/','-')+'-'+theme+'.png')});
         }
     }
