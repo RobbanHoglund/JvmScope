@@ -20,6 +20,7 @@ export function replacePageUrl(url) {
 }
 
 function send(message) { vscode?.postMessage({ channel, version: 1, ...message }); }
+export function notifyHostReady() { send({ type: 'ready' }); }
 function request(action, payload = {}) {
     return new Promise((resolve, reject) => {
         const id = `web:${++nextId}`;
@@ -63,12 +64,28 @@ export function initializeHostNavigation() {
         }
     });
     document.addEventListener('click', event => {
+        // Analyzer links can already have revealed a panel and moved focus.
+        if (event.defaultPrevented) return;
         const link = event.target.closest?.('a');
         if (!link || link.hasAttribute('download')) return;
         const route = link.dataset.hostRoute;
         const href = link.getAttribute('href');
         if (route) {
             event.preventDefault(); request('navigate', { route }).catch(showHostError);
+        } else if (href?.startsWith('#')) {
+            // The webview's <base> points to its resource directory, so native
+            // fragment navigation would leave the article instead of scrolling.
+            event.preventDefault();
+            let target;
+            try { target = document.getElementById(decodeURIComponent(href.slice(1))); }
+            catch { return; }
+            if (!target) return;
+            const url = getPageUrl();
+            url.hash = href;
+            replacePageUrl(url);
+            target.scrollIntoView({ block: 'start' });
+            if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+            target.focus({ preventScroll: true });
         } else if (/^https?:\/\//i.test(href || '')) {
             event.preventDefault(); request('external', { url: href }).catch(showHostError);
         } else if (href && !href.startsWith('#') && !/^[a-z][a-z0-9+.-]*:/i.test(href)) {
@@ -79,7 +96,7 @@ export function initializeHostNavigation() {
             }
         }
     });
-    if (!['tda', 'tls'].includes(document.body.dataset.jvmscopePage)) send({ type: 'ready' });
+    if (!['tda', 'tls', 'knowledge'].includes(document.body.dataset.jvmscopePage)) notifyHostReady();
 }
 
 export function bindHostInputs({ fileInput, onSources }) {
@@ -96,7 +113,7 @@ export function bindHostInputs({ fileInput, onSources }) {
         event.preventDefault();
         request('chooseFiles').then(sources => sources?.length && onSources(sources)).catch(showHostError);
     });
-    send({ type: 'ready' });
+    notifyHostReady();
 }
 
 export const writeClipboard = text => vscode ? request('copy', { text }) : navigator.clipboard.writeText(text);

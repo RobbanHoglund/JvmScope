@@ -41,6 +41,7 @@ for (const analyzer of ['tda', 'tls']) {
             await expect(dialog.locator('.docs-nav a[href="#guide-scenarios"]')).toBeHidden();
         }
         await dialog.locator('.docs-nav a[href="#guide-input-formats"]').click();
+        await expect(topic).toBeFocused();
         await expect(input).toBeInViewport();
         await expectGuideControlsWithinViewport(dialog, page);
         await dialog.screenshot({ path: `../.run/help-search/${analyzer}-${test.info().project.name}.png` });

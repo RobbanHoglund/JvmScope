@@ -6,9 +6,10 @@ import readme from '../../../../README.md?raw';
 import { escapeHtml as h, escapeAttr as a } from '../tda/ui-safety.js';
 import './knowledge.css';
 import { getPageUrl, replacePageUrl } from '../host/platform.js';
+import { initializeKnowledgeNavigation } from './navigation.js';
 
-const root=document.getElementById('knowledgeRoot');
 const coverage=parseGeneratedCoverage(readme);
+function renderKnowledgePage(root) {
 const pageUrl=getPageUrl();
 const article=ARTICLES.find(item=>pageUrl.pathname.endsWith(`/${item.id}.html`));
 const params=pageUrl.searchParams;
@@ -89,7 +90,9 @@ if(article){
     };
     root.querySelector('#articleVersion').addEventListener('change',()=>{rememberVersion(root.querySelector('#articleVersion').value);root.querySelector('#knowledgeBack').href=backPath();render();});render();
     articleSearch=createArticleSearch(root,initialSearch);
+    return ()=>articleSearch.destroy();
 }else{
+    document.title='Java Knowledge Base · JvmScope';
     const initialVersion=selectedVersion();
     root.innerHTML=`<h1>Java Knowledge Base</h1><p class="lead">Choose diagnostic evidence and understand runtime changes before tuning. Analysis tools remain independent.</p>
         <div class="knowledge-controls"><label>Search articles <input id="knowledgeSearch" type="search" maxlength="512" placeholder="CPU allocation, virtual threads Java 21…"></label><button id="knowledgeSearchClear" type="button">Clear search</button><label>Java version <select id="knowledgeVersion">${options(initialVersion,true)}</select></label><label>Topic <select id="knowledgeTopic"><option value="">All topics</option>${['diagnostics','threads','performance','memory','gc','upgrades'].map(t=>`<option>${t}</option>`).join('')}</select></label></div><p id="knowledgeCount" aria-live="polite"></p><div id="knowledgeArticles" class="knowledge-grid"></div>
@@ -120,3 +123,5 @@ if(article){
     const support=()=>{const v=root.querySelector('#capabilityVersion').value;root.querySelector('#knowledgeCapabilities').innerHTML=`<h3>A. Documented JVM capabilities</h3>${capabilities(v)}`;root.querySelector('#knowledgeCoverage').innerHTML=verifiedCoverage(v);showFormat();};
     root.querySelector('#capabilityVersion').addEventListener('change',support);list();compare();support();
 }
+}
+initializeKnowledgeNavigation(document.getElementById('knowledgeRoot'),renderKnowledgePage,ARTICLES.map(article=>article.id));

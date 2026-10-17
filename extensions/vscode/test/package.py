@@ -30,6 +30,7 @@ with zipfile.ZipFile(package) as archive:
     manifest = json.loads(archive.read("extension/package.json"))
     for key in ["name", "publisher", "version", "engines", "preview"]:
         assert manifest[key] == expected[key], f"Wrong packaged {key}"
+    assert manifest["preview"] is False, "GA releases must not enable the Preview badge"
     assert not manifest.get("dependencies"), "Runtime dependencies need a new packaging review"
     assert "extension/" + manifest["main"].removeprefix("./") in names
     for item in manifest["contributes"]["viewsContainers"]["activitybar"]:
@@ -61,6 +62,13 @@ with zipfile.ZipFile(package) as archive:
     assert identity.attrib["Id"] == expected["name"]
     assert identity.attrib["Publisher"] == expected["publisher"]
     assert identity.attrib["Version"] == expected["version"]
+    gallery_flags = xml.findtext(".//{*}GalleryFlags", default="").split()
+    assert "Preview" not in gallery_flags, "GA VSIX must not advertise Preview in Marketplace"
+    assert not any(
+        prop.get("Id") == "Microsoft.VisualStudio.Code.PreRelease"
+        and prop.get("Value", "").lower() == "true"
+        for prop in xml.findall(".//{*}Property")
+    ), "GA VSIX must use the stable release channel"
     readme = archive.read("extension/readme.md").decode()
     assert "https://github.com/RobbanHoglund/JvmScope/blob/main/docs/VSCODE.md" in readme
     for document in [readme, archive.read("extension/changelog.md").decode()]:
@@ -90,4 +98,4 @@ with zipfile.ZipFile(package) as archive:
         parser.feed(archive.read("extension/media/" + page).decode())
 
 digest = hashlib.sha256(package.read_bytes()).hexdigest()
-print(f"PASS: {package.name}: {len(names)} entries, {len(pages)} pages, {width}x{height} icon, valid assets, legal notices and Marketplace links. SHA-256: {digest}")
+print(f"PASS: {package.name}: stable GA metadata, {len(names)} entries, {len(pages)} pages, {width}x{height} icon, valid assets, legal notices and Marketplace links. SHA-256: {digest}")

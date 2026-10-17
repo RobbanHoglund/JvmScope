@@ -131,7 +131,8 @@ export function createArticleSearch(root,{query='',section='articleIntro'}={}) {
     input.addEventListener('search',()=>{clearSearchFragment();refresh();});
     input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();select(current+(event.shiftKey?-1:1),true);}else if(event.key==='Escape'){event.preventDefault();reset();}});
     previous.addEventListener('click',()=>select(current-1,true));next.addEventListener('click',()=>select(current+1,true));clear.addEventListener('click',reset);
-    document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='f'&&!event.altKey){event.preventDefault();input.focus();input.select();}});
+    const findShortcut=event=>{if(input.isConnected&&(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='f'&&!event.altKey){event.preventDefault();input.focus();input.select();}};
+    document.addEventListener('keydown',findShortcut);
     refresh({scroll:Boolean(input.value),preferredSection:section});
-    return {refresh};
+    return {refresh,destroy:()=>document.removeEventListener('keydown',findShortcut)};
 }

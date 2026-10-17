@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0 — General availability
+
+- Show sidebar expand arrows only when an analyzer has captured items; empty roots remain direct tool launchers.
+- Move keyboard focus to the selected Help topic in both analyzers; Escape returns to Help without changing the loaded capture or page URL.
+- Preserve Knowledge Base browsing in one retained tab, with Back/Forward history and restoration of search, version/format choices, result filters, scroll and focus. Reopening Knowledge Base resumes the current article.
+- Use host selection and focus colors for the active knowledge search match, including light and high-contrast themes.
+- Keep knowledge-base section links inside the current VS Code webview, preserving search, Java/format selections and keyboard focus.
+- Remove the Preview badge from the desktop extension and update the listing and installation documentation to describe the GA release.
+- Validate stable release metadata in the actual VSIX, including the Marketplace gallery flags and pre-release channel property.
+- Clarify that merging to main builds the release artifact; a new Marketplace version must be published separately.
+
 ## 0.3.14 — Compact TLS capture header
 
 - Keep the complete TLS capture filename beside its label on a dedicated wrapping row, with tighter header spacing. Restore at least six complete interaction rows at 1366 × 768 with capture analysis collapsed.

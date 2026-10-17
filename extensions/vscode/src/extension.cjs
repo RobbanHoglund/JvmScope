@@ -27,15 +27,19 @@ async function activate(context) {
     });
     context.subscriptions.push(sidebar, vscode.window.createTreeView('jvmscope.analysis', { treeDataProvider: sidebar, showCollapseAll: true }));
 
-    async function openPage(route) {
+    async function openPage(route, { resume = false } = {}) {
         const { name, hash } = resolveRoute(route, pages);
         const kind = name === 'jvmscope/tda.html' ? 'tda' : name === 'jvmscope/tls.html' ? 'tls' : 'docs';
         let session = sessions.get(kind);
-        // Documentation owns its query/search state in the page. Reopening it
-        // must apply the requested version and fragment, including same-page links.
-        if (session && !session.startupFailed && session.page === name && kind !== 'docs') {
+        // Tool commands resume retained sessions. Explicit knowledge links use
+        // the page's in-memory history without disposing its tab or reading state.
+        const knowledgeRoute = name.startsWith('knowledge/') && session?.page.startsWith('knowledge/');
+        if (session && !session.startupFailed && (kind === 'docs' ? knowledgeRoute : session.page === name)) {
             session.panel.reveal();
-            if (hash) await session.panel.webview.postMessage({ channel: 'jvmscope', version: 1, type: 'revealHash', hash });
+            if (kind === 'docs' && !resume) {
+                await session.ready;
+                await session.panel.webview.postMessage({ channel: 'jvmscope', version: 1, type: 'knowledgeRoute', route });
+            } else if (hash) await session.panel.webview.postMessage({ channel: 'jvmscope', version: 1, type: 'revealHash', hash });
             return session;
         }
         if (session) session.panel.dispose();
@@ -165,7 +169,7 @@ async function activate(context) {
     register('jvmscope.revealAnalysisItem', id => sidebar.reveal(id));
     register('jvmscope.openTda', async () => { const session = await openPage('/jvmscope/tda.html'); await session.ready; });
     register('jvmscope.openTls', async () => { const session = await openPage('/jvmscope/tls.html'); await session.ready; });
-    register('jvmscope.openKnowledge', async () => { const session = await openPage('/knowledge/index.html'); await session.ready; });
+    register('jvmscope.openKnowledge', async () => { const session = await openPage('/knowledge/index.html', { resume: true }); await session.ready; });
     register('jvmscope.analyzeThreadDump', (uri, selected) => analyze('tda', uri, selected));
     register('jvmscope.analyzeTlsLog', (uri, selected) => analyze('tls', uri, selected));
     context.subscriptions.push({ dispose: () => { for (const session of sessions.values()) session.panel.dispose(); evidence.clear(); } });
