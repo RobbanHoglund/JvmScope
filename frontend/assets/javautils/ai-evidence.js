@@ -7,8 +7,8 @@ export const MAX_AI_CHARACTERS = 80000;
 export const SUMMARY_LIMIT = 40000; // Leaves 35k raw + 5k instructions within the 80k review limit.
 const RAW_LIMIT = 35000;
 const clip = (value, limit = 800) => {
-    const text = String(value ?? 'Not captured');
-    return text.length <= limit ? text : text.slice(0, limit) + '\n[Excerpt truncated]';
+    const text = String(value ?? 'Not captured'), mark = '\n[Excerpt truncated]';
+    return text.length <= limit ? text : text.slice(0, Math.max(0, limit - mark.length)) + mark.slice(0, limit);
 };
 
 // Reduce optional detail, never a reported cycle or its matched thread blocks.
