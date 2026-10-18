@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, linkSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, linkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, resolve, sep } from 'node:path';
 import { validatePagesBase, verifyOutputLocation, renderPagesIndex, scanPagesArtifact, verifyPagesArtifact, pagesOutput } from './build-pages.mjs';
@@ -29,8 +29,10 @@ function payload(t) {
     const dir = temporary(t);
     const html = `<html><a href="${base}jvmscope/tda.html">Threads</a><script src="${base}assets/js/worker-analysis-worker-12345678.js"></script></html>`;
     for (const path of ['index.html','jvmscope/tda.html','jvmscope/tls.html','knowledge/index.html',...ARTICLES.map(a => `knowledge/${a.id}.html`)]) put(dir, path, html);
-    for (const path of ['assets/js/d3.min.js','assets/img/java-thread-mark.svg','assets/img/java-tls-mark.svg',
-        'assets/legal/d3-LICENSE.txt','assets/legal/Apache-2.0.txt',
+    // Vite copies every public asset. Use those actual files so a new bundled
+    // asset cannot silently drift from the publication allowlist in this test.
+    cpSync(new URL('../frontend/public/', import.meta.url), dir, { recursive: true });
+    for (const path of ['assets/img/java-thread-mark.svg','assets/img/java-tls-mark.svg',
         'assets/js/worker-analysis-worker-12345678.js','assets/tls-analysis-worker-12345678.js']) put(dir, path, 'fixture');
     for (const file of projectLegalFiles()) put(dir, file.fileName, file.source);
     [...THREAD_EXAMPLES,...TLS_EXAMPLES].forEach((example, i) =>
@@ -99,6 +101,17 @@ test('Pages publication accepts only approved examples and the complete two-work
     assert.ok(verifyPagesArtifact(dir).length > 40);
     put(dir, 'assets/examples/private-12345678.txt','private content');
     assert.throws(() => verifyPagesArtifact(dir), /Unapproved example/);
+});
+
+test('Pages publication preserves the bundled Markdown notices and requires them in the payload', t => {
+    const dir = payload(t), path = 'assets/legal/markdown-it-NOTICES.txt';
+    complete(dir);
+    const files = verifyPagesArtifact(dir);
+    const notice = files.find(file => file.path === path);
+    assert.ok(notice, 'The Markdown dependency notices must be published');
+    assert.equal(notice.sha256, hash(readFileSync(new URL('../frontend/public/' + path, import.meta.url))));
+    rmSync(resolve(dir, path));
+    assert.throws(() => verifyPagesArtifact(dir), /Missing Pages file: assets\/legal\/markdown-it-NOTICES\.txt/);
 });
 
 test('Publication rejects missing or replaced project licenses and stale portable notices', t => {
