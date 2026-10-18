@@ -1,5 +1,6 @@
 import { describeLockCoverage } from './tda/lock-coverage.js';
 import { cpuCoverage } from './tda/presentation.js';
+import { isTlsCorrelationAmbiguous } from './tls-core.js';
 import { tlsCaptureCoverage, tlsDiagnosis, tlsObservedSequence } from './tls-sequence-model.js';
 
 export const MAX_AI_CHARACTERS = 80000;
@@ -9,7 +10,6 @@ const clip = (value, limit = 800) => {
     const text = String(value ?? 'Not captured');
     return text.length <= limit ? text : text.slice(0, limit) + '\n[Excerpt truncated]';
 };
-const json = value => clip(JSON.stringify(value, null, 2), SUMMARY_LIMIT);
 
 // Reduce optional detail, never a reported cycle or its matched thread blocks.
 // Reject an oversized minimum explicitly instead of cutting structured evidence.
@@ -96,30 +96,44 @@ export function threadAiEvidence({ dump, snapshotIndex, snapshotCount, name }) {
 
 export function tlsAiEvidence({ interactions, selected, name }) {
     if (!interactions.length) return null;
-    const items = selected ? [selected] : interactions.slice(0, 20);
+    const priority = it => it.outcome === 'failure' ? 0 : isTlsCorrelationAmbiguous(it) ? 1 : it.outcome !== 'success' ? 2 : 3;
+    const chosen = new Set([...interactions].sort((a, b) => priority(a) - priority(b)).slice(0, 20));
+    const items = selected ? [selected] : interactions.filter(it => chosen.has(it)).slice(0, 20);
+    const outcomeCounts = {};
+    for (const it of interactions) outcomeCounts[it.outcome || 'unknown'] = (outcomeCounts[it.outcome || 'unknown'] || 0) + 1;
+    const sequences = items.map(tlsObservedSequence);
+    let summary;
+    for (const eventLimit of [30,10,3,0]) {
+        summary = JSON.stringify({
+            scope: selected ? 'Only the selected interaction; other interactions are not included.'
+                : `${items.length} of ${interactions.length} interactions, prioritizing failures, uncertain grouping and incomplete outcomes, then retaining capture order. Table filters do not restrict this overview.`,
+            ...(!selected ? { captureOutcomeCounts: outcomeCounts } : {}),
+            interactions: items.map((it, i) => {
+                const sequence = sequences[i].filter((e, index) => index < eventLimit || e.kind === 'failure');
+                return {
+                    id: it.id, outcome: it.outcome, diagnosis: clip(tlsDiagnosis(it)),
+                    correlationQuality: it.correlationQuality, correlationWarnings: it.correlationWarnings?.slice(0, 10).map(x => clip(x, 240)),
+                    coverage: tlsCaptureCoverage(it), direction: it.direction,
+                    protocol: it.tlsVersion, cipher: clip(it.negotiatedCipherSuite, 240),
+                    peerHost: clip(it.peerHost, 240), sni: clip(it.sni, 240),
+                    start: it.startTsRaw, end: it.endTsRaw, timeQuality: it.timeQuality,
+                    failureReason: clip(it.failureReason),
+                    observedSequence: sequence.map(e => ({ line: e.sourceLine, action: e.action, title: clip(e.title, 400), kind: e.kind })),
+                    sequenceCoverage: `${sequence.length} of ${sequences[i].length} observed events; all classified failure events retained. Missing messages are not evidence of success or failure.`,
+                };
+            }),
+        });
+        if (summary.length <= SUMMARY_LIMIT) break;
+    }
+    if (summary.length > SUMMARY_LIMIT) throw new Error('Required TLS evidence exceeds the evidence budget. Select one interaction or a smaller capture; nothing has been sent.');
+    const headings = items.map(it => `Interaction ${it.id} (grouped log lines)\n`);
+    const perItem = Math.floor((RAW_LIMIT - headings.join('').length - 2 * items.length) / items.length) - 20;
     return {
         scope: `${selected ? `Interaction ${selected.id}` : `Capture overview · ${interactions.length} interactions`} · ${clip(name, 240)}`,
-        summary: json({
-            scope: selected ? 'Only the selected interaction; other interactions are not included.'
-                : `First ${items.length} of ${interactions.length} interactions in capture order; table filters do not restrict this overview.`,
-            interactions: items.map(it => ({
-                id: it.id, outcome: it.outcome, diagnosis: clip(tlsDiagnosis(it)),
-                correlationQuality: it.correlationQuality, correlationWarnings: it.correlationWarnings?.slice(0, 10),
-                coverage: tlsCaptureCoverage(it), direction: it.direction,
-                protocol: it.tlsVersion, cipher: it.negotiatedCipherSuite || null,
-                peerHost: clip(it.peerHost), sni: clip(it.sni),
-                start: it.startTsRaw, end: it.endTsRaw, timeQuality: it.timeQuality,
-                failureReason: clip(it.failureReason),
-                observedSequence: tlsObservedSequence(it).slice(0, 30).map(e => ({
-                    line: e.sourceLine, action: e.action, title: clip(e.title), kind: e.kind,
-                })),
-                sequenceCoverage: 'Up to 30 observed events per interaction; missing messages are not evidence of success or failure.',
-            })),
-        }),
-        // Keep physical source-line references in summaries; interleaved interaction
-        // text is not a contiguous file range and must never be labelled as one.
-        raw: clip(items.map(it => `Interaction ${it.id} (grouped log lines)\n${(it.rawLines || []).join('\n')}`).join('\n\n'), RAW_LIMIT),
-        rawLabel: 'Included interactions’ grouped log lines (at most 35,000 characters)',
+        summary,
+        // Fair per-interaction excerpts; interleaved lines are not contiguous file ranges.
+        raw: items.map((it, i) => headings[i] + clip((it.rawLines || []).join('\n'), perItem)).join('\n\n'),
+        rawLabel: 'Included interactions’ grouped log lines (at most 35,000 characters, shared across included interactions)',
     };
 }
 
