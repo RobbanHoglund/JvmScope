@@ -181,6 +181,29 @@ test('AI capture replacement invalidates a previous review before any handoff',a
     await expect(host.page.locator('#aiScope')).toContainText('replacement.txt');
 });
 
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} completion reveals the analyzer and reopens the exact review without resending`,async({host})=>{
+    const {page}=host;
+    await host.open(`/jvmscope/${analyzer}.html`); await page.locator('#loadSampleBtn').click();
+    await page.locator('#analyzeAiBtn').click(); await page.locator('#aiIncludeRaw').check();
+    const reviewed=`Reviewed ${analyzer} prompt with private details removed.`;
+    await page.locator('#aiPrompt').fill(reviewed); await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    expect(host.ai.results).toHaveLength(1);
+    await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiStatus')).toContainText('Previous analysis complete');
+    await expect(page.locator('#aiPrompt')).toHaveValue(reviewed);
+    await expect(page.locator('#aiIncludeRaw')).toBeChecked();
+    await expect(page.locator('#aiRun')).toBeEnabled();
+    expect(host.messages.filter(m=>m.action==='analyzeAi')).toHaveLength(1);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#analyzeAiBtn')).toBeFocused();
+    await expect(page.locator('#aiPrompt')).toHaveValue('');
+    await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiStatus')).toHaveText('Nothing has been sent.');
+    await expect(page.locator('#aiPrompt')).not.toHaveValue(reviewed);
+});
+
 for (const analyzer of ['tda','tls']) test(`AI ${analyzer} shows live Copilot status, cancels a hung request and allows retry`,async({host},testInfo)=>{
     const {page,ai}=host;
     ai.vscode.lm.selectChatModels=()=>new Promise(()=>{});
@@ -200,6 +223,7 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} shows live Copilot st
     await page.screenshot({path:testInfo.outputPath(`${analyzer}-copilot-running.png`)});
     await page.locator('#aiCancel').click();
     await expect(page.locator('#aiStatus')).toContainText('cancelled');
+    await expect(page.locator('#aiAnalysisDialog')).toBeVisible();
     await expect(page.locator('#aiRun')).toBeEnabled();
     await expect(page.locator('#aiCancel')).toBeHidden();
     expect(ai.ai.running).toBe(false);
@@ -309,6 +333,7 @@ test('AI provider errors appear in the dialog and retry works with an undismisse
     await host.open('/jvmscope/tda.html'); await page.locator('#loadSampleBtn').click();
     await page.locator('#analyzeAiBtn').click(); await page.locator('#aiRun').click();
     await expect(page.locator('#aiStatus')).toContainText('Copilot access denied');
+    await expect(page.locator('#aiAnalysisDialog')).toBeVisible();
     await expect(page.locator('#aiRun')).toBeEnabled();
     await page.screenshot({path:testInfo.outputPath('copilot-error-retry.png')});
     ai.vscode.lm.selectChatModels=async()=>[ai.model];

@@ -24,7 +24,7 @@ export function createAiAnalysisView(getEvidence) {
     document.body.append(dialog);
     const $ = id => dialog.querySelector('#' + id);
     const prompt = $('aiPrompt'), raw = $('aiIncludeRaw'), provider = $('aiProvider'), run = $('aiRun'), copy = $('aiCopy'), cancel = $('aiCancel');
-    let generation = 0, evidence = null, providers = [], busy = false, jobId = null, pollTimer = null, cancelling = false;
+    let generation = 0, evidence = null, providers = [], busy = false, jobId = null, pollTimer = null, cancelling = false, savedReview = false;
     const status = text => { $('aiStatus').textContent = text; };
     function refresh() {
         const selected = providers.find(p => p.id === provider.value);
@@ -40,11 +40,14 @@ export function createAiAnalysisView(getEvidence) {
             : selected ? 'Copies this exact prompt and opens the assistant. Paste into its chat, review, then send. Its sign-in and usage limits apply.'
                 : 'No supported assistant is available in this VS Code window. You can copy the prompt, or enable Copilot Chat, Codex or Claude Code and reopen this dialog.';
     }
-    function close() {
+    function close({ preserveReview = false, restoreFocus = true } = {}) {
         generation++; clearTimeout(pollTimer);
         if (jobId) void cancelAi(jobId).catch(() => {});
-        jobId = null; cancelling = false; dialog.close(); prompt.value = ''; evidence = null; busy = false;
-        opener.focus({ preventScroll: true });
+        jobId = null; cancelling = false; dialog.close(); busy = false; savedReview = preserveReview;
+        if (!preserveReview) { prompt.value = ''; evidence = null; }
+        // The completed report already owns VS Code focus. Do not focus the
+        // analyzer again merely because its review dialog has finished.
+        if (restoreFocus) opener.focus({ preventScroll: true });
     }
     function showJob(state, current) {
         if (current !== generation) return;
@@ -52,6 +55,7 @@ export function createAiAnalysisView(getEvidence) {
         if (!busy) cancelling = false;
         refresh(); clearTimeout(pollTimer);
         if (busy) pollTimer = setTimeout(() => poll(current), 500);
+        else if (state.state === 'completed') close({ preserveReview: true, restoreFocus: false });
     }
     async function poll(current) {
         try { showJob(await getAiStatus(), current); }
@@ -66,16 +70,20 @@ export function createAiAnalysisView(getEvidence) {
         try { await cancelAi(id); if (current === generation) await poll(current); }
         catch (error) { if (current === generation) { status(error.message); cancelling = false; refresh(); } }
     });
-    dialog.querySelector('[data-ai-close]').addEventListener('click', close);
+    dialog.querySelector('[data-ai-close]').addEventListener('click', () => close());
     dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
     provider.addEventListener('change', refresh); prompt.addEventListener('input', refresh);
     raw.addEventListener('change', () => { prompt.value = aiPrompt(evidence, raw.checked); status('Prompt rebuilt for the new evidence selection.'); refresh(); });
     opener.addEventListener('click', async () => {
-        evidence = getEvidence(); if (!evidence) return;
+        const restoreReview = savedReview, selectedProvider = provider.value;
+        if (!restoreReview) evidence = getEvidence();
+        if (!evidence) return;
+        savedReview = false;
         const current = ++generation;
         clearTimeout(pollTimer); jobId = null; cancelling = false;
-        providers = []; provider.replaceChildren(); raw.checked = false; busy = false;
-        $('aiScope').textContent = evidence.scope; prompt.value = aiPrompt(evidence);
+        providers = []; provider.replaceChildren(); busy = false;
+        if (!restoreReview) { raw.checked = false; prompt.value = aiPrompt(evidence); }
+        $('aiScope').textContent = evidence.scope;
         status('Checking installed assistants…'); refresh(); dialog.showModal();
         dialog.querySelector('[data-ai-close]').focus({ preventScroll: true });
         try {
@@ -83,8 +91,9 @@ export function createAiAnalysisView(getEvidence) {
             if (current !== generation) return;
             providers = found;
             for (const item of providers) { const option = document.createElement('option'); option.value = item.id; option.textContent = item.label; provider.append(option); }
+            if (restoreReview && providers.some(item => item.id === selectedProvider)) provider.value = selectedProvider;
             if (state.running) { provider.value = 'copilot'; showJob(state, current); }
-            else { status('Nothing has been sent.'); refresh(); }
+            else { status(restoreReview ? 'Previous analysis complete. Review or edit this prompt before starting another analysis.' : 'Nothing has been sent.'); refresh(); }
         } catch (error) { if (current === generation) { status(error.message); refresh(); } }
     });
     async function act(action) {
@@ -103,5 +112,5 @@ export function createAiAnalysisView(getEvidence) {
             showJob(result, current);
         } catch (error) { if (current === generation) { busy = false; status(error.message); refresh(); } }
     });
-    return { invalidate() { generation++; if (dialog.open) close(); else { prompt.value = ''; evidence = null; } } };
+    return { invalidate() { generation++; savedReview = false; if (dialog.open) close(); else { prompt.value = ''; evidence = null; } } };
 }
