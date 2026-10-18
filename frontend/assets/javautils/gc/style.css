@@ -5,3 +5,23 @@
 .gc-table-scroll{max-height:480px}.gc-events thead th{position:sticky;top:0;background:var(--gc-panel);z-index:1}.gc-chart .gc-mark.pause:not(.warning):not(.critical){fill:var(--gc-text)}.gc-badge.info{color:var(--gc-accent)}
 @media(max-width:800px){.gc-investigation{grid-template-columns:1fr}.gc-inspector pre{max-height:180px}.gc-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.gc-start{grid-template-columns:1fr}.gc-start-visual{display:none}.gc-capture-bar{align-items:flex-start;flex-wrap:wrap}.gc-chart-card{padding:14px}.gc-header h1{font-size:22px}}
 @media(max-width:450px){.gc-shell{padding:12px}.gc-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.gc-range{flex-wrap:wrap}.gc-range>span{order:3;width:100%;text-align:center}.gc-controls{width:100%}.gc-controls label{min-width:0;flex:1}.gc-start{padding:24px 18px}.gc-start-copy h2{font-size:30px}.gc-footer label{width:100%}.gc-footer select{min-width:0;width:100%}.gc-chart{min-height:0}.gc-legend{gap:9px}.gc-events{padding:12px}}
+
+/* Keep evidence readable at native size, including narrow VS Code panels. */
+.gc-metric small,.gc-footnote,.gc-annotation small,.gc-inspector pre,.gc-event-link span,.gc-badge,.gc-events th,.gc-legend{font-size:12px}
+.gc-chart text{font-size:11px}
+.gc-annotation-group{--marker-color:var(--gc-warning)}
+.gc-annotation-group.critical,.gc-annotation.critical{--marker-color:var(--gc-critical)}
+.gc-annotation-group.info,.gc-annotation.info{--marker-color:var(--gc-accent)}
+.gc-chart .gc-annotation-group .gc-annotation-line,.gc-chart .gc-annotation-group .gc-annotation-dot{stroke:var(--marker-color)}
+.gc-chart .gc-annotation-group .gc-annotation-number{fill:var(--marker-color)}
+.gc-annotation>span:first-child{color:var(--marker-color,var(--gc-warning));border-color:var(--marker-color,var(--gc-warning))}
+.gc-dot.stall{background:var(--gc-critical)}
+.gc-page #gcRows .gc-event-link{background:transparent!important;color:var(--gc-text)!important}
+.gc-page #gcRows .gc-event-link:hover{text-decoration:underline}
+
+@media(max-width:450px){.gc-metric:last-child{grid-column:1/-1}}
+.gc-coverage .gc-button{display:flex;margin-top:8px;white-space:normal;text-align:left}
+
+.gc-shell{container-type:inline-size}
+@container(max-width:800px){.gc-investigation{grid-template-columns:1fr}.gc-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.gc-capture-bar{flex-wrap:wrap}}
+@container(max-width:450px){.gc-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.gc-metric:last-child{grid-column:1/-1}}

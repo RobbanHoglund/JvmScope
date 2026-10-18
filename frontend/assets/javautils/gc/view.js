@@ -63,7 +63,9 @@ function recalculate(choose=false){
     const warnings=[...parsed.warnings];
     if(s.collector==='Unknown')warnings.push('The collector was not identified from recorded evidence. No collector-specific defaults are assumed.');
     $('gcWarnings').replaceChildren(...warnings.map(w=>el('p',w)));
-    $('gcCoverage').open=warnings.length>0;
+    const signals=model.findings.filter(f=>f.eventId===null);
+    for(const f of signals){const button=el('button',`${f.severity} · ${f.title} · line ${f.line}`,'gc-button');button.type='button';button.onclick=()=>{inspectSignal(f);$('gcEventTitle').tabIndex=-1;$('gcEventTitle').focus();};$('gcWarnings').append(button);}
+    $('gcCoverage').open=warnings.length>0||signals.length>0;
     draw();renderTable();inspect();
 }
 function bounds(){const full=Math.max(1,(model.end??0)-(model.start??0));return [(model.start??0)+full*range[0]/1000,(model.start??0)+full*range[1]/1000];}
@@ -71,18 +73,24 @@ function eventFindings(id){return model.findings.filter(f=>f.eventId===id);}
 function select(id,{zoom=false}={}){selected=id;const e=model.events.find(e=>e.id===id);if(!e)return;
     if(zoom&&e.startMs!==null){const span=Math.max(20,Math.min((model.end-model.start)*.2,Math.max(e.durationMs*8,100)));const full=Math.max(1,model.end-model.start);range=[Math.max(0,(e.startMs-span/2-model.start)/full*1000),Math.min(1000,(e.endMs+span/2-model.start)/full*1000)];}
     draw();inspect();renderTable();
+    $('gcEventTitle').tabIndex=-1;
+    $('gcEventTitle').focus({preventScroll:true});
+    if(matchMedia('(max-width:800px)').matches)$('gcInspector').scrollIntoView({block:'nearest'});
 }
 function draw(){
     if(!model)return;
-    const width=Math.max(340,$('gcTimeline').clientWidth),height=330,left=52,right=width-15,plot=right-left;
+    const width=Math.max(240,$('gcTimeline').clientWidth),height=330,left=52,right=width-15,plot=right-left;
     const [from,to]=bounds(),span=Math.max(1,to-from),x=n=>left+(n-from)/span*plot;
     const chart=svg('svg',{viewBox:`0 0 ${width} ${height}`,role:'group','aria-label':'GC timeline. Select an event to inspect its evidence.'});
     const visible=model.events.filter(e=>e.startMs!==null&&e.endMs>=from&&e.startMs<=to);
+    for(const id of ['gcFrom','gcTo','gcReset'])$(id).disabled=model.start===null;
+    $('gcZoom').disabled=!model.events.some(e=>e.id===selected&&e.startMs!==null);
     if(model.start===null){$('gcTimeline').replaceChildren(el('p','No usable timestamps were recorded. Inspect the completed phases in the event list.','gc-footnote'));$('gcAnnotations').replaceChildren();$('gcChartNote').textContent='Untimed events cannot be placed on a timeline.';$('gcRangeLabel').textContent='Time range unavailable';return;}
     const heap=visible.filter(e=>e.heap),maxHeap=Math.max(1,heap.reduce((m,e)=>Math.max(m,e.heap.before,e.heap.after,e.heap.capacity??0),0));
     const maxPause=Math.max(visible.filter(e=>e.kind==='pause').reduce((m,e)=>Math.max(m,e.durationMs),0),.01)*1.12;
     const hy=n=>138-n/maxHeap*100,py=n=>252-n/maxPause*70;
-    for(let i=0;i<=4;i++){const xx=left+plot*i/4;chart.append(svg('line',{x1:xx,x2:xx,y1:30,y2:302,class:'gc-grid'}),svg('text',{x:xx,y:322,'text-anchor':i===0?'start':i===4?'end':'middle'},time(from+span*i/4)));}
+    const ticks=width<500?2:4;
+    for(let i=0;i<=ticks;i++){const xx=left+plot*i/ticks;chart.append(svg('line',{x1:xx,x2:xx,y1:30,y2:302,class:'gc-grid'}),svg('text',{x:xx,y:322,'text-anchor':i===0?'start':i===ticks?'end':'middle'},time(from+span*i/ticks)));}
     chart.append(svg('text',{x:0,y:19},'HEAP'),svg('text',{x:0,y:40},`${(maxHeap/1048576).toFixed(0)} MiB`),svg('text',{x:0,y:141},'0'),svg('text',{x:0,y:171},'PAUSE'),svg('text',{x:0,y:190},`${maxPause.toFixed(maxPause<1?2:0)} ms`),svg('text',{x:0,y:255},'0'),svg('text',{x:0,y:293},'OTHER'));
     for(const yy of [138,252,302])chart.append(svg('line',{x1:left,x2:right,y1:yy,y2:yy,class:'gc-grid'}));
     const clip=svg('clipPath',{id:'gcPlotClip'});clip.append(svg('rect',{x:left,y:25,width:plot,height:279}));const defs=svg('defs');defs.append(clip);chart.append(defs);
@@ -106,12 +114,20 @@ function draw(){
     const candidates=model.findings.filter(f=>f.startMs!==null&&f.startMs>=from&&f.startMs<=to);
     currentAnnotations=[];const ids=new Set();for(const f of candidates){const key=f.eventId??'line:'+f.line;if(ids.has(key))continue;ids.add(key);currentAnnotations.push(f);if(currentAnnotations.length===3)break;}
     currentAnnotations.sort((a,b)=>a.startMs-b.startMs);
-    currentAnnotations.forEach((f,i)=>{const actual=x(f.startMs),cx=left+plot*(i+1)/(currentAnnotations.length+1);
-        chart.append(svg('line',{x1:actual,x2:actual,y1:31,y2:302,class:'gc-annotation-line'}),svg('line',{x1:actual,x2:cx,y1:31,y2:18,class:'gc-annotation-line'}),svg('circle',{cx,cy:17,r:10,class:'gc-annotation-dot'}),svg('text',{x:cx,y:21,class:'gc-annotation-number'},i+1));});
+    // Nearby findings share a badge anchored to their actual time region.
+    // Spreading badges evenly would imply anomalies at unrelated timestamps.
+    const clusters=[];
+    currentAnnotations.forEach((f,i)=>{const actual=x(f.startMs),last=clusters.at(-1);if(last&&actual-last.end<46){last.end=actual;last.indices.push(i);}else clusters.push({start:actual,end:actual,indices:[i]});});
+    for(const cluster of clusters){
+        const {indices,start,end}=cluster,label=indices.map(i=>i+1).join('·'),half=indices.length>1?22:11,cx=Math.max(left+half,Math.min(right-half,(start+end)/2));
+        const severity=indices.some(i=>currentAnnotations[i].severity==='critical')?'critical':indices.some(i=>currentAnnotations[i].severity==='warning')?'warning':'info';
+        const group=svg('g',{class:`gc-annotation-group ${severity}`});
+        group.append(svg('line',{x1:start,x2:start,y1:31,y2:302,class:'gc-annotation-line'}),svg('line',{x1:start,x2:cx,y1:31,y2:27,class:'gc-annotation-line'}),svg('rect',{x:cx-half,y:6,width:half*2,height:22,rx:11,class:'gc-annotation-dot'}),svg('text',{x:cx,y:21,class:'gc-annotation-number'},label));chart.append(group);
+    }
     $('gcTimeline').replaceChildren(chart);
-    $('gcAnnotations').replaceChildren(...currentAnnotations.map((f,i)=>{const b=el('button',undefined,'gc-annotation');b.type='button';const copy=el('span');copy.append(el('strong',f.title),el('small',`${time(f.startMs)} · ${f.severity} · line ${f.line}`));b.append(el('span',i+1),copy);b.addEventListener('click',()=>{if(f.eventId!==null)select(f.eventId);else inspectSignal(f);});return b;}));
+    $('gcAnnotations').replaceChildren(...currentAnnotations.map((f,i)=>{const b=el('button',undefined,'gc-annotation '+f.severity);b.type='button';const copy=el('span');copy.append(el('strong',f.title),el('small',`${time(f.startMs)} · ${f.severity} · line ${f.line}`));b.append(el('span',i+1),copy);b.addEventListener('click',()=>{if(f.eventId!==null)select(f.eventId);else inspectSignal(f);});return b;}));
     if(!currentAnnotations.length)$('gcAnnotations').append(el('p','No review markers in this time range. This does not establish overall application health.','gc-footnote'));
-    $('gcChartNote').textContent=`${visible.length.toLocaleString()} events in range${bins.size<visible.length?`; ${bins.size.toLocaleString()} representative marks shown. All events remain in the table`:''}. Concurrent work is not stop-the-world time. ${candidates.length>3?'Showing up to 3 annotated events; use “With review markers” for the complete list.':''}`;
+    $('gcChartNote').textContent=`${visible.length.toLocaleString()} events in range${bins.size<visible.length?`; ${bins.size.toLocaleString()} representative marks shown. All events remain in the table`:''}. Concurrent work is not stop-the-world time. ${candidates.length>3?'Showing up to 3 annotated events; use “With review markers” for event findings; standalone JVM signals appear under capture coverage.':''}`;
     $('gcFrom').value=range[0];$('gcTo').value=range[1];$('gcRangeLabel').textContent=time(from)+' – '+time(to);
 }
 function findingNode(f){const box=el('div',undefined,'gc-finding '+f.severity);box.append(el('strong',`${f.severity==='critical'?'Critical':f.severity==='warning'?'Review':'Info'} · ${f.title}`),el('p',f.detail));return box;}
@@ -122,12 +138,12 @@ function inspect(){const e=model?.events.find(e=>e.id===selected);if(!e)return;$
     $('gcRawLocation').textContent=`lines ${e.line}–${e.endLine}`;$('gcRaw').textContent=rawFor(e);$('gcInspector').dataset.selectedId=e.id;
     bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:e.line,endLine:e.endLine}:null);
 }
-function inspectSignal(f){$('gcEventTitle').textContent=f.title;$('gcEventFacts').replaceChildren();$('gcEventFindings').replaceChildren(findingNode(f));$('gcRawLocation').textContent='line '+f.line;$('gcRaw').textContent=lines[f.line-1]||'';bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:f.line,endLine:f.line}:null);}
+function inspectSignal(f){selected=null;draw();renderTable();$('gcInspector').removeAttribute('data-selected-id');$('gcEventTitle').textContent=f.title;$('gcEventFacts').replaceChildren();$('gcEventFindings').replaceChildren(findingNode(f));$('gcRawLocation').textContent='line '+f.line;$('gcRaw').textContent=lines[f.line-1]||'';bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:f.line,endLine:f.line}:null);}
 function renderTable(){if(!model)return;const type=$('gcType').value,query=$('gcSearch').value.toLowerCase();const foundIds=new Set(model.findings.map(f=>f.eventId));
     const filtered=model.events.filter(e=>(type==='all'||type==='findings'?type!=='findings'||foundIds.has(e.id):e.kind===type)&&(`${e.label} GC(${e.gcId})`.toLowerCase().includes(query)));
     page=Math.max(0,Math.min(page,Math.ceil(filtered.length/40)-1));const shown=filtered.slice(page*40,page*40+40);
     $('gcRows').replaceChildren(...shown.map(e=>{const tr=el('tr');tr.dataset.selected=String(e.id===selected);const button=el('button',title(e),'gc-event-link');button.type='button';button.append(el('span',`${kindNames[e.kind]} · ${e.gcId===null?'line '+e.line:'GC('+e.gcId+')'}`));button.addEventListener('click',()=>select(e.id));const cell=el('td');cell.append(button);tr.append(el('td',time(e.startMs)),cell,el('td',ms(e.durationMs)),el('td',e.heap?`${mib(e.heap.before)} → ${mib(e.heap.after)}`:'Not recorded'));
-        const fs=eventFindings(e.id),review=el('td');if(fs.length){const badge=el('span',undefined,'gc-badge '+fs[0].severity),icon=svg('svg',{viewBox:'0 0 16 16','aria-hidden':'true'});icon.append(svg('path',{d:fs[0].severity==='critical'?'M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1m0 3v5m0 2v1':'M8 1 15 14H1Z M8 5v4m0 2v1'}));badge.append(icon,el('span',`${fs.length} ${fs[0].severity==='info'?'info':'review'}`));review.append(badge);}else review.textContent='—';tr.append(review);return tr;}));
+        const fs=eventFindings(e.id),review=el('td');if(fs.length){const badge=el('span',undefined,'gc-badge '+fs[0].severity),icon=svg('svg',{viewBox:'0 0 16 16','aria-hidden':'true'});icon.append(svg('path',{d:fs[0].severity==='critical'?'M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1m0 3v5m0 2v1':fs[0].severity==='info'?'M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1m0 6v5m0-8v1':'M8 1 15 14H1Z M8 5v4m0 2v1'}));badge.append(icon,el('span',`${fs.length} ${fs[0].severity==='info'?'info':'review'}`));review.append(badge);}else review.textContent='—';tr.append(review);return tr;}));
     if(!shown.length){const tr=el('tr'),td=el('td','No events match these filters.');td.colSpan=5;tr.append(td);$('gcRows').append(tr);}
     $('gcCount').textContent=filtered.length?`${page*40+1}–${Math.min(page*40+40,filtered.length)} of ${filtered.length.toLocaleString()} events`:'0 events';$('gcPrev').disabled=page===0;$('gcNext').disabled=(page+1)*40>=filtered.length;
 }

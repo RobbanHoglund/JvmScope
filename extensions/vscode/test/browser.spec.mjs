@@ -179,6 +179,28 @@ test('GC themes, keyboard access and narrow layout',async({host},testInfo)=>{
     await expect(page.locator('#gcEventTitle')).toBeFocused();
 });
 
+test('GC visual markers follow time, info stays neutral and untimed controls are disabled',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');await page.locator('#gcSample').click();
+    await expect(page.locator('#gcWorkspace')).toBeVisible();
+    const positions=await page.locator('.gc-annotation-group').evaluateAll(groups=>groups.map(g=>{
+        const lines=g.querySelectorAll('line');return Math.abs(Number(lines[1].getAttribute('x1'))-Number(lines[1].getAttribute('x2')));
+    }));
+    expect(positions.length).toBeGreaterThan(0);expect(Math.max(...positions)).toBeLessThan(50);
+    await page.setViewportSize({width:360,height:900});
+    await page.locator('#gcRows button').first().click();
+    await expect(page.locator('#gcEventTitle')).toBeFocused();await expect(page.locator('#gcEventTitle')).toBeInViewport();
+    await page.screenshot({path:testInfo.outputPath('gc-narrow.png'),fullPage:true});
+    await host.load([{name:'untimed.log',text:'[info][gc] GC(0) Pause Full (System.gc()) 20M->4M(32M) 2ms'}]);
+    for(const id of ['gcZoom','gcReset','gcFrom','gcTo'])await expect(page.locator('#'+id)).toBeDisabled();
+    await expect(page.locator('.gc-badge.info')).toContainText('info');
+    expect(await page.locator('.gc-badge.info path').getAttribute('d')).not.toContain('15 14H1');
+    await page.locator('#gcSample').click();await expect(page.locator('#gcZoom')).toBeEnabled();
+    await page.setViewportSize({width:1440,height:1050});
+    await page.evaluate(()=>document.documentElement.style.zoom='2');
+    await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:testInfo.outputPath('gc-200-percent.png'),fullPage:true});
+});
+
 test('GC clear cancels a delayed sample and raw log text never executes HTML',async({host})=>{
     const {page}=host;await host.open('/jvmscope/gc.html');
     let release;const gate=new Promise(resolve=>release=resolve);
