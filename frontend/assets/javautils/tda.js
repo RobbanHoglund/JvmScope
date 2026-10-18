@@ -1,3 +1,4 @@
+import { AI_ICONS } from './ai-icons.js';
 import { createThreadNavigation } from './host/navigation-model.js';
 import { createAiAnalysisView } from './ai-analysis-view.js';
 import { threadSelectionAiEvidence, threadAiSnapshotOptions } from './tda/ai-evidence-selection.js';
@@ -1843,7 +1844,7 @@ function renderSmartAnalysisPanel() {
       <div class="tda-priority" data-severity="${escapeAttr(priority?.severity || 'info')}">
         <div>
           <p class="tda-eyebrow">${priority ? 'Start here' : 'Analysis coverage'} · Snapshot ${selectedDumpIndex + 1} of ${parsedDumps.length}</p>
-          <h2>${escapeHtml(priority?.title || 'No configured material findings')}</h2>
+          <h2>${priority ? AI_ICONS[({critical: 'critical', high: 'warning', medium: 'important', info: 'note'})[priority.severity] || 'note'] : ''}${escapeHtml(priority?.title || 'No configured material findings')}</h2>
           <p>${escapeHtml(prioritySummary)}</p>
         </div>
         ${graphPanelId || priority?.threads?.length ? `<div class="tda-priority-action">

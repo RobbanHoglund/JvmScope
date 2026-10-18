@@ -1,5 +1,6 @@
 import { isVsCode, getAiProviders, getAiStatus, cancelAi, analyzeWithAi, writeClipboard } from './host/platform.js';
 import { aiPrompt, MAX_AI_CHARACTERS } from './ai-evidence.js';
+import { aiFindingContext } from './ai-finding-context.js';
 import { AI_ICONS } from './ai-icons.js';
 
 /** Review the exact outgoing text. Nothing is sent merely by opening this view. */
@@ -159,7 +160,7 @@ export function createAiAnalysisView(getEvidence, { getSnapshotOptions } = {}) {
         const current = generation;
         busy = true; status(provider.value === 'copilot' ? 'Starting Copilot analysis…' : 'Opening the assistant…'); refresh();
         try {
-            const result = await analyzeWithAi(provider.value, prompt.value);
+            const result = await analyzeWithAi(provider.value, prompt.value, aiFindingContext(evidence, prompt.value !== aiPrompt(evidence, raw.checked)));
             if (current !== generation) { if (result.jobId) await cancelAi(result.jobId); return; }
             showJob(result, current);
         } catch (error) { if (current === generation) { busy = false; status(error.message); refresh(); } }

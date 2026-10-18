@@ -86,7 +86,7 @@ async function activate(context) {
                 case 'cancelAi': return ai.cancel(id, message.jobId);
                 case 'analyzeAi': {
                     if (kind === 'docs' || !session.navigation?.count) throw new Error('Load a capture in an analyzer before using AI analysis.');
-                    return ai.run(message.provider, message.prompt, { owner: id, onState: state => { if (!session.disposed) session.aiState = state; } });
+                    return ai.run(message.provider, message.prompt, { owner: id, findingContext: message.findingContext, onState: state => { if (!session.disposed) session.aiState = state; } });
                 }
                 case 'chooseFiles': {
                     if (kind === 'docs') throw new Error('Open an analyzer before choosing captures.');

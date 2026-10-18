@@ -1,3 +1,4 @@
+import { renderLocalFindings } from './ai-findings-view.js';
 import { renderAiMarkdown } from './ai-result-markdown.js';
 import './ai-result.css';
 
@@ -23,6 +24,7 @@ window.addEventListener('message', ({ data }) => {
         try {
             document.getElementById('resultScope').textContent = data.result.scope;
             document.getElementById('resultModel').textContent = `Model: ${data.result.model}`;
+            renderLocalFindings(document.getElementById('localFindings'), data.result.findingContext);
             const answer = document.getElementById('answer');
             answer.innerHTML = renderAiMarkdown(data.result.body);
             // Wide tables scroll locally; they must not widen the entire report.

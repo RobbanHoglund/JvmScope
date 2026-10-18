@@ -1,3 +1,4 @@
+const { snapshotFindingContext } = require('./ai-finding-context.cjs');
 const MAX_AI_BYTES = 256 * 1024;
 const MAX_RESPONSE_CHARACTERS = 128000;
 const AI_TIMEOUT_MS = 180_000;
@@ -45,14 +46,15 @@ class AiAnalysis {
             .map(({ id, label }) => ({ id, label }));
     }
 
-    async run(provider, prompt, { owner, onState = () => {} } = {}) {
+    async run(provider, prompt, { owner, onState = () => {}, findingContext } = {}) {
         validateAiInput(provider, prompt);
+        const localFindings = snapshotFindingContext(findingContext);
         if (this.disposed) throw new Error('JvmScope has closed.');
         if (!this.providers().some(p => p.id === provider)) throw new Error('This assistant is not available in the current VS Code window. Enable it and reopen AI analysis.');
         const v = this.vscode;
         if (provider === 'copilot') {
             if (this.running) throw new Error('Another Copilot analysis is running. Cancel it in its AI dialog or VS Code progress notification first.');
-            const job = { jobId: `ai:${++this.nextJob}`, owner, onState, source: new v.CancellationTokenSource() };
+            const job = { jobId: `ai:${++this.nextJob}`, owner, onState, findingContext: localFindings, source: new v.CancellationTokenSource() };
             this.active = job; this.running = true;
             this.publish(job, 'running', 'Connecting to Copilot… If VS Code asks for access, approve it there.');
             const initial = job.state;
@@ -157,7 +159,7 @@ class AiAnalysis {
                 const scope = prompt.match(/^Scope: (.+)$/m)?.[1]?.slice(0, 500) || 'User-reviewed prompt';
                 const content = `# JvmScope AI analysis\n\nModel: ${chosen.name}\n\nScope: ${scope}\n\nAI interpretation of the reviewed evidence; verify claims against the capture. This does not change JvmScope findings.\n\n${output}`;
                 report('Opening the formatted response…');
-                await wait(() => this.showResult({ model: chosen.name, scope, body: output, markdown: content }, token));
+                await wait(() => this.showResult({ model: chosen.name, scope, body: output, markdown: content, findingContext: job.findingContext }, token));
             } finally { listener.dispose(); }
         });
     }

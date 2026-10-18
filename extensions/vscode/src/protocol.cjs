@@ -1,3 +1,4 @@
+const { validateFindingContext } = require('./ai-finding-context.cjs');
 const MAX_BYTES = 64 * 1024 * 1024;
 const MAX_FILES = 50;
 const { validateAiInput } = require('./ai-analysis.cjs');
@@ -13,7 +14,7 @@ function validateRequest(message) {
     if (['copy', 'openRaw'].includes(message.action) && !text(message.text)) throw new Error('Text exceeds the 64 MiB limit.');
     if (message.action === 'openRaw' && (typeof message.name !== 'string' || message.name.length > 240)) throw new Error('Invalid evidence name.');
     if (message.action === 'cancelAi' && (typeof message.jobId !== 'string' || !/^ai:\d{1,12}$/.test(message.jobId))) throw new Error('Invalid AI job.');
-    if (message.action === 'analyzeAi') validateAiInput(message.provider, message.prompt);
+    if (message.action === 'analyzeAi') { validateAiInput(message.provider, message.prompt); validateFindingContext(message.findingContext); }
     if (message.action === 'save') {
         if (typeof message.name !== 'string' || !/^[\w.-]{1,180}\.(?:md|html|txt|json|png)$/.test(message.name)
             || typeof message.base64 !== 'string' || message.base64.length > Math.ceil(MAX_BYTES / 3) * 4

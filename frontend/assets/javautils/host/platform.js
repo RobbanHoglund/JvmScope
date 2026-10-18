@@ -125,7 +125,7 @@ export const openSourceLocation = location => request('openSource', location);
 export const getAiProviders = () => request('aiProviders');
 export const getAiStatus = () => request('aiStatus');
 export const cancelAi = jobId => request('cancelAi', { jobId });
-export const analyzeWithAi = (provider, prompt) => request('analyzeAi', { provider, prompt });
+export const analyzeWithAi = (provider, prompt, findingContext) => request('analyzeAi', { provider, prompt, findingContext });
 
 export function bindSourceButton(button, location) {
     if (!button) return;

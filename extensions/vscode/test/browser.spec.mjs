@@ -64,7 +64,7 @@ const test=base.extend({
                     if(message.action==='cancelAi')value=ai.ai.cancel('browser',message.jobId);
                     if(message.action==='analyzeAi') {
                         if(message.provider!=='copilot')clipboard=message.prompt;
-                        value=await ai.ai.run(message.provider,message.prompt,{owner:'browser',onState:state=>{aiState=state;}});
+                        value=await ai.ai.run(message.provider,message.prompt,{owner:'browser',findingContext:message.findingContext,onState:state=>{aiState=state;}});
                     }
                 } catch(cause) { error=cause.message; }
                 await page.evaluate(({message,value,error})=>window.postMessage({channel:'jvmscope',version:1,type:'response',id:message.id,value,error},'*'),{message,value,error});
@@ -175,7 +175,7 @@ test('AI snapshot selection previews a whole series or a custom subset and prese
     await page.locator('#aiSnapshotScope').selectOption('series');
     await expect(page.locator('#aiScope')).toContainText('3 snapshots of 3');
     const all=await page.locator('#aiPrompt').inputValue();
-    expect(all).toContain('"selectedSnapshots": [\n    1,\n    2,\n    3');
+    expect(JSON.parse(all.split('BEGIN JVMSCOPE EVIDENCE\n')[1].split('\nFull raw text')[0]).selectedSnapshots).toEqual([1,2,3]);
     expect(all).toContain('Full raw text is not included');
     expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
     await page.locator('#aiSnapshotScope').selectOption('selected');
@@ -217,7 +217,7 @@ test('AI current series excludes snapshots belonging to another known JVM',async
     await host.page.locator('#aiSnapshotScope').selectOption('series');
     await expect(host.page.locator('#aiScope')).toContainText('#1, #2');
     const prompt=await host.page.locator('#aiPrompt').inputValue();
-    expect(prompt).toContain('"processId": "1234"'); expect(prompt).not.toContain('"processId": "5678"');
+    expect(JSON.parse(prompt.split('BEGIN JVMSCOPE EVIDENCE\n')[1].split('\nFull raw text')[0]).snapshots.map(s=>s.processId)).toEqual(['1234','1234']);
     await host.page.keyboard.press('Escape');
     await host.page.locator('#dumpSelect').selectOption('2'); await host.page.locator('#analyzeAiBtn').click();
     await expect(host.page.locator('#aiSnapshotOptions')).not.toBeVisible();
@@ -391,10 +391,12 @@ test('AI priority labels remain readable without color, use local SVGs and never
 
 test('AI report does not execute model HTML, load external images or expose command/file links',async({host})=>{
     const body='## Safe heading\n\n<script>window.compromised=true</script>\n\n<img src="https://tracker.example/image" onerror="window.compromised=true">\n\n![beacon](https://tracker.example/beacon)\n\n[Run](command:workbench.action.openSettings) [Local](file:///secret)\n\n```text\n'+ 'very.long.package.'.repeat(100)+'\n```';
-    const report=await host.openResult({model:'<img src="https://tracker.example/model">',scope:'Capture <script>untrusted</script>',body,markdown:body}), page=report.page;
+    const report=await host.openResult({model:'<img src="https://tracker.example/model">',scope:'Capture <script>untrusted</script>',body,markdown:body,findingContext:{scope:'Capture',edited:false,findings:[{severity:'critical',title:'<img src="https://tracker.example/finding">',detail:body,qualification:'Untrusted <script> text'}]}}), page=report.page;
     await expect(page.locator('#answer h2')).toHaveText('Safe heading');
     await expect(page.locator('#answer img, #answer script, #answer iframe, #answer a')).toHaveCount(0);
     await expect(page.locator('#resultModel')).toContainText('<img');
+    await expect(page.locator('#localFindings img, #localFindings script, #localFindings iframe, #localFindings a')).toHaveCount(0);
+    await expect(page.locator('#localFindings h3')).toContainText('<img');
     expect(await page.evaluate(()=>window.compromised)).toBeUndefined();
     await page.setViewportSize({width:360,height:900});
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
@@ -1558,3 +1560,44 @@ test('knowledge filters and articles fit narrow VS Code editor splits',async({ho
     }
 });
 
+
+
+for (const analyzer of ['tda','tls']) test(`AI ${analyzer} local priority survives plain model output, edits and report recreation`, async({host},testInfo)=>{
+    const {page}=host;
+    await host.open(`/jvmscope/${analyzer}.html`);
+    if(analyzer==='tda') await page.locator('#loadSampleBtn').click();
+    else await host.load([{name:'failure.log',text:await capture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt')}]);
+    if(analyzer==='tda') await expect(page.locator('.tda-priority[data-severity="critical"] h2 svg')).toBeVisible();
+    await page.locator('#analyzeAiBtn').click();
+    if(analyzer==='tda') await page.locator('#aiSnapshotScope').selectOption('series');
+    const generated=await page.locator('#aiPrompt').inputValue();
+    if(analyzer==='tda') {
+        const evidence=JSON.parse(generated.split('BEGIN JVMSCOPE EVIDENCE\n')[1].split('\nFull raw text')[0]);
+        expect(evidence.snapshots.map(s=>s.deadlockCycles.length)).toEqual([2,2,2]);
+        expect(evidence.snapshots.map(s=>s.threads.filter(t=>t.deadlockCycle).length)).toEqual([5,5,5]);
+        expect(evidence.snapshots.map(s=>s.measuredCpuThreads.length)).toEqual([0,9,9]);
+    }
+    await page.locator('#aiPrompt').fill(generated+'\nExplain uncertainty clearly.');
+    await page.locator('#aiRun').click(); await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    const result=host.ai.results[0];
+    expect(result.body).toBe('Observed evidence.');
+    const report=await host.openResult(result), view=report.page;
+    const selector=analyzer==='tda'?'.local-finding-critical':'.local-finding-warning';
+    await expect(view.locator(selector+' svg')).toBeVisible();
+    await expect(view.locator(selector+' h3')).toContainText(analyzer==='tda'?'Critical · Confirmed Java deadlock':'High · TLS failure observed');
+    await expect(view.locator('.local-findings-note')).toContainText('You edited the prompt');
+    await expect(view.locator('#answer')).toHaveText('Observed evidence.');
+    await expect(view.locator('.ai-callout')).toHaveCount(0);
+    for(const theme of Object.keys(themePalettes))for(const width of [600,360]) {
+        await applyTheme(view,theme);await view.setViewportSize({width,height:900});
+        for(const selector of ['#localFindings h2','.local-finding h3','.local-finding p','.local-findings-note'])await expectReadable(view.locator(selector).first());
+        expect(await view.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+        if(width===600)await view.screenshot({path:testInfo.outputPath(`${analyzer}-local-priority-${theme}.png`),fullPage:true});
+    }
+    await view.reload(); await expect(view.locator(selector+' svg')).toBeVisible();
+    await view.getByRole('button',{name:'Copy response',exact:true}).click();
+    await expect(view.locator('#actionStatus')).toHaveText('Markdown copied.');
+    expect(host.reports.calls.find(c=>c[0]==='copy').at(-1)).toBe(result.markdown);
+    expect(result.markdown).not.toContain(result.findingContext.findings[0].detail);
+    expect(report.externalRequests).toEqual([]);
+});

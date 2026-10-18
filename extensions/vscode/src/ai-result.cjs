@@ -48,7 +48,7 @@ class AiResults {
                 delivered = true;
                 // No capture or answer is embedded in executable HTML or persisted
                 // via webview state. Resend the same snapshot after tab recreation.
-                await reply({ type: 'result', result: { model: result.model, scope: result.scope, body: result.body } });
+                await reply({ type: 'result', result: { model: result.model, scope: result.scope, body: result.body, ...(result.findingContext ? { findingContext: result.findingContext } : {}) } });
             } else if (message.type === 'rendered' && delivered) finish();
             else if (message.type === 'action' && Number.isSafeInteger(message.id) && message.id > 0) {
                 if (actionRunning) { await reply({ type: 'actionResult', id: message.id, message: 'Finish the previous action first.' }); return; }
