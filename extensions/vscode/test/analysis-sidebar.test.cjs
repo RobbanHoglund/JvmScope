@@ -19,15 +19,15 @@ const vscode={
 test('knowledge base is a permanent native shortcut, including before a capture is loaded',async()=>{
     const sidebar=new AnalysisSidebar(vscode,async()=>assert.fail('Knowledge must not open an analyzer'));
     const roots=await sidebar.getChildren();
-    assert.deepEqual(roots.map(node=>node.id),['tda','tls','knowledge']);
-    const knowledge=sidebar.getTreeItem(roots[2]);
+    assert.deepEqual(roots.map(node=>node.id),['tda','tls','gc','knowledge']);
+    const knowledge=sidebar.getTreeItem(roots[3]);
     assert.equal(knowledge.label,'Knowledge base');
     assert.equal(knowledge.collapsibleState,vscode.TreeItemCollapsibleState.None);
     assert.equal(knowledge.iconPath.id,'book');
     assert.deepEqual(knowledge.command,{command:'jvmscope.openKnowledge',title:'Open Knowledge Base'});
-    assert.deepEqual(await sidebar.getChildren(roots[2]),[]);
+    assert.deepEqual(await sidebar.getChildren(roots[3]),[]);
     sidebar.changed('tda');sidebar.changed('tls');
-    assert.equal((await sidebar.getChildren())[2],roots[2]);
+    assert.equal((await sidebar.getChildren())[3],roots[3]);
     sidebar.dispose();
 });
 

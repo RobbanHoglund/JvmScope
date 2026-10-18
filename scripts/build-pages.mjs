@@ -5,6 +5,7 @@ import { lstatSync, readdirSync, readFileSync, realpathSync, writeFileSync, exis
 import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { THREAD_EXAMPLES, TLS_EXAMPLES } from '../frontend/assets/javautils/example-catalog.js';
+import { GC_EXAMPLES } from '../frontend/assets/javautils/gc/examples.js';
 import { ARTICLES } from '../frontend/assets/javautils/knowledge/data.js';
 import { projectLegalAssets, verifyProjectLegal } from './project-legal.mjs';
 
@@ -12,7 +13,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 export const pagesOutput = resolve(root, 'build/pages');
 export const defaultPagesBase = '/JvmScope/';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
-const examples = [...THREAD_EXAMPLES, ...TLS_EXAMPLES];
+const examples = [...THREAD_EXAMPLES, ...TLS_EXAMPLES, ...GC_EXAMPLES];
 const approvedExamples = () => new Set(examples.map(sample => sha256(readFileSync(new URL(sample.url)))));
 const byPath = (a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
 
@@ -38,9 +39,9 @@ export function verifyOutputLocation(output = pagesOutput) {
 
 export function scanPagesArtifact(directory, { completed = false } = {}) {
     const allowed = new Set([
-        'index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html',
+        'index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'jvmscope/gc.html', 'knowledge/index.html',
         ...ARTICLES.map(a => `knowledge/${a.id}.html`),
-        'assets/js/d3.min.js', 'assets/img/java-thread-mark.svg', 'assets/img/java-tls-mark.svg',
+        'assets/js/d3.min.js', 'assets/img/java-thread-mark.svg', 'assets/img/java-tls-mark.svg', 'assets/img/java-gc-mark.svg',
         'assets/legal/d3-LICENSE.txt', 'assets/legal/Apache-2.0.txt', 'assets/legal/markdown-it-NOTICES.txt',
         ...Object.keys(projectLegalAssets),
         ...(completed ? ['index.html', '.nojekyll', 'THIRD-PARTY-NOTICES.md', 'build-info.json', 'manifest.json'] : []),
@@ -56,8 +57,8 @@ export function scanPagesArtifact(directory, { completed = false } = {}) {
             if (!stat.isFile()) throw new Error('Only regular files are allowed in a Pages artifact.');
             const path = relative(directory, full).split(sep).join('/');
             const bytes = readFileSync(full), digest = sha256(bytes);
-            const hashed = /^(?:assets\/(?:js|css)\/[A-Za-z0-9_-]+-[A-Za-z0-9_-]{8}\.(?:js|css)|assets\/tls-analysis-worker-[A-Za-z0-9_-]{8}\.js)$/.test(path);
-            const example = /^assets\/examples\/[A-Za-z0-9._-]+-[A-Za-z0-9_-]{8}\.(?:txt|json)$/.test(path);
+            const hashed = /^(?:assets\/(?:js|css)\/[A-Za-z0-9_-]+-[A-Za-z0-9_-]{8}\.(?:js|css)|assets\/(?:tls-analysis-worker|gc-worker)-[A-Za-z0-9_-]{8}\.js)$/.test(path);
+            const example = /^assets\/examples\/[A-Za-z0-9._-]+-[A-Za-z0-9_-]{8}\.(?:txt|json|log)$/.test(path);
             if (example) {
                 if (!approved.has(digest)) throw new Error(`Unapproved example in Pages artifact: ${path}`);
                 foundExamples.add(digest);
@@ -70,7 +71,8 @@ export function scanPagesArtifact(directory, { completed = false } = {}) {
     for (const path of allowed) if (!files.some(file => file.path === path)) throw new Error(`Missing Pages file: ${path}`);
     verifyProjectLegal(directory);
     if (!files.some(file => /^assets\/js\/worker-analysis-worker-/.test(file.path))
-        || !files.some(file => /^assets\/tls-analysis-worker-/.test(file.path))) throw new Error('Both analysis workers must be packaged.');
+        || !files.some(file => /^assets\/tls-analysis-worker-/.test(file.path))
+        || !files.some(file => /^assets\/gc-worker-/.test(file.path))) throw new Error('All three analysis workers must be packaged.');
     if (foundExamples.size !== approved.size) throw new Error('The Pages artifact must contain every approved example.');
     return files;
 }
@@ -88,7 +90,8 @@ export function renderPagesIndex(base, revision) {
 :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#0e1116;color:#e2edf7}
 *{box-sizing:border-box}body{margin:0;padding:64px 48px}main{max-width:1040px;margin:0 auto}
 .brand{font-weight:750;font-size:24px;letter-spacing:.2px;color:#88bff1}h1{font-size:42px;line-height:1.15;margin:36px 0 16px}
-p{color:#a6bacf;line-height:1.7;max-width:760px}.tools{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:40px 0 28px}
+p{color:#a6bacf;line-height:1.7;max-width:760px}.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin:40px 0 28px}
+@media(max-width:760px){body{padding:28px 18px}.tools{grid-template-columns:1fr}h1{font-size:32px}footer{flex-wrap:wrap;gap:16px}}
 .tool{color:inherit;text-decoration:none;padding:28px;border:1px solid #394551;border-radius:14px;background:#151a22}
 .tool:hover{background:#1b2531;border-color:#88bff1}.tool:focus-visible{outline:3px solid #72e0d1;outline-offset:4px}
 .tool img{width:48px;height:48px}.tool h2{font-size:22px;margin:20px 0 10px}.tool p{margin:0 0 22px}.open{color:#88bff1;font-weight:650}
@@ -97,12 +100,13 @@ p{color:#a6bacf;line-height:1.7;max-width:760px}.tools{display:grid;grid-templat
 footer{display:flex;justify-content:space-between;border-top:1px solid #293440;margin-top:48px;padding-top:20px;font-size:13px;color:#91a4b8}
 footer a{color:#b5cfe8}footer a:focus-visible{outline:2px solid #72e0d1;outline-offset:4px}
 </style></head><body><main>
-<div class="brand">JvmScope</div><h1>Analyze Java thread dumps and TLS logs.</h1>
-<p>Follow a handshake, explore blocked threads and compare what changed between JVM snapshots.</p>
-<p class="privacy"><strong>Analyzed locally in your browser. Nothing uploaded.</strong><span>Both tools include examples to explore without a private capture.</span></p>
+<div class="brand">JvmScope</div><h1>Understand Java threads, TLS and garbage collection.</h1>
+<p>Follow a handshake, explore blocked threads and see garbage collection unfold over time.</p>
+<p class="privacy"><strong>Analyzed locally in your browser. Nothing uploaded.</strong><span>All three tools include examples to explore without a private capture.</span></p>
 <section class="tools" aria-label="Analysis tools">
 <a class="tool" href="${base}jvmscope/tda.html"><img src="${base}assets/img/java-thread-mark.svg" alt=""><h2>Thread Dump Analyzer</h2><p>Compare snapshots, inspect stacks and explore thread dependencies, deadlocks and measured CPU activity.</p><span class="open">Open thread analyzer →</span></a>
 <a class="tool tls" href="${base}jvmscope/tls.html"><img src="${base}assets/img/java-tls-mark.svg" alt=""><h2>TLS Log Analyzer</h2><p>Follow handshake messages, inspect certificates and narrow a capture by time, host or diagnostic evidence.</p><span class="open">Open TLS analyzer →</span></a>
+<a class="tool gc" href="${base}jvmscope/gc.html"><img src="${base}assets/img/java-gc-mark.svg" alt=""><h2>Garbage Collection Analyzer</h2><p>Explore heap, pauses and concurrent activity on a timeline with source-backed pressure annotations.</p><span class="open">Open GC analyzer →</span></a>
 </section><section aria-label="Java Knowledge Base"><a class="knowledge" href="${base}knowledge/index.html"><h2>Java Knowledge Base</h2><p>Choose diagnostic evidence, check version-dependent capabilities and compare potential upgrade changes.</p><span class="open">Explore eight Java knowledge articles →</span></a></section>
 <footer><span>Version ${version}</span><a href="${base}assets/legal/JvmScope-LICENSE.txt">Apache-2.0 license</a><a href="${base}THIRD-PARTY-NOTICES.md">Third-party notices</a></footer>
 </main></body></html>\n`;
@@ -146,7 +150,7 @@ export function verifyPagesArtifact(directory = pagesOutput) {
         || info.base !== manifest.base || info.target !== 'pages') throw new Error('Pages build metadata does not match.');
     const payload = files.filter(file => file.path !== 'manifest.json').sort(byPath);
     if (JSON.stringify(payload) !== JSON.stringify(manifest.files)) throw new Error('Pages manifest does not match the payload.');
-    for (const name of ['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html', ...ARTICLES.map(a => `knowledge/${a.id}.html`)]) {
+    for (const name of ['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'jvmscope/gc.html', 'knowledge/index.html', ...ARTICLES.map(a => `knowledge/${a.id}.html`)]) {
         const html = readFileSync(resolve(directory, name), 'utf8');
         for (const match of html.matchAll(/(?:href|src)\s*=\s*(['"])(.*?)\1/g)) {
             const url = match[2];

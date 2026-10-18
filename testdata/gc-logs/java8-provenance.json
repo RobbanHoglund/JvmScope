@@ -1,0 +1,103 @@
+{
+  "major": 8,
+  "capturedAt": "2026-10-18T08:17:24.283Z",
+  "provenance": {
+    "packageId": "0188608b89a1adb9a7c55066e69ad080",
+    "javaVersion": "8.0.504+1",
+    "url": "https://cdn.azul.com/zulu/bin/zulu8.96.0.205-ca-jdk8.0.504-linux_x64.tar.gz",
+    "sha256": "fdb93d3789f740c62b85c57a1c55db9960eb8bf6d7966ca8becd2a6be89bfcbf",
+    "catalogChecksum": "fdb93d3789f740c62b85c57a1c55db9960eb8bf6d7966ca8becd2a6be89bfcbf",
+    "catalogChecksumType": "sha256"
+  },
+  "workloadSha256": "fb0dabad1587ecdf0be5477a4bc18a055e3ae439eb70c8be50b44e18f0f61213",
+  "cases": [
+    {
+      "collector": "serial",
+      "status": "captured",
+      "file": "java8-serial.log.gz",
+      "sha256": "8128f31f8ad91826f652935cdd51b841b88d3706e2d368408f7432ede6ddbd48",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseSerialGC",
+        "-XX:+PrintGCDetails",
+        "-XX:+PrintGCDateStamps",
+        "-XX:+PrintGCTimeStamps",
+        "-Xloggc:<checkout>/testdata/gc-logs/java8-serial.log",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/8/serial-oracle.txt"
+      ],
+      "oracle": "runtime=1.8.0_504-b01\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=Copy|count=75|timeMs=22\ncollector=MarkSweepCompact|count=8|timeMs=9\n"
+    },
+    {
+      "collector": "parallel",
+      "status": "captured",
+      "file": "java8-parallel.log",
+      "sha256": "4ddb8da9a554cd5d15cb587990d35158acbd7e58a9d15078a9eb0042cad3e9d7",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseParallelGC",
+        "-XX:+PrintGCDetails",
+        "-XX:+PrintGCDateStamps",
+        "-XX:+PrintGCTimeStamps",
+        "-Xloggc:<checkout>/testdata/gc-logs/java8-parallel.log",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/8/parallel-oracle.txt"
+      ],
+      "oracle": "runtime=1.8.0_504-b01\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=PS Scavenge|count=73|timeMs=39\ncollector=PS MarkSweep|count=9|timeMs=19\n"
+    },
+    {
+      "collector": "g1",
+      "status": "captured",
+      "file": "java8-g1.log.gz",
+      "sha256": "aa43273ac968e0aafd0499b43a98bb7a5010ebffba323a9cd3f74df4a7308960",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseG1GC",
+        "-XX:+PrintGCDetails",
+        "-XX:+PrintGCDateStamps",
+        "-XX:+PrintGCTimeStamps",
+        "-Xloggc:<checkout>/testdata/gc-logs/java8-g1.log",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/8/g1-oracle.txt"
+      ],
+      "oracle": "runtime=1.8.0_504-b01\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=G1 Young Generation|count=42|timeMs=35\ncollector=G1 Old Generation|count=7|timeMs=18\n"
+    },
+    {
+      "collector": "cms",
+      "status": "captured",
+      "file": "java8-cms.log.gz",
+      "sha256": "7b55f8766507cedddba67adea38528d464fffded0b5fa1b77a5feb256f9320fb",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseConcMarkSweepGC",
+        "-XX:+PrintGCDetails",
+        "-XX:+PrintGCDateStamps",
+        "-XX:+PrintGCTimeStamps",
+        "-Xloggc:<checkout>/testdata/gc-logs/java8-cms.log",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/8/cms-oracle.txt"
+      ],
+      "oracle": "runtime=1.8.0_504-b01\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=ParNew|count=74|timeMs=34\ncollector=ConcurrentMarkSweep|count=8|timeMs=24\n"
+    }
+  ]
+}

@@ -1,6 +1,29 @@
 // Teaching blocks contain text, never author-supplied HTML. Layout calculations
 // are illustrative; the renderer labels them separately from real capture data.
 export const GUIDES = {
+    'gc-memory': {
+        does: [
+            {type:'table',caption:'Read the three GC timeline tracks independently',headers:['Track','Evidence','Do not infer'],rows:[
+                ['Heap','Used bytes before/after a collection; capacity only when explicitly recorded','Total process RSS, Xmx, allocation rate or a leak. Young collections do not measure the complete live set.'],
+                ['Stop-the-world pauses','Completed pause elapsed times, max, nearest-rank p95 and union of timed pause intervals','GC CPU time, all safepoints or request latency. Concurrent phases are not added to pauses.'],
+                ['Concurrent / stalls','Concurrent phase and cycle elapsed times; individual allocation stalls','That all application threads stopped for a concurrent cycle or a single-thread allocation stall.'],
+            ]},
+            {type:'callout',title:'Annotations are evidence, not a diagnosis',text:'A pause above your selected budget is a configurable review threshold, not a Java rule. Full GC and high post-collection occupancy require context. Ordinary Allocation Failure is a collection trigger, not an OutOfMemoryError. Explicit System.gc requests are informational unless another independent rule fires.'},
+        ],
+        versions: [
+            {type:'paragraph',text:'The analyzer reads Sun/OpenJDK HotSpot legacy Java 8 logs and unified logging from Java 9–27. Collector availability and record details vary by release and vendor. Serial, Parallel, G1, historical CMS, ZGC and Shenandoah captures are replayed in regression tests. This does not promise support for OpenJ9, every vendor extension, rotation gaps or every logging decoration.'},
+            {type:'callout',title:'Log format is not a Java language specification',text:'Unified GC logging was introduced in JDK 9 (JEP 271). The parser uses recorded evidence and warns about incomplete records; it does not guess a Java version from a collector name. Keep the exact runtime build and capture flags with the log.',sources:['https://openjdk.org/jeps/271']},
+        ],
+        check: [
+            {type:'code',caption:'HotSpot Java 8 startup recipe · choose a fresh writable output path',text:'java -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -Xloggc:gc.log -jar application.jar',sources:['https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/']},
+            {type:'code',caption:'HotSpot Java 9–27 startup recipe · verify flags on your exact target build',text:'java -Xlog:gc*,safepoint:file=gc.log:time,uptime,level,tags -jar application.jar',sources:['https://openjdk.org/jeps/271']},
+            {type:'list',items:['Do not change the collector just to collect a log. Record VM version, heap flags, workload interval and latency objectives separately. Logging has overhead and disk-space costs.','Load one chronological capture from one JVM. If you concatenate captures from different processes, explicit startup or clock-reset evidence is needed to separate them reliably. Rotation gaps cannot be reconstructed.','Use a representative observation interval. Tiny synthetic samples exercise the parser, not production performance. Remove private information before sharing captures externally.']},
+        ],
+        measure: [
+            {type:'list',items:['Inspect the marked region, select its event and read the original lines before changing a flag. Red allocation-stall signals describe affected allocating threads, not a global stop.','Observed pause share uses the first-to-last timed event window and merges overlapping pause intervals. It is not whole-process uptime, application throughput, or GC CPU utilization.','The heap curve connects discrete samples for orientation; unobserved points are not measured. ZGC percentages do not establish an exact capacity.','Evacuation/to-space failures, promotion failures and concurrent-mode failures warrant investigation. Correlate with available heap, allocation, CPU and I/O evidence before assigning a cause.','Use the four bundled real samples to learn the view. The repository includes provenance and repeatable Java 8–27 workload captures, plus an independent MXBean count oracle for stop-the-world collectors.']},
+            {type:'paragraph',text:'A high post-GC heap alone is not a memory leak. Compare complete collection cycles over time and use object/retention evidence when appropriate. Likewise, a full collection can be requested by an operator or diagnostic tool.',sources:['https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html']},
+        ],
+    },
     'thread-dumps': {
         does: [
             {type:'table',caption:'Choose the question before the filename',headers:['Question','Collect','Important blind spot'],rows:[

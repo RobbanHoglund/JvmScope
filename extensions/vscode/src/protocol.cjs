@@ -38,6 +38,7 @@ function sourceName(uri) { return uri.path.split('/').pop() || 'capture.txt'; }
 async function readSources(vscode, uris, analyzer, registerSource = null) {
     if (!Array.isArray(uris) || !uris.length || uris.length > MAX_FILES) throw new Error('Choose between 1 and 50 capture files.');
     if (analyzer === 'tls' && uris.length !== 1) throw new Error('Choose one TLS log at a time. Thread analysis supports multiple files.');
+    if (analyzer === 'gc' && uris.length !== 1) throw new Error('Choose one GC log at a time. JVM segments inside a file are analyzed separately.');
     const sources = []; let total = 0;
     for (const uri of uris) {
         const document = vscode.workspace.textDocuments.find(document => document.uri.toString() === uri.toString());

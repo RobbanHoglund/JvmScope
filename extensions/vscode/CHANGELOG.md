@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.0 — Garbage Collection Log Analyzer
+
+- Add a third analyzer for Sun/OpenJDK HotSpot Java 8–27 logs: upload/drop, separate heap/pause/concurrent timeline tracks, zoom, review annotations and exact source evidence.
+- Distinguish JVM pressure signals from configurable pause budgets, informational explicit GC and qualified occupancy heuristics. Keep concurrent cycles and allocation stalls out of stop-the-world totals.
+- Add GC commands, colored SVG icons, native sidebar navigation, web navigation and a source-backed GC knowledge guide.
+- Bundle four authentic collector samples and replay real isolated JVM captures from every major Java release 8–27, with provenance, hashes and independent MXBean count checks.
+- Test malformed input, cancellation, source navigation, keyboard use, four themes and narrow layouts. GC analysis remains fully local; AI is still available only for thread/TLS analysis.
+
 ## 1.2.2 — Analysis-specific AI prompts
 
 - Give thread dumps and TLS logs separate diagnostic instructions. Select distinct guidance for one thread snapshot, a snapshot series, one TLS interaction and a TLS capture overview.

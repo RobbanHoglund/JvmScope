@@ -63,7 +63,7 @@ class AnalysisSidebar {
     constructor(vscode, open) {
         this.vscode=vscode;this.open=open;this.sessions=new Map();this.nodes=new Map();
         this.events=new vscode.EventEmitter();this.onDidChangeTreeData=this.events.event;
-        this.roots=['tda','tls'].map(analyzer=>({id:analyzer,analyzer,root:true,key:''}));
+        this.roots=['tda','tls','gc'].map(analyzer=>({id:analyzer,analyzer,root:true,key:''}));
         this.knowledge={id:'knowledge',label:'Knowledge base'};
     }
     attach(analyzer, session) {this.sessions.set(analyzer,session);this.changed(analyzer);}
@@ -79,11 +79,11 @@ class AnalysisSidebar {
         }
         const vscode=this.vscode,session=this.sessions.get(node.analyzer);
         const hasChildren=node.root?Boolean(session?.navigation.count):node.children;
-        const item=new vscode.TreeItem(node.root?(node.analyzer==='tda'?'Java thread dumps':'Java TLS logs'):node.label,
+        const item=new vscode.TreeItem(node.root?({tda:'Java thread dumps',tls:'Java TLS logs',gc:'Java garbage collection'})[node.analyzer]:node.label,
             hasChildren ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
         item.id=node.id;item.description=node.root?(session?.navigation.summary || 'No capture loaded'):node.description;
         item.tooltip=node.root?item.description:`${node.label}\n${node.description}`;
-        item.iconPath=new vscode.ThemeIcon(node.root?(node.analyzer==='tda'?'list-tree':'shield'):({file:'file',snapshot:'history',thread:'symbol-method',interaction:'plug',event:'arrow-right',page:'ellipsis',notice:'info'})[node.kind]);
+        item.iconPath=new vscode.ThemeIcon(node.root?({tda:'list-tree',tls:'shield',gc:'pulse'})[node.analyzer]:({file:'file',snapshot:'history',thread:'symbol-method',interaction:'plug',event:'arrow-right',page:'ellipsis',notice:'info'})[node.kind]);
         item.contextValue=node.root?'jvmscope.analyzer':'jvmscope.item';
         if (node.kind!=='page' && node.kind!=='notice') item.command={command:'jvmscope.revealAnalysisItem',title:'Open analysis item',arguments:[node.id]};
         item.accessibilityInformation={label:`${item.label}. ${item.description || ''}`};

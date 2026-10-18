@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 /** Static TLS/TDA delivery only. No file uploads, registry API or filesystem routes. */
 public final class SlimServer implements AutoCloseable {
     private static final byte[] HEALTH = "{\"status\":\"UP\",\"application\":\"JvmScope\"}\n".getBytes(StandardCharsets.UTF_8);
-    private static final Set<String> PAGES = Set.of("/index.html", "/jvmscope/tls.html", "/jvmscope/tda.html",
+    private static final Set<String> PAGES = Set.of("/index.html", "/jvmscope/tls.html", "/jvmscope/tda.html", "/jvmscope/gc.html",
         "/knowledge/index.html", "/knowledge/thread-dumps.html", "/knowledge/thread-counters.html",
         "/knowledge/virtual-threads.html", "/knowledge/string-interning.html", "/knowledge/string-memory.html",
         "/knowledge/object-headers.html", "/knowledge/gc-memory.html", "/knowledge/upgrade-checklist.html");

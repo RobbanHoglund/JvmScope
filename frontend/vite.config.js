@@ -52,14 +52,17 @@ export function toolNavigation({ slim = false, vscode = false } = {}) {
     transformIndexHtml: {
       order: 'pre',
       handler(html, context) {
+        // Vite rewrites asset URLs, not ordinary root-relative article links.
+        // Preserve native VS Code route names; static project hosting needs its base.
+        if (!vscode && base !== '/') html = html.replace(/href="\/(knowledge\/[^"?#]+\.html)"/g, `href="${base}$1"`);
         // The AI report has its own small host bridge and no analyzer navigation.
         if (context.filename.endsWith('ai-result.html')) return html;
-        const active = context.filename.includes('knowledge') ? 'knowledge' : context.filename.endsWith('tls.html') ? 'tls'
+        const active = context.filename.includes('knowledge') ? 'knowledge' : context.filename.endsWith('gc.html') ? 'gc' : context.filename.endsWith('tls.html') ? 'tls'
           : context.filename.endsWith('tda.html') ? 'tda' : 'home';
         const link = (name, path, label) => `<a href="${path}"${active === name ? ' aria-current="page"' : ''}>${label}</a>`;
         // VS Code provides native tool navigation and a knowledge-base shortcut.
         // Omit the website navigation entirely so it takes no space or tab stops.
-        const navigation = vscode ? '' : `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
+        const navigation = vscode ? '' : `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('gc', `${base}jvmscope/gc.html`, 'Garbage collection')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
         // Reuse the brand asset and let Vite apply the delivery target's base.
         // Keep each analyzer's own icon; home/knowledge pages need a default.
         const icon = /<link\b[^>]*\brel=["']icon["']/i.test(html) ? ''
@@ -102,7 +105,7 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     minify: mode !== "development",
     // Small teaching captures must remain fetchable files, including JSON/TXT excerpts.
-    assetsInlineLimit: filePath => /\.(txt|json)$/i.test(filePath) ? false : undefined,
+    assetsInlineLimit: filePath => /\.(txt|json|log)$/i.test(filePath) ? false : undefined,
 
     rollupOptions: {
       input: ['slim', 'pages', 'vscode'].includes(mode) ? {
@@ -110,6 +113,7 @@ export default defineConfig(({ mode }) => ({
         ...knowledgeInputs,
         tda: resolve(rootDir, "jvmscope/tda.html"),
         tls: resolve(rootDir, "jvmscope/tls.html"),
+        gc: resolve(rootDir, "jvmscope/gc.html"),
         ...(mode === 'vscode' ? { 'ai-result': resolve(rootDir, 'ai-result.html') } : {}),
       } : {
         ...knowledgeInputs,
@@ -117,6 +121,7 @@ export default defineConfig(({ mode }) => ({
         utils: resolve(rootDir, "utils.html"),
         tda: resolve(rootDir, "jvmscope/tda.html"),
         tls: resolve(rootDir, "jvmscope/tls.html"),
+        gc: resolve(rootDir, "jvmscope/gc.html"),
       },
 
       output: {
@@ -137,7 +142,7 @@ export default defineConfig(({ mode }) => ({
             return "assets/fonts/[name][extname]";
           }
 
-          if (/\.(txt|json)$/i.test(fileName)) {
+          if (/\.(txt|json|log)$/i.test(fileName)) {
             return "assets/examples/[name]-[hash][extname]";
           }
 

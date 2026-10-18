@@ -1,0 +1,30 @@
+name: Regenerate real GC captures
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Capture isolated real JVM workload
+        run: node scripts/capture-gc.mjs ${{ matrix.java }}
+      - name: Replay byte-exact captures and semantic regression tests
+        run: npm run test:gc --prefix frontend
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gc-java-${{ matrix.java }}
+          path: testdata/gc-logs/java${{ matrix.java }}-*
+          retention-days: 14

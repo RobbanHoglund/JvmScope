@@ -38,7 +38,7 @@ def mimeTypes = [html: 'text/html; charset=utf-8', js: 'text/javascript; charset
     css: 'text/css; charset=utf-8', svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg',
     jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', ico: 'image/x-icon',
     woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', otf: 'font/otf', wasm: 'application/wasm',
-    txt: 'text/plain; charset=utf-8', json: 'application/json; charset=utf-8']
+    txt: 'text/plain; charset=utf-8', log: 'text/plain; charset=utf-8', json: 'application/json; charset=utf-8']
 def digest = { byte[] bytes -> MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex().toString() }
 
 tasks.register('prepareAssets') {
@@ -55,7 +55,7 @@ tasks.register('prepareAssets') {
         def entries = []
         fileTree(source).files.sort { it.path }.each { asset ->
             def path = source.relativize(asset.toPath()).toString().replace('\\', '/')
-            if (!(path in ['index.html', 'jvmscope/tls.html', 'jvmscope/tda.html']) && !path.startsWith('assets/') && !path.matches('knowledge/[a-z-]+\\.html')) {
+            if (!(path in ['index.html', 'jvmscope/tls.html', 'jvmscope/tda.html', 'jvmscope/gc.html']) && !path.startsWith('assets/') && !path.matches('knowledge/[a-z-]+\\.html')) {
                 throw new GradleException("Unexpected slim asset: $path")
             }
             if (path.toLowerCase().contains('dockerutils')) throw new GradleException("Docker asset in slim build: $path")

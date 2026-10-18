@@ -113,7 +113,7 @@ try {
     assert.equal((await run('start')).code, 0);
     assert.equal((await status()).pid, running.pid);
     assert.equal((await fetch(`${SLIM_URL}/health`)).status, 200);
-    for (const path of ['/jvmscope/tda.html', '/jvmscope/tls.html']) assert.equal((await fetch(SLIM_URL + path)).status, 200);
+    for (const path of ['/jvmscope/tda.html', '/jvmscope/tls.html', '/jvmscope/gc.html']) assert.equal((await fetch(SLIM_URL + path)).status, 200);
     assert.deepEqual(await status(true), running, 'The compatibility alias must address the same supervisor');
     console.log('PASS: canonical/alias concurrent starts share one linked Java server with both analyzers');
 

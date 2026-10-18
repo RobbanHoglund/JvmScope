@@ -7,7 +7,7 @@ const { AnalysisSidebar, NavigationSession } = require('./analysis-sidebar.cjs')
 const { AiAnalysis } = require('./ai-analysis.cjs');
 const { AiResults } = require('./ai-result.cjs');
 const decoder = new TextDecoder();
-const titles = { tda: 'JvmScope · Thread dumps', tls: 'JvmScope · TLS logs', docs: 'JvmScope · Knowledge' };
+const titles = { tda: 'JvmScope · Thread dumps', tls: 'JvmScope · TLS logs', gc: 'JvmScope · Garbage collection', docs: 'JvmScope · Knowledge' };
 
 async function activate(context) {
     const aiResults = new AiResults(vscode, context.extensionUri);
@@ -34,7 +34,7 @@ async function activate(context) {
 
     async function openPage(route, { resume = false } = {}) {
         const { name, hash } = resolveRoute(route, pages);
-        const kind = name === 'jvmscope/tda.html' ? 'tda' : name === 'jvmscope/tls.html' ? 'tls' : 'docs';
+        const kind = name === 'jvmscope/tda.html' ? 'tda' : name === 'jvmscope/tls.html' ? 'tls' : name === 'jvmscope/gc.html' ? 'gc' : 'docs';
         let session = sessions.get(kind);
         // Tool commands resume retained sessions. Explicit knowledge links use
         // the page's in-memory history without disposing its tab or reading state.
@@ -91,7 +91,7 @@ async function activate(context) {
                 case 'chooseFiles': {
                     if (kind === 'docs') throw new Error('Open an analyzer before choosing captures.');
                     const uris = await vscode.window.showOpenDialog({ canSelectMany: kind === 'tda', canSelectFolders: false,
-                        openLabel: kind === 'tda' ? 'Analyze thread dumps' : 'Analyze TLS log',
+                        openLabel: kind === 'tda' ? 'Analyze thread dumps' : kind === 'gc' ? 'Analyze GC log' : 'Analyze TLS log',
                         filters: { 'Capture files': ['txt', 'log', 'json', 'dump', 'tdump'], 'All files': ['*'] } });
                     return uris ? readSources(vscode, uris, kind, sources.register.bind(sources)) : null;
                 }
@@ -181,9 +181,11 @@ async function activate(context) {
     register('jvmscope.revealAnalysisItem', id => sidebar.reveal(id));
     register('jvmscope.openTda', async () => { const session = await openPage('/jvmscope/tda.html'); await session.ready; });
     register('jvmscope.openTls', async () => { const session = await openPage('/jvmscope/tls.html'); await session.ready; });
+    register('jvmscope.openGc', async () => { const session = await openPage('/jvmscope/gc.html'); await session.ready; });
     register('jvmscope.openKnowledge', async () => { const session = await openPage('/knowledge/index.html', { resume: true }); await session.ready; });
     register('jvmscope.analyzeThreadDump', (uri, selected) => analyze('tda', uri, selected));
     register('jvmscope.analyzeTlsLog', (uri, selected) => analyze('tls', uri, selected));
+    register('jvmscope.analyzeGcLog', (uri, selected) => analyze('gc', uri, selected));
     context.subscriptions.push({ dispose: () => { for (const session of sessions.values()) session.panel.dispose(); evidence.clear(); } });
     return Object.freeze({ getAnalysisItems: (analyzer, parentId) => sidebar.list(analyzer, parentId) });
 }

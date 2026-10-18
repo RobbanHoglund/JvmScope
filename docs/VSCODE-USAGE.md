@@ -7,7 +7,20 @@ See the [feature overview and quick start](../extensions/vscode/README.md) to ge
 
 1. Download the `jvmscope-vscode` artifact from the branch's **VS Code extension checks** workflow and unzip it.
 2. In VS Code, run **Extensions: Install from VSIX…** and select the downloaded `jvmscope-<version>.vsix`.
-3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer** or **JvmScope: Open Java TLS Log Analyzer**.
+3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer**, **JvmScope: Open Java TLS Log Analyzer**, or **JvmScope: Open Java Garbage Collection Log Analyzer**.
+
+## Garbage collection
+
+The GC analyzer accepts one UTF-8 HotSpot Java 8–27 log (up to 64 MiB), from
+**Open GC log**, drag-and-drop or **Analyze as Java GC Log** in Explorer. **Load
+sample** opens a real collector capture; choose another example at the bottom.
+The native sidebar lists GC events and returns to their timeline selection.
+
+Heap, stop-the-world pauses and concurrent work are separate tracks. Click an
+annotation or event for its explanation and exact source lines; use **Zoom to
+event** to inspect a region. **Pause budget** is a configurable threshold, not a
+JVM rule. See the [GC guide](GC-ANALYZER.md) for interpretation, tested coverage,
+limitations and repeatable runtime tests. GC does not currently offer AI handoff.
 
 Alternatively, build the package using the instructions below. Requires VS Code
 **1.110 or later** on desktop (Windows, macOS or Linux). Browser-hosted VS Code
@@ -192,7 +205,7 @@ the analyzer panel is closed or VS Code reloads. Raw evidence is invalidated whe
 its owning capture is cleared/replaced or its panel closes. Exports can contain
 sensitive diagnostic data; review them before saving or sharing.
 
-The sidebar and both analyzers follow VS Code's theme, including light, dark,
+The sidebar and all three analyzers follow VS Code's theme, including light, dark,
 high-contrast dark and high-contrast light. Run **Preferences: Color Theme** to
 switch themes; open analyzers update immediately. Both analyzers also adapt to
 narrow editor splits. The standalone application and exported reports retain
@@ -242,7 +255,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.2.2.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.3.0.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

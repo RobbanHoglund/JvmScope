@@ -56,8 +56,8 @@ test('the application includes home and knowledge pages but excludes the optiona
     const full = viteConfig({ mode: 'production' });
     const slim = viteConfig({ mode: 'slim' });
     const knowledge = ['knowledge-index', ...ARTICLES.map(a=>`knowledge-${a.id}`)];
-    assert.deepEqual(Object.keys(full.build.rollupOptions.input).sort(), [...knowledge, 'main', 'tda', 'tls', 'utils'].sort());
-    assert.deepEqual(Object.keys(slim.build.rollupOptions.input).sort(), [...knowledge, 'main', 'tda', 'tls'].sort());
+    assert.deepEqual(Object.keys(full.build.rollupOptions.input).sort(), [...knowledge, 'main', 'tda', 'tls', 'gc', 'utils'].sort());
+    assert.deepEqual(Object.keys(slim.build.rollupOptions.input).sort(), [...knowledge, 'main', 'tda', 'tls', 'gc'].sort());
     assert.notEqual(full.build.outDir, slim.build.outDir);
     const navigation = config => config.plugins.find(plugin => plugin.name === 'tool-navigation')
         .transformIndexHtml.handler('<head></head><body></body>', { filename: '/jvmscope/tls.html' });

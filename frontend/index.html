@@ -127,7 +127,7 @@
 
     .utility-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
       padding: 0;
       margin: 0;
@@ -253,19 +253,19 @@
     <section class="hero" aria-labelledby="pageTitle">
       <div>
         <div class="eyebrow">JvmScope</div>
-        <h1 id="pageTitle">Analyze Java thread dumps and TLS logs.</h1>
+        <h1 id="pageTitle">Understand Java threads, TLS and garbage collection.</h1>
         <p class="subtitle">
-          Follow a handshake, explore blocked threads and compare what changed between JVM snapshots.
+          Follow a handshake, explore blocked threads and see garbage collection unfold over time.
         </p>
-        <p class="privacy"><strong>Analyzed locally in your browser. Nothing uploaded.</strong><span>Both tools include examples to explore without a private capture.</span></p>
+        <p class="privacy"><strong>Analyzed locally in your browser. Nothing uploaded.</strong><span>All three tools include examples to explore without a private capture.</span></p>
       </div>
-      <div class="hero-badge">2 tools available</div>
+      <div class="hero-badge">3 tools available</div>
     </section>
 
     <ul class="utility-grid" aria-label="Available utilities">
       <li class="utility-card">
         <a href="/jvmscope/tda.html">
-          <span class="card-icon">🧵</span>
+          <span class="card-icon"><img src="/assets/javautils/java-thread-mark.svg" width="44" height="44" alt="" /></span>
           <span class="card-title">JvmScope · Java Thread Dump Analyzer <span class="card-arrow">→</span></span>
           <p class="card-desc">Inspect Java thread dumps, thread states, lock ownership, blockers, and runtime patterns.</p>
           <span class="card-tag">JVM analysis</span>
@@ -281,6 +281,14 @@
         </a>
       </li>
 
+      <li class="utility-card">
+        <a href="/jvmscope/gc.html">
+          <span class="card-icon"><img src="/assets/javautils/java-gc-mark.svg" width="44" height="44" alt="" /></span>
+          <span class="card-title">JvmScope · Garbage Collection Log Analyzer <span class="card-arrow">→</span></span>
+          <p class="card-desc">Explore heap, pauses and concurrent activity on a timeline with source-backed pressure annotations.</p>
+          <span class="card-tag">Java 8–27 · HotSpot GC</span>
+        </a>
+      </li>
     </ul>
     <section class="knowledge" aria-label="Java Knowledge Base">
       <a href="/knowledge/index.html"><h2>Java Knowledge Base</h2><p class="card-desc">Choose diagnostic evidence, check version-dependent capabilities and compare potential upgrade changes.</p>

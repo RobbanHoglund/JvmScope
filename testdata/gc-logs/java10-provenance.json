@@ -1,0 +1,95 @@
+{
+  "major": 10,
+  "capturedAt": "2026-10-18T08:28:02.495Z",
+  "provenance": {
+    "packageId": "936f8b166c410d3b2b18a500494b27ba",
+    "javaVersion": "10.0.2+13",
+    "url": "https://cdn.azul.com/zulu/bin/zulu10.3+5-jdk10.0.2-linux_x64.tar.gz",
+    "sha256": "47ef4b708689f1923a2be9325b17c9df8545a33769a7f11b00dc70f0be4f12ca",
+    "catalogChecksum": "47ef4b708689f1923a2be9325b17c9df8545a33769a7f11b00dc70f0be4f12ca",
+    "catalogChecksumType": "sha256"
+  },
+  "workloadSha256": "fb0dabad1587ecdf0be5477a4bc18a055e3ae439eb70c8be50b44e18f0f61213",
+  "cases": [
+    {
+      "collector": "serial",
+      "status": "captured",
+      "file": "java10-serial.log.gz",
+      "sha256": "a2c79a15c3b9f1af9dafc65e4088d0f5830f863ad9eeb3b543034fef3d199920",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ParallelGCThreads=2",
+        "-XX:ConcGCThreads=1",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java10-serial.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/10/serial-oracle.txt"
+      ],
+      "oracle": "runtime=10.0.2+13\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=Copy|count=75|timeMs=19\ncollector=MarkSweepCompact|count=8|timeMs=16\n"
+    },
+    {
+      "collector": "parallel",
+      "status": "captured",
+      "file": "java10-parallel.log.gz",
+      "sha256": "017635697cbf46e3ba0a8dbb85d98b59ff00e3324c0c651514695bd55ecc6a3f",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ParallelGCThreads=2",
+        "-XX:ConcGCThreads=1",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseParallelGC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java10-parallel.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/10/parallel-oracle.txt"
+      ],
+      "oracle": "runtime=10.0.2+13\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=PS MarkSweep|count=9|timeMs=27\ncollector=PS Scavenge|count=76|timeMs=28\n"
+    },
+    {
+      "collector": "g1",
+      "status": "captured",
+      "file": "java10-g1.log.gz",
+      "sha256": "c9a72b5394cc5236246337d72d6242fcc0fba65abb419fabc67d08d72e0cbb91",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ParallelGCThreads=2",
+        "-XX:ConcGCThreads=1",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseG1GC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java10-g1.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/10/g1-oracle.txt"
+      ],
+      "oracle": "runtime=10.0.2+13\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=G1 Young Generation|count=43|timeMs=33\ncollector=G1 Old Generation|count=9|timeMs=25\n"
+    },
+    {
+      "collector": "cms",
+      "status": "captured",
+      "file": "java10-cms.log.gz",
+      "sha256": "cbca73cfdcd57f272b512fe4505421e8e539385ea875203416305b0ca2b9cbc1",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ParallelGCThreads=2",
+        "-XX:ConcGCThreads=1",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseConcMarkSweepGC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java10-cms.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/10/cms-oracle.txt"
+      ],
+      "oracle": "runtime=10.0.2+13\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=ParNew|count=74|timeMs=30\ncollector=ConcurrentMarkSweep|count=8|timeMs=20\n"
+    }
+  ]
+}

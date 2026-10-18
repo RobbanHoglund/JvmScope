@@ -60,7 +60,7 @@ function bindFormat(version,afterChange=()=>{}) {
 }
 
 function measurementContext(version) {
-    return `<section id="collection"><h3>B. Evidence needed for this question</h3><p>Use measurements from the target JVM and workload described in this article. Thread dumps and TLS logs do not measure object-layout savings, retained-heap benefit or GC performance.</p></section><section id="analyzer-scope"><h3>C. Where JvmScope can help</h3><p>JvmScope analyzes thread and handshake observations; it has no heap-layout or GC analysis engine. Analyzer capture counts do not validate a tuning change.</p><a href="${a(versionPath('./index.html',version))}#support">See the separate diagnostic-format and analyzer-evidence guide</a></section>`;
+    return `<section id="collection"><h3>B. Evidence needed for this question</h3><p>Use measurements from the target JVM and workload described in this article. Thread dumps and TLS logs do not measure object-layout savings, retained-heap benefit or GC performance.</p></section><section id="analyzer-scope"><h3>C. Where JvmScope can help</h3><p>JvmScope analyzes thread, handshake and GC-log observations. The GC timeline shows recorded heap samples, pauses and concurrent phases; it does not measure object layout or establish that a tuning change improves application performance.</p><a href="../jvmscope/gc.html">Open Garbage Collection Log Analyzer</a><br><a href="${a(versionPath('./index.html',version))}#support">See the separate diagnostic-format and analyzer-evidence guide</a></section>`;
 }
 
 function relatedGuides(version) {

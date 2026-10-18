@@ -2,3 +2,4 @@
 // vscode-workers.js because webviews can start workers only from blob/data URIs.
 export const createTdaWorker = () => new Worker(new URL('../tda/analysis-worker.js', import.meta.url), { type: 'module' });
 export const createTlsWorker = () => new Worker(new URL('../tls-analysis-worker.js', import.meta.url), { type: 'module' });
+export const createGcWorker = () => new Worker(new URL('../gc/gc-worker.js', import.meta.url), { type: 'module' });

@@ -7,6 +7,7 @@ import { dirname, resolve, sep } from 'node:path';
 import { validatePagesBase, verifyOutputLocation, renderPagesIndex, scanPagesArtifact, verifyPagesArtifact, pagesOutput } from './build-pages.mjs';
 import { startPagesServer } from './preview-pages.mjs';
 import { THREAD_EXAMPLES, TLS_EXAMPLES } from '../frontend/assets/javautils/example-catalog.js';
+import { GC_EXAMPLES } from '../frontend/assets/javautils/gc/examples.js';
 import { ARTICLES } from '../frontend/assets/javautils/knowledge/data.js';
 import { projectLegalFiles, verifyProjectLegal } from './project-legal.mjs';
 
@@ -28,14 +29,14 @@ function put(dir, path, content) {
 function payload(t) {
     const dir = temporary(t);
     const html = `<html><a href="${base}jvmscope/tda.html">Threads</a><script src="${base}assets/js/worker-analysis-worker-12345678.js"></script></html>`;
-    for (const path of ['index.html','jvmscope/tda.html','jvmscope/tls.html','knowledge/index.html',...ARTICLES.map(a => `knowledge/${a.id}.html`)]) put(dir, path, html);
+    for (const path of ['index.html','jvmscope/tda.html','jvmscope/tls.html','jvmscope/gc.html','knowledge/index.html',...ARTICLES.map(a => `knowledge/${a.id}.html`)]) put(dir, path, html);
     // Vite copies every public asset. Use those actual files so a new bundled
     // asset cannot silently drift from the publication allowlist in this test.
     cpSync(new URL('../frontend/public/', import.meta.url), dir, { recursive: true });
-    for (const path of ['assets/img/java-thread-mark.svg','assets/img/java-tls-mark.svg',
-        'assets/js/worker-analysis-worker-12345678.js','assets/tls-analysis-worker-12345678.js']) put(dir, path, 'fixture');
+    for (const path of ['assets/img/java-thread-mark.svg','assets/img/java-tls-mark.svg','assets/img/java-gc-mark.svg',
+        'assets/js/worker-analysis-worker-12345678.js','assets/tls-analysis-worker-12345678.js','assets/gc-worker-12345678.js']) put(dir, path, 'fixture');
     for (const file of projectLegalFiles()) put(dir, file.fileName, file.source);
-    [...THREAD_EXAMPLES,...TLS_EXAMPLES].forEach((example, i) =>
+    [...THREAD_EXAMPLES,...TLS_EXAMPLES,...GC_EXAMPLES].forEach((example, i) =>
         put(dir, `assets/examples/sample-${i}-12345678.txt`, readFileSync(new URL(example.url))));
     return dir;
 }
@@ -70,9 +71,9 @@ test('Pages and Railway keep independent output paths and base-aware tool naviga
     const { default:config, toolNavigation } = await import('../frontend/vite.config.js');
     const pages = config({mode:'pages'}), slim = config({mode:'slim'}), preview = config({mode:'production'});
     const knowledge = ['knowledge-index', ...ARTICLES.map(a => `knowledge-${a.id}`)];
-    assert.deepEqual(Object.keys(pages.build.rollupOptions.input),['main',...knowledge,'tda','tls']);
-    assert.deepEqual(Object.keys(slim.build.rollupOptions.input),['main',...knowledge,'tda','tls']);
-    assert.deepEqual(Object.keys(preview.build.rollupOptions.input),[...knowledge,'main','utils','tda','tls']);
+    assert.deepEqual(Object.keys(pages.build.rollupOptions.input),['main',...knowledge,'tda','tls','gc']);
+    assert.deepEqual(Object.keys(slim.build.rollupOptions.input),['main',...knowledge,'tda','tls','gc']);
+    assert.deepEqual(Object.keys(preview.build.rollupOptions.input),[...knowledge,'main','utils','tda','tls','gc']);
     assert.notEqual(pages.build.outDir,slim.build.outDir);
     assert.notEqual(pages.build.outDir,preview.build.outDir);
     assert.equal(pages.build.outDir,pagesOutput);
@@ -136,8 +137,8 @@ test('Pages verification rejects forgotten files and truncated worker/example bu
     put(unexpected,'secret.env','fixture secret');
     assert.throws(() => scanPagesArtifact(unexpected), /Unexpected file/);
     const missingWorker = payload(t);
-    rmSync(resolve(missingWorker,'assets/tls-analysis-worker-12345678.js'));
-    assert.throws(() => scanPagesArtifact(missingWorker), /Both analysis workers/);
+    rmSync(resolve(missingWorker,'assets/gc-worker-12345678.js'));
+    assert.throws(() => scanPagesArtifact(missingWorker), /All three analysis workers/);
     const missingExample = payload(t);
     rmSync(resolve(missingExample,'assets/examples/sample-0-12345678.txt'));
     assert.throws(() => scanPagesArtifact(missingExample), /every approved example/);
@@ -184,7 +185,7 @@ test('Strict Pages delivery exercises real HTTP with exact case, MIME, HEAD and 
     assert.equal(root.status,200);
     assert.match(root.headers.get('content-type'),/^text\/html/);
     assert.match(await root.text(),/Thread Dump Analyzer/);
-    for (const path of ['jvmscope/tda.html','jvmscope/tls.html','knowledge/index.html',...ARTICLES.map(a=>`knowledge/${a.id}.html`),'assets/js/d3.min.js','manifest.json']) {
+    for (const path of ['jvmscope/tda.html','jvmscope/tls.html','jvmscope/gc.html','knowledge/index.html',...ARTICLES.map(a=>`knowledge/${a.id}.html`),'assets/js/d3.min.js','manifest.json']) {
         const response = await fetch(url+path+'?cache=1');
         assert.equal(response.status,200);
         assert.equal(hash(Buffer.from(await response.arrayBuffer())),hash(readFileSync(resolve(dir,path))));

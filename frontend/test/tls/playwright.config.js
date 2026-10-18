@@ -12,6 +12,7 @@ export default defineConfig({
     use: {
         browserName: 'chromium',
         headless: true,
+        launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? {executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']} : {},
         permissions: ['clipboard-read', 'clipboard-write'],
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
