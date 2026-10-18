@@ -113,7 +113,18 @@ The summary includes JvmScope's findings, qualifications and selected stack or
 event excerpts. Full raw text is excluded by default; **Include raw evidence
 excerpt** adds up to 35,000 characters, shared across the selected snapshots,
 and rebuilds the prompt. Changing the selection also replaces prompt edits.
-The summary keeps every selected snapshot and explicitly labels reduced detail.
+The summary keeps every selected snapshot, reported deadlock cycle and measured
+CPU-hot thread evidence, with explicit excerpt coverage. Oversized selections ask
+you to choose fewer snapshots. TLS overviews prioritize failed, uncertain and
+incomplete interactions instead of only the start of the log.
+
+The report shows **JvmScope findings** separately from the AI response, including
+a critical icon for a confirmed deadlock regardless of the model's formatting.
+Severity indicates analyzer priority, not proven application impact. Counts are
+per snapshot. Up to three priorities are shown, with secondary ones collapsed.
+If you edit the prompt, a note identifies the findings as referring to the original
+selection. These local labels add nothing to the text sent to the provider;
+copy/save/source export the original AI response.
 
 After a successful Copilot response, the review dialog closes to reveal the
 analyzer beside the report. **Analyze with AI** reopens the reviewed prompt
@@ -233,7 +244,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.2.0.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.2.1.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

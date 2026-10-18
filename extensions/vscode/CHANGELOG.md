@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1 — Reliable AI evidence and severity indicators
+
+- Show a critical icon for confirmed Java deadlocks in the analyzer and a separate JvmScope findings section in the AI report, even when the model returns plain text. Keep analyzer priority distinct from AI assessment and application impact. Show up to three priorities, with secondary ones collapsed.
+- Preserve every reported deadlock cycle, unresolved participant mappings, matched participant stack excerpts and measured CPU-hot thread IDs, rates, thresholds and interval qualifications. Keep all findings in the real three-snapshot example instead of dropping its second cycle and CPU evidence.
+- Use valid bounded JSON for both analyzers; reject an oversized minimum with a recoverable review message. Prioritize late TLS failures and uncertain/incomplete interactions, retain classified failure events and share optional raw excerpts across included interactions.
+- Retain reviewed prompt privacy: local display metadata is never appended to the model request. Edited prompts are labelled, completed reports keep their original findings, and copy/save/source still export the original AI response.
+- Add real-capture regressions, plain-response report journeys, metadata validation, four-theme and narrow-layout checks, safe rendering and exact-export coverage.
+
 ## 1.2.0 — AI snapshot comparisons and clearer priorities
 
 - Choose the current thread snapshot, its whole process group, or a custom subset of up to 20 snapshots in one reviewed AI request. Keep capture order, actual CPU interval endpoints, source references and thread identity qualifications.

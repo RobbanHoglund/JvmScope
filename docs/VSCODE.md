@@ -83,8 +83,28 @@ callouts and keeps a textual priority plus **AI assessment** on each. The
 original response is retained for copy, save and source actions; HTML remains
 disabled. These are model-provided priorities, not additional parser findings.
 
-Series summaries have a shared 30,000-character budget. Detail is reduced evenly
-and each snapshot reports excerpt coverage; snapshots are never silently dropped.
+A separate **JvmScope findings** section carries up to three existing analyzer
+priorities from the selected evidence. A confirmed JVM deadlock therefore gets a
+critical icon even when the answer contains no Markdown callouts. Repeated cycle
+counts are per snapshot, never summed as distinct deadlocks. TLS failure, ambiguous
+grouping and incomplete outcomes remain distinct. Severity prioritizes inspection
+and does not prove production impact. Secondary priorities are collapsed.
+
+This bounded, validated display context is copied at submission and passed only to
+the local result view, never appended to the exact reviewed model prompt. Editing
+the prompt adds a visible qualification that these findings still refer to the
+original selection. Dynamic strings render as text with fixed local SVGs. Copy,
+save and source actions export the original model response and metadata, as before.
+
+Evidence summaries use up to 40,000 characters, reserving 35,000 for optional raw
+text and space for instructions within the 80,000-character review limit. JSON is
+never cut mid-record. Optional thread/stack detail is reduced, while every reported
+deadlock edge (including unresolved mappings), mapped participant stack excerpts,
+and measured CPU-hot identities, thresholds and intervals are preserved. Finding
+counts and excerpt coverage remain explicit; oversized minimum evidence is
+rejected. TLS overviews prioritize failures, uncertain grouping and incomplete
+outcomes among up to 20 interactions, retain classified failure events and label
+capture-wide outcome counts separately from the excerpt.
 Optional raw excerpts share 35,000 characters with individual snapshot labels.
 An oversized selection is rejected before handoff. The exact edited prompt still
 passes the provider's token-budget check; these bounds do not guarantee it fits

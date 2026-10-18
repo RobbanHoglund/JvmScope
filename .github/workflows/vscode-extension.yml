@@ -42,14 +42,14 @@ jobs:
       - name: Validate the actual Marketplace package
         run: python3 extensions/vscode/test/package.py
       - name: Extract the validated VSIX for browser tests
-        run: python3 -m zipfile -e build/vscode/jvmscope-1.2.0.vsix .run/vscode-package
+        run: python3 -m zipfile -e build/vscode/jvmscope-1.2.1.vsix .run/vscode-package
       - name: Packaged webview CSP and browser integration
         env:
           VSCODE_TEST_EXTENSION_ROOT: .run/vscode-package/extension
         run: npx --prefix frontend playwright test --config extensions/vscode/test/playwright.config.mjs
       - name: Install VSIX and test the minimum VS Code version
         env:
-          VSCODE_VSIX: build/vscode/jvmscope-1.2.0.vsix
+          VSCODE_VSIX: build/vscode/jvmscope-1.2.1.vsix
         run: xvfb-run -a npm run test:integration --prefix extensions/vscode
       - uses: actions/upload-artifact@v4
         with:
@@ -95,7 +95,7 @@ jobs:
         shell: bash
         env:
           VSCODE_VERSION: ${{ matrix.vscode }}
-          VSCODE_VSIX: build/vscode/jvmscope-1.2.0.vsix
+          VSCODE_VSIX: build/vscode/jvmscope-1.2.1.vsix
         run: |
           if [ "$RUNNER_OS" = Linux ]; then
             xvfb-run -a npm run test:integration --prefix extensions/vscode
