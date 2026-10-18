@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { eventWindow, captureSummary } from '../../assets/javautils/gc/presentation.js';
+import { eventWindow, captureSummary, panWindow, describeFinding } from '../../assets/javautils/gc/presentation.js';
 import { parseGcLog, analyzeGc } from '../../assets/javautils/gc/parser.js';
 
 const analyze = text => analyzeGc(parseGcLog(text));
@@ -34,4 +34,21 @@ test('zoom preserves real gaps and supports multi-day timestamps and untimed rec
     const day=86400000,events=[{id:0,startMs:day,endMs:day+2,durationMs:2},{id:1,startMs:3*day,endMs:3*day+2,durationMs:2}];
     assert.deepEqual(eventWindow(events,events[1],day,3*day+2),[day,3*day+2]);
     assert.equal(eventWindow(events,{startMs:null},day,3*day),null);
+});
+
+test('overview panning preserves width at both boundaries and at fine zoom', () => {
+    assert.deepEqual(panWindow([100,400],-500),[0,300]);
+    assert.deepEqual(panWindow([100,400],900),[700,1000]);
+    const fine=panWindow([500,500.001],.002);
+    assert.ok(Math.abs(fine[1]-fine[0]-.001)<1e-9);
+    assert.deepEqual(panWindow([0,1000],50),[0,1000]);
+});
+test('signal explanations distinguish recorded causes and preserve original evidence', () => {
+    for(const [text,title] of [['(concurrent mode failure): 123K','CMS concurrent mode failure'],['GC(7) Promotion failed','Promotion failed'],['To-space exhausted','Evacuation failure reported'],['java.lang.OutOfMemoryError: Metaspace','Out of memory reported']]){
+        const f={rule:'jvm-signal',title:'Collector pressure signal',detail:text};
+        const copy=describeFinding(f);assert.equal(copy.title,title);assert.equal(f.detail,text);
+        assert.notEqual(copy.detail,text);
+    }
+    const unknown=describeFinding({rule:'jvm-signal',title:'Collector pressure signal',detail:'Unknown diagnostic'});
+    assert.equal(unknown.title,'Collector pressure signal');assert.doesNotMatch(unknown.detail,/leak|promotion|evacuation/);
 });

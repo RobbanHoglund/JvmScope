@@ -27,3 +27,25 @@ export function captureSummary(model, warnings = []) {
         : 'No warning or critical markers found in the analyzed records. This is not an application health assessment.';
     return { headline, detail: detail + (warnings.length ? ' Capture coverage notes apply.' : ''), severity: critical ? 'critical' : reviews ? 'warning' : 'info' };
 }
+
+export function panWindow(range, delta) {
+    const width = range[1] - range[0];
+    const start = Math.max(0, Math.min(1000 - width, range[0] + delta));
+    return [start, start + width];
+}
+
+// Explain recorded signals without adding new parser rules or diagnoses.
+export function describeFinding(finding) {
+    if (finding.rule !== 'jvm-signal') return { title: finding.title, detail: finding.detail };
+    const text = finding.detail;
+    const signals = [
+        [/OutOfMemoryError/i, 'Out of memory reported', 'The JVM reported OutOfMemoryError. Check the original message for the affected resource and review surrounding collections.'],
+        [/concurrent mode failure/i, 'CMS concurrent mode failure', 'The log records a concurrent mode failure. Review the associated pause, heap occupancy and nearby collections.'],
+        [/promotion failed/i, 'Promotion failed', 'The JVM reported a failed promotion. Review surrounding collections and available heap space; this alone does not establish a memory leak.'],
+        [/to-space exhausted|Evacuation Failure/i, 'Evacuation failure reported', 'The log reports an evacuation failure. Review the recorded cause, heap occupancy and subsequent collections.'],
+        [/Allocation Stall/i, 'Allocation stall', 'An allocating thread stalled. This signal is kept separate from stop-the-world pause time.'],
+        [/GC overhead limit/i, 'GC overhead limit reported', 'The JVM reported a GC overhead limit. Inspect the original message and surrounding collections.'],
+    ];
+    const match = signals.find(([pattern]) => pattern.test(text));
+    return match ? { title: match[1], detail: match[2] } : { title: finding.title, detail: 'The JVM emitted a collector pressure signal. Inspect the original message and surrounding collections.' };
+}
