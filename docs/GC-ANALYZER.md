@@ -5,7 +5,7 @@ Open Java Garbage Collection Log Analyzer** in VS Code. The VS Code sidebar,
 editor title and file context menu also expose GC analysis.
 
 Drop one UTF-8 `.log`/`.txt` file, choose **Open GC log**, or **Load sample**.
-Select a different real collector example at the bottom. Parsing runs in a
+Select a different real collector example next to Load sample. Parsing runs in a
 cancelable local worker; no log is uploaded. GC analysis does not invoke AI.
 
 ## Reading the view
@@ -52,11 +52,20 @@ present in recorded metadata. Restart/startup evidence separates JVM segments;
 arbitrary concatenated files without such evidence cannot reliably be separated.
 Rotation gaps and missing log lines cannot be reconstructed.
 
+## Multi-day captures
+
+Elapsed time is not limited to one day. Uptime labels include days and wall-clock
+evidence retains the UTC calendar date. The existing 64 MiB / 200,000-event
+limits still apply; exceeding the event count produces partial results.
+Rotated files must be ordered and combined externally, within the input limit.
+A synthetic three-day, 100,000-event regression tests scale and late findings;
+it is not a production benchmark or a real multi-day JVM capture.
+
 ## Reproducible verification
 
 `testdata/gc-logs/` contains actual isolated JVM workload captures for every major
 release 8–27, with exact builds, launch arguments, hashes and independent MXBean
-observations. Four examples remain plain `.log`; other regression fixtures are
+observations. Seven examples remain plain `.log`; other regression fixtures are
 losslessly gzip-compressed. Tests verify hashes of decompressed original bytes.
 
 ```sh

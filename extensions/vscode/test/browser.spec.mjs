@@ -146,7 +146,7 @@ test('GC real captures, source links, navigation, filters and annotations',async
 
 test('GC bundled real collectors, malformed file preservation and drag/drop',async({host})=>{
     const {page}=host;await host.open('/jvmscope/gc.html');
-    for(const [id,collector] of [['g1','G1'],['legacy','Parallel'],['zgc','ZGC'],['shenandoah','Shenandoah']]){
+    for(const [id,collector] of [['g1','G1'],['legacy','Parallel'],['zgc','ZGC'],['shenandoah','Shenandoah'],['serial','Serial'],['parallel','Parallel'],['cms','CMS']]){
         await page.locator('#gcExample').selectOption(id);await page.locator('#gcSample').click();
         await expect(page.locator('#gcMetadata')).toContainText(collector,{timeout:20000});
         await expect(page.locator('#gcError')).toBeHidden();
@@ -199,6 +199,20 @@ test('GC visual markers follow time, info stays neutral and untimed controls are
     await page.evaluate(()=>document.documentElement.style.zoom='2');
     await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.screenshot({path:testInfo.outputPath('gc-200-percent.png'),fullPage:true});
+});
+
+test('GC synthetic multi-day history stays navigable with bounded chart marks',async({host})=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    const text=Array.from({length:20000},(_,i)=>`[${1+i*15}s][info][gc] GC(${i}) Pause Young (Normal) 20M->${i===19999?'30':'4'}M(32M) 2ms`).join('\n');
+    await host.load([{name:'synthetic-multi-day.log',text}]);
+    await expect(page.locator('#gcRangeLabel')).toContainText('3d');
+    expect(await page.locator('#gcTimeline .gc-mark').count()).toBeLessThan(2000);
+    await page.locator('#gcType').selectOption('findings');
+    await expect(page.locator('#gcRows')).toContainText('GC(19999)');
+    await page.locator('#gcRows button').click();await expect(page.locator('#gcRaw')).toContainText('GC(19999)');
+    await page.locator('#gcZoom').click();await expect(page.locator('#gcRangeLabel')).toContainText('3d');
+    await page.setViewportSize({width:360,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
 test('GC clear cancels a delayed sample and raw log text never executes HTML',async({host})=>{

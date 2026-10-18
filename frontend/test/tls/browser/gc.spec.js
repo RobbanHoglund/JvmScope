@@ -3,7 +3,7 @@ import {test,expect} from './fixtures.js';
 test('GC analyzer loads real samples through production routes and keeps evidence local',async({page,appUrl},info)=>{
     const requests=[];page.on('request',r=>requests.push({url:r.url(),method:r.method(),body:r.postData()}));
     await page.goto(appUrl+'/jvmscope/gc.html');
-    for(const [id,name] of [['g1','G1'],['legacy','Parallel'],['zgc','ZGC'],['shenandoah','Shenandoah']]){
+    for(const [id,name] of [['g1','G1'],['legacy','Parallel'],['zgc','ZGC'],['shenandoah','Shenandoah'],['serial','Serial'],['parallel','Parallel'],['cms','CMS']]){
         await page.locator('#gcExample').selectOption(id);await page.locator('#gcSample').click();
         await expect(page.locator('#gcMetadata')).toContainText(name);
         await expect(page.locator('#gcTimeline .gc-mark').first()).toBeVisible();

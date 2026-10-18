@@ -1,4 +1,5 @@
 import './style.css';
+import { formatGcTime } from './time.js';
 import { analyzeGc, MAX_GC_BYTES } from './parser.js';
 import { createGcClient } from './client.js';
 import { GC_EXAMPLES } from './examples.js';
@@ -16,7 +17,7 @@ const mib=n=>finite(n)?`${(n/1048576).toFixed(1)} MiB`:'Not recorded';
 const title=e=>e.label.replace(/\s+[\d.,]+[KMGT].*$/,'').replace(/\s*\[.*$/,'').replace(/\s*\d{4}-\d\d-\d\dT.*$/,'').replace(/[,\s]+$/,'');
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 const svg=(tag,attrs={},text)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;};
-function time(n){if(!finite(n))return 'No timestamp';return parsed?.sessions.find(s=>s.id===model.session)?.clock==='wall'?new Date(n).toISOString().slice(11,23):`${(n/1000).toFixed(3)} s`;}
+function time(n,options){return formatGcTime(n,parsed?.sessions.find(s=>s.id===model.session)?.clock,options);}
 function error(cause){$('gcError').hidden=false;$('gcError').textContent=(cause.message||String(cause))+(source?' The previous capture was kept.':'');}
 function busy(on){$('gcStatus').textContent=on?'Reading and analyzing GC records locally…':'HotSpot / OpenJDK · Java 8–27 · analyzed locally';$('gcClear').disabled=!on&&!parsed;$('gcWorkspace').setAttribute('aria-busy',String(on));}
 function reset(){generation++;controller?.abort();client.cancel();parsed=model=source=null;lines=[];selected=null;page=0;range=[0,1000];$('gcError').hidden=true;$('gcWorkspace').hidden=true;$('gcStart').hidden=false;$('gcFile').value='';syncSourceLinks([]);navigation.publish(null);busy(false);}
@@ -90,7 +91,7 @@ function draw(){
     const maxPause=Math.max(visible.filter(e=>e.kind==='pause').reduce((m,e)=>Math.max(m,e.durationMs),0),.01)*1.12;
     const hy=n=>138-n/maxHeap*100,py=n=>252-n/maxPause*70;
     const ticks=width<500?2:4;
-    for(let i=0;i<=ticks;i++){const xx=left+plot*i/ticks;chart.append(svg('line',{x1:xx,x2:xx,y1:30,y2:302,class:'gc-grid'}),svg('text',{x:xx,y:322,'text-anchor':i===0?'start':i===ticks?'end':'middle'},time(from+span*i/ticks)));}
+    for(let i=0;i<=ticks;i++){const xx=left+plot*i/ticks;chart.append(svg('line',{x1:xx,x2:xx,y1:30,y2:302,class:'gc-grid'}),svg('text',{x:xx,y:322,'text-anchor':i===0?'start':i===ticks?'end':'middle'},time(from+span*i/ticks,{compact:true,span})));}
     chart.append(svg('text',{x:0,y:19},'HEAP'),svg('text',{x:0,y:40},`${(maxHeap/1048576).toFixed(0)} MiB`),svg('text',{x:0,y:141},'0'),svg('text',{x:0,y:171},'PAUSE'),svg('text',{x:0,y:190},`${maxPause.toFixed(maxPause<1?2:0)} ms`),svg('text',{x:0,y:255},'0'),svg('text',{x:0,y:293},'OTHER'));
     for(const yy of [138,252,302])chart.append(svg('line',{x1:left,x2:right,y1:yy,y2:yy,class:'gc-grid'}));
     const clip=svg('clipPath',{id:'gcPlotClip'});clip.append(svg('rect',{x:left,y:25,width:plot,height:279}));const defs=svg('defs');defs.append(clip);chart.append(defs);

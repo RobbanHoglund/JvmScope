@@ -15,7 +15,7 @@ and its account, after you review the evidence to share. JvmScope also has a
 | --- | --- |
 | **Thread dumps** | Thread states, lock owners and JVM-reported deadlock cycles with interactive graphs. Compare snapshots and inspect CPU intervals when the capture contains usable measurements. |
 | **TLS logs** | Observed handshake stages, alerts, certificates and negotiated settings. Filter interactions and inspect the exact log evidence, with uncertainty kept visible. |
-| **Garbage collection** | Java 8–27 HotSpot logs: heap, stop-the-world pauses and concurrent activity on separate timeline tracks. Annotated review points link to original evidence, with four real collector samples and a GC guide. |
+| **Garbage collection** | Java 8–27 HotSpot logs: heap, stop-the-world pauses and concurrent activity on separate timeline tracks. Annotated review points link to original evidence, with seven real collector samples and a GC guide. |
 | **Optional AI** | Review one snapshot or a selected series, one TLS interaction or a capture overview. Use an in-app Copilot report or copy a reviewed prompt to Codex or Claude Code. |
 | **Evidence and guides** | Search exact raw captures, jump to source lines, export findings and graphs, and browse bundled examples and the knowledge base. |
 

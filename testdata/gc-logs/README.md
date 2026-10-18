@@ -10,12 +10,15 @@ Ready to drop into JvmScope:
 
 | File | Demonstrates |
 | --- | --- |
+| `java27-serial.log` | Serial young/full collections |
+| `java27-parallel.log` | Unified Parallel GC |
+| `java8-cms.log` | Historical CMS phases and pauses |
 | `java8-parallel.log` | Legacy format, young/full collections and explicit GC |
 | `java27-g1.log` | Unified logging, heap pressure and evacuation failure |
 | `java27-zgc.log` | Generational phases, concurrent cycles and allocation stalls |
 | `java17-shenandoah.log` | Concurrent phases, pauses and aggregate statistics |
 
-Other successful captures are `.log.gz` to keep the regression corpus small.
+These three additional plain samples are byte-identical decompressions of their matching `.log.gz` files. Other successful captures are `.log.gz` to keep the regression corpus small.
 Decompress before opening in the analyzer; the test suite decompresses them
 automatically and verifies the original-byte hash. No output lines are rewritten.
 
