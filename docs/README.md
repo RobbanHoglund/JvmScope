@@ -6,6 +6,8 @@ collection commands and interpretation while using each analyzer.
 
 ## Current guides
 
+- [VS Code user guide](VSCODE-USAGE.md): captures, sidebar navigation, AI assistance, privacy and troubleshooting.
+- [VS Code integration](VSCODE.md): architecture, verification and Marketplace releases.
 - [Examples](EXAMPLES.md): named scenarios, controlled-capture provenance and regeneration.
 - [Development](DEVELOPMENT.md): layout, application/preview builds, ports and tests.
 - [JVM sample workflow](JVM-SAMPLES.md): manual collection, validation, import and README generation.

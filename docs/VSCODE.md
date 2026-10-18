@@ -322,6 +322,14 @@ a new stable version of the existing **RobbanHoglund.jvmscope** extension using 
 publisher account. Building or merging alone does not update Marketplace metadata.
 Users must then install the new version to receive the updated package metadata.
 
+The listing's short description comes from `extensions/vscode/package.json` and
+its Details page from `extensions/vscode/README.md`. Keep the overview concise;
+the detailed controls live in [the user guide](VSCODE-USAGE.md). Listing screenshots
+are PNG documentation assets under `docs/images/vscode`, with provenance recorded
+there. Their HTTPS URLs pin the image commit so deleting a merged branch cannot
+break published images. Refresh those URLs when updating screenshots, label
+illustrative AI answers and validate the packaged README with the package gate.
+
 Primary API references:
 - https://code.visualstudio.com/api/references/extension-manifest
 - https://code.visualstudio.com/api/extension-guides/webview
