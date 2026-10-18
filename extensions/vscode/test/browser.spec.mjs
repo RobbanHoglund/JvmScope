@@ -297,6 +297,64 @@ test('GC clustered and standalone signal markers open details without the lower 
     await expect(page.locator('#gcClusterFindings')).toBeHidden();
 });
 
+test('GC overview handles, dragging and keyboard preserve interval scope',async({host},testInfo)=>{
+    const {page}=host;await page.setViewportSize({width:1440,height:1050});
+    await host.open('/jvmscope/gc.html');await page.locator('#gcSample').click();await expect(page.locator('#gcWorkspace')).toBeVisible();
+    const metrics=await page.locator('#gcMetrics').textContent(),summary=await page.locator('#gcSummary').textContent();
+    await page.locator('#gcOverview').scrollIntoViewIfNeeded();
+    const box=await page.locator('#gcOverview').boundingBox();
+    // Drag the native start and end handles on their shared overview track.
+    await page.mouse.move(box.x,box.y+25);await page.mouse.down();await page.mouse.move(box.x+box.width*.2,box.y+25,{steps:5});await page.mouse.up();
+    await expect.poll(()=>page.locator('#gcFrom').inputValue().then(Number)).toBeGreaterThan(150);
+    await page.mouse.move(box.x+box.width,box.y+25);await page.mouse.down();await page.mouse.move(box.x+box.width*.8,box.y+25,{steps:5});await page.mouse.up();
+    await expect.poll(()=>page.locator('#gcTo').inputValue().then(Number)).toBeLessThan(850);
+    const before=await page.locator('#gcTimeline>svg').evaluate(n=>[Number(n.dataset.from),Number(n.dataset.to)]);
+    const window=await page.locator('#gcWindow').boundingBox();
+    await page.mouse.move(window.x+window.width/2,window.y+25);await page.mouse.down();await page.mouse.move(window.x+window.width/2+40,window.y+25,{steps:5});await page.mouse.up();
+    await expect.poll(()=>page.locator('#gcTimeline>svg').getAttribute('data-from').then(Number)).toBeGreaterThan(before[0]);
+    const after=await page.locator('#gcTimeline>svg').evaluate(n=>[Number(n.dataset.from),Number(n.dataset.to)]);
+    expect(after[1]-after[0]).toBeCloseTo(before[1]-before[0],3);
+    await page.locator('#gcWindow').focus();await page.keyboard.press('ArrowLeft');
+    await expect.poll(()=>page.locator('#gcTimeline>svg').getAttribute('data-from').then(Number)).toBeLessThan(after[0]);
+    await expect(page.locator('#gcMetrics')).toHaveText(metrics);await expect(page.locator('#gcSummary')).toHaveText(summary);
+    await expect(page.locator('#gcVisibleScope')).toContainText('Visible interval:');
+    expect(await page.locator('#gcOverviewPlot path').getAttribute('d')).toContain('M');
+    for(const id of ['gcFrom','gcTo'])expect(await page.locator('#'+id).evaluate(n=>getComputedStyle(n).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+    await page.screenshot({path:testInfo.outputPath('gc-overview-selection.png'),fullPage:true});
+});
+
+test('GC timeline dominates desktop layout and details can collapse and reopen',async({host},testInfo)=>{
+    const {page}=host;await page.setViewportSize({width:1440,height:1050});await host.open('/jvmscope/gc.html');await page.locator('#gcExample').selectOption('cms');await page.locator('#gcSample').click();
+    await expect(page.locator('#gcWorkspace')).toBeVisible();
+    await expect(page.locator('#gcSummary')).not.toHaveAttribute('open');
+    const region=await page.locator('.gc-investigation').boundingBox(),chart=await page.locator('#gcTimeline').boundingBox();
+    expect(chart.width/region.width).toBeGreaterThan(.74);expect(chart.height).toBeGreaterThanOrEqual(450);
+    const nav=await page.locator('#gcOverview').boundingBox();expect(nav.y+nav.height).toBeLessThan(1050);
+    await expect(page.locator('#gcEventFindings')).toContainText('CMS concurrent mode failure');
+    await expect(page.locator('#gcEventFindings details')).not.toHaveAttribute('open');
+    await page.locator('#gcEventFindings summary').click();await expect(page.locator('#gcEventFindings pre')).toContainText('concurrent mode failure');
+    await page.locator('#gcEventFindings summary').click();
+    await page.screenshot({path:testInfo.outputPath('gc-desktop-layout.png'),fullPage:true});
+    await page.locator('#gcDetailsToggle').click();await expect(page.locator('#gcInspector')).toBeHidden();
+    await expect.poll(()=>page.locator('#gcTimeline').boundingBox().then(b=>b.width)).toBeGreaterThan(chart.width+150);
+    await page.locator('.gc-annotation-group .gc-annotation-dot').first().click();await expect(page.locator('#gcInspector')).toBeVisible();
+    await expect(page.locator('#gcDetailsToggle')).toHaveAttribute('aria-expanded','true');
+    await expect(page.locator('#gcEventTitle')).toBeFocused();
+});
+
+test('GC all findings includes standalone signals and paginates every review',async({host})=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    const text=Array.from({length:45},(_,i)=>`[${i+1}s][info][gc] GC(${i}) Pause Young (Normal) 20M->30M(32M) 2ms`).join('\n')+'\n[46s][error][gc] java.lang.OutOfMemoryError: Java heap space\n[47s][info][gc] GC(45) Pause Young (Normal) 20M->4M(32M) 2ms';
+    await host.load([{name:'findings.log',text}]);
+    await expect(page.locator('#gcShowFindings')).toHaveText('View all 46 findings');
+    await page.locator('#gcShowFindings').click();await expect(page.locator('#gcAllFindings')).toHaveAttribute('open');
+    await expect(page.locator('#gcFindingRows button')).toHaveCount(40);
+    await page.locator('#gcFindingRows button').first().click();await expect(page.locator('#gcRaw')).toHaveText('[46s][error][gc] java.lang.OutOfMemoryError: Java heap space');
+    await page.locator('#gcFindingNext').click();await expect(page.locator('#gcFindingCount')).toHaveText('41–46 of 46');
+    await page.locator('#gcFindingRows button').last().click();await expect(page.locator('#gcRaw')).toContainText('GC(44)');
+    await page.locator('#gcFindingPrev').click();await expect(page.locator('#gcFindingCount')).toHaveText('1–40 of 46');
+});
+
 test('GC tooltips stay readable and inside the viewport in all themes',async({host},testInfo)=>{
     const {page}=host;await host.open('/jvmscope/gc.html');await page.locator('#gcSample').click();
     await expect(page.locator('#gcWorkspace')).toBeVisible();

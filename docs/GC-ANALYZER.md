@@ -12,7 +12,9 @@ cancelable local worker; no log is uploaded. GC analysis does not invoke AI.
 
 - **Summary:** describes all analyzed records in the selected JVM segment, even
   when the chart is zoomed. Pause-budget results and memory-pressure indicators
-  remain separate; a short pause is not proof of healthy memory behavior.
+  remain separate; a short pause is not proof of healthy memory behavior. Expand
+  the summary for interpretation notes. Metrics always cover the whole segment;
+  the timeline heading identifies the currently visible interval and event count.
 - **Heap:** dots mark recorded total-heap bytes before/after collections. Dashed
   links between collections are visual guides, not continuous measurements. Reported capacity is not
   necessarily `-Xmx`; ZGC percentages are not converted to an invented capacity.
@@ -31,11 +33,20 @@ cancelable local worker; no log is uploaded. GC analysis does not invoke AI.
   to see its duration, heap values, rule explanation and exact physical log lines.
   In VS Code, imported sources can be opened at those lines, with existing stale
   source protection. Samples and dropped browser files have copyable evidence.
-- **Zoom to event / Full range / From / To:** inspect a region without discarding
+- **Time overview / Zoom to event / Full range:** inspect a region without discarding
   the capture. Event zoom frames nearby events using their actual spacing;
   large gaps are not compressed on the time axis. The searchable, paginated
   event table retains all parsed events.
-  The chart uses bounded representative marks for dense logs.
+  The chart uses bounded representative marks for dense logs. The small pause
+  overview always covers the entire segment. Drag its handles to resize the
+  interval or drag the selected window to move it; the controls also support
+  keyboard navigation. Left/right arrows move the focused window, Home/End move
+  it to a boundary. Hide details expands the timeline; selecting a chart event
+  reopens the inspector.
+- **View all findings:** opens a paginated list of every finding in the selected
+  segment, including standalone JVM signals. The three chart annotations are
+  a compact selection, not the complete list. Signal descriptions explain the
+  recorded cause; expand Original JVM message to inspect the unchanged evidence.
 
 The initial pause budget is **200 ms**, a user-changeable review threshold, not a
 JVM correctness rule. High occupancy (at least 90% of recorded capacity), full or

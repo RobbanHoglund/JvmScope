@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Give the GC timeline more space with a compact summary, responsive chart height and collapsible details. Add a draggable whole-segment pause overview, explicit visible-range scope, readable signal explanations and a complete paginated findings list.
+
 - Open GC finding details directly from numbered chart markers and review diamonds. Cluster markers open the first finding immediately and expose the other findings in the detail panel, with keyboard support.
 
 ## 2.0.0 — Garbage Collection Log Analyzer
