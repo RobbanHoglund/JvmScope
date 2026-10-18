@@ -88,6 +88,9 @@ public final class SlimServerTest {
                     check(Arrays.equals(bundled.readAllBytes(), request("GET", path).body()), "JAR and delivered notices match");
                 }
             }
+            check(assets.containsKey("/jvmscope/gc.html"), "GC analyzer page packaged");
+            check(request("GET", "/jvmscope/gc.html").statusCode() == 200, "GC analyzer route served");
+            check(assets.values().stream().anyMatch(asset -> asset.path().endsWith(".log") && asset.mime().startsWith("text/plain")), "real GC examples have text MIME");
             for (String analyzer : List.of("tda", "tls")) {
                 String legacy = "/javautils/" + analyzer + ".html";
                 String canonical = "/jvmscope/" + analyzer + ".html";

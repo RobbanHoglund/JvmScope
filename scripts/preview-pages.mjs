@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { defaultPagesBase, pagesOutput, validatePagesBase, verifyPagesArtifact } from './build-pages.mjs';
 
 const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8',
-    '.json':'application/json; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.md':'text/plain; charset=utf-8', '.svg':'image/svg+xml' };
+    '.json':'application/json; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.log':'text/plain; charset=utf-8', '.md':'text/plain; charset=utf-8', '.svg':'image/svg+xml' };
 
 // Strict static delivery, with exact case even on Windows. No redirects, API,
 // proxy, Vite middleware or SPA fallback. The server binds only to loopback.

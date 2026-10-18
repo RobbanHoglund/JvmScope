@@ -7,7 +7,7 @@ implemented architecture and the remaining integration roadmap.
 ## Stage 1 — working offline extension
 
 Implemented in `extensions/vscode` on top of the existing frontend. One extension
-opens separate TDA and TLS panels. It is packaged as an installable VSIX. Building
+opens separate TDA, TLS and GC panels. It is packaged as an installable VSIX. Building
 does not publish to Marketplace or start a Java/HTTP server.
 
 | Area | Implementation |

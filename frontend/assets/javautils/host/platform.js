@@ -96,7 +96,7 @@ export function initializeHostNavigation() {
             }
         }
     });
-    if (!['tda', 'tls', 'knowledge'].includes(document.body.dataset.jvmscopePage)) notifyHostReady();
+    if (!['tda', 'tls', 'gc', 'knowledge'].includes(document.body.dataset.jvmscopePage)) notifyHostReady();
 }
 
 export function bindHostInputs({ fileInput, onSources }) {

@@ -10,8 +10,8 @@ const dump = n => `2026-10-04 12:00:0${n}\nFull thread dump OpenJDK 64-Bit Serve
 
 test('Pages root, direct links, navigation, reload and module workers use the project prefix', async ({ page, appUrl }) => {
     await page.goto(appUrl+'/');
-    await expect(page.getByRole('heading', {name:'Analyze Java thread dumps and TLS logs.'})).toBeVisible();
-    await page.locator('a.tool:not(.tls)').click();
+    await expect(page.getByRole('heading', {name:'Understand Java threads, TLS and garbage collection.'})).toBeVisible();
+    await page.locator('a.tool:not(.tls):not(.gc)').click();
     await expect(page).toHaveURL(appUrl+'/jvmscope/tda.html');
     await page.locator('#loadSampleBtn').click();
     await expect(page.locator('#rowCount')).toContainText('67 threads');
@@ -94,7 +94,7 @@ test('Pages graph export produces a PNG locally', async ({ page, appUrl }, info)
 
 test('Pages delivers every manifest file byte-exactly via GET and HEAD and rejects server-only paths', async ({ page, appUrl }) => {
     const manifest=JSON.parse(readFileSync(resolve(pagesOutput,'manifest.json')));
-    const types={html:'text/html',js:'text/javascript',css:'text/css',json:'application/json',txt:'text/plain',md:'text/plain',svg:'image/svg+xml'};
+    const types={html:'text/html',js:'text/javascript',css:'text/css',json:'application/json',txt:'text/plain',log:'text/plain',md:'text/plain',svg:'image/svg+xml'};
     for (const file of [...manifest.files,{path:'manifest.json'}]) {
         const response=await page.request.get(appUrl+'/'+file.path);
         expect(response.status(),file.path).toBe(200);

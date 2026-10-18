@@ -1,8 +1,8 @@
 {
   "name": "jvmscope",
-  "displayName": "JvmScope \u2014 Java Thread Dumps & TLS Logs",
-  "description": "Analyze Java thread dumps and JSSE TLS logs locally. Visualize deadlocks, compare snapshots and investigate findings with optional AI assistance.",
-  "version": "1.2.2",
+  "displayName": "JvmScope — Java Threads, TLS & GC",
+  "description": "Analyze Java thread dumps, JSSE TLS logs and garbage collection locally. Visualize deadlocks and GC timelines, compare snapshots and investigate evidence.",
+  "version": "2.0.0",
   "publisher": "RobbanHoglund",
   "icon": "icon.png",
   "license": "Apache-2.0",
@@ -41,6 +41,18 @@
   },
   "contributes": {
     "commands": [
+      {
+        "command": "jvmscope.openGc",
+        "title": "Open Java Garbage Collection Log Analyzer",
+        "category": "JvmScope",
+        "icon": { "light": "resources/gc-light.svg", "dark": "resources/gc-dark.svg" }
+      },
+      {
+        "command": "jvmscope.analyzeGcLog",
+        "title": "Analyze as Java GC Log",
+        "category": "JvmScope",
+        "icon": { "light": "resources/gc-light.svg", "dark": "resources/gc-dark.svg" }
+      },
       {
         "command": "jvmscope.openTda",
         "title": "Open Java Thread Dump Analyzer",
@@ -91,6 +103,7 @@
     ],
     "menus": {
       "explorer/context": [
+        { "command": "jvmscope.analyzeGcLog", "when": "!explorerResourceIsFolder", "group": "jvmscope@3" },
         {
           "command": "jvmscope.analyzeThreadDump",
           "when": "!explorerResourceIsFolder",
@@ -103,6 +116,7 @@
         }
       ],
       "editor/title": [
+        { "command": "jvmscope.openGc", "group": "navigation@22" },
         {
           "command": "jvmscope.openTda",
           "group": "navigation@20"
@@ -113,6 +127,7 @@
         }
       ],
       "editor/title/context": [
+        { "command": "jvmscope.analyzeGcLog", "group": "jvmscope@3" },
         {
           "command": "jvmscope.analyzeThreadDump",
           "group": "jvmscope@1"
@@ -123,6 +138,8 @@
         }
       ],
       "view/title": [
+        { "command": "jvmscope.openGc", "when": "view == jvmscope.analysis", "group": "navigation@3" },
+        { "command": "jvmscope.openGc", "when": "view == jvmscope.analysis", "group": "1_analyzers@3" },
         {
           "command": "jvmscope.openTda",
           "when": "view == jvmscope.analysis",
@@ -174,7 +191,7 @@
     "test": "node --test test/*.test.cjs",
     "test:integration": "node test/run-integration.cjs",
     "vscode:prepublish": "npm run build",
-    "package": "vsce package --no-dependencies --out ../../build/vscode/jvmscope-1.2.2.vsix"
+    "package": "vsce package --no-dependencies --out ../../build/vscode/"
   },
   "devDependencies": {
     "@vscode/test-electron": "3.1.0",

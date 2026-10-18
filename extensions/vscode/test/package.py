@@ -91,7 +91,7 @@ with zipfile.ZipFile(package) as archive:
                     assert "extension/media/" + asset in names, f"Missing resource: {asset}"
 
     pages = json.loads(archive.read("extension/media/pages.json"))
-    assert {"index.html", "jvmscope/tda.html", "jvmscope/tls.html", "knowledge/index.html"} <= set(pages)
+    assert {"index.html", "jvmscope/tda.html", "jvmscope/tls.html", "jvmscope/gc.html", "knowledge/index.html"} <= set(pages)
     for page in [*pages, 'ai-result.html']:
         parser = Assets()
         parser.page = page

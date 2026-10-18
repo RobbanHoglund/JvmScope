@@ -1,6 +1,6 @@
 # JvmScope
 
-**Java thread dumps and TLS logs, investigated locally in your browser.**
+**Java thread dumps, TLS and garbage collection logs, investigated locally.**
 
 [![Analyzer release checks](https://github.com/RobbanHoglund/JvmScope/actions/workflows/analyzer-tests.yml/badge.svg)](https://github.com/RobbanHoglund/JvmScope/actions/workflows/analyzer-tests.yml)
 
@@ -16,6 +16,11 @@ original evidence instead of treating a missing diagnostic as proof of health.
 | Inspect virtual threads and reported carrier relationships | Filter by time period, host, SNI, direction and outcome |
 | Read highlighted stacks beside thread details | Navigate from the inspector to original log lines |
 | Follow snapshot-local blocking patterns and export selected findings | Keep partial or contradictory outcomes qualified |
+
+The **Garbage Collection Log Analyzer** adds a three-track heap/pause/concurrent
+timeline, source-linked review annotations and real collector examples for
+Sun/OpenJDK HotSpot Java 8–27. It works in the browser and VS Code. See the
+[GC guide and repeatable runtime tests](docs/GC-ANALYZER.md).
 
 The home page also links to a **Java Knowledge Base** with eight source-backed
 articles, full-content search with highlighted excerpts, version/topic filters

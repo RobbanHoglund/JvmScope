@@ -96,7 +96,7 @@ test('knowledge home, local filters, version comparison and direct articles work
     const requests=[];
     context.on('request',r=>{if(/^https?:/.test(r.url()))requests.push({url:r.url(),body:r.postData(),method:r.method()});});
     await page.goto(appUrl+'/');
-    await expect(page.getByRole('heading',{name:'Analyze Java thread dumps and TLS logs.',exact:true})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Understand Java threads, TLS and garbage collection.',exact:true})).toBeVisible();
     await expect(page.locator('.privacy')).toContainText('Analyzed locally in your browser. Nothing uploaded.');
     await expect(page.locator('a[href$="jvmscope/tda.html"]').last()).toBeVisible();
     const privacy=await page.locator('.privacy').boundingBox(),tool=await page.locator('a[href$="jvmscope/tda.html"]').last().boundingBox();
@@ -152,7 +152,7 @@ test('knowledge home, local filters, version comparison and direct articles work
         }else{
             await expect(page.locator('#knowledgeFormat')).toHaveCount(0);
             await expect(page.locator('#articleCoverage')).toHaveCount(0);
-            await expect(page.locator('#measurementContext')).toContainText('capture counts do not validate');
+            await expect(page.locator('#measurementContext')).toContainText('does not measure object layout or establish that a tuning change improves application performance');
         }
     }
     expect(requests.every(r=>new URL(r.url).origin===new URL(appUrl).origin && ['GET','HEAD'].includes(r.method) && r.body===null)).toBe(true);

@@ -110,6 +110,185 @@ const test=base.extend({
     },
 });
 
+test('GC real captures, source links, navigation, filters and annotations',async({host})=>{
+    const {page}=host;
+    await host.open('/jvmscope/gc.html');
+    await expect(page.locator('#gcStart')).toBeVisible();
+    const text=await capture('testdata/gc-logs/java27-g1.log');
+    const sourceId='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    const result=await host.load([{name:'java27-g1-long-capture-name.log',text,hostSourceId:sourceId}]);
+    expect(result.events).toBeGreaterThan(20);
+    await expect(page.locator('#gcMetadata')).toContainText('Java 27');
+    await expect(page.locator('#gcTimeline .gc-mark').first()).toBeVisible();
+    await expect(page.locator('#gcAnnotations button').first()).toBeVisible();
+    await page.locator('#gcAnnotations button').first().click();
+    const raw=await page.locator('#gcRaw').textContent();expect(text).toContain(raw);
+    await page.locator('#gcSource').click();
+    await expect.poll(()=>host.messages.find(m=>m.action==='openSource')).toBeTruthy();
+    const request=host.messages.find(m=>m.action==='openSource');expect(request.sourceId).toBe(sourceId);
+    expect(text.split('\n').slice(request.startLine-1,request.endLine).join('\n')).toBe(raw);
+    await page.locator('#gcCopy').click();await expect.poll(host.clipboard).toBe(raw);
+    const originalRange=await page.locator('#gcRangeLabel').textContent();
+    await page.locator('#gcZoom').click();await expect(page.locator('#gcRangeLabel')).not.toHaveText(originalRange);
+    await page.locator('#gcReset').click();await expect(page.locator('#gcRangeLabel')).toHaveText(originalRange);
+    await page.locator('#gcBudget').fill('0.001');await page.locator('#gcBudget').dispatchEvent('change');
+    await page.locator('#gcType').selectOption('findings');await expect(page.locator('#gcRows .gc-badge').first()).toBeVisible();
+    const nav=await host.navigation('children');expect(nav.value.total).toBe(result.events);
+    const target=nav.value.items.at(-1);await host.navigation('select',target.key);
+    await expect(page.locator('#gcInspector')).toHaveAttribute('data-selected-id',target.key.split(':').at(-1));
+    await page.locator('#gcBudget').fill('0');await page.locator('#gcBudget').dispatchEvent('change');
+    await expect(page.locator('#gcBudget')).toHaveAttribute('aria-invalid','true');
+    await page.locator('#gcSample').click();await expect(page.locator('#gcError')).toContainText('Correct the pause budget');
+    await expect(page.locator('#gcFilename')).toHaveText('java27-g1-long-capture-name.log');
+    await page.locator('#gcClear').click();await expect(page.locator('#gcStart')).toBeVisible();
+    await expect(page.locator('#gcWorkspace')).toBeHidden();
+});
+
+test('GC bundled real collectors, malformed file preservation and drag/drop',async({host})=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    for(const [id,collector] of [['g1','G1'],['legacy','Parallel'],['zgc','ZGC'],['shenandoah','Shenandoah'],['serial','Serial'],['parallel','Parallel'],['cms','CMS']]){
+        await page.locator('#gcExample').selectOption(id);await page.locator('#gcSample').click();
+        await expect(page.locator('#gcMetadata')).toContainText(collector,{timeout:20000});
+        await expect(page.locator('#gcError')).toBeHidden();
+    }
+    const before=await page.locator('#gcFilename').textContent();
+    await page.locator('#gcFile').setInputFiles({name:'invalid.log',mimeType:'text/plain',buffer:Buffer.from('not a GC log')});
+    await expect(page.locator('#gcError')).toContainText('previous capture was kept');
+    await expect(page.locator('#gcFilename')).toHaveText(before);
+    const text=await capture('testdata/gc-logs/java8-parallel.log');
+    await page.evaluate(text=>{const transfer=new DataTransfer();transfer.items.add(new File([text],'dropped-java8.log',{type:'text/plain'}));document.dispatchEvent(new DragEvent('drop',{dataTransfer:transfer,bubbles:true,cancelable:true}));},text);
+    await expect(page.locator('#gcFilename')).toHaveText('dropped-java8.log');
+    await expect(page.locator('#gcMetadata')).toContainText('Java 8');
+    await expect(page.locator('#gcSource')).toBeHidden();
+});
+
+test('GC themes, keyboard access and narrow layout',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');await page.locator('#gcSample').click();
+    await expect(page.locator('#gcWorkspace')).toBeVisible();
+    for(const theme of Object.keys(themePalettes)){
+        await applyTheme(page,theme);
+        for(const selector of ['h1','#gcOpen','#gcMetadata','.gc-metric small','#gcEventTitle','.gc-finding p','#gcAnnotations strong','#gcCount'])await expectReadable(page.locator(selector).first());
+        for(const width of [1440,600,360]){
+            await page.setViewportSize({width,height:1000});
+            await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+        }
+        await page.setViewportSize({width:1440,height:1050});
+        await page.screenshot({path:testInfo.outputPath(`gc-${theme}.png`),fullPage:true});
+    }
+    const mark=page.locator('#gcTimeline .gc-mark').first();await mark.focus();await mark.press('Enter');
+    await expect(page.locator('#gcEventTitle')).toBeFocused();
+});
+
+test('GC visual markers follow time, info stays neutral and untimed controls are disabled',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');await page.locator('#gcSample').click();
+    await expect(page.locator('#gcWorkspace')).toBeVisible();
+    const positions=await page.locator('.gc-annotation-group').evaluateAll(groups=>groups.map(g=>{
+        const lines=g.querySelectorAll('line');return Math.abs(Number(lines[1].getAttribute('x1'))-Number(lines[1].getAttribute('x2')));
+    }));
+    expect(positions.length).toBeGreaterThan(0);expect(Math.max(...positions)).toBeLessThan(50);
+    await page.setViewportSize({width:360,height:900});
+    await page.locator('#gcRows button').first().click();
+    await expect(page.locator('#gcEventTitle')).toBeFocused();await expect(page.locator('#gcEventTitle')).toBeInViewport();
+    await page.screenshot({path:testInfo.outputPath('gc-narrow.png'),fullPage:true});
+    await host.load([{name:'untimed.log',text:'[info][gc] GC(0) Pause Full (System.gc()) 20M->4M(32M) 2ms'}]);
+    for(const id of ['gcZoom','gcReset','gcFrom','gcTo'])await expect(page.locator('#'+id)).toBeDisabled();
+    await expect(page.locator('.gc-badge.info')).toContainText('info');
+    expect(await page.locator('.gc-badge.info path').getAttribute('d')).not.toContain('15 14H1');
+    await page.locator('#gcSample').click();await expect(page.locator('#gcZoom')).toBeEnabled();
+    await page.setViewportSize({width:1440,height:1050});
+    await page.evaluate(()=>document.documentElement.style.zoom='2');
+    await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:testInfo.outputPath('gc-200-percent.png'),fullPage:true});
+});
+
+test('GC synthetic multi-day history stays navigable with bounded chart marks',async({host})=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    const text=Array.from({length:20000},(_,i)=>`[${1+i*15}s][info][gc] GC(${i}) Pause Young (Normal) 20M->${i===19999?'30':'4'}M(32M) 2ms`).join('\n');
+    await host.load([{name:'synthetic-multi-day.log',text}]);
+    await expect(page.locator('#gcRangeLabel')).toContainText('3d');
+    expect(await page.locator('#gcTimeline .gc-mark').count()).toBeLessThan(2000);
+    await page.locator('#gcType').selectOption('findings');
+    await expect(page.locator('#gcRows')).toContainText('GC(19999)');
+    await page.locator('#gcRows button').click();await expect(page.locator('#gcRaw')).toContainText('GC(19999)');
+    await page.locator('#gcZoom').click();await expect(page.locator('#gcRangeLabel')).toContainText('3d');
+    await page.setViewportSize({width:360,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('GC rich tooltips, separate review symbols and contextual zoom',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    await host.load([{name:'serial.log',text:await capture('testdata/gc-logs/java27-serial.log')}]);
+    await expect(page.locator('#gcSummary')).toContainText('within your 200 ms budget');
+    await expect(page.locator('#gcSummary')).toContainText('Memory pressure');
+    await expect(page.locator('#gcRawDetails')).not.toHaveAttribute('open');
+    await expect(page.locator('#gcEventHighlights')).toContainText('Heap change');
+    await page.locator('#gcSearch').fill('GC(77)');await page.locator('#gcRows button').click();
+    await page.locator('#gcZoom').click();
+    const span=await page.locator('#gcTimeline>svg').evaluate(n=>Number(n.dataset.to)-Number(n.dataset.from));
+    expect(span).toBeLessThan(40);
+    expect(await page.locator('.gc-heap-point').count()).toBeGreaterThan(0);
+    const selected=page.locator('.gc-mark.selected');
+    await selected.scrollIntoViewIfNeeded();await selected.focus();
+    await expect(page.locator('#gcTooltip')).toBeVisible();
+    await expect(page.locator('#gcTooltip')).toContainText('Heap');
+    await expect(page.locator('#gcTooltip')).toContainText('High occupancy');
+    await expect(selected).toHaveAttribute('aria-describedby','gcTooltip');
+    expect(await selected.locator('title').count()).toBe(0);
+    expect(await page.locator('.gc-mark.warning,.gc-mark.critical').count()).toBe(0);
+    expect(await page.locator('.gc-review-diamond').count()).toBeGreaterThan(0);
+    await selected.press('Escape');await expect(page.locator('#gcTooltip')).toBeHidden();
+    await expect(selected).toBeFocused();
+    await selected.hover();await expect(page.locator('#gcTooltip')).toBeVisible();
+    await page.locator('#gcTooltip').hover();await page.waitForTimeout(200);
+    await expect(page.locator('#gcTooltip')).toBeVisible();
+    await page.screenshot({path:testInfo.outputPath('gc-tooltip-dark.png')});
+    await page.keyboard.press('Escape');
+    await page.locator('#gcReset').click();
+    const cluster=page.locator('.gc-annotation-group').filter({hasText:'findings'}).first();
+    await expect(cluster).toBeVisible();await cluster.focus();
+    await expect(page.locator('#gcTooltip')).toContainText('annotated findings');
+    await cluster.press('Enter');await expect(page.locator('#gcAnnotations button:focus')).toHaveCount(1);
+});
+
+test('GC tooltips stay readable and inside the viewport in all themes',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');await page.locator('#gcSample').click();
+    await expect(page.locator('#gcWorkspace')).toBeVisible();
+    for(const theme of Object.keys(themePalettes)){
+        await applyTheme(page,theme);
+        for(const width of [1440,360]){
+            await page.setViewportSize({width,height:1000});
+            await expect.poll(()=>page.locator('#gcTimeline').evaluate(n=>Math.abs(Number(n.querySelector('svg').getAttribute('viewBox').split(' ')[2])-n.clientWidth)<1)).toBe(true);
+            await page.locator('#gcTimeline').scrollIntoViewIfNeeded();
+            const mark=page.locator('.gc-mark.selected');await mark.focus();
+            await expect(page.locator('#gcTooltip')).toBeVisible();
+            await expectReadable(page.locator('#gcTooltip>strong'));
+            await expectReadable(page.locator('#gcTooltip dt').first());
+            const box=await page.locator('#gcTooltip').boundingBox();
+            expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(width);
+            expect(box.y).toBeGreaterThanOrEqual(0);expect(box.y+box.height).toBeLessThanOrEqual(1000);
+            expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+            await page.screenshot({path:testInfo.outputPath(`gc-tooltip-${theme}-${width}.png`)});
+            await mark.press('Escape');await mark.press('Enter');await expect(page.locator('#gcEventTitle')).toBeFocused();
+        }
+    }
+});
+
+test('GC clear cancels a delayed sample and raw log text never executes HTML',async({host})=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    let release;const gate=new Promise(resolve=>release=resolve);
+    await page.route('**/assets/examples/java27-g1-*',async route=>{await gate;await route.continue().catch(()=>{});});
+    await page.locator('#gcSample').click();await expect(page.locator('#gcClear')).toBeEnabled();await page.locator('#gcClear').click();
+    release();await page.unrouteAll({behavior:'wait'});
+    await expect(page.locator('#gcWorkspace')).toBeHidden();
+    const text='[1s][info][gc] GC(0) Pause Young (<img src=x onerror="globalThis.gcInjected=true">) 20M->4M(32M) 4ms';
+    await page.locator('#gcFile').setInputFiles({name:'literal.log',mimeType:'text/plain',buffer:Buffer.from(text)});
+    await expect(page.locator('#gcRaw')).toHaveText(text);expect(await page.evaluate(()=>globalThis.gcInjected)).toBeUndefined();
+    await expect(page.locator('#gcEventTitle img')).toHaveCount(0);
+    await page.locator('.gc-mark').focus();await expect(page.locator('#gcTooltip')).toBeVisible();
+    await expect(page.locator('#gcTooltip img')).toHaveCount(0);
+    expect(await page.evaluate(()=>globalThis.gcInjected)).toBeUndefined();
+});
+
 for (const analyzer of ['tda','tls']) test(`AI ${analyzer} reviews exact evidence, hands off edits and restores focus`, async({host},testInfo)=>{
     const {page}=host;
     await host.open(`/jvmscope/${analyzer}.html`);

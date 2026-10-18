@@ -1,8 +1,8 @@
-# JvmScope — Java Thread Dumps & TLS Logs for VS Code
+# JvmScope — Java Threads, TLS & GC for VS Code
 
-Investigate **Java thread dumps** and **TLS/SSL logs from Java's JSSE** inside
-VS Code. Visualize deadlocks, compare snapshots and follow a handshake from its
-observed events to the evidence behind a failure.
+Investigate **Java thread dumps**, **TLS/SSL logs from Java's JSSE** and **HotSpot
+garbage collection logs** inside VS Code. Visualize deadlocks, compare snapshots,
+follow handshakes and inspect GC pauses and heap pressure on a timeline.
 
 The built-in analyzers run **locally and offline**, with no Java installation,
 server or account required. Optional AI assistance uses your chosen assistant
@@ -15,20 +15,22 @@ and its account, after you review the evidence to share. JvmScope also has a
 | --- | --- |
 | **Thread dumps** | Thread states, lock owners and JVM-reported deadlock cycles with interactive graphs. Compare snapshots and inspect CPU intervals when the capture contains usable measurements. |
 | **TLS logs** | Observed handshake stages, alerts, certificates and negotiated settings. Filter interactions and inspect the exact log evidence, with uncertainty kept visible. |
+| **Garbage collection** | Java 8–27 HotSpot logs: heap, stop-the-world pauses and concurrent activity on separate timeline tracks. Annotated review points link to original evidence, with seven real collector samples and a GC guide. |
 | **Optional AI** | Review one snapshot or a selected series, one TLS interaction or a capture overview. Use an in-app Copilot report or copy a reviewed prompt to Codex or Claude Code. |
 | **Evidence and guides** | Search exact raw captures, jump to source lines, export findings and graphs, and browse bundled examples and the knowledge base. |
 
 ## Get started
 
-1. Install **JvmScope — Java Thread Dumps & TLS Logs** (`RobbanHoglund.jvmscope`)
+1. Install **JvmScope — Java Threads, TLS & GC** (`RobbanHoglund.jvmscope`)
    from Extensions. Run **JvmScope: Open Analysis Sidebar** from the Command Palette.
-2. Open the **Java Thread Dump Analyzer** or **Java TLS Log Analyzer** from the
-   sidebar. Choose a capture file, or try **Full sample** without preparing a file.
+2. Open the **Java Thread Dump Analyzer**, **Java TLS Log Analyzer** or **Java
+   Garbage Collection Log Analyzer** from the sidebar. Choose or drop a capture,
+   or try **Full sample** (threads/TLS) or **Load sample** (GC).
 3. Inspect the highlighted finding, graph or handshake sequence. Use **Raw dump**
    in thread analysis or **Raw log** in TLS to check the underlying evidence.
 
 You can also right-click a capture in Explorer and choose **Analyze as Java
-Thread Dump** or **Analyze as Java TLS Log**. Select several thread dump files
+Thread Dump**, **Analyze as Java TLS Log**, or **Analyze as Java GC Log**. Select several thread dump files
 to compare snapshots.
 
 **Requirements:** VS Code **1.110 or later** on Windows, macOS or Linux. The desktop
@@ -37,7 +39,8 @@ and high-contrast themes are supported, including narrow editor splits.
 
 ## Optional AI analysis
 
-Choose **Analyze with AI** in either analyzer. Review or edit the prompt before
+Choose **Analyze with AI** in the thread or TLS analyzer. GC analysis is local
+and does not currently offer AI handoff. Review or edit the prompt before
 continuing; the instructions follow the analysis tool and your selection.
 Thread analysis can include the current snapshot, its series or a custom subset
 of up to 20 snapshots. TLS uses the selected interaction or a bounded overview.

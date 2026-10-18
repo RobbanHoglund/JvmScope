@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { readFileSync, readdirSync } = require('node:fs');
 const path = require('node:path');
 const { renderWebview, resolveRoute } = require('../src/webview.cjs');
-const pages = ['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html'];
+const pages = ['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'jvmscope/gc.html', 'knowledge/index.html'];
 const options = { page: 'jvmscope/tda.html', pages, cspSource: 'https://resources.example', resourceUri: name => 'https://resources.example/' + name };
 
 test('bundled resources are rewritten; scripts receive a nonce and external capabilities stay blocked', () => {
@@ -32,10 +32,10 @@ test('navigation is limited to packaged pages, with no external origin or query 
     assert.match(html, /data-host-route="\/knowledge\/index.html\?java=21#support"/);
 });
 
-test('production extension has both analyzers, offline examples, legal notices and self-contained workers', () => {
+test('production extension has all three analyzers, offline examples, legal notices and self-contained workers', () => {
     const media = path.join(__dirname, '../media');
     const list = JSON.parse(readFileSync(path.join(media, 'pages.json'), 'utf8'));
-    for (const page of ['jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html']) assert.ok(list.includes(page));
+    for (const page of ['jvmscope/tda.html', 'jvmscope/tls.html', 'jvmscope/gc.html', 'knowledge/index.html']) assert.ok(list.includes(page));
     for (const page of list) {
         const html = readFileSync(path.join(media, page), 'utf8');
         assert.match(html, /data-jvmscope-page=/);

@@ -1,0 +1,110 @@
+{
+  "major": 22,
+  "capturedAt": "2026-10-18T08:33:17.913Z",
+  "provenance": {
+    "packageId": "8360d0313b41f3e96bc6bc8b159bd1f2",
+    "javaVersion": "22.0.2+9",
+    "url": "https://cdn.azul.com/zulu/bin/zulu22.32.15-ca-jre22.0.2-linux_x64.tar.gz",
+    "sha256": "be4330eb8522ff02bfe5b8c7a7ec67affb7919d628f292b1f3bacb465a2086c6",
+    "catalogChecksum": "be4330eb8522ff02bfe5b8c7a7ec67affb7919d628f292b1f3bacb465a2086c6",
+    "catalogChecksumType": "sha256"
+  },
+  "workloadSha256": "fb0dabad1587ecdf0be5477a4bc18a055e3ae439eb70c8be50b44e18f0f61213",
+  "cases": [
+    {
+      "collector": "serial",
+      "status": "captured",
+      "file": "java22-serial.log.gz",
+      "sha256": "40a99b1befcbc69cc17045c8ebd6403554a2696af72046bf30c31b4e9c1a908e",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java22-serial.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/22/serial-oracle.txt"
+      ],
+      "oracle": "runtime=22.0.2+9\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=Copy|count=74|timeMs=20\ncollector=MarkSweepCompact|count=8|timeMs=14\n"
+    },
+    {
+      "collector": "parallel",
+      "status": "captured",
+      "file": "java22-parallel.log.gz",
+      "sha256": "073cc006885649135c770adb21d1bd519c549d8f7a6c672281e23da67d45d125",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseParallelGC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java22-parallel.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/22/parallel-oracle.txt"
+      ],
+      "oracle": "runtime=22.0.2+9\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=PS MarkSweep|count=9|timeMs=19\ncollector=PS Scavenge|count=72|timeMs=21\n"
+    },
+    {
+      "collector": "g1",
+      "status": "captured",
+      "file": "java22-g1.log.gz",
+      "sha256": "0f20645b5dc6d63f2bb1aabcce3a6091ccd67187f668d636e83f98d169d33e10",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseG1GC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java22-g1.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/22/g1-oracle.txt"
+      ],
+      "oracle": "runtime=22.0.2+9\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=G1 Young Generation|count=43|timeMs=20\ncollector=G1 Concurrent GC|count=0|timeMs=0\ncollector=G1 Old Generation|count=12|timeMs=20\n"
+    },
+    {
+      "collector": "zgc",
+      "status": "captured",
+      "file": "java22-zgc.log.gz",
+      "sha256": "71e1b3d36fd3a4cfe4dc7d2ace04b2fd1cf5a5bd984590a9616f5dfd5ab9c360",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseZGC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java22-zgc.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/22/zgc-oracle.txt"
+      ],
+      "oracle": "runtime=22.0.2+9\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=ZGC Cycles|count=36|timeMs=108\ncollector=ZGC Pauses|count=111|timeMs=0\n"
+    },
+    {
+      "collector": "shenandoah",
+      "status": "captured",
+      "file": "java22-shenandoah.log.gz",
+      "sha256": "f8a5889405c29017ac04bb561a19a4aca0670f244fe2e6df8100e1a7a6962e3b",
+      "command": [
+        "-Xms32m",
+        "-Xmx32m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseShenandoahGC",
+        "-Xlog:gc*,safepoint:file=<checkout>/testdata/gc-logs/java22-shenandoah.log:time,uptime,level,tags",
+        "-cp",
+        "<checkout>/.run/gc-runtimes/classes",
+        "GcWorkload",
+        "<checkout>/.run/gc-runtimes/22/shenandoah-oracle.txt"
+      ],
+      "oracle": "runtime=22.0.2+9\nvendor=Azul Systems, Inc.\nvm=OpenJDK 64-Bit Server VM\npressureReached=true\ncollector=Shenandoah Pauses|count=216|timeMs=18\ncollector=Shenandoah Cycles|count=67|timeMs=147\n"
+    }
+  ]
+}

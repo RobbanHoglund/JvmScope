@@ -119,12 +119,19 @@ exports.run = async () => {
     await vscode.commands.executeCommand('jvmscope.openAnalysis');
     assert.deepEqual(await api.getAnalysisItems('tda'), []);
     assert.deepEqual(await api.getAnalysisItems('tls'), []);
+    assert.deepEqual(await api.getAnalysisItems('gc'), []);
     const tda = await vscode.commands.executeCommand('jvmscope.analyzeThreadDump',
         fixture('frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt'));
     assert.ok(tda?.snapshots === 1 && tda.threads > 0, JSON.stringify(tda));
     const tls = await vscode.commands.executeCommand('jvmscope.analyzeTlsLog',
         fixture('frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt'));
     assert.ok(tls?.interactions > 0, JSON.stringify(tls));
+    const gc=await vscode.commands.executeCommand('jvmscope.analyzeGcLog',fixture('testdata/gc-logs/java27-g1.log'));
+    assert.ok(gc?.events>20&&gc.segments===1,JSON.stringify(gc));
+    const gcEvents=await api.getAnalysisItems('gc');
+    assert.ok(gcEvents.some(item=>item.kind==='event'));
+    assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem',gcEvents[0].id),true);
+    await expectActiveTab('JvmScope · Garbage collection');
     // Knowledge opens independently of the retained analyzer sessions. Both
     // loaded trees must still navigate back to their exact threads and events.
     const knowledge = await vscode.commands.executeCommand('jvmscope.openKnowledge');
