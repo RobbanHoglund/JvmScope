@@ -42,6 +42,13 @@ test('pause budget is explicit, configurable and independent from collector defa
     const p=parse(pause(1,201));assert.equal(analyzeGc(p).findings[0].rule,'pause-budget');assert.equal(analyzeGc(p,{pauseBudgetMs:250}).findings.length,0);
     for(const budget of [0,-1,NaN,Infinity,60001])assert.throws(()=>analyzeGc(p,{pauseBudgetMs:budget}),/budget/);
 });
+test('documented marker boundaries and explicit-GC exceptions remain independent',()=>{
+    const p=parse(line(1,'GC(1) Pause Full (System.gc()) 95M->90M(100M) 200ms'));
+    const a=analyzeGc(p);
+    assert.deepEqual(a.findings.map(f=>[f.rule,f.severity]),[['heap-occupancy','warning'],['full-collection','info']]);
+    assert.ok(analyzeGc(p,{pauseBudgetMs:199}).findings.some(f=>f.rule==='pause-budget'));
+    assert.equal(analyzeGc(parse(line(1,'GC(1) Pause Young (Normal) 95M->89M(100M) 200ms'))).findings.length,0);
+});
 test('evacuation failure appended to a completion matches its start and preserves a pressure signal',()=>{
     const p=parse(line(1,'GC(0) Pause Young (Normal) (G1 Evacuation Pause)','gc,start'),line(1.02,'GC(0) Pause Young (Normal) (G1 Evacuation Pause) (Evacuation Failure: Allocation) 30M->28M(32M) 20ms'));
     assert.equal(p.events[0].line,1);assert.deepEqual(p.warnings,[]);assert.equal(analyzeGc(p).findings[0].rule,'jvm-signal');
