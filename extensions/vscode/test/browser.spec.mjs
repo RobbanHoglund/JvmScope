@@ -247,7 +247,54 @@ test('GC rich tooltips, separate review symbols and contextual zoom',async({host
     const cluster=page.locator('.gc-annotation-group').filter({hasText:'findings'}).first();
     await expect(cluster).toBeVisible();await cluster.focus();
     await expect(page.locator('#gcTooltip')).toContainText('annotated findings');
-    await cluster.press('Enter');await expect(page.locator('#gcAnnotations button:focus')).toHaveCount(1);
+    await cluster.press('Enter');await expect(page.locator('#gcEventTitle')).toBeFocused();
+    await expect(page.locator('#gcClusterFindings')).toBeVisible();
+});
+
+test('GC chart finding markers open exact details directly with mouse and keyboard',async({host})=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    await host.load([{name:'chart-findings.log',text:[
+        '[1s][info][gc] GC(7) Pause Young (Normal) 20M->30M(32M) 2ms',
+        '[2s][info][gc] GC(8) Pause Full (Allocation Failure) 30M->4M(32M) 4ms',
+        '[3s][info][gc] GC(9) Pause Young (Normal) 20M->4M(32M) 300ms',
+    ].join('\n')}]);
+    await page.locator('.gc-annotation-group').nth(1).locator('.gc-annotation-dot').click();
+    await expect(page.locator('#gcRaw')).toContainText('GC(8)');
+    await expect(page.locator('#gcEventTitle')).toBeFocused();
+    await expect(page.locator('#gcClusterFindings')).toBeHidden();
+    await page.locator('.gc-annotation-group').nth(2).focus();await page.keyboard.press('Enter');
+    await expect(page.locator('#gcRaw')).toContainText('GC(9)');
+    await page.locator('.gc-review-diamond').first().click();await expect(page.locator('#gcRaw')).toContainText('GC(7)');
+    await page.setViewportSize({width:360,height:900});
+    await page.locator('.gc-annotation-group').nth(1).locator('.gc-annotation-dot').click();
+    await expect(page.locator('#gcRaw')).toContainText('GC(8)');
+    await expect(page.locator('#gcEventTitle')).toBeInViewport();
+    await expect(page.locator('#gcEventTitle')).toBeFocused();
+});
+
+test('GC clustered and standalone signal markers open details without the lower list',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    await host.load([{name:'cluster.log',text:[
+        '[1s][info][gc] GC(0) Pause Young (Normal) 20M->4M(32M) 2ms',
+        '[10s][info][gc] GC(1) Pause Young (Normal) 20M->30M(32M) 2ms',
+        '[10.01s][info][gc] GC(2) Pause Full (Allocation Failure) 30M->4M(32M) 4ms',
+        '[10.02s][error][gc] java.lang.OutOfMemoryError: Java heap space',
+        '[11s][info][gc] GC(3) Pause Young (Normal) 20M->4M(32M) 2ms',
+    ].join('\n')}]);
+    await page.locator('.gc-mark').first().click();await expect(page.locator('#gcRaw')).toContainText('GC(0)');
+    await page.locator('.gc-annotation-group .gc-annotation-dot').click();await expect(page.locator('#gcRaw')).toContainText('GC(1)');
+    await expect(page.locator('#gcClusterFindings button')).toHaveCount(3);
+    await page.screenshot({path:testInfo.outputPath('gc-direct-cluster.png'),fullPage:true});
+    await page.locator('#gcClusterFindings button').nth(1).click();await expect(page.locator('#gcRaw')).toContainText('GC(2)');
+    await expect(page.locator('#gcClusterFindings button').nth(1)).toHaveAttribute('aria-pressed','true');
+    await page.locator('#gcClusterFindings button').nth(2).focus();await page.keyboard.press('Space');
+    await expect(page.locator('#gcEventTitle')).toHaveText('Out of memory reported');
+    await expect(page.locator('#gcRaw')).toHaveText('[10.02s][error][gc] java.lang.OutOfMemoryError: Java heap space');
+    await expect(page.locator('#gcEventTitle')).toBeFocused();
+    await page.locator('.gc-mark').first().click();await expect(page.locator('#gcClusterFindings')).toBeHidden();
+    await host.load([{name:'standalone.log',text:'[1s][info][gc] GC(0) Pause Young (Normal) 20M->4M(32M) 2ms\n[2s][error][gc] java.lang.OutOfMemoryError: Java heap space\n[3s][info][gc] GC(1) Pause Young (Normal) 20M->4M(32M) 2ms'}]);
+    await page.locator('.gc-annotation-group .gc-annotation-dot').click();await expect(page.locator('#gcEventTitle')).toHaveText('Out of memory reported');
+    await expect(page.locator('#gcClusterFindings')).toBeHidden();
 });
 
 test('GC tooltips stay readable and inside the viewport in all themes',async({host},testInfo)=>{

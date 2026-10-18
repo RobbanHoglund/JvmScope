@@ -78,10 +78,28 @@ function select(id,{zoom=false}={}){selected=id;const e=model.events.find(e=>e.i
         range=window.map(value=>(value-model.start)/full*1000);
     }
     draw();inspect();renderTable();
-    $('gcEventTitle').tabIndex=-1;
-    $('gcEventTitle').focus({preventScroll:true});
-    if(matchMedia('(max-width:800px)').matches)$('gcInspector').scrollIntoView({block:'nearest'});
+    focusInspector();
 }
+function focusInspector(){
+    const heading=$('gcEventTitle');heading.tabIndex=-1;heading.focus({preventScroll:true});
+    if($('gcInspector').getBoundingClientRect().top>$('gcTimeline').getBoundingClientRect().bottom)heading.scrollIntoView({block:'nearest'});
+}
+function openFinding(f){
+    if(f.eventId!==null)select(f.eventId);else{inspectSignal(f);focusInspector();}
+}
+function openChartFindings(findings,index=0){
+    openFinding(findings[index]);
+    if(findings.length>1){
+        const choices=$('gcClusterFindings');choices.hidden=false;
+        choices.replaceChildren(el('span',`${findings.length} findings at this marker`,'gc-eyebrow'),...findings.map((f,i)=>{
+            const button=el('button',`${i+1}. ${f.title} · ${time(f.startMs)}`,'gc-cluster-choice');
+            button.type='button';button.setAttribute('aria-pressed',String(i===index));
+            button.onclick=()=>openChartFindings(findings,i);return button;
+        }));
+    }
+    focusInspector();
+}
+function clearChartFindings(){$('gcClusterFindings').hidden=true;$('gcClusterFindings').replaceChildren();}
 function draw(){
     if(!model)return;
     hideTooltip();
@@ -130,7 +148,7 @@ function draw(){
         const mark=svg('rect',{x:xx,y:yy,width:Math.max(3,Math.min(right-xx,x(e.endMs)-xx)),height:pause?Math.max(2,252-yy):e.kind==='stall'?15:8,rx:1,
             class:`gc-mark ${e.kind} ${e.id===selected?'selected':''}`,tabindex:0,role:'button','aria-label':`${time(e.startMs)}: ${title(e)}. ${ms(e.durationMs)}${f?'. '+f.title:''}`});
         bindTooltip(mark,()=>showEventTooltip(mark,e));
-        if(f){const diamond=svg('path',{d:`M${xx+3},${yy-10} l4,4 -4,4 -4,-4 Z`,class:`gc-review-diamond ${f.severity}`,'pointer-events':'none'});content.append(diamond);}
+        if(f){const diamond=svg('path',{d:`M${xx+3},${yy-10} l4,4 -4,4 -4,-4 Z`,class:`gc-review-diamond ${f.severity}`});bindTooltip(diamond,()=>showEventTooltip(diamond,e));diamond.addEventListener('click',()=>select(e.id));content.append(diamond);}
         mark.addEventListener('click',()=>select(e.id));mark.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();select(e.id);$('gcEventTitle').tabIndex=-1;$('gcEventTitle').focus({preventScroll:true});}});content.append(mark);
     }
     const candidates=model.findings.filter(f=>f.startMs!==null&&f.startMs>=from&&f.startMs<=to);
@@ -145,12 +163,13 @@ function draw(){
         const severity=indices.some(i=>currentAnnotations[i].severity==='critical')?'critical':indices.some(i=>currentAnnotations[i].severity==='warning')?'warning':'info';
         const group=svg('g',{class:`gc-annotation-group ${severity}`,tabindex:0,role:'button','aria-label':indices.map(i=>`Finding ${i+1}: ${currentAnnotations[i].title}`).join('. ')});
         bindTooltip(group,()=>showFindingsTooltip(group,indices));
-        const reveal=()=>{const button=$('gcAnnotations').children[indices[0]];button?.focus();button?.scrollIntoView({block:'nearest'});};
+        const findings=indices.map(i=>currentAnnotations[i]);
+        const reveal=()=>openChartFindings(findings);
         group.addEventListener('click',reveal);group.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();reveal();}});
         group.append(svg('line',{x1:start,x2:start,y1:31,y2:302,class:'gc-annotation-line'}),svg('line',{x1:start,x2:cx,y1:31,y2:27,class:'gc-annotation-line'}),svg('rect',{x:cx-half,y:6,width:half*2,height:22,rx:11,class:'gc-annotation-dot'}),svg('text',{x:cx,y:21,class:'gc-annotation-number'},label));chart.append(group);
     }
     $('gcTimeline').replaceChildren(chart);
-    $('gcAnnotations').replaceChildren(...currentAnnotations.map((f,i)=>{const b=el('button',undefined,'gc-annotation '+f.severity);b.type='button';const copy=el('span');copy.append(el('strong',f.title),el('small',`${time(f.startMs)} · ${f.severity} · line ${f.line}`));b.append(el('span',i+1),copy);b.addEventListener('click',()=>{if(f.eventId!==null)select(f.eventId);else inspectSignal(f);});return b;}));
+    $('gcAnnotations').replaceChildren(...currentAnnotations.map((f,i)=>{const b=el('button',undefined,'gc-annotation '+f.severity);b.type='button';const copy=el('span');copy.append(el('strong',f.title),el('small',`${time(f.startMs)} · ${f.severity} · line ${f.line}`));b.append(el('span',i+1),copy);b.addEventListener('click',()=>openFinding(f));return b;}));
     if(!currentAnnotations.length)$('gcAnnotations').append(el('p','No review markers in this time range. This does not establish overall application health.','gc-footnote'));
     $('gcChartNote').textContent=`${visible.length.toLocaleString()} events in range${bins.size<visible.length?`; ${bins.size.toLocaleString()} representative marks shown. All events remain in the table`:''}. Concurrent work is not stop-the-world time. ${candidates.length>3?'Showing up to 3 annotated events; use “With review markers” for event findings; standalone JVM signals appear under capture coverage.':''}`;
     $('gcFrom').value=range[0];$('gcTo').value=range[1];$('gcRangeLabel').textContent=time(from)+' – '+time(to);
@@ -182,7 +201,7 @@ function showEventTooltip(anchor,e){
     showTooltip(anchor,[el('span',`${kindNames[e.kind]}${e.gcId===null?'':` · GC(${e.gcId})`}`,'gc-eyebrow'),el('strong',title(e)),facts,list,el('small','Click or press Enter for event evidence.')]);
 }
 function showFindingsTooltip(anchor,indices){
-    showTooltip(anchor,[el('strong',`${indices.length} annotated finding${indices.length===1?'':'s'} in this region`),...indices.map(i=>el('p',`${i+1}. ${currentAnnotations[i].title} · ${time(currentAnnotations[i].startMs)}`)),el('small','Click or press Enter to explore the findings below.')]);
+    showTooltip(anchor,[el('strong',`${indices.length} annotated finding${indices.length===1?'':'s'} in this region`),...indices.map(i=>el('p',`${i+1}. ${currentAnnotations[i].title} · ${time(currentAnnotations[i].startMs)}`)),el('small',indices.length===1?'Click or press Enter to open details.':'Click or press Enter to open details; switch findings in the detail panel.')]);
 }
 function bindTooltip(mark,show){mark.addEventListener('pointerenter',show);mark.addEventListener('pointerleave',scheduleTooltipHide);mark.addEventListener('focus',show);mark.addEventListener('blur',hideTooltip);}
 $('gcTooltip').addEventListener('pointerenter',()=>clearTimeout(tooltipTimer));
@@ -192,7 +211,7 @@ window.addEventListener('scroll',event=>{if(event.target instanceof Node&&$('gcT
 window.addEventListener('resize',hideTooltip);
 function findingNode(f){const box=el('div',undefined,'gc-finding '+f.severity);box.append(el('strong',`${f.severity==='critical'?'Critical':f.severity==='warning'?'Review':'Info'} · ${f.title}`),el('p',f.detail));return box;}
 function rawFor(e){return lines.slice(e.line-1,e.endLine).join('\n');}
-function inspect(){const e=model?.events.find(e=>e.id===selected);if(!e)return;$('gcEventTitle').textContent=title(e);const facts=el('dl');
+function inspect(){clearChartFindings();const e=model?.events.find(e=>e.id===selected);if(!e)return;$('gcEventTitle').textContent=title(e);const facts=el('dl');
     const duration=el('div');duration.append(el('span',e.kind==='pause'?'Stop-the-world pause':'Duration'),el('strong',ms(e.durationMs)));
     const heap=el('div');heap.append(el('span','Heap change'),el('strong',e.heap?`${e.heap.after>e.heap.before?'+':e.heap.after<e.heap.before?'−':''}${mib(Math.abs(e.heap.after-e.heap.before))}`:'Not recorded'));
     $('gcEventHighlights').replaceChildren(duration,heap);
@@ -201,7 +220,7 @@ function inspect(){const e=model?.events.find(e=>e.id===selected);if(!e)return;$
     $('gcRawLocation').textContent=`lines ${e.line}–${e.endLine}`;$('gcRaw').textContent=rawFor(e);$('gcInspector').dataset.selectedId=e.id;
     bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:e.line,endLine:e.endLine}:null);
 }
-function inspectSignal(f){selected=null;draw();renderTable();$('gcInspector').removeAttribute('data-selected-id');$('gcEventTitle').textContent=f.title;$('gcEventHighlights').replaceChildren();$('gcEventFacts').replaceChildren();$('gcEventFindings').replaceChildren(findingNode(f));$('gcRawLocation').textContent='line '+f.line;$('gcRaw').textContent=lines[f.line-1]||'';bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:f.line,endLine:f.line}:null);}
+function inspectSignal(f){clearChartFindings();selected=null;draw();renderTable();$('gcInspector').removeAttribute('data-selected-id');$('gcEventTitle').textContent=f.title;$('gcEventHighlights').replaceChildren();$('gcEventFacts').replaceChildren();$('gcEventFindings').replaceChildren(findingNode(f));$('gcRawLocation').textContent='line '+f.line;$('gcRaw').textContent=lines[f.line-1]||'';bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:f.line,endLine:f.line}:null);}
 function renderTable(){if(!model)return;const type=$('gcType').value,query=$('gcSearch').value.toLowerCase();const foundIds=new Set(model.findings.map(f=>f.eventId));
     const filtered=model.events.filter(e=>(type==='all'||type==='findings'?type!=='findings'||foundIds.has(e.id):e.kind===type)&&(`${e.label} GC(${e.gcId})`.toLowerCase().includes(query)));
     page=Math.max(0,Math.min(page,Math.ceil(filtered.length/40)-1));const shown=filtered.slice(page*40,page*40+40);

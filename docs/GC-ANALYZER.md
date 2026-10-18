@@ -25,7 +25,9 @@ cancelable local worker; no log is uploaded. GC analysis does not invoke AI.
   review reasons. Escape dismisses the tooltip; click or Enter opens the
   event inspector. Log evidence is expandable and remains copyable.
 - **Annotations:** numbered source-backed review points. Nearby annotations
-  share a labelled findings badge; click or Enter moves to the findings list. Click one or an event
+  share a labelled findings badge. Click or Enter opens details immediately;
+  for a cluster, switch between its findings inside the detail panel. Click a
+  numbered chart marker, a review diamond, a list entry or an event
   to see its duration, heap values, rule explanation and exact physical log lines.
   In VS Code, imported sources can be opened at those lines, with existing stale
   source protection. Samples and dropped browser files have copyable evidence.
