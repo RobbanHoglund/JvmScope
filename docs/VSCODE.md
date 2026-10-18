@@ -132,6 +132,49 @@ Integration references (checked 2026-10-17):
 - [Codex IDE commands](https://developers.openai.com/codex/ide/commands)
 - [Claude Code VS Code integration](https://code.claude.com/docs/en/vs-code#launch-a-vs-code-tab-from-other-tools)
 
+### Analysis prompts
+
+The evidence builder supplies an explicit kind to `aiPrompt`; the analyzer and
+the actual selection determine the instructions. Filenames, raw capture text and
+user-edited scope labels cannot select a profile. Missing or unknown kinds fail
+before handoff instead of falling back to mixed diagnostic instructions.
+
+| Selection | Analysis instructions |
+| --- | --- |
+| One thread snapshot | Explain captured thread states, every reported deadlock cycle, lock dependencies and measured CPU qualifications. Do not infer a trend or blocked duration from one capture. Identify findings that depend on other loaded snapshots. |
+| Multiple thread snapshots | Add comparisons using qualified identities and process boundaries, actual CPU interval endpoints, counter resets and missing captures. Count cycles per snapshot; repeated stacks or waits do not prove continuous blocking. |
+| One TLS interaction | Follow the observed JSSE handshake, endpoint role/direction, negotiated settings, alerts and certificate/authentication evidence. Keep grouping uncertainty, incomplete capture, normal closure and post-handshake errors distinct. |
+| TLS capture overview | Add comparisons of the included interactions, while distinguishing capture-wide counts from the bounded excerpt that prioritizes failures and uncertainty. Do not infer a failure rate from that biased excerpt or a shared cause from identical error text. |
+
+The thread instructions contain no TLS diagnosis rules, and the TLS instructions
+contain no thread-state, CPU or deadlock diagnosis rules. TLS guidance distinguishes
+offered and negotiated settings, TLS 1.2/1.3 and resumed handshakes, certificate
+trust and peer identity, and client authentication. It asks for certificate dates
+to be assessed against reliable capture time and rejects bypassing verification
+or weakening algorithms as a fix. Thread guidance distinguishes monitor blocking
+from synchronizer waits, cumulative CPU time from rates, and endpoint state from
+work over a measured interval; it preserves platform/virtual-thread coverage.
+
+Only the response format, evidence attribution, uncertainty, severity labels and
+untrusted-data rules are shared. Changing the selection or raw-evidence option
+rebuilds the visible review with the appropriate profile. The provider receives
+exactly the final reviewed text, including user edits; no extra diagnostic
+instructions are appended after review.
+
+Regression tests use a real three-snapshot Java capture and real JSSE logs from
+Java 8, 11 and 25, including TLS 1.2 mutual authentication, TLS 1.3 success,
+required-client-authentication failure and untrusted-server failure. They cover
+non-adjacent selections, uncertain grouping, excerpt bias, raw opt-in, unsupported
+kinds and the maximum prompt budget. Packaged browser journeys verify selection
+changes and exact reviewed submissions for both analyzers. These tests verify the
+prompt and handoff contract, not a model's compliance or diagnostic accuracy.
+
+Technical references checked 2026-10-18:
+- [Java 25 Thread.State](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.State.html)
+- [Java 25 ThreadMXBean](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
+- [Java 25 JSSE reference guide](https://docs.oracle.com/en/java/javase/25/security/java-secure-socket-extension-jsse-reference-guide.html)
+- [TLS 1.3, RFC 8446](https://www.rfc-editor.org/rfc/rfc8446.html)
+
 ### Copilot model selection
 
 The stable `selectChatModels({ vendor: 'copilot' })` API can return internal

@@ -118,6 +118,14 @@ CPU-hot thread evidence, with explicit excerpt coverage. Oversized selections as
 you to choose fewer snapshots. TLS overviews prioritize failed, uncertain and
 incomplete interactions instead of only the start of the log.
 
+Analysis instructions follow your tool and selection. Thread analysis focuses on
+states, locks, deadlocks and measured CPU evidence, with comparison rules when
+multiple snapshots are selected. TLS analysis focuses on handshake progress,
+alerts, certificates and negotiated settings, with separate guidance for one
+interaction and a capture overview. Both request evidence references, explicit
+uncertainty and the same readable report format. The text you review is exactly
+what is submitted or copied.
+
 The report shows **JvmScope findings** separately from the AI response, including
 a critical icon for a confirmed deadlock regardless of the model's formatting.
 Severity indicates analyzer priority, not proven application impact. Counts are

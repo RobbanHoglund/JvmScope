@@ -126,6 +126,10 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} reviews exact evidenc
     await expect(page.locator('#aiIncludeRaw')).not.toBeChecked();
     const initial=await page.locator('#aiPrompt').inputValue();
     expect(initial).toContain('at most three bullets'); expect(initial).toContain('[!WARNING]');
+    const instructions=initial.split('\nScope: ')[0];
+    expect(instructions).toContain(analyzer==='tda'?'Analyze this Java thread dump evidence':'Analyze this Java TLS/JSSE log evidence');
+    expect(instructions).toContain(analyzer==='tda'?'Selection: One thread snapshot':'Selection: One TLS interaction');
+    expect(instructions).not.toMatch(analyzer==='tda'?/TLS|JSSE|Finished|cipher/:/RUNNABLE|TIMED_WAITING|CPU|deadlock/);
     expect(initial).toContain('Full raw text is not included');
     expect(initial).toContain(analyzer==='tda'?'Snapshot 2 of 3':'Only the selected interaction');
     expect(host.messages.some(m=>m.action==='analyzeAi'||m.action==='copy')).toBe(false);
@@ -175,6 +179,7 @@ test('AI snapshot selection previews a whole series or a custom subset and prese
     await page.locator('#aiSnapshotScope').selectOption('series');
     await expect(page.locator('#aiScope')).toContainText('3 snapshots of 3');
     const all=await page.locator('#aiPrompt').inputValue();
+    expect(all).toContain('Selection: Multiple thread snapshots');
     expect(JSON.parse(all.split('BEGIN JVMSCOPE EVIDENCE\n')[1].split('\nFull raw text')[0]).selectedSnapshots).toEqual([1,2,3]);
     expect(all).toContain('Full raw text is not included');
     expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
@@ -185,7 +190,10 @@ test('AI snapshot selection previews a whole series or a custom subset and prese
     await expect(page.locator('#aiStatus')).toContainText('Select at least one snapshot');
     await expect(page.locator('#aiRun')).toBeDisabled(); await expect(page.locator('#aiCopy')).toBeDisabled();
     await expect(page.locator('#aiPrompt')).toHaveValue('');
-    for (const index of ['0','2']) await page.locator(`#aiSnapshotList input[value="${index}"]`).check();
+    await page.locator('#aiSnapshotList input[value="0"]').check();
+    expect(await page.locator('#aiPrompt').inputValue()).toContain('Selection: One thread snapshot');
+    await page.locator('#aiSnapshotList input[value="2"]').check();
+    expect(await page.locator('#aiPrompt').inputValue()).toContain('Selection: Multiple thread snapshots');
     await page.locator('#aiIncludeRaw').check();
     const reviewed=await page.locator('#aiPrompt').inputValue();
     expect(reviewed).toContain('Snapshot #1'); expect(reviewed).toContain('Snapshot #3'); expect(reviewed).not.toContain('Snapshot #2');
@@ -1577,9 +1585,11 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} local priority surviv
         expect(evidence.snapshots.map(s=>s.threads.filter(t=>t.deadlockCycle).length)).toEqual([5,5,5]);
         expect(evidence.snapshots.map(s=>s.measuredCpuThreads.length)).toEqual([0,9,9]);
     }
-    await page.locator('#aiPrompt').fill(generated+'\nExplain uncertainty clearly.');
+    const reviewed=generated+'\nExplain uncertainty clearly.';
+    await page.locator('#aiPrompt').fill(reviewed);
     await page.locator('#aiRun').click(); await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
     const result=host.ai.results[0];
+    expect(host.ai.calls.find(c=>c[0]==='send')[1][0].content).toBe(reviewed);
     expect(result.body).toBe('Observed evidence.');
     const report=await host.openResult(result), view=report.page;
     const selector=analyzer==='tda'?'.local-finding-critical':'.local-finding-warning';
@@ -1600,4 +1610,32 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} local priority surviv
     expect(host.reports.calls.find(c=>c[0]==='copy').at(-1)).toBe(result.markdown);
     expect(result.markdown).not.toContain(result.findingContext.findings[0].detail);
     expect(report.externalRequests).toEqual([]);
+});
+
+
+test('AI TLS overview and selected interaction rebuild distinct instructions with exact Copilot submission', async({host})=>{
+    const {page}=host;
+    await host.open('/jvmscope/tls.html'); await page.locator('#loadSampleBtn').click();
+    // A hidden selected interaction clears the inspector; AI overview still
+    // describes the whole capture, as its review explicitly states.
+    await page.locator('#searchInput').fill('no-such-peer-for-ai-prompt-test');
+    await expect(page.locator('.tls-select-btn')).toHaveCount(0);
+    await page.locator('#analyzeAiBtn').click();
+    let prompt=await page.locator('#aiPrompt').inputValue();
+    expect(prompt).toContain('Selection: TLS capture overview');
+    expect(prompt).toContain('capture-wide outcome counts separately');
+    expect(prompt.split('\nScope: ')[0]).not.toMatch(/RUNNABLE|CPU|deadlock/);
+    await page.locator('#aiIncludeRaw').check();
+    prompt=await page.locator('#aiPrompt').inputValue();
+    expect(prompt).toContain('Selection: TLS capture overview');
+    await page.locator('#aiRun').click(); await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    expect(host.ai.calls.filter(c=>c[0]==='send').at(-1)[1][0].content).toBe(prompt);
+    await page.locator('#searchInput').fill(''); await page.locator('.tls-select-btn').first().click();
+    await page.locator('#analyzeAiBtn').click();
+    prompt=await page.locator('#aiPrompt').inputValue();
+    expect(prompt).toContain('Selection: One TLS interaction');
+    expect(prompt).not.toContain('Selection: TLS capture overview');
+    await page.locator('#aiRun').click(); await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    expect(host.ai.calls.filter(c=>c[0]==='send').at(-1)[1][0].content).toBe(prompt);
+    expect(host.ai.results.at(-1).findingContext.edited).toBe(false);
 });

@@ -13,7 +13,7 @@ test('TLS AI evidence preserves the selected interaction, source lines and obser
     assert.equal(facts[0].correlationQuality, selected.correlationQuality);
     assert.ok(facts[0].observedSequence.every(e => Number.isSafeInteger(e.line) && e.line > 0));
     assert.match(aiPrompt(evidence, true), /grouped log lines/);
-    assert.match(aiPrompt(evidence), /missing TLS Finished messages do not prove failure/);
+    assert.match(aiPrompt(evidence), /missing TLS Finished messages do not prove failure/i);
 });
 
 test('ambiguous and incomplete TLS groups remain qualified in AI context', () => {

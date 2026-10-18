@@ -48,6 +48,6 @@ export function threadSelectionAiEvidence({ dumps, currentIndex, indices = [curr
     const headings = selected.map(index => `Snapshot #${index + 1} · ${excerpt(dumps[index].sourceLabel || name, 180)} · ${excerpt(dumps[index].timestampRaw || 'Time unavailable', 90)}\n`);
     const perSnapshot = Math.floor((RAW_LIMIT - headings.join('').length - 2 * selected.length) / selected.length);
     const raw = selected.map((index, position) => headings[position] + excerpt(dumps[index].rawText || '', perSnapshot)).join('\n\n');
-    return { scope, summary, raw,
+    return { kind: 'thread-series', scope, summary, raw,
         rawLabel: `Selected snapshots’ raw excerpts (at most 35,000 characters total, shared across ${selected.length} snapshots)` };
 }
