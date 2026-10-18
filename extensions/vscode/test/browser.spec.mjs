@@ -1645,14 +1645,20 @@ test('TLS capture filters and open menus remain readable when the VS Code theme 
     await page.setViewportSize({width:1280,height:900});
     await host.open('/jvmscope/tls.html');
     await page.locator('#loadSampleBtn').click();
+    // Loading the example includes an asynchronous fetch and worker analysis.
+    // Hidden summaries have computed colors but cannot receive keyboard focus.
+    await expect(page.locator('#tlsTableBody tr')).toHaveCount(35);
+    await expect(page.locator('#tlsInspector')).toHaveAttribute('data-selected-id','35');
     for(const theme of Object.keys(themePalettes)) {
         await applyTheme(page,theme);
+        await page.locator('#tlsTimeline').focus();
         for(const id of ['tlsHostFacet','tlsSniFacet','tlsFailureFacet','tlsPeriodMenu']) {
             const facet=page.locator('#'+id), summary=facet.locator('summary');
+            await expect(summary).toBeVisible();
             await expectReadable(summary);
             await page.keyboard.press('Tab');
-            await summary.focus();
-            expect(await summary.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+            await expect(summary).toBeFocused();
+            await expect(summary).toHaveCSS('outline-style','solid');
             await page.keyboard.press('Enter');
             const popup=facet.locator('.tls-facet-popover, .tls-period-popover');
             await expect(popup).toBeVisible();
@@ -1660,7 +1666,7 @@ test('TLS capture filters and open menus remain readable when the VS Code theme 
                 const elements=popup.locator(selector);
                 if(await elements.count())await expectReadable(elements.first());
             }
-            await summary.click();
+            await page.keyboard.press('Enter');
             await expect(popup).toBeHidden();
         }
     }

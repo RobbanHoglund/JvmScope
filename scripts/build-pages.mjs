@@ -41,7 +41,7 @@ export function scanPagesArtifact(directory, { completed = false } = {}) {
         'index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html',
         ...ARTICLES.map(a => `knowledge/${a.id}.html`),
         'assets/js/d3.min.js', 'assets/img/java-thread-mark.svg', 'assets/img/java-tls-mark.svg',
-        'assets/legal/d3-LICENSE.txt', 'assets/legal/Apache-2.0.txt',
+        'assets/legal/d3-LICENSE.txt', 'assets/legal/Apache-2.0.txt', 'assets/legal/markdown-it-NOTICES.txt',
         ...Object.keys(projectLegalAssets),
         ...(completed ? ['index.html', '.nojekyll', 'THIRD-PARTY-NOTICES.md', 'build-info.json', 'manifest.json'] : []),
     ]);
