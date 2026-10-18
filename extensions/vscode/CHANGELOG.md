@@ -2,6 +2,7 @@
 
 ## 2.0.0 — Garbage Collection Log Analyzer
 
+- Resolve the VSIX filename from the manifest throughout packaging and cross-platform CI, so version bumps cannot leave extraction and installation pointing at an older package.
 - Major feature release introducing GC analysis alongside thread dumps and TLS logs. Includes the final timeline, accessibility and knowledge-base review improvements.
 
 - Add a third analyzer for Sun/OpenJDK HotSpot Java 8–27 logs: upload/drop, separate heap/pause/concurrent timeline tracks, zoom, review annotations and exact source evidence.
