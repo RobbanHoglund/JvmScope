@@ -1,6 +1,8 @@
 # Changelog
 
-## 1.3.0 — Garbage Collection Log Analyzer
+## 2.0.0 — Garbage Collection Log Analyzer
+
+- Major feature release introducing GC analysis alongside thread dumps and TLS logs. Includes the final timeline, accessibility and knowledge-base review improvements.
 
 - Add a third analyzer for Sun/OpenJDK HotSpot Java 8–27 logs: upload/drop, separate heap/pause/concurrent timeline tracks, zoom, review annotations and exact source evidence.
 - Distinguish JVM pressure signals from configurable pause budgets, informational explicit GC and qualified occupancy heuristics. Keep concurrent cycles and allocation stalls out of stop-the-world totals.

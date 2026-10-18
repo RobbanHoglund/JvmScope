@@ -255,7 +255,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.3.0.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-2.0.0.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or
