@@ -1639,3 +1639,31 @@ test('AI TLS overview and selected interaction rebuild distinct instructions wit
     expect(host.ai.calls.filter(c=>c[0]==='send').at(-1)[1][0].content).toBe(prompt);
     expect(host.ai.results.at(-1).findingContext.edited).toBe(false);
 });
+
+test('TLS capture filters and open menus remain readable when the VS Code theme changes',async({host})=>{
+    const {page}=host;
+    await page.setViewportSize({width:1280,height:900});
+    await host.open('/jvmscope/tls.html');
+    await page.locator('#loadSampleBtn').click();
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme);
+        for(const id of ['tlsHostFacet','tlsSniFacet','tlsFailureFacet','tlsPeriodMenu']) {
+            const facet=page.locator('#'+id), summary=facet.locator('summary');
+            await expectReadable(summary);
+            await page.keyboard.press('Tab');
+            await summary.focus();
+            expect(await summary.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+            await page.keyboard.press('Enter');
+            const popup=facet.locator('.tls-facet-popover, .tls-period-popover');
+            await expect(popup).toBeVisible();
+            for(const selector of ['p','label','button']) {
+                const elements=popup.locator(selector);
+                if(await elements.count())await expectReadable(elements.first());
+            }
+            await summary.click();
+            await expect(popup).toBeHidden();
+        }
+    }
+    await expect(page.locator('#tlsTableBody tr')).toHaveCount(35);
+    await expect(page.locator('#tlsInspector')).toHaveAttribute('data-selected-id','35');
+});

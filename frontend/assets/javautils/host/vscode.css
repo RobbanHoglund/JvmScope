@@ -15,11 +15,15 @@ body[data-jvmscope-host="vscode"] {
   --tda-surface-raised: var(--host-raised);
   --tda-surface-inset: var(--host-bg);
   --tda-panel-border: var(--host-border);
-  --tls-surface: var(--host-surface);
-  --tls-raised: var(--host-raised);
-  --tls-inset: var(--host-bg);
-  --tls-border: var(--host-border);
-  --tls-accent: var(--host-link);
+  /* Override body.tls-page even when its stylesheet is loaded after the host.
+     Facet menus and the timeline consume these tokens without a surface reset. */
+  &.tls-page {
+    --tls-surface: var(--host-surface);
+    --tls-raised: var(--host-raised);
+    --tls-inset: var(--host-bg);
+    --tls-border: var(--host-border);
+    --tls-accent: var(--host-link);
+  }
   --text-strong: var(--host-fg);
   --text-normal: var(--host-fg);
   --text-muted: var(--host-muted);

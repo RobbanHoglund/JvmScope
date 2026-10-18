@@ -6,6 +6,7 @@
 - Qualify thread-state and CPU interpretations, snapshot identity and deadlock counts. Qualify JSSE handshake outcomes, endpoint direction, certificate/authentication evidence and biased overview excerpts.
 - Keep the shared report format and exact reviewed-prompt handoff. Reject unsupported evidence types instead of silently using generic instructions.
 - Add regressions using real Java captures and packaged analyzer journeys, including scope changes, optional raw evidence, exact Copilot submissions and maximum prompt size.
+- Keep TLS capture filters, open menus and timeline surfaces consistent with the VS Code theme, including light and high-contrast themes.
 
 ## 1.2.1 — Reliable AI evidence and severity indicators
 
