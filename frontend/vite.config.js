@@ -52,6 +52,8 @@ export function toolNavigation({ slim = false, vscode = false } = {}) {
     transformIndexHtml: {
       order: 'pre',
       handler(html, context) {
+        // The AI report has its own small host bridge and no analyzer navigation.
+        if (context.filename.endsWith('ai-result.html')) return html;
         const active = context.filename.includes('knowledge') ? 'knowledge' : context.filename.endsWith('tls.html') ? 'tls'
           : context.filename.endsWith('tda.html') ? 'tda' : 'home';
         const link = (name, path, label) => `<a href="${path}"${active === name ? ' aria-current="page"' : ''}>${label}</a>`;
@@ -108,6 +110,7 @@ export default defineConfig(({ mode }) => ({
         ...knowledgeInputs,
         tda: resolve(rootDir, "jvmscope/tda.html"),
         tls: resolve(rootDir, "jvmscope/tls.html"),
+        ...(mode === 'vscode' ? { 'ai-result': resolve(rootDir, 'ai-result.html') } : {}),
       } : {
         ...knowledgeInputs,
         main: resolve(rootDir, "index.html"),

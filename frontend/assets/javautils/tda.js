@@ -1,4 +1,7 @@
+import { AI_ICONS } from './ai-icons.js';
 import { createThreadNavigation } from './host/navigation-model.js';
+import { createAiAnalysisView } from './ai-analysis-view.js';
+import { threadSelectionAiEvidence, threadAiSnapshotOptions } from './tda/ai-evidence-selection.js';
 import { describeLockCoverage } from './tda/lock-coverage.js';
 import { cpuCoverage, compactSnapshotTime } from './tda/presentation.js';
 import './tda/triage.css';
@@ -525,6 +528,10 @@ function tooltipAttr(value) {
 
 // ---- model/state ----
 let parsedDumps = [];
+const aiAnalysis = createAiAnalysisView(indices => threadSelectionAiEvidence({ dumps: parsedDumps,
+    currentIndex: selectedDumpIndex, indices, name: UI.fileName.textContent }), {
+    getSnapshotOptions: () => threadAiSnapshotOptions(parsedDumps, selectedDumpIndex),
+});
 let threadSeries = [];
 let selectedDumpIndex = 0;
 
@@ -1837,7 +1844,7 @@ function renderSmartAnalysisPanel() {
       <div class="tda-priority" data-severity="${escapeAttr(priority?.severity || 'info')}">
         <div>
           <p class="tda-eyebrow">${priority ? 'Start here' : 'Analysis coverage'} · Snapshot ${selectedDumpIndex + 1} of ${parsedDumps.length}</p>
-          <h2>${escapeHtml(priority?.title || 'No configured material findings')}</h2>
+          <h2>${priority ? AI_ICONS[({critical: 'critical', high: 'warning', medium: 'important', info: 'note'})[priority.severity] || 'note'] : ''}${escapeHtml(priority?.title || 'No configured material findings')}</h2>
           <p>${escapeHtml(prioritySummary)}</p>
         </div>
         ${graphPanelId || priority?.threads?.length ? `<div class="tda-priority-action">
@@ -4089,6 +4096,7 @@ async function pasteThreadDumpFromClipboard() {
 
 // ---- events & UI wiring ----
 function beginInputRequest() {
+    aiAnalysis.invalidate();
     const requestId = inputRequestGate.begin();
     analysisClient.cancel();
     return requestId;
@@ -4103,6 +4111,7 @@ const hostNavigation = createHostNavigation(({snapshotIndex,thread}) => {
 });
 
 function applySessionAnalysis(result) {
+    aiAnalysis.invalidate();
     reportDatasetRevision++;
     blockingPatterns = result.blockingPatterns || [];
     blockingPatternSummary = result.blockingPatternSummary || null;
@@ -4288,6 +4297,7 @@ function renderParserState(result) {
 }
 
 function activateSelectedDump() {
+    aiAnalysis.invalidate();
     if (rawDumpSnapshot && rawDumpSnapshot !== parsedDumps[selectedDumpIndex]) invalidateRawDumpWorkspace();
     const selected = parsedDumps[selectedDumpIndex] || null;
     if (UI.openRawDumpBtn) UI.openRawDumpBtn.disabled = !selected?.rawText;
@@ -4579,6 +4589,7 @@ UI.howToUseModal?.addEventListener('cancel', (event) => {
 
 
 UI.clearBtn?.addEventListener('click', () => {
+    aiAnalysis.invalidate();
     cancelSessionInputs();
     sessionSources = [];
     hostNavigation.publish(null);

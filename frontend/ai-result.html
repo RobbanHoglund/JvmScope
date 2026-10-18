@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JvmScope · AI analysis</title>
+    <script type="module" src="/assets/javautils/ai-result-view.js"></script>
+</head>
+<body>
+<main class="report" aria-labelledby="reportTitle">
+    <header class="report-header">
+        <p class="eyebrow">JVMSCOPE <span>AI INTERPRETATION</span></p>
+        <h1 id="reportTitle">AI analysis</h1>
+        <p id="resultScope" class="scope"></p>
+        <div class="report-meta"><span id="resultModel" class="model"></span><span>Verify conclusions against the captured evidence.</span></div>
+        <nav class="report-actions" aria-label="AI response actions">
+            <button type="button" data-action="copy" title="Copy the original response as Markdown" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></svg>Copy response</button>
+            <button type="button" data-action="save" title="Save the original response as a Markdown file" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>Save…</button>
+            <button type="button" data-action="source" class="source-action" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-14-2 16"/></svg>Open Markdown</button>
+        </nav>
+        <output id="actionStatus" role="status" aria-live="polite">Loading response…</output>
+    </header>
+    <section id="localFindings" aria-labelledby="localFindingsTitle" hidden></section>
+    <h2 class="answer-label">AI response</h2>
+    <article id="answer" class="markdown" aria-label="AI response" aria-busy="true"></article>
+</main>
+</body>
+</html>

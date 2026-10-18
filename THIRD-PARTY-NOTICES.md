@@ -19,6 +19,16 @@ file into preview and application builds at `/assets/legal/d3-LICENSE.txt`.
 The vendored file matches upstream 7.9.0 after line-ending/final newline normalization.
 [Upstream license](https://github.com/d3/d3/blob/v7.9.0/LICENSE).
 
+## Bundled Markdown renderer
+
+The VS Code AI response view bundles markdown-it 15.0.2 and its browser
+dependencies (entities, linkify-it, mdurl, punycode.js and uc.micro). Their full
+copyright and license texts are retained in
+[`markdown-it-NOTICES.txt`](frontend/public/assets/legal/markdown-it-NOTICES.txt)
+and distributed under `assets/legal/`. Exact versions are locked in
+`frontend/package-lock.json`. These modules are bundled locally; rendering uses
+no CDN or external service. [Upstream](https://github.com/markdown-it/markdown-it).
+
 ## Gradle wrapper and development tools
 
 The Gradle wrapper JAR and scripts are Apache-2.0; their original script copyright

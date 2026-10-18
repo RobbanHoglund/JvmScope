@@ -92,10 +92,12 @@ with zipfile.ZipFile(package) as archive:
 
     pages = json.loads(archive.read("extension/media/pages.json"))
     assert {"index.html", "jvmscope/tda.html", "jvmscope/tls.html", "knowledge/index.html"} <= set(pages)
-    for page in pages:
+    for page in [*pages, 'ai-result.html']:
         parser = Assets()
         parser.page = page
         parser.feed(archive.read("extension/media/" + page).decode())
+    assert 'extension/src/ai-result.cjs' in names
+    assert b'markdown-it 15.0.2' in archive.read('extension/media/assets/legal/markdown-it-NOTICES.txt')
 
 digest = hashlib.sha256(package.read_bytes()).hexdigest()
 print(f"PASS: {package.name}: stable GA metadata, {len(names)} entries, {len(pages)} pages, {width}x{height} icon, valid assets, legal notices and Marketplace links. SHA-256: {digest}")

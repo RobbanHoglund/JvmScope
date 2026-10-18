@@ -1,5 +1,60 @@
 # Changelog
 
+## 1.2.2 — Analysis-specific AI prompts
+
+- Give thread dumps and TLS logs separate diagnostic instructions. Select distinct guidance for one thread snapshot, a snapshot series, one TLS interaction and a TLS capture overview.
+- Qualify thread-state and CPU interpretations, snapshot identity and deadlock counts. Qualify JSSE handshake outcomes, endpoint direction, certificate/authentication evidence and biased overview excerpts.
+- Keep the shared report format and exact reviewed-prompt handoff. Reject unsupported evidence types instead of silently using generic instructions.
+- Add regressions using real Java captures and packaged analyzer journeys, including scope changes, optional raw evidence, exact Copilot submissions and maximum prompt size.
+- Keep TLS capture filters, open menus and timeline surfaces consistent with the VS Code theme, including light and high-contrast themes.
+- Refresh the extension listing with a shorter quick start, analyzer screenshots and accurate local/AI privacy guidance. Move detailed controls and troubleshooting into the linked user guide.
+
+## 1.2.1 — Reliable AI evidence and severity indicators
+
+- Show a critical icon for confirmed Java deadlocks in the analyzer and a separate JvmScope findings section in the AI report, even when the model returns plain text. Keep analyzer priority distinct from AI assessment and application impact. Show up to three priorities, with secondary ones collapsed.
+- Preserve every reported deadlock cycle, unresolved participant mappings, matched participant stack excerpts and measured CPU-hot thread IDs, rates, thresholds and interval qualifications. Keep all findings in the real three-snapshot example instead of dropping its second cycle and CPU evidence.
+- Use valid bounded JSON for both analyzers; reject an oversized minimum with a recoverable review message. Prioritize late TLS failures and uncertain/incomplete interactions, retain classified failure events and share optional raw excerpts across included interactions.
+- Retain reviewed prompt privacy: local display metadata is never appended to the model request. Edited prompts are labelled, completed reports keep their original findings, and copy/save/source still export the original AI response.
+- Add real-capture regressions, plain-response report journeys, metadata validation, four-theme and narrow-layout checks, safe rendering and exact-export coverage.
+
+## 1.2.0 — AI snapshot comparisons and clearer priorities
+
+- Choose the current thread snapshot, its whole process group, or a custom subset of up to 20 snapshots in one reviewed AI request. Keep capture order, actual CPU interval endpoints, source references and thread identity qualifications.
+- Share the evidence budget across selected snapshots, label reduced detail and reject oversized selections without silently omitting captures. Raw excerpts remain optional.
+- Close the prompt dialog after a successfully rendered answer so the analyzer is visible beside it. Reopen the exact reviewed prompt without resending; errors and cancellation remain editable.
+- Replace the chat-bubble action icon with a compact AI sparkle. Render explicit critical, warning, important and note callouts with text labels and at most three local SVG status icons per report, respecting VS Code themes. Their priority is labelled as an AI assessment and never changes parser findings.
+- Request a concise summary and shorter paragraphs, improve narrow-panel reading size and simplify Copy response / Save… actions. Original Markdown exports are preserved.
+- Add regression coverage for process boundaries, snapshot subsets, counter resets, budget limits, exact handoff, successful review reopening, explicit callout rendering and themed layouts.
+
+## 1.1.3 — Readable AI responses
+
+- Open completed Copilot answers in a formatted report beside the analyzer, with readable headings, lists, tables, quotes and code blocks instead of showing Markdown source by default.
+- Follow the active VS Code theme, including high contrast, and keep long code and tables within narrow editor panels.
+- Add Copy Markdown, Save Markdown and Open Markdown actions using the original response and its model/scope metadata.
+- Render model output without executable HTML, embedded images or command/file links. External web links open only when clicked; nothing is fetched to render an answer.
+- Test formatted output, exact exports, cancellation, four themes and narrow layouts in both analyzer journeys, plus the installed VSIX webview.
+
+## 1.1.2 — Copilot model selection
+
+- Exclude Copilot's internal dictation and utility aliases from the model picker, fixing the “only available to VS Code core” error for dictation models.
+- If another model rejects an extension request as core-only, preserve the reviewed prompt and offer a new explicit choice. Remember the rejected model for the session; never switch models automatically.
+- Keep consent, quota and network errors visible without retrying another model, and explain when only internal models are available.
+- Add unit regressions, both packaged analyzer journeys and a real VS Code host check for the internal-model catalog.
+
+## 1.1.1 — Recoverable Copilot requests
+
+- Release failed AI jobs immediately, without waiting for an error notification to be dismissed.
+- Show Copilot progress and provider errors in the AI dialog, keep Analyze disabled during the request and add Cancel analysis.
+- Release cancelled or timed-out requests even when a provider does not respond, ignore late results and cancel when the reviewed evidence changes or its dialog closes.
+- Add regressions using the packaged controller in both analyzer dialogs and real VS Code notification/progress APIs.
+
+## 1.1.0 — Optional AI analysis
+
+- Add an editable AI evidence preview for the selected thread snapshot or TLS interaction, preserving analyzer qualifications and marking excerpt limits.
+- Analyze through installed Copilot Chat using its available models, token budgets and cancellation support; open the response in a separate Markdown editor.
+- Detect installed Codex and Claude Code and offer explicit Copy and open handoff, with manual copy available for other assistants.
+- Keep raw evidence optional, clear reviewed prompts when captures change, and explain provider sharing separately from local parsing.
+
 ## 1.0.0 — General availability
 
 - Show sidebar expand arrows only when an analyzer has captured items; empty roots remain direct tool launchers.

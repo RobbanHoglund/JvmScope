@@ -56,7 +56,7 @@ export function initializeHostNavigation() {
     if (!vscode) return;
     document.body.dataset.jvmscopeHost = 'vscode';
     for (const notice of document.querySelectorAll('.analyzer-start-privacy, .privacy strong')) {
-        notice.textContent = 'Analyzed locally in VS Code. Nothing is uploaded.';
+        notice.textContent = 'Capture analysis stays local. Optional AI sharing is controlled by you.';
     }
     window.addEventListener('message', ({ data }) => {
         if (data?.channel === channel && data.version === 1 && data.type === 'revealHash' && typeof data.hash === 'string') {
@@ -122,6 +122,10 @@ export const openRawEvidence = (text, name) => request('openRaw', { text, name }
 export const invalidateHostEvidence = () => { if (vscode) request('clearRaw').catch(showHostError); };
 export const syncSourceLinks = sourceIds => { if (vscode) request('syncSources', { sourceIds: sourceIds.filter(Boolean) }).catch(showHostError); };
 export const openSourceLocation = location => request('openSource', location);
+export const getAiProviders = () => request('aiProviders');
+export const getAiStatus = () => request('aiStatus');
+export const cancelAi = jobId => request('cancelAi', { jobId });
+export const analyzeWithAi = (provider, prompt, findingContext) => request('analyzeAi', { provider, prompt, findingContext });
 
 export function bindSourceButton(button, location) {
     if (!button) return;
