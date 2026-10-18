@@ -1,4 +1,5 @@
 import './style.css';
+import { captureSummary, eventWindow } from './presentation.js';
 import { formatGcTime } from './time.js';
 import { analyzeGc, MAX_GC_BYTES } from './parser.js';
 import { createGcClient } from './client.js';
@@ -20,7 +21,7 @@ const svg=(tag,attrs={},text)=>{const n=document.createElementNS('http://www.w3.
 function time(n,options){return formatGcTime(n,parsed?.sessions.find(s=>s.id===model.session)?.clock,options);}
 function error(cause){$('gcError').hidden=false;$('gcError').textContent=(cause.message||String(cause))+(source?' The previous capture was kept.':'');}
 function busy(on){$('gcStatus').textContent=on?'Reading and analyzing GC records locally…':'HotSpot / OpenJDK · Java 8–27 · analyzed locally';$('gcClear').disabled=!on&&!parsed;$('gcWorkspace').setAttribute('aria-busy',String(on));}
-function reset(){generation++;controller?.abort();client.cancel();parsed=model=source=null;lines=[];selected=null;page=0;range=[0,1000];$('gcError').hidden=true;$('gcWorkspace').hidden=true;$('gcStart').hidden=false;$('gcFile').value='';syncSourceLinks([]);navigation.publish(null);busy(false);}
+function reset(){hideTooltip();generation++;controller?.abort();client.cancel();parsed=model=source=null;lines=[];selected=null;page=0;range=[0,1000];$('gcError').hidden=true;$('gcWorkspace').hidden=true;$('gcStart').hidden=false;$('gcFile').value='';syncSourceLinks([]);navigation.publish(null);busy(false);}
 function begin(){const id=++generation;controller?.abort();client.cancel();$('gcError').hidden=true;busy(true);return id;}
 async function accept(text,name,hostSourceId,id){
     if(id!==generation)return null;
@@ -67,12 +68,15 @@ function recalculate(choose=false){
     const signals=model.findings.filter(f=>f.eventId===null);
     for(const f of signals){const button=el('button',`${f.severity} · ${f.title} · line ${f.line}`,'gc-button');button.type='button';button.onclick=()=>{inspectSignal(f);$('gcEventTitle').tabIndex=-1;$('gcEventTitle').focus();};$('gcWarnings').append(button);}
     $('gcCoverage').open=warnings.length>0||signals.length>0;
-    draw();renderTable();inspect();
+    renderSummary();draw();renderTable();inspect();
 }
 function bounds(){const full=Math.max(1,(model.end??0)-(model.start??0));return [(model.start??0)+full*range[0]/1000,(model.start??0)+full*range[1]/1000];}
 function eventFindings(id){return model.findings.filter(f=>f.eventId===id);}
 function select(id,{zoom=false}={}){selected=id;const e=model.events.find(e=>e.id===id);if(!e)return;
-    if(zoom&&e.startMs!==null){const span=Math.max(20,Math.min((model.end-model.start)*.2,Math.max(e.durationMs*8,100)));const full=Math.max(1,model.end-model.start);range=[Math.max(0,(e.startMs-span/2-model.start)/full*1000),Math.min(1000,(e.endMs+span/2-model.start)/full*1000)];}
+    if(zoom&&e.startMs!==null){
+        const window=eventWindow(model.events,e,model.start,model.end),full=Math.max(1,model.end-model.start);
+        range=window.map(value=>(value-model.start)/full*1000);
+    }
     draw();inspect();renderTable();
     $('gcEventTitle').tabIndex=-1;
     $('gcEventTitle').focus({preventScroll:true});
@@ -80,9 +84,10 @@ function select(id,{zoom=false}={}){selected=id;const e=model.events.find(e=>e.i
 }
 function draw(){
     if(!model)return;
+    hideTooltip();
     const width=Math.max(240,$('gcTimeline').clientWidth),height=330,left=52,right=width-15,plot=right-left;
     const [from,to]=bounds(),span=Math.max(1,to-from),x=n=>left+(n-from)/span*plot;
-    const chart=svg('svg',{viewBox:`0 0 ${width} ${height}`,role:'group','aria-label':'GC timeline. Select an event to inspect its evidence.'});
+    const chart=svg('svg',{viewBox:`0 0 ${width} ${height}`,role:'group','data-from':from,'data-to':to,'aria-label':'GC timeline. Select an event to inspect its evidence.'});
     const visible=model.events.filter(e=>e.startMs!==null&&e.endMs>=from&&e.startMs<=to);
     for(const id of ['gcFrom','gcTo','gcReset'])$(id).disabled=model.start===null;
     $('gcZoom').disabled=!model.events.some(e=>e.id===selected&&e.startMs!==null);
@@ -99,7 +104,22 @@ function draw(){
     // Bound SVG nodes by horizontal pixel buckets; raw samples stay in the table.
     const heapBins=new Map();for(const e of heap){const key=Math.floor(x(e.endMs));const old=heapBins.get(key);if(!old||e.heap.before>old.heap.before||e.heap.after<old.heap.after)heapBins.set(key,e);}
     const sampledHeap=[...heapBins.values()].sort((a,b)=>a.startMs-b.startMs);
-    if(sampledHeap.length){const points=sampledHeap.flatMap(e=>[[x(e.startMs),hy(e.heap.before)],[x(e.endMs),hy(e.heap.after)]]);const path=points.map(([xx,yy],i)=>`${i?'L':'M'}${xx.toFixed(2)},${yy.toFixed(2)}`).join(' ');content.append(svg('path',{d:`${path} L${points.at(-1)[0]},138 L${points[0][0]},138 Z`,class:'gc-heap-area'}),svg('path',{d:path,class:'gc-heap-line'}));}
+    if(sampledHeap.length){
+        let previous=null;
+        for(const e of sampledHeap){
+            const before=[x(e.startMs),hy(e.heap.before)],after=[x(e.endMs),hy(e.heap.after)];
+            if(previous&&e.startMs>=previous.endMs)content.append(svg('path',{d:`M${x(previous.endMs)},${hy(previous.heap.after)} L${before[0]},${before[1]}`,class:'gc-heap-guide'}));
+            content.append(svg('path',{d:`M${before[0]},${before[1]} L${after[0]},${after[1]}`,class:'gc-heap-line'}));
+            for(const [point,phase] of [[before,'before'],[after,'after']]){
+                const dot=svg('circle',{cx:point[0],cy:point[1],r:2.6,class:`gc-heap-point ${phase}`});
+                // Mouse inspection complements the keyboard-accessible event marks below.
+                dot.addEventListener('pointerenter',()=>showEventTooltip(dot,e));
+                dot.addEventListener('pointerleave',scheduleTooltipHide);
+                dot.addEventListener('click',()=>select(e.id));content.append(dot);
+            }
+            previous=e;
+        }
+    }
     else chart.append(svg('text',{x:left+plot/2,y:85,'text-anchor':'middle'},'No total-heap samples recorded in this range'));
     if(model.pauseBudgetMs<=maxPause)content.append(svg('line',{x1:left,x2:right,y1:py(model.pauseBudgetMs),y2:py(model.pauseBudgetMs),class:'gc-budget-line'}));
     chart.append(svg('text',{x:right,y:model.pauseBudgetMs<=maxPause?py(model.pauseBudgetMs)-5:171,'text-anchor':'end'},`${model.pauseBudgetMs} ms budget${model.pauseBudgetMs>maxPause?' · above scale':''}`));
@@ -108,8 +128,9 @@ function draw(){
     for(const e of bins.values()){
         const f=byId.get(e.id),pause=e.kind==='pause',xx=Math.max(left,x(e.startMs)),yy=pause?py(e.durationMs):e.kind==='stall'?282:274;
         const mark=svg('rect',{x:xx,y:yy,width:Math.max(3,Math.min(right-xx,x(e.endMs)-xx)),height:pause?Math.max(2,252-yy):e.kind==='stall'?15:8,rx:1,
-            class:`gc-mark ${e.kind} ${f?.severity||''} ${e.id===selected?'selected':''}`,tabindex:0,role:'button','aria-label':`${time(e.startMs)}: ${title(e)}. ${ms(e.durationMs)}${f?'. '+f.title:''}`});
-        mark.append(svg('title',{},`${title(e)} · ${ms(e.durationMs)} · ${time(e.startMs)}`));
+            class:`gc-mark ${e.kind} ${e.id===selected?'selected':''}`,tabindex:0,role:'button','aria-label':`${time(e.startMs)}: ${title(e)}. ${ms(e.durationMs)}${f?'. '+f.title:''}`});
+        bindTooltip(mark,()=>showEventTooltip(mark,e));
+        if(f){const diamond=svg('path',{d:`M${xx+3},${yy-10} l4,4 -4,4 -4,-4 Z`,class:`gc-review-diamond ${f.severity}`,'pointer-events':'none'});content.append(diamond);}
         mark.addEventListener('click',()=>select(e.id));mark.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();select(e.id);$('gcEventTitle').tabIndex=-1;$('gcEventTitle').focus({preventScroll:true});}});content.append(mark);
     }
     const candidates=model.findings.filter(f=>f.startMs!==null&&f.startMs>=from&&f.startMs<=to);
@@ -120,9 +141,12 @@ function draw(){
     const clusters=[];
     currentAnnotations.forEach((f,i)=>{const actual=x(f.startMs),last=clusters.at(-1);if(last&&actual-last.end<46){last.end=actual;last.indices.push(i);}else clusters.push({start:actual,end:actual,indices:[i]});});
     for(const cluster of clusters){
-        const {indices,start,end}=cluster,label=indices.map(i=>i+1).join('·'),half=indices.length>1?22:11,cx=Math.max(left+half,Math.min(right-half,(start+end)/2));
+        const {indices,start,end}=cluster,label=indices.length>1?`${indices.length} findings`:String(indices[0]+1),half=indices.length>1?39:11,cx=Math.max(left+half,Math.min(right-half,(start+end)/2));
         const severity=indices.some(i=>currentAnnotations[i].severity==='critical')?'critical':indices.some(i=>currentAnnotations[i].severity==='warning')?'warning':'info';
-        const group=svg('g',{class:`gc-annotation-group ${severity}`});
+        const group=svg('g',{class:`gc-annotation-group ${severity}`,tabindex:0,role:'button','aria-label':indices.map(i=>`Finding ${i+1}: ${currentAnnotations[i].title}`).join('. ')});
+        bindTooltip(group,()=>showFindingsTooltip(group,indices));
+        const reveal=()=>{const button=$('gcAnnotations').children[indices[0]];button?.focus();button?.scrollIntoView({block:'nearest'});};
+        group.addEventListener('click',reveal);group.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();reveal();}});
         group.append(svg('line',{x1:start,x2:start,y1:31,y2:302,class:'gc-annotation-line'}),svg('line',{x1:start,x2:cx,y1:31,y2:27,class:'gc-annotation-line'}),svg('rect',{x:cx-half,y:6,width:half*2,height:22,rx:11,class:'gc-annotation-dot'}),svg('text',{x:cx,y:21,class:'gc-annotation-number'},label));chart.append(group);
     }
     $('gcTimeline').replaceChildren(chart);
@@ -131,15 +155,53 @@ function draw(){
     $('gcChartNote').textContent=`${visible.length.toLocaleString()} events in range${bins.size<visible.length?`; ${bins.size.toLocaleString()} representative marks shown. All events remain in the table`:''}. Concurrent work is not stop-the-world time. ${candidates.length>3?'Showing up to 3 annotated events; use “With review markers” for event findings; standalone JVM signals appear under capture coverage.':''}`;
     $('gcFrom').value=range[0];$('gcTo').value=range[1];$('gcRangeLabel').textContent=time(from)+' – '+time(to);
 }
+function renderSummary(){
+    const summary=captureSummary(model,parsed.warnings),box=$('gcSummary');
+    box.className='gc-summary '+summary.severity;
+    box.replaceChildren(el('span','Selected JVM segment','gc-eyebrow'),el('strong',summary.headline),el('p',summary.detail));
+}
+let tooltipAnchor=null,tooltipTimer;
+function hideTooltip(){clearTimeout(tooltipTimer);tooltipAnchor?.removeAttribute('aria-describedby');tooltipAnchor=null;$('gcTooltip').hidden=true;}
+function scheduleTooltipHide(){clearTimeout(tooltipTimer);tooltipTimer=setTimeout(()=>{if(document.activeElement!==tooltipAnchor)hideTooltip();},160);}
+function showTooltip(anchor,nodes){
+    hideTooltip();tooltipAnchor=anchor;anchor.setAttribute('aria-describedby','gcTooltip');
+    const tip=$('gcTooltip');tip.replaceChildren(...nodes);tip.hidden=false;
+    positionTooltip();
+}
+function positionTooltip(){
+    if(!tooltipAnchor)return;
+    const tip=$('gcTooltip'),rect=tooltipAnchor.getBoundingClientRect(),box=tip.getBoundingClientRect();
+    tip.style.left=Math.max(8,Math.min(innerWidth-box.width-8,rect.left+rect.width/2-box.width/2))+'px';
+    tip.style.top=Math.max(8,rect.top-box.height-10>=8?rect.top-box.height-10:Math.min(innerHeight-box.height-8,rect.bottom+10))+'px';
+}
+function showEventTooltip(anchor,e){
+    const facts=el('dl');
+    for(const [label,value] of [['Start',time(e.startMs)],[e.kind==='pause'?'Pause':'Duration',ms(e.durationMs)],['Heap',e.heap?`${mib(e.heap.before)} → ${mib(e.heap.after)}`:'Not recorded']])facts.append(el('dt',label),el('dd',value));
+    const findings=eventFindings(e.id),list=el('div',undefined,'gc-tooltip-findings');
+    for(const f of findings)list.append(el('p',`${f.severity==='critical'?'Critical':f.severity==='warning'?'Review':'Info'} · ${f.title}`,f.severity));
+    showTooltip(anchor,[el('span',`${kindNames[e.kind]}${e.gcId===null?'':` · GC(${e.gcId})`}`,'gc-eyebrow'),el('strong',title(e)),facts,list,el('small','Click or press Enter for event evidence.')]);
+}
+function showFindingsTooltip(anchor,indices){
+    showTooltip(anchor,[el('strong',`${indices.length} annotated finding${indices.length===1?'':'s'} in this region`),...indices.map(i=>el('p',`${i+1}. ${currentAnnotations[i].title} · ${time(currentAnnotations[i].startMs)}`)),el('small','Click or press Enter to explore the findings below.')]);
+}
+function bindTooltip(mark,show){mark.addEventListener('pointerenter',show);mark.addEventListener('pointerleave',scheduleTooltipHide);mark.addEventListener('focus',show);mark.addEventListener('blur',hideTooltip);}
+$('gcTooltip').addEventListener('pointerenter',()=>clearTimeout(tooltipTimer));
+$('gcTooltip').addEventListener('pointerleave',scheduleTooltipHide);
+document.addEventListener('keydown',event=>{if(event.key==='Escape')hideTooltip();});
+window.addEventListener('scroll',event=>{if(event.target instanceof Node&&$('gcTooltip').contains(event.target))return;if(document.activeElement===tooltipAnchor)positionTooltip();else hideTooltip();},true);
+window.addEventListener('resize',hideTooltip);
 function findingNode(f){const box=el('div',undefined,'gc-finding '+f.severity);box.append(el('strong',`${f.severity==='critical'?'Critical':f.severity==='warning'?'Review':'Info'} · ${f.title}`),el('p',f.detail));return box;}
 function rawFor(e){return lines.slice(e.line-1,e.endLine).join('\n');}
 function inspect(){const e=model?.events.find(e=>e.id===selected);if(!e)return;$('gcEventTitle').textContent=title(e);const facts=el('dl');
+    const duration=el('div');duration.append(el('span',e.kind==='pause'?'Stop-the-world pause':'Duration'),el('strong',ms(e.durationMs)));
+    const heap=el('div');heap.append(el('span','Heap change'),el('strong',e.heap?`${e.heap.after>e.heap.before?'+':e.heap.after<e.heap.before?'−':''}${mib(Math.abs(e.heap.after-e.heap.before))}`:'Not recorded'));
+    $('gcEventHighlights').replaceChildren(duration,heap);
     for(const [name,value] of [['Kind',kindNames[e.kind]],['GC ID',e.gcId===null?'Not recorded':'GC('+e.gcId+')'],['Start',time(e.startMs)],['Duration',ms(e.durationMs)+(e.durationDerived?' (from timestamps)':'')],['Heap before',mib(e.heap?.before)],['Heap after',mib(e.heap?.after)],['Reported capacity',mib(e.heap?.capacity)]]){facts.append(el('dt',name),el('dd',value));}
     $('gcEventFacts').replaceChildren(facts);$('gcEventFindings').replaceChildren(...eventFindings(e.id).map(findingNode));
     $('gcRawLocation').textContent=`lines ${e.line}–${e.endLine}`;$('gcRaw').textContent=rawFor(e);$('gcInspector').dataset.selectedId=e.id;
     bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:e.line,endLine:e.endLine}:null);
 }
-function inspectSignal(f){selected=null;draw();renderTable();$('gcInspector').removeAttribute('data-selected-id');$('gcEventTitle').textContent=f.title;$('gcEventFacts').replaceChildren();$('gcEventFindings').replaceChildren(findingNode(f));$('gcRawLocation').textContent='line '+f.line;$('gcRaw').textContent=lines[f.line-1]||'';bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:f.line,endLine:f.line}:null);}
+function inspectSignal(f){selected=null;draw();renderTable();$('gcInspector').removeAttribute('data-selected-id');$('gcEventTitle').textContent=f.title;$('gcEventHighlights').replaceChildren();$('gcEventFacts').replaceChildren();$('gcEventFindings').replaceChildren(findingNode(f));$('gcRawLocation').textContent='line '+f.line;$('gcRaw').textContent=lines[f.line-1]||'';bindSourceButton($('gcSource'),source.hostSourceId?{sourceId:source.hostSourceId,startLine:f.line,endLine:f.line}:null);}
 function renderTable(){if(!model)return;const type=$('gcType').value,query=$('gcSearch').value.toLowerCase();const foundIds=new Set(model.findings.map(f=>f.eventId));
     const filtered=model.events.filter(e=>(type==='all'||type==='findings'?type!=='findings'||foundIds.has(e.id):e.kind===type)&&(`${e.label} GC(${e.gcId})`.toLowerCase().includes(query)));
     page=Math.max(0,Math.min(page,Math.ceil(filtered.length/40)-1));const shown=filtered.slice(page*40,page*40+40);

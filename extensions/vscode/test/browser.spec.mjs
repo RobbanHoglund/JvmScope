@@ -215,6 +215,64 @@ test('GC synthetic multi-day history stays navigable with bounded chart marks',a
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
+test('GC rich tooltips, separate review symbols and contextual zoom',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');
+    await host.load([{name:'serial.log',text:await capture('testdata/gc-logs/java27-serial.log')}]);
+    await expect(page.locator('#gcSummary')).toContainText('within your 200 ms budget');
+    await expect(page.locator('#gcSummary')).toContainText('Memory pressure');
+    await expect(page.locator('#gcRawDetails')).not.toHaveAttribute('open');
+    await expect(page.locator('#gcEventHighlights')).toContainText('Heap change');
+    await page.locator('#gcSearch').fill('GC(77)');await page.locator('#gcRows button').click();
+    await page.locator('#gcZoom').click();
+    const span=await page.locator('#gcTimeline>svg').evaluate(n=>Number(n.dataset.to)-Number(n.dataset.from));
+    expect(span).toBeLessThan(40);
+    expect(await page.locator('.gc-heap-point').count()).toBeGreaterThan(0);
+    const selected=page.locator('.gc-mark.selected');
+    await selected.scrollIntoViewIfNeeded();await selected.focus();
+    await expect(page.locator('#gcTooltip')).toBeVisible();
+    await expect(page.locator('#gcTooltip')).toContainText('Heap');
+    await expect(page.locator('#gcTooltip')).toContainText('High occupancy');
+    await expect(selected).toHaveAttribute('aria-describedby','gcTooltip');
+    expect(await selected.locator('title').count()).toBe(0);
+    expect(await page.locator('.gc-mark.warning,.gc-mark.critical').count()).toBe(0);
+    expect(await page.locator('.gc-review-diamond').count()).toBeGreaterThan(0);
+    await selected.press('Escape');await expect(page.locator('#gcTooltip')).toBeHidden();
+    await expect(selected).toBeFocused();
+    await selected.hover();await expect(page.locator('#gcTooltip')).toBeVisible();
+    await page.locator('#gcTooltip').hover();await page.waitForTimeout(200);
+    await expect(page.locator('#gcTooltip')).toBeVisible();
+    await page.screenshot({path:testInfo.outputPath('gc-tooltip-dark.png')});
+    await page.keyboard.press('Escape');
+    await page.locator('#gcReset').click();
+    const cluster=page.locator('.gc-annotation-group').filter({hasText:'findings'}).first();
+    await expect(cluster).toBeVisible();await cluster.focus();
+    await expect(page.locator('#gcTooltip')).toContainText('annotated findings');
+    await cluster.press('Enter');await expect(page.locator('#gcAnnotations button:focus')).toHaveCount(1);
+});
+
+test('GC tooltips stay readable and inside the viewport in all themes',async({host},testInfo)=>{
+    const {page}=host;await host.open('/jvmscope/gc.html');await page.locator('#gcSample').click();
+    await expect(page.locator('#gcWorkspace')).toBeVisible();
+    for(const theme of Object.keys(themePalettes)){
+        await applyTheme(page,theme);
+        for(const width of [1440,360]){
+            await page.setViewportSize({width,height:1000});
+            await expect.poll(()=>page.locator('#gcTimeline').evaluate(n=>Math.abs(Number(n.querySelector('svg').getAttribute('viewBox').split(' ')[2])-n.clientWidth)<1)).toBe(true);
+            await page.locator('#gcTimeline').scrollIntoViewIfNeeded();
+            const mark=page.locator('.gc-mark.selected');await mark.focus();
+            await expect(page.locator('#gcTooltip')).toBeVisible();
+            await expectReadable(page.locator('#gcTooltip>strong'));
+            await expectReadable(page.locator('#gcTooltip dt').first());
+            const box=await page.locator('#gcTooltip').boundingBox();
+            expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(width);
+            expect(box.y).toBeGreaterThanOrEqual(0);expect(box.y+box.height).toBeLessThanOrEqual(1000);
+            expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+            await page.screenshot({path:testInfo.outputPath(`gc-tooltip-${theme}-${width}.png`)});
+            await mark.press('Escape');await mark.press('Enter');await expect(page.locator('#gcEventTitle')).toBeFocused();
+        }
+    }
+});
+
 test('GC clear cancels a delayed sample and raw log text never executes HTML',async({host})=>{
     const {page}=host;await host.open('/jvmscope/gc.html');
     let release;const gate=new Promise(resolve=>release=resolve);
@@ -226,6 +284,9 @@ test('GC clear cancels a delayed sample and raw log text never executes HTML',as
     await page.locator('#gcFile').setInputFiles({name:'literal.log',mimeType:'text/plain',buffer:Buffer.from(text)});
     await expect(page.locator('#gcRaw')).toHaveText(text);expect(await page.evaluate(()=>globalThis.gcInjected)).toBeUndefined();
     await expect(page.locator('#gcEventTitle img')).toHaveCount(0);
+    await page.locator('.gc-mark').focus();await expect(page.locator('#gcTooltip')).toBeVisible();
+    await expect(page.locator('#gcTooltip img')).toHaveCount(0);
+    expect(await page.evaluate(()=>globalThis.gcInjected)).toBeUndefined();
 });
 
 for (const analyzer of ['tda','tls']) test(`AI ${analyzer} reviews exact evidence, hands off edits and restores focus`, async({host},testInfo)=>{

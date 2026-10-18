@@ -7,6 +7,7 @@
 - Add a third analyzer for Sun/OpenJDK HotSpot Java 8–27 logs: upload/drop, separate heap/pause/concurrent timeline tracks, zoom, review annotations and exact source evidence.
 - Distinguish JVM pressure signals from configurable pause budgets, informational explicit GC and qualified occupancy heuristics. Keep concurrent cycles and allocation stalls out of stop-the-world totals.
 - Add GC commands, colored SVG icons, native sidebar navigation, web navigation and a source-backed GC knowledge guide.
+- Improve GC event zoom, add theme-aware keyboard-accessible tooltips and distinguish review diamonds from pause duration. Show heap observations, a segment-wide interpretation and a clearer event inspector with expandable log evidence.
 - Put the seven collector samples next to Load sample, including Serial, modern Parallel and historical CMS. Preserve elapsed days and calendar dates in long-capture labels, with synthetic multi-day scale regressions.
 - Bundle seven authentic collector samples and replay real isolated JVM captures from every major Java release 8–27, with provenance, hashes and independent MXBean count checks.
 - Test malformed input, cancellation, source navigation, keyboard use, four themes and narrow layouts. GC analysis remains fully local; AI is still available only for thread/TLS analysis.

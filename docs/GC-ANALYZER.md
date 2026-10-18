@@ -10,19 +10,29 @@ cancelable local worker; no log is uploaded. GC analysis does not invoke AI.
 
 ## Reading the view
 
-- **Heap:** recorded total-heap bytes before/after collections. Connecting lines
-  are visual interpolation, not measured allocation. Reported capacity is not
+- **Summary:** describes all analyzed records in the selected JVM segment, even
+  when the chart is zoomed. Pause-budget results and memory-pressure indicators
+  remain separate; a short pause is not proof of healthy memory behavior.
+- **Heap:** dots mark recorded total-heap bytes before/after collections. Dashed
+  links between collections are visual guides, not continuous measurements. Reported capacity is not
   necessarily `-Xmx`; ZGC percentages are not converted to an invented capacity.
 - **Pauses:** completed stop-the-world phases. Max and nearest-rank p95 use these
   durations only. The graph auto-scales independently of the pause budget.
+  Pause bars retain their own color; separate diamonds show review severity.
 - **Concurrent work / cycles and stalls:** separate from stop-the-world pauses.
   An allocation stall affects the allocating thread; it is not a global pause.
-- **Annotations:** numbered source-backed review points. Click one or an event
+- **Tooltips:** hover or focus an event for time, duration, heap values and
+  review reasons. Escape dismisses the tooltip; click or Enter opens the
+  event inspector. Log evidence is expandable and remains copyable.
+- **Annotations:** numbered source-backed review points. Nearby annotations
+  share a labelled findings badge; click or Enter moves to the findings list. Click one or an event
   to see its duration, heap values, rule explanation and exact physical log lines.
   In VS Code, imported sources can be opened at those lines, with existing stale
   source protection. Samples and dropped browser files have copyable evidence.
 - **Zoom to event / Full range / From / To:** inspect a region without discarding
-  the capture. The searchable, paginated event table retains all parsed events.
+  the capture. Event zoom frames nearby events using their actual spacing;
+  large gaps are not compressed on the time axis. The searchable, paginated
+  event table retains all parsed events.
   The chart uses bounded representative marks for dense logs.
 
 The initial pause budget is **200 ms**, a user-changeable review threshold, not a
