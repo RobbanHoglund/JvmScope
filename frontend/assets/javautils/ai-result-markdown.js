@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it';
+import { addAiCallouts } from './ai-result-callouts.js';
 
 // Diagnostic text and model output are untrusted. No HTML, embeds, images,
 // workspace/file URLs or command links. No highlighting plugin executes code.
@@ -8,6 +9,7 @@ export function isReportLink(value) {
     catch { return false; }
 }
 const md = new MarkdownIt({ html: false, linkify: false, typographer: false });
+addAiCallouts(md);
 md.validateLink = isReportLink;
 md.renderer.rules.image = (tokens, index) => `<span class="omitted-image">[Image omitted: ${md.utils.escapeHtml(tokens[index].content)}]</span>`;
 md.renderer.rules.link_open = (tokens, index) => {

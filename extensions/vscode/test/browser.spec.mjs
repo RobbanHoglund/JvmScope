@@ -125,6 +125,7 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} reviews exact evidenc
     await expect(page.locator('#aiProvider option')).toHaveCount(3);
     await expect(page.locator('#aiIncludeRaw')).not.toBeChecked();
     const initial=await page.locator('#aiPrompt').inputValue();
+    expect(initial).toContain('at most three bullets'); expect(initial).toContain('[!WARNING]');
     expect(initial).toContain('Full raw text is not included');
     expect(initial).toContain(analyzer==='tda'?'Snapshot 2 of 3':'Only the selected interaction');
     expect(host.messages.some(m=>m.action==='analyzeAi'||m.action==='copy')).toBe(false);
@@ -340,23 +341,26 @@ for (const analyzer of ['tda','tls']) test(`AI report ${analyzer} renders the co
     await host.page.locator('#analyzeAiBtn').click();await host.page.locator('#aiRun').click();
     await expect(host.page.locator('#aiStatus')).toContainText('formatted response');
     const result=host.ai.results[0], report=await host.openResult(result), page=report.page;
+    await expect(page.getByRole('heading',{name:'Summary',exact:true})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Observed facts',exact:true})).toBeVisible();
     await expect(page.locator('#answer strong').first()).toHaveText('two deadlock cycles involving five threads');
     await expect(page.locator('#answer table')).toHaveCount(1);
     await expect(page.locator('#answer pre code')).toContainText('synchronized (firstLock)');
+    await expect(page.locator('.ai-callout svg')).toHaveCount(2);
+    await expect(page.getByRole('complementary',{name:'Warning — AI assessment',exact:true})).toContainText('A single capture');
     await expect(page.locator('#resultScope')).toHaveText(result.scope);
     for(const width of [1100,600,360])for(const theme of Object.keys(themePalettes)){
         await page.setViewportSize({width,height:900});await applyTheme(page,theme);
-        for(const selector of ['#reportTitle','#resultScope','#resultModel','.report-meta','#answer p','#answer h2','#answer td','#answer th','#answer pre code','[data-action="copy"]'])await expectReadable(page.locator(selector).first());
+        for(const selector of ['#reportTitle','#resultScope','#resultModel','.report-meta','#answer p','#answer h2','#answer td','#answer th','#answer pre code','.ai-callout-label','.ai-callout-label small','[data-action="copy"]'])await expectReadable(page.locator(selector).first());
         expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
-        await page.getByRole('button',{name:'Copy Markdown',exact:true}).focus();await page.keyboard.press('Tab');
-        await expect(page.getByRole('button',{name:'Save Markdown',exact:true})).toBeFocused();
+        await page.getByRole('button',{name:'Copy response',exact:true}).focus();await page.keyboard.press('Tab');
+        await expect(page.getByRole('button',{name:'Save…',exact:true})).toBeFocused();
         expect(await page.locator(':focus').evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
         if(width===600)await page.screenshot({path:testInfo.outputPath(`${analyzer}-ai-report-${theme}.png`),fullPage:true});
     }
-    await page.getByRole('button',{name:'Copy Markdown',exact:true}).click();
+    await page.getByRole('button',{name:'Copy response',exact:true}).click();
     await expect(page.locator('#actionStatus')).toHaveText('Markdown copied.');
-    await page.getByRole('button',{name:'Save Markdown',exact:true}).click();
+    await page.getByRole('button',{name:'Save…',exact:true}).click();
     await expect(page.locator('#actionStatus')).toHaveText('Markdown saved.');
     await page.getByRole('button',{name:'Open Markdown',exact:true}).click();
     await expect(page.locator('#actionStatus')).toHaveText('Markdown source opened.');
@@ -366,7 +370,23 @@ for (const analyzer of ['tda','tls']) test(`AI report ${analyzer} renders the co
     expect(host.reports.calls.find(c=>c[0]==='external')).toEqual(['external','https://docs.oracle.com/en/java/']);
     expect(report.externalRequests).toEqual([]);
     // The same complete answer is restored after VS Code recreates a hidden tab.
-    await page.reload();await expect(page.locator('#answer h2').first()).toHaveText('Observed facts');
+    await page.reload();await expect(page.locator('#answer h2').first()).toHaveText('Summary');
+});
+
+test('AI priority labels remain readable without color, use local SVGs and never mark unlabelled prose as critical',async({host},testInfo)=>{
+    const body='## Summary\n\nCritical and warning are ordinary words here.\n\n> [!CRITICAL]\n> Fixture priority: verify the captured evidence.\n\n> [!WARNING]\n> Duration is unknown.\n\n> [!NOTE]\n> Impact has not been captured.\n\n> [!IMPORTANT]\n> A fourth label keeps text without adding another icon.\n\n<script>window.modelExecuted=true</script>';
+    const report=await host.openResult({model:'Fixture',scope:'Priority rendering fixture',body,markdown:body}), page=report.page;
+    await expect(page.locator('.ai-callout')).toHaveCount(4); await expect(page.locator('.ai-callout svg')).toHaveCount(3);
+    await expect(page.locator('#answer > p').first()).toHaveText('Critical and warning are ordinary words here.');
+    for(const theme of Object.keys(themePalettes)){
+        await applyTheme(page,theme); await page.setViewportSize({width:360,height:900});
+        for(const label of await page.locator('.ai-callout-label').all())await expectReadable(label);
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+        if(theme==='vscode-dark')await page.screenshot({path:testInfo.outputPath('ai-priority-icons.png'),fullPage:true});
+    }
+    expect(await page.evaluate(()=>window.modelExecuted)).toBeUndefined(); expect(report.externalRequests).toEqual([]);
+    await page.getByRole('button',{name:'Copy response',exact:true}).click();
+    await expect.poll(()=>host.reports.calls.find(c=>c[0]==='copy')?.[1]).toBe(body);
 });
 
 test('AI report does not execute model HTML, load external images or expose command/file links',async({host})=>{
@@ -380,9 +400,9 @@ test('AI report does not execute model HTML, load external images or expose comm
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
     expect(report.externalRequests).toEqual([]);
     host.reports.vscode.env.clipboard.writeText=async()=>{throw new Error('Clipboard unavailable');};
-    await page.getByRole('button',{name:'Copy Markdown',exact:true}).click();
+    await page.getByRole('button',{name:'Copy response',exact:true}).click();
     await expect(page.locator('#actionStatus')).toContainText('Clipboard unavailable');
-    await expect(page.getByRole('button',{name:'Save Markdown',exact:true})).toBeEnabled();
+    await expect(page.getByRole('button',{name:'Save…',exact:true})).toBeEnabled();
     await expect(page.locator('#answer h2')).toHaveText('Safe heading');
 });
 

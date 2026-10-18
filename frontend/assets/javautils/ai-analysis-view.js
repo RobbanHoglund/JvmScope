@@ -1,5 +1,6 @@
 import { isVsCode, getAiProviders, getAiStatus, cancelAi, analyzeWithAi, writeClipboard } from './host/platform.js';
 import { aiPrompt, MAX_AI_CHARACTERS } from './ai-evidence.js';
+import { AI_ICONS } from './ai-icons.js';
 
 /** Review the exact outgoing text. Nothing is sent merely by opening this view. */
 export function createAiAnalysisView(getEvidence, { getSnapshotOptions } = {}) {
@@ -8,7 +9,7 @@ export function createAiAnalysisView(getEvidence, { getSnapshotOptions } = {}) {
     opener.id = 'analyzeAiBtn'; opener.type = 'button'; opener.className = 'btn btn-sm btn-accent';
     opener.setAttribute('data-capture-only', ''); opener.setAttribute('aria-haspopup', 'dialog');
     opener.setAttribute('aria-controls', 'aiAnalysisDialog');
-    opener.innerHTML = '<svg class="ai-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8M8 12h5"/></svg>Analyze with AI';
+    opener.innerHTML = `${AI_ICONS.ai}Analyze with AI`;
     document.getElementById('howToUseBtn').before(opener);
     const dialog = document.createElement('dialog');
     dialog.id = 'aiAnalysisDialog'; dialog.className = 'ai-analysis-dialog';

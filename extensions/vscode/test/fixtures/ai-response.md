@@ -1,3 +1,12 @@
+## Summary
+
+- The capture reports **two deadlock cycles involving five threads**.
+- Their impact on application requests is unknown from this snapshot.
+- Compare the same threads in another capture and inspect the lock acquisition order.
+
+> [!WARNING]
+> A single capture does not establish how long a wait has persisted or whether production requests are affected.
+
 ## Observed facts
 
 The JVM reports **two deadlock cycles involving five threads**. The excerpt covers the selected snapshot; it does not establish how long these conditions have persisted.
@@ -17,6 +26,9 @@ The JVM reports **two deadlock cycles involving five threads**. The excerpt cove
 > A lock bottleneck is a hypothesis about impact. Verify it against repeated captures and application symptoms.
 
 ## Suggested checks
+
+> [!IMPORTANT]
+> Verify repeated observations against exact thread identities and capture times before drawing conclusions about duration.
 
 1. Capture another dump and compare the same threads.
 2. Inspect the application paths acquiring the two monitors.

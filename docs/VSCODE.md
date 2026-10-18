@@ -75,6 +75,14 @@ analyzer; reopening it restores the exact reviewed prompt without sending again.
 Errors and cancellation keep the review open. The saved review lives only in
 memory and is cleared by manual close or evidence invalidation.
 
+The reviewed prompt requests a concise summary and optional top-level Markdown
+callouts (`[!CRITICAL]`, `[!WARNING]`, `[!IMPORTANT]`, `[!NOTE]`). The renderer
+decorates only these explicit markers (plus the standard CAUTION/TIP aliases),
+never diagnostic keywords or code examples. It adds local SVGs to at most three
+callouts and keeps a textual priority plus **AI assessment** on each. The
+original response is retained for copy, save and source actions; HTML remains
+disabled. These are model-provided priorities, not additional parser findings.
+
 Series summaries have a shared 30,000-character budget. Detail is reduced evenly
 and each snapshot reports excerpt coverage; snapshots are never silently dropped.
 Optional raw excerpts share 35,000 characters with individual snapshot labels.

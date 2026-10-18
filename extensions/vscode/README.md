@@ -135,11 +135,17 @@ return an answer inside JvmScope. Their models are not assumed to be available
 through the Copilot API. Model responses never change parser findings.
 
 The response view renders headings, lists, tables, quotes and code blocks using
-your VS Code theme. **Copy Markdown**, **Save Markdown** and **Open Markdown**
+your VS Code theme. **Copy response**, **Save…** and **Open Markdown**
 retain the original answer with its model and scope. Reports stay in memory until
 their tabs close; saving is explicit. AI-supplied HTML is displayed as text,
 embedded images are omitted, and web links open only when clicked. Commands and
 local-file links in model output cannot be opened by this view.
+
+The prompt requests a short summary followed by facts, inferences, hypotheses
+and next checks. Explicit priority callouts have text labels and at most three
+status icons per report. Each label says **AI assessment**: the renderer never
+assigns severity from keywords or changes JvmScope's findings. Model formatting
+can vary; ordinary Markdown still renders normally.
 
 The Copilot picker omits known internal dictation and utility models. If Copilot
 rejects another model as reserved for VS Code, choose another model in the picker;
@@ -227,7 +233,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.1.3.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.2.0.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

@@ -27,6 +27,28 @@ async function showing(host, source = tokenSource()) {
     assert.equal(host.panels.length, 1);
     return { promise, panel: host.panels[0], source };
 }
+test('explicit priority callouts keep Markdown, readable labels and at most three icons per report', async () => {
+    const { renderAiMarkdown } = await import('../../../frontend/assets/javautils/ai-result-markdown.js');
+    const html = renderAiMarkdown('> [!CRITICAL]\n> **Check** `lock-1`.\n\n> [!WARNING]\n>\n> - Uncertain duration\n\n> [!IMPORTANT]\n> Compare captures.\n\n> [!NOTE]\n> No impact data.\n\n## Facts\n\nDone.');
+    assert.equal((html.match(/<aside /g) || []).length, 4);
+    assert.equal((html.match(/<\/aside>/g) || []).length, 4);
+    assert.equal((html.match(/<svg /g) || []).length, 3);
+    assert.equal((html.match(/<small>AI assessment<\/small>/g) || []).length, 4);
+    assert.match(html, /aria-label="Critical — AI assessment"/);
+    assert.match(html, /<strong>Check<\/strong> <code>lock-1<\/code>/);
+    assert.match(html, /<li>Uncertain duration<\/li>/);
+    assert.match(html, /<h2>Facts<\/h2>/);
+    assert.ok(!html.includes('[!'));
+});
+test('callouts never infer severity from keywords, code, nested quotes or unknown markup', async () => {
+    const { renderAiMarkdown } = await import('../../../frontend/assets/javautils/ai-result-markdown.js');
+    const html = renderAiMarkdown('Critical deadlock warning.\n\n```\n> [!CRITICAL]\n> example only\n```\n\n> Plain quote\n>\n> > [!CRITICAL]\n> > Nested data\n\n> [!CRITICAL onclick=alert(1)]\n> <img src=x onerror=alert(1)>\n\n> [!HEALTHY]\n> Not a supported status');
+    assert.ok(!html.includes('<aside')); assert.ok(!html.includes('<svg'));
+    assert.ok(!html.includes('<img')); assert.match(html, /&lt;img/);
+    assert.match(html, /\[!HEALTHY\]/);
+    const second = renderAiMarkdown('> [!NOTE]\n> A later report.');
+    assert.equal((second.match(/<svg /g) || []).length, 1, 'The icon budget is per report');
+});
 test('a result opens beside the analyzer and waits for rendering; actions use the original Markdown', async () => {
     const h = createResultHost(AiResults, root), { promise, panel } = await showing(h);
     try {

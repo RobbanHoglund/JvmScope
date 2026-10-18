@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 — AI snapshot comparisons and clearer priorities
+
+- Choose the current thread snapshot, its whole process group, or a custom subset of up to 20 snapshots in one reviewed AI request. Keep capture order, actual CPU interval endpoints, source references and thread identity qualifications.
+- Share the evidence budget across selected snapshots, label reduced detail and reject oversized selections without silently omitting captures. Raw excerpts remain optional.
+- Close the prompt dialog after a successfully rendered answer so the analyzer is visible beside it. Reopen the exact reviewed prompt without resending; errors and cancellation remain editable.
+- Replace the chat-bubble action icon with a compact AI sparkle. Render explicit critical, warning, important and note callouts with text labels and at most three local SVG status icons per report, respecting VS Code themes. Their priority is labelled as an AI assessment and never changes parser findings.
+- Request a concise summary and shorter paragraphs, improve narrow-panel reading size and simplify Copy response / Save… actions. Original Markdown exports are preserved.
+- Add regression coverage for process boundaries, snapshot subsets, counter resets, budget limits, exact handoff, successful review reopening, explicit callout rendering and themed layouts.
+
 ## 1.1.3 — Readable AI responses
 
 - Open completed Copilot answers in a formatted report beside the analyzer, with readable headings, lists, tables, quotes and code blocks instead of showing Markdown source by default.
