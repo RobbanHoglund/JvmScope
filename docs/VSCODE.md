@@ -48,9 +48,16 @@ not yet covered by that matrix; browser-hosted VS Code (`vscode.dev`) is not sup
 
 Version 1.1 adds optional **Analyze with AI** in both analyzer headers. The shared
 evidence builder copies the existing analysis model and its qualifications into
-a bounded, editable preview. It does not run a second rule engine. TDA scopes the
-summary to the selected snapshot; TLS scopes it to the selected interaction (or
-an explicitly limited overview). Full raw text is excluded unless requested.
+a bounded, editable preview. It does not run a second rule engine. TDA defaults
+to the selected snapshot and also offers the current series or a custom subset
+of up to 20 snapshots from the existing analyzer process group. It preserves
+capture order, source labels, identity qualifications and actual CPU interval
+endpoints, including when an endpoint is outside the selection. Names alone
+never establish thread identity. Missing PIDs, resets, incomplete collections,
+gaps and excerpt omissions remain explicit limitations. Multiple observations
+do not establish uninterrupted blocking or elapsed duration. TLS scopes it to the
+selected interaction (or an explicitly limited overview). Full raw text is
+excluded unless requested.
 
 The host protocol accepts only the fixed provider IDs `copilot`, `codex` and
 `claude`, with a 256 KiB UTF-8 input bound. Discovery does not activate assistants,
@@ -63,7 +70,17 @@ scope cancellation to the owning panel and request. Closing the dialog or
 invalidating its evidence cancels the pending work. Every provider await races
 against cancellation, with a three-minute total deadline; late results cannot
 open an editor or clear a newer job. Error notification dismissal never holds
-the job lock.
+the job lock. Completion closes the review without explicitly refocusing the
+analyzer; reopening it restores the exact reviewed prompt without sending again.
+Errors and cancellation keep the review open. The saved review lives only in
+memory and is cleared by manual close or evidence invalidation.
+
+Series summaries have a shared 30,000-character budget. Detail is reduced evenly
+and each snapshot reports excerpt coverage; snapshots are never silently dropped.
+Optional raw excerpts share 35,000 characters with individual snapshot labels.
+An oversized selection is rejected before handoff. The exact edited prompt still
+passes the provider's token-budget check; these bounds do not guarantee it fits
+every model.
 
 Codex uses the documented `chatgpt.openSidebar` command after copying the reviewed
 prompt. Claude uses its documented `/open` URI without prompt data in the URL;

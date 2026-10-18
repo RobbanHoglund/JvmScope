@@ -16,6 +16,7 @@ const {AiResults}=require(resolve(extensionRoot,'src/ai-result.cjs'));
 const {createAiHost}=require('./ai-host.cjs');
 const {createResultHost}=require('./ai-result-host.cjs');
 const capture=relative=>readFile(resolve(root,relative),'utf8');
+const {elapsedSnapshot}=await import('../../../frontend/test/tda/elapsed-regression-fixture.js');
 const test=base.extend({
     host: async({page},use)=>{
         const pages=JSON.parse(await readFile(resolve(media,'pages.json'),'utf8'));
@@ -161,6 +162,65 @@ test('AI copy fallback works without installed assistants and sends nothing on c
     await host.page.locator('#aiCopy').click();
     await expect.poll(()=>host.clipboard()).toBe('Manually reviewed evidence');
     await host.page.keyboard.press('Escape');
+    expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
+});
+
+test('AI snapshot selection previews a whole series or a custom subset and preserves the exact outgoing review',async({host},testInfo)=>{
+    const {page}=host;
+    await host.open('/jvmscope/tda.html'); await page.locator('#loadSampleBtn').click();
+    await page.locator('#dumpSelect').selectOption('1'); await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiSnapshotScope')).toHaveValue('current');
+    await expect(page.locator('#aiScope')).toContainText('Snapshot 2 of 3');
+    await page.locator('#aiSnapshotScope').selectOption('series');
+    await expect(page.locator('#aiScope')).toContainText('3 snapshots of 3');
+    const all=await page.locator('#aiPrompt').inputValue();
+    expect(all).toContain('"selectedSnapshots": [\n    1,\n    2,\n    3');
+    expect(all).toContain('Full raw text is not included');
+    expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
+    await page.locator('#aiSnapshotScope').selectOption('selected');
+    await page.locator('#aiSnapshotList input[value="1"]').uncheck();
+    await expect(page.locator('#aiScope')).toContainText('2 snapshots of 3 · #1, #3');
+    for (const index of ['0','2']) await page.locator(`#aiSnapshotList input[value="${index}"]`).uncheck();
+    await expect(page.locator('#aiStatus')).toContainText('Select at least one snapshot');
+    await expect(page.locator('#aiRun')).toBeDisabled(); await expect(page.locator('#aiCopy')).toBeDisabled();
+    await expect(page.locator('#aiPrompt')).toHaveValue('');
+    for (const index of ['0','2']) await page.locator(`#aiSnapshotList input[value="${index}"]`).check();
+    await page.locator('#aiIncludeRaw').check();
+    const reviewed=await page.locator('#aiPrompt').inputValue();
+    expect(reviewed).toContain('Snapshot #1'); expect(reviewed).toContain('Snapshot #3'); expect(reviewed).not.toContain('Snapshot #2');
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme); await page.setViewportSize({width:360,height:900});
+        await expectReadable(page.locator('#aiSnapshotScope')); await expectReadable(page.locator('#aiSnapshotList label').first());
+        expect(await page.locator('#aiAnalysisDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    }
+    await applyTheme(page,'vscode-dark'); await page.setViewportSize({width:650,height:900});
+    await page.screenshot({path:testInfo.outputPath('ai-selected-snapshots.png')});
+    await page.locator('#aiRun').click();
+    await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
+    await expect(page.locator('#aiAnalysisDialog')).not.toBeVisible();
+    expect(host.ai.calls.find(c=>c[0]==='send')[1][0].content).toBe(reviewed);
+    await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiPrompt')).toHaveValue(reviewed);
+    await expect(page.locator('#aiSnapshotScope')).toHaveValue('selected');
+    await expect(page.locator('#aiSnapshotList input[value="1"]')).not.toBeChecked();
+    await page.locator('#aiProvider').selectOption('codex'); await page.locator('#aiRun').click();
+    await expect.poll(()=>host.clipboard()).toBe(reviewed);
+    expect(host.messages.filter(m=>m.action==='analyzeAi')).toHaveLength(2);
+});
+
+test('AI current series excludes snapshots belonging to another known JVM',async({host})=>{
+    const sources=['1234','1234','5678'].map((pid,i)=>({name:`capture-${i}.txt`,text:pid+':\n'+elapsedSnapshot(i,100+i*700,`${100+i}.000`)}));
+    await host.open('/jvmscope/tda.html'); await host.load(sources);
+    await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiSnapshotScope option[value="series"]')).toHaveText('Current series (2 snapshots)');
+    await host.page.locator('#aiSnapshotScope').selectOption('series');
+    await expect(host.page.locator('#aiScope')).toContainText('#1, #2');
+    const prompt=await host.page.locator('#aiPrompt').inputValue();
+    expect(prompt).toContain('"processId": "1234"'); expect(prompt).not.toContain('"processId": "5678"');
+    await host.page.keyboard.press('Escape');
+    await host.page.locator('#dumpSelect').selectOption('2'); await host.page.locator('#analyzeAiBtn').click();
+    await expect(host.page.locator('#aiSnapshotOptions')).not.toBeVisible();
+    await expect(host.page.locator('#aiScope')).toContainText('Snapshot 3 of 3');
     expect(host.messages.some(m=>m.action==='analyzeAi')).toBe(false);
 });
 

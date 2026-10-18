@@ -1,6 +1,6 @@
 import { createThreadNavigation } from './host/navigation-model.js';
 import { createAiAnalysisView } from './ai-analysis-view.js';
-import { threadAiEvidence } from './ai-evidence.js';
+import { threadSelectionAiEvidence, threadAiSnapshotOptions } from './tda/ai-evidence-selection.js';
 import { describeLockCoverage } from './tda/lock-coverage.js';
 import { cpuCoverage, compactSnapshotTime } from './tda/presentation.js';
 import './tda/triage.css';
@@ -527,8 +527,10 @@ function tooltipAttr(value) {
 
 // ---- model/state ----
 let parsedDumps = [];
-const aiAnalysis = createAiAnalysisView(() => threadAiEvidence({ dump: parsedDumps[selectedDumpIndex],
-    snapshotIndex: selectedDumpIndex, snapshotCount: parsedDumps.length, name: UI.fileName.textContent }));
+const aiAnalysis = createAiAnalysisView(indices => threadSelectionAiEvidence({ dumps: parsedDumps,
+    currentIndex: selectedDumpIndex, indices, name: UI.fileName.textContent }), {
+    getSnapshotOptions: () => threadAiSnapshotOptions(parsedDumps, selectedDumpIndex),
+});
 let threadSeries = [];
 let selectedDumpIndex = 0;
 

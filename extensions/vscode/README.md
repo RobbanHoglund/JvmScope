@@ -104,11 +104,21 @@ Clearing/replacing the input or closing the panel revokes its source links.
 ## Optional AI analysis
 
 Load a capture and choose **Analyze with AI** beside Help. Review or edit the
-prompt and evidence before continuing. TDA uses the current snapshot; TLS uses
+prompt and evidence before continuing. TDA defaults to the current snapshot;
+choose **Current series** or **Choose snapshots…** to compare up to 20 snapshots
+from its process group in one request. Known JVM process boundaries are kept
+separate; missing process IDs cannot confirm that captures share a JVM. TLS uses
 the selected interaction, or a bounded capture overview if none is selected.
 The summary includes JvmScope's findings, qualifications and selected stack or
 event excerpts. Full raw text is excluded by default; **Include raw evidence
-excerpt** adds up to 35,000 characters and rebuilds the prompt.
+excerpt** adds up to 35,000 characters, shared across the selected snapshots,
+and rebuilds the prompt. Changing the selection also replaces prompt edits.
+The summary keeps every selected snapshot and explicitly labels reduced detail.
+
+After a successful Copilot response, the review dialog closes to reveal the
+analyzer beside the report. **Analyze with AI** reopens the reviewed prompt
+without resending it. Closing the review manually or changing the capture clears
+it. Errors and cancellation keep the dialog open for editing and retry.
 
 | Installed assistant | Action |
 | --- | --- |

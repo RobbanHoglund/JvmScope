@@ -12,36 +12,48 @@ const clip = (value, limit = 800) => {
 const json = value => clip(JSON.stringify(value, null, 2), SUMMARY_LIMIT);
 
 /** A bounded, explicit snapshot of evidence, never a second diagnostic engine. */
-export function threadAiEvidence({ dump, snapshotIndex, snapshotCount, name }) {
-    if (!dump?.threads?.length) return null;
+export function threadAiFacts({ dump, snapshotIndex, threadLimit = 12, stackLimit = 12, findingLimit = 20, includedSnapshots = [snapshotIndex] }) {
     const threads = dump.threads;
     const states = {};
     for (const thread of threads) states[thread.javaState || 'UNKNOWN'] = (states[thread.javaState || 'UNKNOWN'] || 0) + 1;
     const priority = thread => thread.isDeadlocked ? 0 : thread.blockedWaiterCount > 0 ? 1 : thread.javaState === 'BLOCKED' ? 2 : 3;
-    const selected = [...threads].sort((a, b) => priority(a) - priority(b)).slice(0, 12);
+    const selected = [...threads].sort((a, b) => priority(a) - priority(b)).slice(0, threadLimit);
+    return {
+        scope: 'Counts describe this complete snapshot; thread and stack details are excerpts. Table filters do not restrict this summary.',
+        snapshot: snapshotIndex + 1, source: clip(dump.sourceLabel, 240), processId: dump.processId ?? null,
+        jvm: clip(dump.headerLine), timestamp: clip(dump.timestampRaw), timeQuality: clip(dump.timestampQualityReason),
+        collectionScope: dump.collectionScope, parsingStatus: dump.parsingStatus, diagnostics: dump.diagnostics,
+        threadCount: threads.length, states, cpuCoverage: cpuCoverage(threads, snapshotIndex).detail,
+        reportedDeadlockCycles: (dump.deadlocks || []).length,
+        findingsCoverage: `${Math.min(findingLimit, dump.smartAnalysis?.findings?.length || 0)} of ${dump.smartAnalysis?.findings?.length || 0} analyzer findings. Existing findings may use other loaded snapshots; only explicitly selected snapshots are included as evidence.`,
+        findings: (dump.smartAnalysis?.findings || []).slice(0, findingLimit).map(f => ({
+            title: clip(f.title), severity: f.severity, confidence: f.confidence,
+            summary: clip(f.summary), evidence: f.evidence, qualification: clip(f.qualification),
+        })),
+        threadExcerptCoverage: `${selected.length} of ${threads.length} threads; deadlock participants, lock owners and blocked threads first. Stack excerpts contain at most ${stackLimit} lines each. Omission from this excerpt does not establish absence from the capture.`,
+        threads: selected.map(t => ({
+            name: clip(t.threadName, 240), id: t.sourceKey, state: t.javaState,
+            seriesKey: t.seriesKey, seriesMatchStatus: t.seriesMatchStatus, seriesMatchReason: t.seriesMatchReason,
+            previousSourceKey: t.previousSourceKey,
+            sourceLines: [t.rawStartLine, t.rawEndLine], deadlockCycle: t.deadlockCycleId,
+            waitsForOwner: clip(t.deadlockHeldBy), waitsForLock: t.deadlockWaitingLockId,
+            blockedWaiters: t.blockedWaiterCount, lockCoverage: describeLockCoverage(t),
+            cpuRatePercent: t.cpuDeltaStatus === 'computed' && t.cpuIntervalQuality === 'reliable' ? t.cpuRatePercent : null,
+            cpuInterval: t.previousSourceKey ? {
+                snapshots: [snapshotIndex, snapshotIndex + 1], bothSnapshotsIncluded: includedSnapshots.includes(snapshotIndex - 1),
+                milliseconds: t.cpuIntervalMs, quality: t.cpuIntervalQuality, basis: t.cpuRateBasis, status: t.cpuDeltaStatus,
+            } : null,
+            cpuQualification: clip(t.cpuIntervalReason),
+            stackExcerpt: (t.stackLines || []).slice(0, stackLimit).map(line => clip(line, 400)),
+        })),
+    };
+}
+
+export function threadAiEvidence({ dump, snapshotIndex, snapshotCount, name }) {
+    if (!dump?.threads?.length) return null;
     return {
         scope: `Snapshot ${snapshotIndex + 1} of ${snapshotCount} · ${clip(name, 240)}`,
-        summary: json({
-            scope: 'Complete selected snapshot; table filters do not restrict this summary. Other snapshots are not included as raw evidence.',
-            jvm: clip(dump.headerLine), timestamp: clip(dump.timestampRaw), timeQuality: clip(dump.timestampQualityReason),
-            collectionScope: dump.collectionScope, parsingStatus: dump.parsingStatus, diagnostics: dump.diagnostics,
-            threadCount: threads.length, states, cpuCoverage: cpuCoverage(threads, snapshotIndex).detail,
-            reportedDeadlockCycles: (dump.deadlocks || []).length,
-            findings: (dump.smartAnalysis?.findings || []).slice(0, 20).map(f => ({
-                title: clip(f.title), severity: f.severity, confidence: f.confidence,
-                summary: clip(f.summary), evidence: f.evidence, qualification: clip(f.qualification),
-            })),
-            threadExcerptCoverage: `${selected.length} of ${threads.length} threads; deadlock participants, lock owners and blocked threads first. Stack excerpts contain at most 12 lines each. This is not a full thread census.`,
-            threads: selected.map(t => ({
-                name: clip(t.threadName, 240), id: t.sourceKey, state: t.javaState,
-                sourceLines: [t.rawStartLine, t.rawEndLine], deadlockCycle: t.deadlockCycleId,
-                waitsForOwner: clip(t.deadlockHeldBy), waitsForLock: t.deadlockWaitingLockId,
-                blockedWaiters: t.blockedWaiterCount, lockCoverage: describeLockCoverage(t),
-                cpuRatePercent: t.cpuDeltaStatus === 'computed' && t.cpuIntervalQuality === 'reliable' ? t.cpuRatePercent : null,
-                cpuQualification: clip(t.cpuIntervalReason),
-                stackExcerpt: (t.stackLines || []).slice(0, 12).map(line => clip(line, 400)),
-            })),
-        }),
+        summary: json(threadAiFacts({ dump, snapshotIndex })),
         raw: clip(dump.rawText || '', RAW_LIMIT),
         rawLabel: 'Selected snapshot raw text (at most 35,000 characters)',
     };

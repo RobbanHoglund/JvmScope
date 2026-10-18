@@ -8,7 +8,15 @@
 .ai-raw-choice { display: flex; align-items: center; gap: 8px; margin: 14px 0; }
 .ai-analysis-dialog textarea { display: block; box-sizing: border-box; width: 100%; height: clamp(150px, 35vh, 360px); resize: vertical; margin: 7px 0 14px; padding: 10px; border: 1px solid var(--vscode-input-border, #64748b); border-radius: 4px; background: var(--vscode-input-background, #0f172a); color: var(--vscode-input-foreground, #e2e8f0); font: 12px/1.5 var(--vscode-editor-font-family, monospace); }
 .ai-provider-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.ai-provider-row select { min-width: 130px; padding: 6px; background: var(--vscode-dropdown-background, #18202d); color: var(--vscode-dropdown-foreground, #e2e8f0); border: 1px solid var(--vscode-dropdown-border, #64748b); }
+.ai-analysis-dialog select { min-width: 130px; max-width: 100%; padding: 6px; background: var(--vscode-dropdown-background, #18202d); color: var(--vscode-dropdown-foreground, #e2e8f0); border: 1px solid var(--vscode-dropdown-border, #64748b); }
+.ai-snapshot-options { min-width: 0; margin: 14px 0; padding: 10px 12px; border: 1px solid var(--vscode-panel-border, #495568); border-radius: 5px; }
+.ai-snapshot-options legend { padding: 0 6px; font-weight: 600; }
+.ai-snapshot-options > label { margin-right: 8px; }
+.ai-snapshot-options p { margin: 8px 0 0; }
+.ai-snapshot-list { max-height: 150px; overflow-y: auto; margin-top: 10px; }
+.ai-snapshot-list label { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; font-size: 12px; overflow-wrap: anywhere; }
+.ai-snapshot-list input { flex-shrink: 0; }
+.ai-snapshot-options[hidden], .ai-snapshot-list[hidden] { display: none; }
 .ai-analysis-dialog :focus-visible { outline: 2px solid var(--vscode-focusBorder, #60a5fa); outline-offset: 2px; }
 #aiStatus { display: block; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 @media (max-width: 480px) { .ai-analysis-dialog { padding: 12px; width: calc(100vw - 16px); } .ai-provider-row select { flex: 1; } }
