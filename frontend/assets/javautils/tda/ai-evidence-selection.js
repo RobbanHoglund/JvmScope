@@ -1,8 +1,8 @@
-import { threadAiEvidence, threadAiFacts } from '../ai-evidence.js';
+import { threadAiEvidence, threadAiFacts, boundedThreadSummary } from '../ai-evidence.js';
 import { canCompareThreadCollections } from './snapshot-quality.js';
 
 export const MAX_AI_SNAPSHOTS = 20;
-const SUMMARY_LIMIT = 30000, RAW_LIMIT = 35000;
+const RAW_LIMIT = 35000;
 const excerpt = (value, size) => {
     const text = String(value ?? 'Unavailable'), mark = '\n[Excerpt truncated]';
     return text.length <= size ? text : text.slice(0, size - mark.length) + mark;
@@ -42,16 +42,9 @@ export function threadSelectionAiEvidence({ dumps, currentIndex, indices = [curr
         })),
         limitations: 'Match threads only by the analyzer series keys and identity qualifications, never by name alone. Missing process IDs do not prove a shared JVM; counter resets and ambiguous identities break continuity. Snapshot numbers express capture order, not elapsed time. Repeated waits or stacks do not prove uninterrupted blocking, lack of progress or root cause. CPU intervals refer to the stated adjacent snapshot pair, which may include an unselected snapshot. Missing excerpt entries are not evidence that a thread or issue disappeared. Do not infer disappearance from incomplete or different collections.',
     };
-    // Reduce detail evenly across the entire selection. Never silently drop a
-    // later snapshot or cut JSON mid-record to fit a provider's context window.
-    let summary;
-    for (const [threadLimit, stackLimit, findingLimit] of [[12,12,20],[8,4,10],[4,2,5],[2,0,2],[0,0,0]]) {
-        summary = JSON.stringify({ ...context, snapshots: selected.map(snapshotIndex => threadAiFacts({
-            dump: dumps[snapshotIndex], snapshotIndex, includedSnapshots: selected, threadLimit, stackLimit, findingLimit,
-        })) }, null, 2);
-        if (summary.length <= SUMMARY_LIMIT) break;
-    }
-    if (summary.length > SUMMARY_LIMIT) throw new Error('These snapshot summaries exceed the evidence budget. Select fewer snapshots; nothing has been sent.');
+    const summary = boundedThreadSummary(limits => ({ ...context, snapshots: selected.map(snapshotIndex => threadAiFacts({
+        dump: dumps[snapshotIndex], snapshotIndex, includedSnapshots: selected, ...limits,
+    })) }));
     const headings = selected.map(index => `Snapshot #${index + 1} · ${excerpt(dumps[index].sourceLabel || name, 180)} · ${excerpt(dumps[index].timestampRaw || 'Time unavailable', 90)}\n`);
     const perSnapshot = Math.floor((RAW_LIMIT - headings.join('').length - 2 * selected.length) / selected.length);
     const raw = selected.map((index, position) => headings[position] + excerpt(dumps[index].rawText || '', perSnapshot)).join('\n\n');

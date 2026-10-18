@@ -70,7 +70,7 @@ test('large series share the budget across every selected snapshot with valid JS
     const facts = JSON.parse(evidence.summary);
     assert.equal(facts.snapshots.length, 20);
     assert.deepEqual(facts.snapshots.map(s => s.snapshot), Array.from({length: 20}, (_, i) => i + 1));
-    assert.ok(evidence.summary.length <= 30000); assert.ok(evidence.raw.length <= 35000);
+    assert.ok(evidence.summary.length <= 40000); assert.ok(evidence.raw.length <= 35000);
     assert.ok(aiPrompt(evidence, true).length < MAX_AI_CHARACTERS);
     for (let i = 0; i < 20; i++) assert.ok(evidence.raw.includes(`raw-${i}\n`));
     assert.ok(facts.snapshots.every(s => s.threadExcerptCoverage.startsWith(`${s.threads.length} of 20`)));
@@ -85,4 +85,32 @@ test('invalid or oversized selections fail explicitly and a single selected snap
     assert.equal(threadSelectionAiEvidence({ dumps: [], currentIndex: 0 }), null);
     assert.deepEqual(threadSelectionAiEvidence({ dumps, currentIndex: 0, indices: [2], name: 'session' }),
         threadAiEvidence({ dump: dumps[2], snapshotIndex: 2, snapshotCount: 3, name: 'session' }));
+});
+
+
+test('real three-snapshot analysis keeps both deadlock cycles, every participant and actionable measured CPU evidence', () => {
+    const dumps = sample();
+    const evidence = threadSelectionAiEvidence({ dumps, currentIndex: 0, indices: [0,1,2] });
+    const { snapshots } = JSON.parse(evidence.summary);
+    for (const [i, facts] of snapshots.entries()) {
+        assert.equal(facts.findings.length, dumps[i].smartAnalysis.findings.length);
+        assert.deepEqual(facts.deadlockCycles.map(c => c.participants.length), [2,3]);
+        const deadlocked = facts.threads.filter(t => t.deadlockCycle);
+        assert.equal(deadlocked.length, 5);
+        assert.ok(deadlocked.every(t => t.stackExcerpt.length >= 2));
+        assert.deepEqual(facts.deadlockCycles.flatMap(c => c.participants.map(p => p.id)).sort(), deadlocked.map(t => t.id).sort());
+        const hot = dumps[i].smartAnalysis.findings.find(f => f.id === 'cpu-hot');
+        assert.deepEqual(facts.measuredCpuThreads.map(t => t.id).sort(), (hot?.threads || []).map(t => t.sourceKey).sort());
+        assert.ok(facts.measuredCpuThreads.every(t => t.ratePercent > 0 && t.stackExcerpt.length && t.interpretation.some(x => /threshold/.test(x))));
+    }
+    assert.ok(aiPrompt(evidence, true).length < MAX_AI_CHARACTERS);
+});
+
+test('critical evidence cannot silently vanish under budget pressure, including unmapped participants', () => {
+    const dump = sample()[0];
+    dump.deadlocks[0].threads.push({threadName: 'Unmapped', mappingStatus: 'ambiguous', heldByMappingStatus: 'missing'});
+    const facts = JSON.parse(threadAiEvidence({ dump, snapshotIndex: 0, snapshotCount: 1 }).summary);
+    assert.equal(facts.deadlockCycles[0].participants.at(-1).mappingStatus, 'ambiguous');
+    dump.deadlocks = Array.from({length: 500}, (_, id) => ({...dump.deadlocks[0], id}));
+    assert.throws(() => threadAiEvidence({ dump, snapshotIndex: 0, snapshotCount: 1 }), /Required analyzer.*nothing has been sent/);
 });

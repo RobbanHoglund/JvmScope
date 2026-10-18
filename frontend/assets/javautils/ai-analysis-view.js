@@ -124,15 +124,19 @@ export function createAiAnalysisView(getEvidence, { getSnapshotOptions } = {}) {
     $('aiSnapshotList').addEventListener('change', rebuildEvidence);
     opener.addEventListener('click', async () => {
         const restoreReview = savedReview, selectedProvider = provider.value;
-        if (!restoreReview) { prepareSnapshotOptions(); evidence = getEvidence(selectedIndices()); }
-        if (!evidence) return;
+        let openingError;
+        if (!restoreReview) {
+            try { prepareSnapshotOptions(); evidence = getEvidence(selectedIndices()); }
+            catch (error) { evidence = null; openingError = error.message; }
+        }
+        if (!evidence && !openingError) return;
         savedReview = false;
         const current = ++generation;
         clearTimeout(pollTimer); jobId = null; cancelling = false;
         providers = []; provider.replaceChildren(); busy = false;
-        if (!restoreReview) { raw.checked = false; prompt.value = aiPrompt(evidence); }
-        $('aiScope').textContent = evidence.scope;
-        status('Checking installed assistants…'); refresh(); dialog.showModal();
+        if (!restoreReview) { raw.checked = false; prompt.value = evidence ? aiPrompt(evidence) : ''; }
+        $('aiScope').textContent = evidence?.scope || 'Evidence exceeds the review budget.';
+        status(openingError || 'Checking installed assistants…'); refresh(); dialog.showModal();
         dialog.querySelector('[data-ai-close]').focus({ preventScroll: true });
         try {
             const [found, state] = await Promise.all([getAiProviders(), getAiStatus()]);
@@ -141,7 +145,7 @@ export function createAiAnalysisView(getEvidence, { getSnapshotOptions } = {}) {
             for (const item of providers) { const option = document.createElement('option'); option.value = item.id; option.textContent = item.label; provider.append(option); }
             if (restoreReview && providers.some(item => item.id === selectedProvider)) provider.value = selectedProvider;
             if (state.running) { provider.value = 'copilot'; showJob(state, current); }
-            else { status(restoreReview ? 'Previous analysis complete. Review or edit this prompt before starting another analysis.' : 'Nothing has been sent.'); refresh(); }
+            else { status(openingError || (restoreReview ? 'Previous analysis complete. Review or edit this prompt before starting another analysis.' : 'Nothing has been sent.')); refresh(); }
         } catch (error) { if (current === generation) { status(error.message); refresh(); } }
     });
     async function act(action) {
