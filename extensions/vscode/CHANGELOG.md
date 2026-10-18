@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 — GC Timeline Navigation
 
 - Give the GC timeline more space with a compact summary, responsive chart height and collapsible details. Add a draggable whole-segment pause overview, explicit visible-range scope, readable signal explanations and a complete paginated findings list.
 
