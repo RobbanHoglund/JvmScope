@@ -1,6 +1,6 @@
 // Deterministic provider boundary; the controller is loaded from the tested source or VSIX.
 function createAiHost(AiAnalysis, { installed = ['GitHub.copilot-chat', 'openai.chatgpt', 'anthropic.claude-code'], tokens = 50, maxInputTokens = 1000, choose = true, deny = false, failOpen = false, timeoutMs } = {}) {
-    const calls = [], errors = [], documents = [];
+    const calls = [], errors = [], results = [];
     let cancel;
     class CancellationTokenSource {
         constructor() {
@@ -37,10 +37,10 @@ function createAiHost(AiAnalysis, { installed = ['GitHub.copilot-chat', 'openai.
             showTextDocument: async document => calls.push(['document', document]),
             showErrorMessage: async text => errors.push(text),
         },
-        workspace: { openTextDocument: async document => { documents.push(document); return document; } },
+        workspace: { openTextDocument: async document => document },
     };
-    const ai = new AiAnalysis(vscode, { timeoutMs });
-    return { ai, vscode, model, calls, errors, documents, cancel: () => cancel() };
+    const ai = new AiAnalysis(vscode, { timeoutMs, showResult: async result => { results.push(result); } });
+    return { ai, vscode, model, calls, errors, results, cancel: () => cancel() };
 }
 
 module.exports = { createAiHost };

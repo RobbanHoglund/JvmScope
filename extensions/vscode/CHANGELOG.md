@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.3 — Readable AI responses
+
+- Open completed Copilot answers in a formatted report beside the analyzer, with readable headings, lists, tables, quotes and code blocks instead of showing Markdown source by default.
+- Follow the active VS Code theme, including high contrast, and keep long code and tables within narrow editor panels.
+- Add Copy Markdown, Save Markdown and Open Markdown actions using the original response and its model/scope metadata.
+- Render model output without executable HTML, embedded images or command/file links. External web links open only when clicked; nothing is fetched to render an answer.
+- Test formatted output, exact exports, cancellation, four themes and narrow layouts in both analyzer journeys, plus the installed VSIX webview.
+
 ## 1.1.2 — Copilot model selection
 
 - Exclude Copilot's internal dictation and utility aliases from the model picker, fixing the “only available to VS Code core” error for dictation models.

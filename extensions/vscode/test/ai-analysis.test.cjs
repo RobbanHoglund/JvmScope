@@ -46,13 +46,13 @@ test('Claude handoff keeps diagnostic data out of URLs and recovers from a faile
     assert.equal(failed.calls.length, before, 'Never open the assistant when copying failed');
 });
 
-test('Copilot uses the chosen runtime model, exact reviewed prompt and a separate response editor', async () => {
+test('Copilot uses the chosen runtime model, exact reviewed prompt and a formatted response view', async () => {
     const h = host();
     await h.ai.run('copilot', 'user-edited prompt'); await h.ai.job;
     assert.deepEqual(h.calls.find(c => c[0] === 'models'), ['models', { vendor: 'copilot' }]);
     assert.deepEqual(h.calls.find(c => c[0] === 'send'), ['send', [{ role: 'user', content: 'user-edited prompt' }]]);
-    assert.equal(h.documents.length, 1); assert.equal(h.documents[0].language, 'markdown');
-    assert.match(h.documents[0].content, /Observed evidence/); assert.match(h.documents[0].content, /does not change JvmScope/);
+    assert.equal(h.results.length, 1); assert.equal(h.results[0].model, h.model.name);
+    assert.match(h.results[0].markdown, /Observed evidence/); assert.match(h.results[0].markdown, /does not change JvmScope/);
     assert.ok(!h.calls.some(c => ['copy', 'command', 'external'].includes(c[0])));
     assert.deepEqual(h.errors, []); assert.equal(h.ai.running, false);
 });
@@ -60,7 +60,7 @@ test('Copilot uses the chosen runtime model, exact reviewed prompt and a separat
 test('model cancellation, unavailable models, access denial and oversized evidence never send a request', async () => {
     for (const options of [{ choose: false }, { deny: true }, { tokens: 900 }, { maxInputTokens: NaN }]) {
         const h = host(options); await h.ai.run('copilot', 'reviewed'); await h.ai.job;
-        assert.ok(!h.calls.some(c => c[0] === 'send')); assert.equal(h.documents.length, 0);
+        assert.ok(!h.calls.some(c => c[0] === 'send')); assert.equal(h.results.length, 0);
         assert.equal(h.errors.length, options.choose === false ? 0 : 1);
     }
     const h = host(); h.vscode.lm.selectChatModels = async () => [];
@@ -79,7 +79,7 @@ test('one AI job at a time and disposal cancel model work without opening stale 
     await new Promise(resolve => setImmediate(resolve));
     await assert.rejects(h.ai.run('copilot', 'another'), /analysis is running/);
     h.ai.dispose(); complete(); await h.ai.job;
-    assert.equal(h.documents.length, 0); assert.deepEqual(h.errors, []);
+    assert.equal(h.results.length, 0); assert.deepEqual(h.errors, []);
 });
 
 test('progress cancellation and stream failures do not present incomplete output as a result', async () => {
@@ -91,7 +91,7 @@ test('progress cancellation and stream failures do not present incomplete output
             yield 'reply';
         })() });
         await h.ai.run('copilot', 'reviewed'); await h.ai.job;
-        assert.equal(h.documents.length, 0); assert.equal(h.errors.length, cancelled ? 0 : 1);
+        assert.equal(h.results.length, 0); assert.equal(h.errors.length, cancelled ? 0 : 1);
     }
 });
 
@@ -105,7 +105,7 @@ test('failed Copilot requests release the job while the error notification is st
     assert.equal(h.ai.running, false, 'An undismissed notification must not lock further analysis');
     h.vscode.lm.selectChatModels = async () => [h.model];
     await h.ai.run('copilot', 'retry'); await h.ai.job;
-    assert.equal(h.documents.length, 1);
+    assert.equal(h.results.length, 1);
 });
 
 for (const stage of ['discovery', 'picker', 'tokens', 'request', 'stream']) {
@@ -127,7 +127,7 @@ for (const stage of ['discovery', 'picker', 'tokens', 'request', 'stream']) {
         await h.ai.job;
         assert.equal(h.ai.running, false);
         assert.equal(states.at(-1).state, 'cancelled');
-        assert.equal(h.documents.length, 0);
+        assert.equal(h.results.length, 0);
         // Start a new job while the old provider still has not cooperated.
         h.vscode.lm.selectChatModels = () => new Promise(() => {});
         const next = await h.ai.run('copilot', 'retry', { owner: 'tda' });
@@ -135,7 +135,7 @@ for (const stage of ['discovery', 'picker', 'tokens', 'request', 'stream']) {
         release(stage === 'discovery' ? [h.model] : stage === 'picker' ? { model: h.model } : stage === 'tokens' ? 50 : { done: true });
         await new Promise(resolve => setImmediate(resolve));
         assert.equal(h.ai.running, true, 'Late provider completion cannot clear the new job');
-        assert.equal(h.documents.length, 0);
+        assert.equal(h.results.length, 0);
         assert.equal(states.at(-1).state, 'cancelled');
         h.ai.cancel('tda', next.jobId); await h.ai.job;
         assert.deepEqual(h.errors, []);
@@ -152,7 +152,7 @@ test('an unresponsive provider times out with a visible, retryable error', async
     assert.equal(h.errors.length, 1);
     h.vscode.lm.selectChatModels = async () => [h.model];
     await h.ai.run('copilot', 'retry'); await h.ai.job;
-    assert.equal(h.documents.length, 1);
+    assert.equal(h.results.length, 1);
 });
 
 test('closing an owning panel cancels pending discovery without requiring provider cooperation', async () => {
@@ -180,7 +180,7 @@ test('Copilot model picker excludes internal dictation/utility aliases before co
         assert.deepEqual(items.map(item => item.model.id), [h.model.id]); return items[0];
     };
     await h.ai.run('copilot', 'reviewed'); await h.ai.job;
-    assert.equal(h.documents.length, 1); assert.deepEqual(h.errors, []);
+    assert.equal(h.results.length, 1); assert.deepEqual(h.errors, []);
 });
 
 test('an internal-only Copilot catalog explains that no suitable chat model is available', async () => {
@@ -207,7 +207,7 @@ for (const streaming of [false, true]) test(`core-only rejection ${streaming ? '
     h.vscode.window.showQuickPick = async items => { picks.push(items.map(item => item.model.id)); return items[0]; };
     await h.ai.run('copilot', 'unchanged reviewed evidence', { onState: state => states.push(state) }); await h.ai.job;
     assert.deepEqual(picks, [['gpt-5.6-luna', h.model.id], [h.model.id]]);
-    assert.equal(rejectedRequests, 1); assert.equal(h.documents.length, 1);
+    assert.equal(rejectedRequests, 1); assert.equal(h.results.length, 1);
     assert.deepEqual(h.calls.find(call => call[0] === 'send')[1], [{ role: 'user', content: 'unchanged reviewed evidence' }]);
     assert.ok(states.some(state => /reserved for VS Code/.test(state.message)));
     assert.deepEqual(h.errors, []);
@@ -224,7 +224,7 @@ test('rejecting a core-only model never submits to another model until the user 
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(pickCount, 2); assert.equal(h.calls.some(call => call[0] === 'send'), false);
     h.ai.cancel('tda', result.jobId); await h.ai.job;
-    assert.equal(h.documents.length, 0); assert.equal(h.ai.running, false);
+    assert.equal(h.results.length, 0); assert.equal(h.ai.running, false);
 });
 
 test('consent, quota and network errors do not trigger model fallback or hide available models', async () => {

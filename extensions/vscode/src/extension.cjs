@@ -5,12 +5,14 @@ const { MAX_BYTES, isMessage, validateRequest, readSources } = require('./protoc
 const { SourceRegistry } = require('./source-navigation.cjs');
 const { AnalysisSidebar, NavigationSession } = require('./analysis-sidebar.cjs');
 const { AiAnalysis } = require('./ai-analysis.cjs');
+const { AiResults } = require('./ai-result.cjs');
 const decoder = new TextDecoder();
 const titles = { tda: 'JvmScope · Thread dumps', tls: 'JvmScope · TLS logs', docs: 'JvmScope · Knowledge' };
 
 async function activate(context) {
-    const ai = new AiAnalysis(vscode);
-    context.subscriptions.push(ai);
+    const aiResults = new AiResults(vscode, context.extensionUri);
+    const ai = new AiAnalysis(vscode, { showResult: (result, token) => aiResults.show(result, token) });
+    context.subscriptions.push(ai, aiResults);
     const media = vscode.Uri.joinPath(context.extensionUri, 'media');
     const pages = JSON.parse(decoder.decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(media, 'pages.json'))));
     const sessions = new Map(), sequences = new Map(), evidence = new Map();

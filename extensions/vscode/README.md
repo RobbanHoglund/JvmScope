@@ -112,7 +112,7 @@ excerpt** adds up to 35,000 characters and rebuilds the prompt.
 
 | Installed assistant | Action |
 | --- | --- |
-| GitHub Copilot Chat | **Analyze with Copilot** offers the models available through VS Code's Language Model API. The response opens in a separate Markdown editor. Progress and errors appear in the AI dialog. Cancel there or from the progress notification. |
+| GitHub Copilot Chat | **Analyze with Copilot** offers available chat models. The response opens as a formatted report beside the analyzer. Progress and errors appear in the AI dialog. Cancel there or from the progress notification. |
 | OpenAI Codex | **Copy and open Codex** copies the reviewed prompt and opens its sidebar. Paste, review and send in Codex. |
 | Claude Code | **Copy and open Claude Code** copies the reviewed prompt and opens a Claude tab. Paste, review and send there. |
 | None / another assistant | **Copy prompt** remains available for manual use. |
@@ -123,6 +123,13 @@ organization policy can still restrict access. Reopen the dialog after enabling
 an extension. Codex and Claude handoff does not automatically submit a request or
 return an answer inside JvmScope. Their models are not assumed to be available
 through the Copilot API. Model responses never change parser findings.
+
+The response view renders headings, lists, tables, quotes and code blocks using
+your VS Code theme. **Copy Markdown**, **Save Markdown** and **Open Markdown**
+retain the original answer with its model and scope. Reports stay in memory until
+their tabs close; saving is explicit. AI-supplied HTML is displayed as text,
+embedded images are omitted, and web links open only when clicked. Commands and
+local-file links in model output cannot be opened by this view.
 
 The Copilot picker omits known internal dictation and utility models. If Copilot
 rejects another model as reserved for VS Code, choose another model in the picker;
@@ -210,7 +217,7 @@ On headless Linux, wrap the extension-host command in `xvfb-run -a`.
 The integration runner downloads the pinned minimum VS Code version into an
 isolated test directory. CI installs the same packaged VSIX on Linux, Windows
 and macOS, and also tests the current stable VS Code on Linux. To test a package
-locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.1.2.vsix` before running
+locally, set `VSCODE_VSIX=build/vscode/jvmscope-1.1.3.vsix` before running
 `test:integration` (path relative to the repository root). Python 3 can also check
 the archive and rewritten Marketplace links with
 `python3 extensions/vscode/test/package.py`. Set `VSCODE_VERSION` to test another release, or

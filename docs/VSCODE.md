@@ -56,7 +56,7 @@ The host protocol accepts only the fixed provider IDs `copilot`, `codex` and
 `claude`, with a 256 KiB UTF-8 input bound. Discovery does not activate assistants,
 authenticate or request inference. A user-initiated Copilot action selects an
 available model through `vscode.lm`, checks its token budget and supports
-cancellation. Its output goes to a separate Markdown editor and never rewrites
+cancellation. Its output goes to a formatted report beside the analyzer and never rewrites
 JvmScope's findings. Only one model request runs at a time. The dialog polls
 per-panel job state and exposes Cancel, progress and provider errors. Job IDs
 scope cancellation to the owning panel and request. Closing the dialog or
@@ -78,7 +78,7 @@ have unit coverage; packaged browser journeys cover the preview, exact edited
 payload, themes, narrow layouts, capture replacement and explicit model reselection
 after a core-only rejection. The installed-extension CI also exercises real native
 notification promises, progress cancellation, internal-alias filtering and the
-response editor with a deterministic provider boundary, without an account. **Live authenticated Copilot inference
+response webview with a deterministic provider boundary, without an account. **Live authenticated Copilot inference
 and interactive Codex/Claude handoff require a manual smoke test with those
 extensions enabled; CI does not submit real diagnostic data or consume quota.**
 
@@ -115,8 +115,35 @@ and [stable API declarations](https://github.com/microsoft/vscode/blob/main/src/
 Provider IDs and error wording are not a public compatibility contract; recheck
 these boundaries when updating Copilot support. The authenticated release smoke
 test must verify that the actual account's picker excludes the internal aliases,
-an allowed model opens a response editor, and cancellation and access-denied
+an allowed model opens a formatted report, and cancellation and access-denied
 retries leave the prompt usable in both analyzers.
+
+### AI response rendering
+
+`AiResults` presents each completed answer in an independent in-memory webview.
+The job waits for its rendering acknowledgement; cancellation while the view is
+loading disposes it, and late asset reads cannot create a new tab. Completed
+reports keep their original snapshot when the analyzer changes. Closing a report
+releases its data; recreating a hidden webview receives the same host-held answer.
+No answer is written to disk or webview persistent state automatically.
+
+The dedicated `ai-result.html` entry is built only for VS Code and is not part of
+the analyzer/knowledge navigation allowlist. Its local Markdown renderer is
+markdown-it 15.0.2 with HTML disabled, images replaced by text and links restricted
+to credential-free HTTP(S). Link targets are inert attributes until an explicit
+click passes host validation. There are no executable code blocks, external
+images, command URIs, local-file links or network calls to render an answer.
+The existing default-deny webview CSP and media-only resource roots still apply.
+
+The report uses VS Code theme variables, keyboard-visible focus and local scroll
+regions for wide tables/code. Copy, save and source actions use the host-held
+original Markdown, never replacement text supplied by the webview. Saving asks
+for a destination; opening source creates an ordinary editable Markdown document.
+Packaged browser tests check both analyzer journeys, themes, narrow widths,
+rendering of malicious markup, exact exports and recovery from action failures.
+Native CI waits for the installed report's real render acknowledgement.
+
+Renderer reference: [markdown-it safety guidance](https://github.com/markdown-it/markdown-it/blob/master/docs/safety.md).
 
 ### Existing editor integration
 

@@ -36,7 +36,7 @@ export function createAiAnalysisView(getEvidence) {
         dialog.querySelector('[data-ai-close]').textContent = jobId ? 'Cancel and close' : 'Close';
         run.textContent = selected?.id === 'copilot' ? (busy ? 'Copilot running…' : 'Analyze with Copilot') : selected ? `Copy and open ${selected.label}` : 'Choose assistant';
         $('aiProviderHelp').textContent = selected?.id === 'copilot'
-            ? 'Choose a model in the VS Code picker at the top of the window. Progress appears below. You can cancel here; the response opens in a new Markdown editor.'
+            ? 'Choose a model in the VS Code picker at the top of the window. Progress appears below. The formatted response opens beside this analyzer, with copy, save and Markdown source actions.'
             : selected ? 'Copies this exact prompt and opens the assistant. Paste into its chat, review, then send. Its sign-in and usage limits apply.'
                 : 'No supported assistant is available in this VS Code window. You can copy the prompt, or enable Copilot Chat, Codex or Claude Code and reopen this dialog.';
     }

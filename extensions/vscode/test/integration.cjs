@@ -33,6 +33,7 @@ exports.run = async () => {
     }
     const { SourceRegistry } = require(path.join(extension.extensionPath, 'src/source-navigation.cjs'));
     const { AiAnalysis } = require(path.join(extension.extensionPath, 'src/ai-analysis.cjs'));
+    const { AiResults } = require(path.join(extension.extensionPath, 'src/ai-result.cjs'));
     // Discovery is read-only even in the real host; CI never requires an AI
     // account, submits a prompt or consumes a provider's quota.
     const ai = new AiAnalysis(vscode);
@@ -72,7 +73,8 @@ exports.run = async () => {
             },
         },
     };
-    const nativeAi = new AiAnalysis(boundary);
+    const nativeResults = new AiResults(vscode, extension.extensionUri);
+    const nativeAi = new AiAnalysis(boundary, { showResult: (result, token) => nativeResults.show(result, token) });
     const completed = async () => {
         let timer;
         try { await Promise.race([nativeAi.job, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Native AI lifecycle did not settle')), 5000); })]); }
@@ -86,14 +88,15 @@ exports.run = async () => {
         assert.equal(notificationDismissed, false, 'Job finishes while the real VS Code error notification is still open');
         boundary.lm.selectChatModels = async () => [internalModel, model];
         await nativeAi.run('copilot', 'Synthetic retry evidence'); await completed();
-        assert.match(vscode.window.activeTextEditor.document.getText(), /Native host AI lifecycle fixture/);
-        await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+        await expectActiveTab('JvmScope · AI analysis');
+        assert.equal(nativeResults.panels.size, 1, 'Formatted report acknowledged rendering in the installed webview');
+        for (const panel of nativeResults.panels) panel.dispose();
         boundary.lm.selectChatModels = () => new Promise(() => {});
         const job = await nativeAi.run('copilot', 'Synthetic cancellation evidence', { owner: 'test' });
         assert.equal(nativeAi.cancel('test', job.jobId), true); await completed();
         assert.equal(nativeAi.running, false);
-    } finally { nativeAi.dispose(); }
-    console.log('PASS: native AI error notification remains open without locking retries; internal Copilot aliases are excluded; progress cancellation releases a non-cooperating provider; result editor opens.');
+    } finally { nativeAi.dispose(); nativeResults.dispose(); }
+    console.log('PASS: native AI error notification remains open without locking retries; internal Copilot aliases are excluded; progress cancellation releases a non-cooperating provider; formatted response renders in an installed webview.');
     // Exercise the contributed view's focus command and editor toolbar commands
     // without explicitly activating the extension, as a user opening the view would.
     await vscode.commands.executeCommand('jvmscope.analysis.focus');

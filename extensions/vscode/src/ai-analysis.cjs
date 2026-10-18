@@ -31,8 +31,9 @@ function validateAiInput(provider, prompt) {
 
 /** No keys, shell commands, automatic file reads or provider requests on activation. */
 class AiAnalysis {
-    constructor(vscode, { timeoutMs = AI_TIMEOUT_MS } = {}) {
+    constructor(vscode, { timeoutMs = AI_TIMEOUT_MS, showResult } = {}) {
         this.vscode = vscode; this.timeoutMs = timeoutMs;
+        this.showResult = showResult;
         this.running = false; this.disposed = false; this.active = null; this.nextJob = 0;
         this.coreOnlyModels = new Set();
     }
@@ -102,7 +103,7 @@ class AiAnalysis {
             job.failure = new Error('Copilot did not finish within three minutes. Check its sign-in/access prompts, then retry or use Copy prompt.');
             source.cancel();
         }, this.timeoutMs);
-        let state = 'completed', message = 'AI analysis complete. The response is open in a Markdown editor.', failure;
+        let state = 'completed', message = 'AI analysis complete. The formatted response is open beside the analyzer.', failure;
         try { await this.analyze(prompt, job, wait); }
         catch (error) {
             if (token.isCancellationRequested && !job.failure) { state = 'cancelled'; message = 'AI analysis cancelled. You can edit the prompt and try again.'; }
@@ -155,8 +156,8 @@ class AiAnalysis {
                 }
                 const scope = prompt.match(/^Scope: (.+)$/m)?.[1]?.slice(0, 500) || 'User-reviewed prompt';
                 const content = `# JvmScope AI analysis\n\nModel: ${chosen.name}\n\nScope: ${scope}\n\nAI interpretation of the reviewed evidence; verify claims against the capture. This does not change JvmScope findings.\n\n${output}`;
-                const document = await wait(() => v.workspace.openTextDocument({ content, language: 'markdown' }));
-                await wait(() => v.window.showTextDocument(document, { viewColumn: v.ViewColumn.Beside, preview: false }));
+                report('Opening the formatted response…');
+                await wait(() => this.showResult({ model: chosen.name, scope, body: output, markdown: content }, token));
             } finally { listener.dispose(); }
         });
     }

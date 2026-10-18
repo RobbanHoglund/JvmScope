@@ -12,7 +12,9 @@ const webview=require(resolve(extensionRoot,'src/webview.cjs'));
 const protocol=require(resolve(extensionRoot,'src/protocol.cjs'));
 const media=resolve(extensionRoot,'media');
 const {AiAnalysis}=require(resolve(extensionRoot,'src/ai-analysis.cjs'));
+const {AiResults}=require(resolve(extensionRoot,'src/ai-result.cjs'));
 const {createAiHost}=require('./ai-host.cjs');
+const {createResultHost}=require('./ai-result-host.cjs');
 const capture=relative=>readFile(resolve(root,relative),'utf8');
 const test=base.extend({
     host: async({page},use)=>{
@@ -21,11 +23,15 @@ const test=base.extend({
         let aiProviders=[{id:'copilot',label:'Copilot'},{id:'codex',label:'Codex'},{id:'claude',label:'Claude Code'}];
         const messages=[];
         const ai=createAiHost(AiAnalysis);
+        const reports=createResultHost(AiResults,extensionRoot), reportPages=[];
         let aiState={state:'idle',running:false,message:''};
         const server=createServer(async(req,res)=>{
             try {
                 const url=new URL(req.url,origin);
-                if(url.pathname==='/view') {
+                if(url.pathname==='/result') {
+                    const panel=reports.panels[Number(url.searchParams.get('index'))];
+                    res.setHeader('Content-Type','text/html');res.end(panel.webview.html.replaceAll('https://resources.test',origin));
+                }else if(url.pathname==='/view') {
                     const route=url.searchParams.get('page')||'/jvmscope/tda.html';
                     const {name}=webview.resolveRoute(route,pages);
                     const html=webview.renderWebview(await readFile(resolve(media,name),'utf8'),{page:name,route,pages,cspSource:origin,resourceUri:name=>origin+'/'+name});
@@ -68,7 +74,19 @@ const test=base.extend({
             window.acquireVsCodeApi=()=>({postMessage:message=>window.testHostMessage(message)});
             document.addEventListener('securitypolicyviolation',event=>window.testCspViolation(`${event.violatedDirective}: ${event.blockedURI}`));
         });
-        await use({page,origin,messages,ai,clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},setAiProviders:items=>{aiProviders=items;},open:async name=>{
+        await use({page,origin,messages,ai,reports,openResult:async result=>{
+            const index=reports.panels.length, source=new ai.vscode.CancellationTokenSource();
+            const ready=reports.view.show(result,source.token);
+            await expect.poll(()=>reports.panels[index]?.webview.html).toBeTruthy();
+            const panel=reports.panels[index], resultPage=await page.context().newPage(), externalRequests=[];reportPages.push(resultPage);
+            resultPage.on('request',request=>{if(!request.url().startsWith(origin+'/'))externalRequests.push(request.url());});
+            resultPage.on('pageerror',error=>errors.push(error.message));
+            await resultPage.exposeFunction('resultHostMessage',message=>panel.receive(message));
+            await resultPage.addInitScript(()=>{window.acquireVsCodeApi=()=>({postMessage:message=>window.resultHostMessage(message)});});
+            panel.onPost=message=>resultPage.evaluate(message=>window.postMessage(message,'*'),message);
+            await resultPage.goto(`${origin}/result?index=${index}`);await ready;
+            return {page:resultPage,panel,source,externalRequests};
+        },clipboard:()=>clipboard,rejectSource:message=>{sourceError=message;},setAiProviders:items=>{aiProviders=items;},open:async name=>{
             const previous=messages.filter(m=>m.type==='ready').length;
             await page.goto(`${origin}/view?page=${encodeURIComponent(name)}`);
             await expect.poll(()=>messages.filter(m=>m.type==='ready').length).toBeGreaterThan(previous);
@@ -85,6 +103,7 @@ const test=base.extend({
             expect(response.error).toBeUndefined();return response.value;
         }});
         ai.ai.dispose(); if(ai.ai.job)await ai.ai.job;
+        reports.view.dispose();for(const resultPage of reportPages)await resultPage.close();
         await new Promise(resolve=>server.close(resolve));
         expect(errors).toEqual([]);expect(violations).toEqual([]);
     },
@@ -189,7 +208,7 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} shows live Copilot st
     await page.locator('#aiRun').click();
     await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
     await expect(page.locator('#aiRun')).toBeEnabled();
-    expect(ai.documents).toHaveLength(1);
+    expect(ai.results).toHaveLength(1);
     expect(ai.calls.find(c=>c[0]==='send')[1][0].content).toBe('Reviewed retry evidence');
     expect(host.messages.filter(m=>m.action==='analyzeAi')).toHaveLength(2);
 });
@@ -220,14 +239,67 @@ for (const analyzer of ['tda','tls']) test(`AI ${analyzer} excludes internal ali
     await expect(page.locator('#aiPrompt')).toHaveValue(reviewed);
     expect(picks).toEqual([[restricted.id,ai.model.id],[ai.model.id]]);
     expect(ai.calls.some(call=>call[0]==='send')).toBe(false);
-    expect(ai.documents).toHaveLength(0);
+    expect(ai.results).toHaveLength(0);
     chooseReplacement();
     await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
     await expect(page.locator('#aiRun')).toBeEnabled();
     await expect(page.locator('#aiCancel')).toBeHidden();
-    expect(ai.documents).toHaveLength(1);
+    expect(ai.results).toHaveLength(1);
     expect(ai.calls.find(call=>call[0]==='send')[1][0].content).toBe(reviewed);
     expect(ai.errors).toEqual([]);
+});
+
+for (const analyzer of ['tda','tls']) test(`AI report ${analyzer} renders the completed answer, follows themes and exports the exact Markdown`,async({host},testInfo)=>{
+    const body=await capture('extensions/vscode/test/fixtures/ai-response.md');
+    host.ai.model.sendRequest=async()=>({text:(async function*(){yield body;})()});
+    await host.open(`/jvmscope/${analyzer}.html`);await host.page.locator('#loadSampleBtn').click();
+    await host.page.locator('#analyzeAiBtn').click();await host.page.locator('#aiRun').click();
+    await expect(host.page.locator('#aiStatus')).toContainText('formatted response');
+    const result=host.ai.results[0], report=await host.openResult(result), page=report.page;
+    await expect(page.getByRole('heading',{name:'Observed facts',exact:true})).toBeVisible();
+    await expect(page.locator('#answer strong').first()).toHaveText('two deadlock cycles involving five threads');
+    await expect(page.locator('#answer table')).toHaveCount(1);
+    await expect(page.locator('#answer pre code')).toContainText('synchronized (firstLock)');
+    await expect(page.locator('#resultScope')).toHaveText(result.scope);
+    for(const width of [1100,600,360])for(const theme of Object.keys(themePalettes)){
+        await page.setViewportSize({width,height:900});await applyTheme(page,theme);
+        for(const selector of ['#reportTitle','#resultScope','#resultModel','.report-meta','#answer p','#answer h2','#answer td','#answer th','#answer pre code','[data-action="copy"]'])await expectReadable(page.locator(selector).first());
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+        await page.getByRole('button',{name:'Copy Markdown',exact:true}).focus();await page.keyboard.press('Tab');
+        await expect(page.getByRole('button',{name:'Save Markdown',exact:true})).toBeFocused();
+        expect(await page.locator(':focus').evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+        if(width===600)await page.screenshot({path:testInfo.outputPath(`${analyzer}-ai-report-${theme}.png`),fullPage:true});
+    }
+    await page.getByRole('button',{name:'Copy Markdown',exact:true}).click();
+    await expect(page.locator('#actionStatus')).toHaveText('Markdown copied.');
+    await page.getByRole('button',{name:'Save Markdown',exact:true}).click();
+    await expect(page.locator('#actionStatus')).toHaveText('Markdown saved.');
+    await page.getByRole('button',{name:'Open Markdown',exact:true}).click();
+    await expect(page.locator('#actionStatus')).toHaveText('Markdown source opened.');
+    expect(host.reports.calls.filter(c=>['copy','save','source'].includes(c[0])).map(c=>c.at(-1))).toEqual([result.markdown,result.markdown,result.markdown]);
+    await page.getByRole('link',{name:'Java documentation'}).click();
+    await expect(page.locator('#actionStatus')).toHaveText('Link opened in your browser.');
+    expect(host.reports.calls.find(c=>c[0]==='external')).toEqual(['external','https://docs.oracle.com/en/java/']);
+    expect(report.externalRequests).toEqual([]);
+    // The same complete answer is restored after VS Code recreates a hidden tab.
+    await page.reload();await expect(page.locator('#answer h2').first()).toHaveText('Observed facts');
+});
+
+test('AI report does not execute model HTML, load external images or expose command/file links',async({host})=>{
+    const body='## Safe heading\n\n<script>window.compromised=true</script>\n\n<img src="https://tracker.example/image" onerror="window.compromised=true">\n\n![beacon](https://tracker.example/beacon)\n\n[Run](command:workbench.action.openSettings) [Local](file:///secret)\n\n```text\n'+ 'very.long.package.'.repeat(100)+'\n```';
+    const report=await host.openResult({model:'<img src="https://tracker.example/model">',scope:'Capture <script>untrusted</script>',body,markdown:body}), page=report.page;
+    await expect(page.locator('#answer h2')).toHaveText('Safe heading');
+    await expect(page.locator('#answer img, #answer script, #answer iframe, #answer a')).toHaveCount(0);
+    await expect(page.locator('#resultModel')).toContainText('<img');
+    expect(await page.evaluate(()=>window.compromised)).toBeUndefined();
+    await page.setViewportSize({width:360,height:900});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+    expect(report.externalRequests).toEqual([]);
+    host.reports.vscode.env.clipboard.writeText=async()=>{throw new Error('Clipboard unavailable');};
+    await page.getByRole('button',{name:'Copy Markdown',exact:true}).click();
+    await expect(page.locator('#actionStatus')).toContainText('Clipboard unavailable');
+    await expect(page.getByRole('button',{name:'Save Markdown',exact:true})).toBeEnabled();
+    await expect(page.locator('#answer h2')).toHaveText('Safe heading');
 });
 
 test('AI provider errors appear in the dialog and retry works with an undismissed notification',async({host},testInfo)=>{
@@ -242,7 +314,7 @@ test('AI provider errors appear in the dialog and retry works with an undismisse
     ai.vscode.lm.selectChatModels=async()=>[ai.model];
     await page.locator('#aiRun').click();
     await expect(page.locator('#aiStatus')).toContainText('AI analysis complete');
-    expect(ai.documents).toHaveLength(1);
+    expect(ai.results).toHaveLength(1);
 });
 
 test('AI close and snapshot replacement cancel pending work and preserve a fresh review',async({host})=>{
@@ -261,7 +333,7 @@ test('AI close and snapshot replacement cancel pending work and preserve a fresh
     await page.locator('#analyzeAiBtn').click();
     await expect(page.locator('#aiScope')).toContainText('Snapshot 2');
     await expect(page.locator('#aiRun')).toBeEnabled();
-    expect(ai.documents).toHaveLength(0);
+    expect(ai.results).toHaveLength(0);
 });
 
 test('VS Code TDA uses inline workers, keeps allocation qualifications and opens exact native evidence',async({host})=>{
