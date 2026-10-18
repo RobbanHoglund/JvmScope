@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2 — Analysis-specific AI prompts
+
+- Give thread dumps and TLS logs separate diagnostic instructions. Select distinct guidance for one thread snapshot, a snapshot series, one TLS interaction and a TLS capture overview.
+- Qualify thread-state and CPU interpretations, snapshot identity and deadlock counts. Qualify JSSE handshake outcomes, endpoint direction, certificate/authentication evidence and biased overview excerpts.
+- Keep the shared report format and exact reviewed-prompt handoff. Reject unsupported evidence types instead of silently using generic instructions.
+- Add regressions using real Java captures and packaged analyzer journeys, including scope changes, optional raw evidence, exact Copilot submissions and maximum prompt size.
+
 ## 1.2.1 — Reliable AI evidence and severity indicators
 
 - Show a critical icon for confirmed Java deadlocks in the analyzer and a separate JvmScope findings section in the AI report, even when the model returns plain text. Keep analyzer priority distinct from AI assessment and application impact. Show up to three priorities, with secondary ones collapsed.
