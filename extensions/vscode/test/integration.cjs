@@ -75,25 +75,34 @@ exports.run = async () => {
     };
     const nativeResults = new AiResults(vscode, extension.extensionUri);
     const nativeAi = new AiAnalysis(boundary, { showResult: (result, token) => nativeResults.show(result, token) });
-    const completed = async () => {
+    const completed = async (phase, expectedState, timeoutMs = 5000) => {
         let timer;
-        try { await Promise.race([nativeAi.job, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Native AI lifecycle did not settle')), 5000); })]); }
+        try {
+            const result = await Promise.race([nativeAi.job, new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error(`Native AI ${phase} did not settle within ${timeoutMs} ms; last state: ${JSON.stringify(states.at(-1))}`)), timeoutMs);
+            })]);
+            assert.equal(result.state, expectedState, `Native AI ${phase}: ${result.message}`);
+        }
         finally { clearTimeout(timer); }
     };
     try {
         await nativeAi.run('copilot', 'Synthetic evidence', { owner: 'test', onState: state => states.push(state) });
-        await completed();
+        await completed('provider error', 'error');
         assert.equal(nativeAi.running, false);
         assert.equal(states.at(-1).state, 'error');
         assert.equal(notificationDismissed, false, 'Job finishes while the real VS Code error notification is still open');
         boundary.lm.selectChatModels = async () => [internalModel, model];
-        await nativeAi.run('copilot', 'Synthetic retry evidence'); await completed();
+        await nativeAi.run('copilot', 'Synthetic retry evidence', { onState: state => states.push(state) });
+        // AiResults allows 15 seconds for a cold webview to acknowledge rendering.
+        // Let that production deadline report failure before this test's watchdog;
+        // provider errors and cancellation retain their stricter five-second limit.
+        await completed('report rendering', 'completed', 20000);
         await expectActiveTab('JvmScope · AI analysis');
         assert.equal(nativeResults.panels.size, 1, 'Formatted report acknowledged rendering in the installed webview');
         for (const panel of nativeResults.panels) panel.dispose();
         boundary.lm.selectChatModels = () => new Promise(() => {});
-        const job = await nativeAi.run('copilot', 'Synthetic cancellation evidence', { owner: 'test' });
-        assert.equal(nativeAi.cancel('test', job.jobId), true); await completed();
+        const job = await nativeAi.run('copilot', 'Synthetic cancellation evidence', { owner: 'test', onState: state => states.push(state) });
+        assert.equal(nativeAi.cancel('test', job.jobId), true); await completed('cancellation', 'cancelled');
         assert.equal(nativeAi.running, false);
     } finally { nativeAi.dispose(); nativeResults.dispose(); }
     console.log('PASS: native AI error notification remains open without locking retries; internal Copilot aliases are excluded; progress cancellation releases a non-cooperating provider; formatted response renders in an installed webview.');
