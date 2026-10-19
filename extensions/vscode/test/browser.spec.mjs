@@ -23,6 +23,7 @@ const test=base.extend({
         let origin, clipboard='', sourceError='', nextNavigation=0;
         let aiProviders=[{id:'copilot',label:'Copilot'},{id:'codex',label:'Codex'},{id:'claude',label:'Claude Code'}];
         const messages=[];
+        const droppedSources = new Map();
         const ai=createAiHost(AiAnalysis);
         const reports=createResultHost(AiResults,extensionRoot), reportPages=[];
         let aiState={state:'idle',running:false,message:''};
@@ -58,6 +59,13 @@ const test=base.extend({
                 let error=message.action==='openSource'?sourceError:undefined;
                 try {
                     protocol.validateRequest(message);
+                    if(message.action==='readDroppedFiles') {
+                        value=message.uris.map(uri=>{
+                            const source=droppedSources.get(uri);
+                            if(!source)throw new Error('Dropped file not found.');
+                            return source;
+                        });
+                    }
                     if(message.action==='navigate')webview.resolveRoute(message.route,pages);
                     if(message.action==='aiProviders')value=aiProviders;
                     if(message.action==='aiStatus')value=aiState;
@@ -75,7 +83,7 @@ const test=base.extend({
             window.acquireVsCodeApi=()=>({postMessage:message=>window.testHostMessage(message)});
             document.addEventListener('securitypolicyviolation',event=>window.testCspViolation(`${event.violatedDirective}: ${event.blockedURI}`));
         });
-        await use({page,origin,messages,ai,reports,openResult:async result=>{
+        await use({page,origin,messages,ai,reports,setDroppedSources:entries=>{droppedSources.clear();for(const [uri,source] of entries)droppedSources.set(uri,source);},openResult:async result=>{
             const index=reports.panels.length, source=new ai.vscode.CancellationTokenSource();
             const ready=reports.view.show(result,source.token);
             await expect.poll(()=>reports.panels[index]?.webview.html).toBeTruthy();
@@ -108,6 +116,101 @@ const test=base.extend({
         await new Promise(resolve=>server.close(resolve));
         expect(errors).toEqual([]);expect(violations).toEqual([]);
     },
+});
+
+const dropFixtures = {
+    tda: 'frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt',
+    tls: 'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt',
+    gc: 'testdata/gc-logs/java27-g1.log',
+};
+async function dispatchCaptureDrop(page, { text, name = 'dropped.log', data = {}, selector = 'header' }) {
+    return page.evaluate(({ text, name, data, selector }) => {
+        const transfer = new DataTransfer();
+        if (text !== undefined) transfer.items.add(new File([text], name, { type: 'text/plain' }));
+        for (const [type, value] of Object.entries(data)) transfer.setData(type, value);
+        const target = document.querySelector(selector);
+        const result = {};
+        for (const type of ['dragenter', 'dragover', 'drop']) {
+            const event = new DragEvent(type, { dataTransfer: transfer, bubbles: true, cancelable: true });
+            target.dispatchEvent(event); result[type] = event.defaultPrevented;
+        }
+        return result;
+    }, { text, name, data, selector });
+}
+for (const analyzer of ['tda', 'tls', 'gc']) {
+    test(`${analyzer} file drop: external files are claimed before VS Code's outer listeners, anywhere on the page`, async ({ host }) => {
+        const { page } = host;
+        await host.open(`/jvmscope/${analyzer}.html`);
+        await expect(page.locator('.host-drop-hint')).toBeVisible();
+        await expect(page.locator('.host-drop-hint')).toContainText('hold Shift');
+        await page.evaluate(() => {
+            window.forwardedDrags = [];
+            // VS Code's webview wrapper listens at window level. In particular,
+            // its dragover forwarding does not check defaultPrevented.
+            for (const type of ['dragenter', 'dragover', 'drop']) window.addEventListener(type, event => window.forwardedDrags.push(event.type));
+        });
+        const text = await capture(dropFixtures[analyzer]);
+        const before = host.messages.filter(m => m.type === 'navigationState').length;
+        expect(await dispatchCaptureDrop(page, { text })).toEqual({ dragenter: true, dragover: true, drop: true });
+        await expect.poll(() => host.messages.filter(m => m.type === 'navigationState').length).toBeGreaterThan(before);
+        await expect.poll(() => host.messages.findLast(m => m.type === 'navigationState')?.count).toBeGreaterThan(0);
+        expect(await page.evaluate(() => window.forwardedDrags)).toEqual([]);
+        // A second drop on a loaded chart/table/main surface works too.
+        const revision = host.messages.findLast(m => m.type === 'navigationState').revision;
+        await dispatchCaptureDrop(page, { text, name: 'second.log', selector: 'main' });
+        await expect.poll(() => host.messages.findLast(m => m.type === 'navigationState')?.revision).toBeGreaterThan(revision);
+        await expect(page.locator(analyzer === 'gc' ? '#gcOpen' : 'label[for="fileInput"]')).toHaveAttribute('title', /hold Shift/);
+    });
+    test(`${analyzer} file drop: Explorer URI imports use the host and retain source links`, async ({ host }) => {
+        const { page } = host;
+        await host.open(`/jvmscope/${analyzer}.html`);
+        const uri = 'vscode-remote://ssh-remote+test/home/Java%20capture.log';
+        const sourceId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+        host.setDroppedSources([[uri, { name: 'Java capture.log', text: await capture(dropFixtures[analyzer]), hostSourceId: sourceId }]]);
+        await dispatchCaptureDrop(page, { data: { 'text/uri-list': '# capture\r\n' + uri } });
+        await expect.poll(() => host.messages.findLast(m => m.type === 'navigationState')?.count || 0).toBeGreaterThan(0);
+        expect(host.messages.filter(m => m.action === 'readDroppedFiles').map(m => m.uris)).toEqual([[uri]]);
+        await expect.poll(() => host.messages.some(m => m.action === 'syncSources' && m.sourceIds.includes(sourceId))).toBe(true);
+        const revision = host.messages.findLast(m => m.type === 'navigationState').revision;
+        await dispatchCaptureDrop(page, { data: { 'text/uri-list': 'command:bad' } });
+        await expect(page.locator(analyzer === 'gc' ? '#gcError' : '#hostError')).toContainText('not capture files');
+        expect(host.messages.findLast(m => m.type === 'navigationState').revision).toBe(revision);
+    });
+}
+test('tda file drop: full internal URI lists and ResourceURLs preserve multiple captures instead of taking only the first', async ({ host }) => {
+    const { page } = host;
+    await host.open('/jvmscope/tda.html');
+    const uris = ['file:///tmp/first.txt', 'file:///tmp/second.txt'];
+    const text = await capture(dropFixtures.tda);
+    host.setDroppedSources(uris.map((uri, i) => [uri, { name: `capture-${i}.txt`, text }]));
+    await dispatchCaptureDrop(page, { data: { 'text/uri-list': uris[0], 'application/vnd.code.uri-list': uris.join('\r\n') } });
+    await expect.poll(() => host.messages.findLast(m => m.type === 'navigationState')?.count || 0).toBeGreaterThan(0);
+    expect(host.messages.findLast(m => m.action === 'readDroppedFiles').uris).toEqual(uris);
+    expect((await host.navigation('children')).value.total).toBe(2);
+    const revision = host.messages.findLast(m => m.type === 'navigationState').revision;
+    await dispatchCaptureDrop(page, { data: { 'text/uri-list': uris[0], ResourceURLs: JSON.stringify(uris) } });
+    await expect.poll(() => host.messages.findLast(m => m.type === 'navigationState')?.revision).toBeGreaterThan(revision);
+    expect(host.messages.findLast(m => m.action === 'readDroppedFiles').uris).toEqual(uris);
+    expect((await host.navigation('children')).value.total).toBe(4);
+});
+test('file drop ignores text selections, clears cancelled hover and reports multiple TLS files without importing the first', async ({ host }) => {
+    const { page } = host;
+    await host.open('/jvmscope/tls.html');
+    expect(await dispatchCaptureDrop(page, { data: { 'text/plain': 'selected text' } })).toEqual({ dragenter: false, dragover: false, drop: false });
+    await page.evaluate(() => {
+        const dataTransfer = new DataTransfer(); dataTransfer.items.add(new File(['a'], 'a.log'));
+        document.dispatchEvent(new DragEvent('dragenter', { dataTransfer, bubbles: true, cancelable: true }));
+    });
+    await expect(page.locator('#analyzerStart')).toHaveClass(/is-dragging/);
+    await page.evaluate(() => document.dispatchEvent(new DragEvent('dragend', { bubbles: true })));
+    await expect(page.locator('#analyzerStart')).not.toHaveClass(/is-dragging/);
+    await page.evaluate(() => {
+        const dataTransfer = new DataTransfer();
+        for (const name of ['a.log', 'b.log']) dataTransfer.items.add(new File(['a'], name));
+        document.dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true, cancelable: true }));
+    });
+    await expect(page.locator('#hostError')).toContainText('one TLS log');
+    await expect(page.locator('#analyzerStart')).toBeVisible();
 });
 
 test('GC real captures, source links, navigation, filters and annotations',async({host})=>{

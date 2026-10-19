@@ -1,7 +1,8 @@
 const vscode = require('vscode');
 const { randomUUID } = require('node:crypto');
 const { renderWebview, resolveRoute } = require('./webview.cjs');
-const { MAX_BYTES, isMessage, validateRequest, readSources } = require('./protocol.cjs');
+const { MAX_BYTES, isMessage, validateRequest, readSources, parseDroppedUris } = require('./protocol.cjs');
+const { CaptureDropController } = require('./capture-drop.cjs');
 const { SourceRegistry } = require('./source-navigation.cjs');
 const { AnalysisSidebar, NavigationSession } = require('./analysis-sidebar.cjs');
 const { AiAnalysis } = require('./ai-analysis.cjs');
@@ -30,7 +31,10 @@ async function activate(context) {
         const session = await openPage(`/jvmscope/${kind}.html`);
         await session.ready;
     });
-    context.subscriptions.push(sidebar, vscode.window.createTreeView('jvmscope.analysis', { treeDataProvider: sidebar, showCollapseAll: true }));
+    const drops = new CaptureDropController(vscode, (kind, input, token) => analyze(kind, null, input.uris, input.sources, token));
+    const tree = vscode.window.createTreeView('jvmscope.analysis', { treeDataProvider: sidebar, dragAndDropController: drops, showCollapseAll: true });
+    tree.message = 'Drop captures onto an analyzer below.';
+    context.subscriptions.push(sidebar, tree);
 
     async function openPage(route, { resume = false } = {}) {
         const { name, hash } = resolveRoute(route, pages);
@@ -95,6 +99,10 @@ async function activate(context) {
                         filters: { 'Capture files': ['txt', 'log', 'json', 'dump', 'tdump'], 'All files': ['*'] } });
                     return uris ? readSources(vscode, uris, kind, sources.register.bind(sources)) : null;
                 }
+                case 'readDroppedFiles': {
+                    if (kind === 'docs') throw new Error('Open an analyzer before dropping captures.');
+                    return readSources(vscode, parseDroppedUris(vscode, message.uris), kind, sources.register.bind(sources));
+                }
                 case 'syncSources': sources.activate(message.sourceIds); return true;
                 case 'openSource': return sources.open(message);
                 case 'copy': await vscode.env.clipboard.writeText(message.text); return true;
@@ -153,16 +161,17 @@ async function activate(context) {
         return session;
     }
 
-    async function analyze(kind, uri, selected) {
+    async function analyze(kind, uri, selected, droppedSources, token) {
+        if (token?.isCancellationRequested) return { cancelled: true };
         const sequence = (sequences.get(kind) || 0) + 1; sequences.set(kind, sequence);
         const uris = Array.isArray(selected) && selected.length ? selected : uri ? [uri]
             : vscode.window.activeTextEditor ? [vscode.window.activeTextEditor.document.uri] : null;
-        if (!uris) throw new Error('Open a capture in the editor or select it in Explorer first.');
+        if (!uris && !droppedSources) throw new Error('Open a capture in the editor or select it in Explorer first.');
         const session = await openPage(`/jvmscope/${kind}.html`);
-        const sources = await readSources(vscode, uris, kind, session.sources.register.bind(session.sources));
-        if (sequences.get(kind) !== sequence || session.disposed) return { cancelled: true };
+        const sources = droppedSources || await readSources(vscode, uris, kind, session.sources.register.bind(session.sources));
+        if (sequences.get(kind) !== sequence || session.disposed || token?.isCancellationRequested) return { cancelled: true };
         await session.ready;
-        if (sequences.get(kind) !== sequence || session.disposed) return { cancelled: true };
+        if (sequences.get(kind) !== sequence || session.disposed || token?.isCancellationRequested) return { cancelled: true };
         clearEvidence(session.owner);
         const id = `host:${++session.nextLoad}`;
         return new Promise((resolve, reject) => {

@@ -56,12 +56,12 @@ globalThis.Worker = class {
 };
 globalThis.fetch = async url => new Response(await readFile(new URL(url), 'utf8'));
 globalThis.document = {
+    ...element(),
     getElementById: getElement,
     querySelectorAll(selector) {
         return selector === '#analyzerStart, #tableContainer'
             ? [getElement('analyzerStart'), getElement('tableContainer')] : [];
     },
-    addEventListener() {},
 };
 globalThis.window = { addEventListener() {} };
 await import('../../assets/javautils/tls.js');
@@ -83,7 +83,7 @@ function pendingFile(name) {
     let resolve;
     let reject;
     const promise = new Promise((fulfill, fail) => { resolve = fulfill; reject = fail; });
-    return { file: { name, text: () => promise }, resolve, reject };
+    return { file: { name, size: 1, text: () => promise }, resolve, reject };
 }
 
 function select(file) {
@@ -92,8 +92,8 @@ function select(file) {
 }
 
 function drop(file) {
-    return getElement('tableContainer').emit('drop', {
-        preventDefault() {}, stopPropagation() {}, dataTransfer: { files: [file] },
+    return document.emit('drop', {
+        preventDefault() {}, stopPropagation() {}, dataTransfer: { types: ['Files'], files: [file] },
     });
 }
 

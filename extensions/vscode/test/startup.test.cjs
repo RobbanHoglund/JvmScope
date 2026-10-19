@@ -10,24 +10,27 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 const ready = { channel: 'jvmscope', version: 1, type: 'ready' };
 
 async function host(t) {
-    const commands = new Map(), timers = new Map(), panels = [], errors = [];
+    const commands = new Map(), timers = new Map(), panels = [], errors = [], trees = [], captures = new Map();
     const disposable = () => ({ dispose() {} });
-    const uri = value => ({ path: value, toString: () => 'file://' + value });
+    const uri = value => ({ path: value, toString: () => 'file://' + value, with: () => uri(value.split('#')[0]) });
     let nextTimer = 0, failRead = false;
     const vscode = {
-        Uri: { joinPath: (base, ...parts) => uri(path.posix.join(base.path, ...parts)) },
+        Uri: { joinPath: (base, ...parts) => uri(path.posix.join(base.path, ...parts)), parse: value => uri(new URL(value).pathname) },
+        FileType: { Directory: 2 },
         ViewColumn: { Active: 1 },
         EventEmitter: class { constructor() { this.event = () => disposable(); } fire() {} dispose() {} },
         workspace: {
+            textDocuments: [],
             registerTextDocumentContentProvider: disposable,
-            fs: { readFile: async resource => {
-                if (resource.path.endsWith('/pages.json')) return Buffer.from(JSON.stringify(['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'knowledge/index.html', 'knowledge/thread-dumps.html']));
+            fs: { stat: async resource => { if (!captures.has(resource.path)) throw new Error('Capture missing'); return { type: 1, size: Buffer.byteLength(captures.get(resource.path)) }; }, readFile: async resource => {
+                if (captures.has(resource.path)) return Buffer.from(captures.get(resource.path));
+                if (resource.path.endsWith('/pages.json')) return Buffer.from(JSON.stringify(['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'jvmscope/gc.html', 'knowledge/index.html', 'knowledge/thread-dumps.html']));
                 if (failRead) { failRead = false; throw new Error('Cannot read packaged page'); }
                 return Buffer.from('<!doctype html><html><head></head><body></body></html>');
             } },
         },
         window: {
-            createTreeView: disposable,
+            createTreeView: (id, options) => { trees.push({ id, ...options }); return disposable(); },
             showErrorMessage: async message => { errors.push(message); },
             createWebviewPanel: () => {
                 let onDispose, onMessage;
@@ -59,13 +62,47 @@ async function host(t) {
     await module.exports.activate(context);
     t.after(() => context.subscriptions.forEach(item => item.dispose()));
     return {
-        panels, errors, timers, run: name => commands.get(name)(),
+        panels, errors, timers, trees, captures, vscode, run: name => commands.get(name)(),
         failNextRead: () => { failRead = true; },
         expireStartup() {
             for (const [id, timer] of [...timers]) if (timer.ms === 30_000) { timers.delete(id); timer.callback(); }
         },
     };
 }
+
+test('the registered sidebar drop controller delivers file contents to each actual panel and waits for analysis acknowledgement', async t => {
+    const h = await host(t);
+    const drop = h.trees.find(tree => tree.id === 'jvmscope.analysis').dragAndDropController;
+    assert.ok(drop, 'File drops must be wired to the contributed tree, not just implemented in isolation');
+    h.captures.set('/capture.log', 'real host read boundary');
+    for (const analyzer of ['tda', 'tls', 'gc']) {
+        const operation = drop.handleDrop({ analyzer }, new Map([['text/uri-list', { asString: async () => 'file:///capture.log' }]]), { isCancellationRequested: false });
+        await tick(); const panel = h.panels.at(-1);
+        await panel.receive(ready); await tick();
+        const load = panel.messages.find(message => message.type === 'load');
+        assert.equal(load.sources[0].text, 'real host read boundary');
+        assert.match(load.sources[0].hostSourceId, /^[a-f0-9-]{36}$/);
+        await panel.receive({ ...ready, type: 'loaded', id: load.id, value: { analyzed: analyzer } });
+        assert.deepEqual(await operation, { analyzed: analyzer });
+    }
+    assert.deepEqual(h.errors, []);
+});
+
+test('webview URI drops read dirty editor content, return source IDs and reject links before filesystem access', async t => {
+    const h = await host(t);
+    const opening = h.run('jvmscope.openTda'); await tick();
+    const panel = h.panels[0]; await panel.receive(ready); await opening;
+    h.captures.set('/capture.log', 'stale disk');
+    h.vscode.workspace.textDocuments.push({ uri: h.vscode.Uri.parse('file:///capture.log'), version: 2, getText: () => 'unsaved editor contents' });
+    const request = uris => ({ ...ready, type: 'request', id: 'web:1', action: 'readDroppedFiles', uris });
+    await panel.receive(request(['file:///capture.log#L1,1']));
+    assert.equal(panel.messages.at(-1).value[0].text, 'unsaved editor contents');
+    assert.match(panel.messages.at(-1).value[0].hostSourceId, /^[a-f0-9-]{36}$/);
+    await panel.receive(request(['https://example.com/capture.log']));
+    assert.match(panel.messages.at(-1).error, /not capture files/);
+    await panel.receive(request(['file:///missing.log']));
+    assert.match(panel.messages.at(-1).error, /Capture missing/);
+});
 
 test('Open retries timed-out webviews and ignores late ready messages from the failed panel', async t => {
     for (const command of ['jvmscope.openTda', 'jvmscope.openTls', 'jvmscope.openKnowledge']) {

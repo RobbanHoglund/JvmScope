@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.1 — Reliable Capture Drops
+
+- Handle external file drops across the entire thread, TLS and GC analyzer pages, before VS Code forwards them to its editor overlay.
+- Read Explorer/editor URI drops through VS Code, preserving multiple thread captures, unsaved editor contents and source navigation. Document the Shift gesture for internal workbench drags.
+- Accept native drops onto all three analyzers in the JvmScope sidebar without a modifier key, with validation, cancellation and clear errors.
+- Add regression coverage for all three tools, full URI lists, host routing, file limits and failed imports.
+
 ## 2.1.0 — GC Timeline Navigation
 
 - Give the GC timeline more space with a compact summary, responsive chart height and collapsible details. Add a draggable whole-segment pause overview, explicit visible-range scope, readable signal explanations and a complete paginated findings list.

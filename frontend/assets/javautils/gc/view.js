@@ -1,3 +1,4 @@
+import { bindCaptureDrop } from '../file-drop.js';
 import './style.css';
 import { createOverview } from './overview.js';
 import { captureSummary, eventWindow, describeFinding } from './presentation.js';
@@ -282,9 +283,6 @@ $('gcShowFindings').onclick=()=>{$('gcAllFindings').open=true;renderFindings();$
 $('gcFindingPrev').onclick=()=>{findingPage--;renderFindings();};$('gcFindingNext').onclick=()=>{findingPage++;renderFindings();};
 $('gcType').onchange=()=>{page=0;renderTable();};$('gcSearch').oninput=()=>{page=0;renderTable();};$('gcPrev').onclick=()=>{page--;renderTable();};$('gcNext').onclick=()=>{page++;renderTable();};
 $('gcCopy').onclick=async()=>{try{await writeClipboard($('gcRaw').textContent);$('gcStatus').textContent='Event evidence copied.';}catch(e){error(e);}};
-let dragDepth=0;document.addEventListener('dragenter',event=>{if(event.dataTransfer?.types.includes('Files')){event.preventDefault();dragDepth++;$('gcDropOverlay').hidden=false;}});
-document.addEventListener('dragover',event=>{if(event.dataTransfer?.types.includes('Files'))event.preventDefault();});
-document.addEventListener('dragleave',()=>{if(--dragDepth<=0){dragDepth=0;$('gcDropOverlay').hidden=true;}});
-document.addEventListener('drop',event=>{if(!event.dataTransfer?.files.length)return;event.preventDefault();dragDepth=0;$('gcDropOverlay').hidden=true;void loadFiles([...event.dataTransfer.files]);});
+bindCaptureDrop(loadFiles, { onActive: active => { $('gcDropOverlay').hidden = !active; }, onError: error });
 new ResizeObserver(()=>{if(model)draw();}).observe($('gcTimeline'));
 bindHostInputs({fileInput:$('gcFile'),onSources});

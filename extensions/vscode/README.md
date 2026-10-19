@@ -33,6 +33,14 @@ You can also right-click a capture in Explorer and choose **Analyze as Java
 Thread Dump**, **Analyze as Java TLS Log**, or **Analyze as Java GC Log**. Select several thread dump files
 to compare snapshots.
 
+**Drag and drop:** Drop files onto **Java thread dumps**, **Java TLS logs** or
+**Java garbage collection** in the JvmScope sidebar. This uses native VS Code
+file dropping without a modifier key. To drop from VS Code's Explorer or an
+editor tab directly into an analyzer view, **hold Shift while dragging and
+dropping**; otherwise VS Code can open the capture as a text editor. External
+files from Windows Explorer/Finder can be dropped anywhere inside the analyzer.
+TLS and GC accept one log per import; thread analysis accepts multiple captures.
+
 **Requirements:** VS Code **1.110 or later** on Windows, macOS or Linux. The desktop
 extension is generally available (GA); `vscode.dev` is not supported. Light, dark
 and high-contrast themes are supported, including narrow editor splits.

@@ -2,7 +2,26 @@ const { validateFindingContext } = require('./ai-finding-context.cjs');
 const MAX_BYTES = 64 * 1024 * 1024;
 const MAX_FILES = 50;
 const { validateAiInput } = require('./ai-analysis.cjs');
-const actions = new Set(['chooseFiles', 'copy', 'paste', 'openRaw', 'clearRaw', 'save', 'navigate', 'external', 'syncSources', 'openSource', 'aiProviders', 'analyzeAi', 'aiStatus', 'cancelAi']);
+const actions = new Set(['chooseFiles', 'readDroppedFiles', 'copy', 'paste', 'openRaw', 'clearRaw', 'save', 'navigate', 'external', 'syncSources', 'openSource', 'aiProviders', 'analyzeAi', 'aiStatus', 'cancelAi']);
+function validateDroppedUris(uris) {
+    if (!Array.isArray(uris) || !uris.length || uris.length > MAX_FILES) throw new Error('Choose between 1 and 50 capture files.');
+    for (const uri of uris) {
+        if (typeof uri !== 'string' || uri.length > 8192 || /[\x00-\x20\x7f]/.test(uri)
+            || !/^(?:file:\/\/[^/]*\/|vscode-remote:\/\/[^/]+\/|untitled:)[^?#]+(?:#[^?]*)?$/.test(uri)) {
+            throw new Error('Drop local files, remote workspace files or untitled editors. Web links and commands are not capture files.');
+        }
+        try { decodeURIComponent(uri); } catch { throw new Error('Invalid dropped file URI.'); }
+    }
+    return uris;
+}
+function parseDroppedUris(vscode, uris) {
+    validateDroppedUris(uris);
+    // An editor selection may add #L3,5. Read the file, not a different resource.
+    return [...new Map(uris.map(value => {
+        const uri = vscode.Uri.parse(value, true).with({ fragment: '' });
+        return [uri.toString(), uri];
+    })).values()];
+}
 const sourceId = value => typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value);
 const text = value => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= MAX_BYTES;
 function isMessage(message) {
@@ -12,6 +31,7 @@ function validateRequest(message) {
     if (!isMessage(message) || message.type !== 'request' || typeof message.id !== 'string'
         || !/^web:\d{1,12}$/.test(message.id) || !actions.has(message.action)) throw new Error('Unsupported extension request.');
     if (['copy', 'openRaw'].includes(message.action) && !text(message.text)) throw new Error('Text exceeds the 64 MiB limit.');
+    if (message.action === 'readDroppedFiles') validateDroppedUris(message.uris);
     if (message.action === 'openRaw' && (typeof message.name !== 'string' || message.name.length > 240)) throw new Error('Invalid evidence name.');
     if (message.action === 'cancelAi' && (typeof message.jobId !== 'string' || !/^ai:\d{1,12}$/.test(message.jobId))) throw new Error('Invalid AI job.');
     if (message.action === 'analyzeAi') { validateAiInput(message.provider, message.prompt); validateFindingContext(message.findingContext); }
@@ -59,4 +79,4 @@ async function readSources(vscode, uris, analyzer, registerSource = null) {
     }
     return sources;
 }
-module.exports = { MAX_BYTES, MAX_FILES, isMessage, validateRequest, readSources };
+module.exports = { MAX_BYTES, MAX_FILES, isMessage, validateRequest, readSources, validateDroppedUris, parseDroppedUris };

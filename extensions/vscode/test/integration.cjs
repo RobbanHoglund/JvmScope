@@ -75,25 +75,34 @@ exports.run = async () => {
     };
     const nativeResults = new AiResults(vscode, extension.extensionUri);
     const nativeAi = new AiAnalysis(boundary, { showResult: (result, token) => nativeResults.show(result, token) });
-    const completed = async () => {
+    const completed = async (phase, expectedState, timeoutMs = 5000) => {
         let timer;
-        try { await Promise.race([nativeAi.job, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Native AI lifecycle did not settle')), 5000); })]); }
+        try {
+            const result = await Promise.race([nativeAi.job, new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error(`Native AI ${phase} did not settle within ${timeoutMs} ms; last state: ${JSON.stringify(states.at(-1))}`)), timeoutMs);
+            })]);
+            assert.equal(result.state, expectedState, `Native AI ${phase}: ${result.message}`);
+        }
         finally { clearTimeout(timer); }
     };
     try {
         await nativeAi.run('copilot', 'Synthetic evidence', { owner: 'test', onState: state => states.push(state) });
-        await completed();
+        await completed('provider error', 'error');
         assert.equal(nativeAi.running, false);
         assert.equal(states.at(-1).state, 'error');
         assert.equal(notificationDismissed, false, 'Job finishes while the real VS Code error notification is still open');
         boundary.lm.selectChatModels = async () => [internalModel, model];
-        await nativeAi.run('copilot', 'Synthetic retry evidence'); await completed();
+        await nativeAi.run('copilot', 'Synthetic retry evidence', { onState: state => states.push(state) });
+        // AiResults allows 15 seconds for a cold webview to acknowledge rendering.
+        // Let that production deadline report failure before this test's watchdog;
+        // provider errors and cancellation retain their stricter five-second limit.
+        await completed('report rendering', 'completed', 20000);
         await expectActiveTab('JvmScope · AI analysis');
         assert.equal(nativeResults.panels.size, 1, 'Formatted report acknowledged rendering in the installed webview');
         for (const panel of nativeResults.panels) panel.dispose();
         boundary.lm.selectChatModels = () => new Promise(() => {});
-        const job = await nativeAi.run('copilot', 'Synthetic cancellation evidence', { owner: 'test' });
-        assert.equal(nativeAi.cancel('test', job.jobId), true); await completed();
+        const job = await nativeAi.run('copilot', 'Synthetic cancellation evidence', { owner: 'test', onState: state => states.push(state) });
+        assert.equal(nativeAi.cancel('test', job.jobId), true); await completed('cancellation', 'cancelled');
         assert.equal(nativeAi.running, false);
     } finally { nativeAi.dispose(); nativeResults.dispose(); }
     console.log('PASS: native AI error notification remains open without locking retries; internal Copilot aliases are excluded; progress cancellation releases a non-cooperating provider; formatted response renders in an installed webview.');
@@ -128,6 +137,27 @@ exports.run = async () => {
     assert.ok(tls?.interactions > 0, JSON.stringify(tls));
     const gc=await vscode.commands.executeCommand('jvmscope.analyzeGcLog',fixture('testdata/gc-logs/java27-g1.log'));
     assert.ok(gc?.events>20&&gc.segments===1,JSON.stringify(gc));
+    // Real DataTransfer/URI objects exercise the native drop boundary and the
+    // installed extension's read -> webview -> parser -> acknowledgement path.
+    // OS pointer gestures and workbench overlay routing are separate UI checks.
+    const { CaptureDropController } = require(path.join(extension.extensionPath, 'src/capture-drop.cjs'));
+    const dropper = new CaptureDropController(vscode, (kind, input) => vscode.commands.executeCommand({
+        tda: 'jvmscope.analyzeThreadDump', tls: 'jvmscope.analyzeTlsLog', gc: 'jvmscope.analyzeGcLog',
+    }[kind], input.uris[0], input.uris));
+    for (const [analyzer, file, expected] of [
+        ['tda', 'frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt', 'threads'],
+        ['tls', 'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt', 'interactions'],
+        ['gc', 'testdata/gc-logs/java27-g1.log', 'events'],
+    ]) {
+        const transfer = new vscode.DataTransfer();
+        transfer.set('text/uri-list', new vscode.DataTransferItem('# Explorer capture\r\n' + fixture(file).with({ fragment: 'L1,1' }).toString()));
+        const cancellation = new vscode.CancellationTokenSource();
+        try {
+            const result = await dropper.handleDrop({ analyzer }, transfer, cancellation.token);
+            assert.ok(result?.[expected] > 0, `${analyzer} native drop: ${JSON.stringify(result)}`);
+        } finally { cancellation.dispose(); }
+    }
+    console.log('PASS: native URI drops analyze real thread, TLS and GC captures through installed webviews.');
     const gcEvents=await api.getAnalysisItems('gc');
     assert.ok(gcEvents.some(item=>item.kind==='event'));
     assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem',gcEvents[0].id),true);
