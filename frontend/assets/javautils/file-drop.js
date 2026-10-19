@@ -49,11 +49,11 @@ export function bindCaptureDrop(onFiles, { onActive = () => {}, onError = showHo
         try {
             const uris = isVsCode() ? droppedUris(event.dataTransfer) : [];
             const files = Array.from(event.dataTransfer?.files || []);
-            if (uris.length) { Promise.resolve(loadDroppedUris(uris)).catch(onError); return; }
+            if (uris.length) return Promise.resolve(loadDroppedUris(uris)).catch(onError);
             if (!files.length) throw new Error('No readable files were dropped. Use Choose file, or drop onto an analyzer in the JvmScope sidebar.');
             if (files.length > 50) throw new Error('Choose between 1 and 50 capture files.');
             if (files.reduce((size, file) => size + file.size, 0) > maxBytes) throw new Error('Selected captures exceed the 64 MiB import limit.');
-            Promise.resolve(onFiles(files)).catch(onError);
+            return Promise.resolve(onFiles(files)).catch(onError);
         } catch (error) { onError(error); }
     }, true);
     document.addEventListener('dragend', reset, true);
