@@ -864,7 +864,10 @@ UI.helpModal.addEventListener('click', e => {
 
 
 bindAnalyzerStart({ choose: () => UI.fileInput.click(), sample: () => UI.loadSampleBtn.click() });
-bindAnalyzerDropZones(files => loadFile(files[0]));
+bindAnalyzerDropZones(files => {
+    if (files.length !== 1) throw new Error('Choose one TLS log at a time.');
+    return loadFile(files[0]);
+});
 
 UI.fileInput.addEventListener('change', async () => {
     const f = UI.fileInput.files && UI.fileInput.files[0];

@@ -9,6 +9,26 @@ See the [feature overview and quick start](../extensions/vscode/README.md) to ge
 2. In VS Code, run **Extensions: Install from VSIX…** and select the downloaded `jvmscope-<version>.vsix`.
 3. Open the Command Palette and run **JvmScope: Open Java Thread Dump Analyzer**, **JvmScope: Open Java TLS Log Analyzer**, or **JvmScope: Open Java Garbage Collection Log Analyzer**.
 
+## Dropping capture files
+
+- **JvmScope sidebar:** Drop onto the relevant analyzer (thread dumps, TLS logs
+  or garbage collection). No Shift key is needed. Dropping onto empty sidebar
+  space asks which analyzer to use. Sidebar imports replace that analyzer's
+  current capture/session, like the Explorer **Analyze as…** commands.
+- **Inside an analyzer:** Files from Windows Explorer/Finder can be dropped
+  anywhere in the page, including its header and charts. For files dragged from
+  VS Code's own Explorer or editor tabs, hold **Shift** while dragging and
+  dropping so VS Code passes the event into the webview instead of opening a
+  text editor. Thread imports respect **Add to session / Replace session**.
+- **File limits:** At most 50 thread dump files and 64 MiB total per import;
+  one TLS or GC log at a time. Failed imports preserve the current analysis.
+  Remote workspace references are read through VS Code; open unsaved editor
+  contents take precedence over the file on disk. A URI-backed capture retains
+  source-line navigation; external file-byte drops retain their raw evidence.
+- If a workbench overlay still captures a drop, use the native sidebar target
+  or **Choose/Open file**. The extension cannot receive a drop intercepted by
+  VS Code before it reaches the webview.
+
 ## Garbage collection
 
 The GC analyzer accepts one UTF-8 HotSpot Java 8–27 log (up to 64 MiB), from
@@ -273,4 +293,3 @@ from git and rebuilt from the shared frontend. The package has no production npm
 dependencies. No Marketplace publication is performed by these commands or CI.
 Merging to main does not update the Marketplace listing or installed extensions.
 See [release and Marketplace publication](https://github.com/RobbanHoglund/JvmScope/blob/main/docs/VSCODE.md#release-and-marketplace-publication).
-

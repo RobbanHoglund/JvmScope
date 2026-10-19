@@ -128,6 +128,27 @@ exports.run = async () => {
     assert.ok(tls?.interactions > 0, JSON.stringify(tls));
     const gc=await vscode.commands.executeCommand('jvmscope.analyzeGcLog',fixture('testdata/gc-logs/java27-g1.log'));
     assert.ok(gc?.events>20&&gc.segments===1,JSON.stringify(gc));
+    // Real DataTransfer/URI objects exercise the native drop boundary and the
+    // installed extension's read -> webview -> parser -> acknowledgement path.
+    // OS pointer gestures and workbench overlay routing are separate UI checks.
+    const { CaptureDropController } = require(path.join(extension.extensionPath, 'src/capture-drop.cjs'));
+    const dropper = new CaptureDropController(vscode, (kind, input) => vscode.commands.executeCommand({
+        tda: 'jvmscope.analyzeThreadDump', tls: 'jvmscope.analyzeTlsLog', gc: 'jvmscope.analyzeGcLog',
+    }[kind], input.uris[0], input.uris));
+    for (const [analyzer, file, expected] of [
+        ['tda', 'frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt', 'threads'],
+        ['tls', 'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt', 'interactions'],
+        ['gc', 'testdata/gc-logs/java27-g1.log', 'events'],
+    ]) {
+        const transfer = new vscode.DataTransfer();
+        transfer.set('text/uri-list', new vscode.DataTransferItem('# Explorer capture\r\n' + fixture(file).with({ fragment: 'L1,1' }).toString()));
+        const cancellation = new vscode.CancellationTokenSource();
+        try {
+            const result = await dropper.handleDrop({ analyzer }, transfer, cancellation.token);
+            assert.ok(result?.[expected] > 0, `${analyzer} native drop: ${JSON.stringify(result)}`);
+        } finally { cancellation.dispose(); }
+    }
+    console.log('PASS: native URI drops analyze real thread, TLS and GC captures through installed webviews.');
     const gcEvents=await api.getAnalysisItems('gc');
     assert.ok(gcEvents.some(item=>item.kind==='event'));
     assert.equal(await vscode.commands.executeCommand('jvmscope.revealAnalysisItem',gcEvents[0].id),true);

@@ -4,7 +4,14 @@ const vscode = typeof globalThis.acquireVsCodeApi === 'function' ? globalThis.ac
 const channel = 'jvmscope';
 const pending = new Map();
 let nextId = 0;
+let importSources;
 export const isVsCode = () => vscode !== null;
+
+export async function loadDroppedUris(uris) {
+    if (!vscode || !importSources) throw new Error('Open an analyzer before dropping captures.');
+    const sources = await request('readDroppedFiles', { uris });
+    return importSources(sources);
+}
 
 // A webview's location belongs to VS Code, not the bundled document. Keep the
 // logical page URL separate so documentation links, filters and search work in
@@ -101,6 +108,16 @@ export function initializeHostNavigation() {
 
 export function bindHostInputs({ fileInput, onSources }) {
     if (!vscode) return;
+    importSources = onSources;
+    const hint = 'From VS Code Explorer: hold Shift while dropping here, or drop onto this analyzer in the JvmScope sidebar. You can also choose a file.';
+    const target = document.querySelector('.analyzer-start-format, #gcDrop');
+    if (target) {
+        const notice = document.createElement('span');
+        notice.className = 'host-drop-hint'; notice.textContent = hint; target.append(notice);
+    }
+    for (const control of [...(fileInput?.labels || []), ...document.querySelectorAll('#gcOpen, [data-start-action="choose"]')]) {
+        control.title = hint;
+    }
     const receive = async data => {
         if (data?.channel !== channel || data.version !== 1 || data.type !== 'load' || !Array.isArray(data.sources)) return;
         try {
