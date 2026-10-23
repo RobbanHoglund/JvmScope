@@ -24,6 +24,11 @@ await writeFile(path.join(output, '.agents/plugins/marketplace.json'), JSON.stri
         policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Developer Tools' }] }, null, 2) + '\n');
 const bundled = await build({ absWorkingDir: here, entryPoints: ['src/server.mjs', 'src/worker.mjs'], outdir: path.join(plugin, 'server'),
     bundle: true, platform: 'node', format: 'esm', outExtension: { '.js': '.mjs' }, target: 'node22', metafile: true, legalComments: 'eof' });
+const ui = await build({ absWorkingDir: here, entryPoints: ['ui/view.mjs'], bundle: true, platform: 'browser', format: 'esm', target: 'es2022', write: false });
+const template = await readFile(path.join(here, 'ui/thread-report.html'), 'utf8');
+const css = await readFile(path.join(here, 'ui/style.css'), 'utf8');
+await mkdir(path.join(plugin, 'ui'), { recursive: true });
+await writeFile(path.join(plugin, 'ui/thread-report.html'), template.replace('/*__STYLE__*/', () => css).replace('/*__SCRIPT__*/', () => ui.outputFiles[0].text));
 const samples = [
     ['threads', 'confirmed-deadlock.txt', 'frontend/assets/javautils/samples/tda-deadlock.txt', 'Synthetic regression: JVM-reported deadlock'],
     ['threads', 'repeated-contention.txt', 'frontend/test/tda/fixtures/repeated-contention.txt', 'Synthetic regression: two-snapshot contention'],

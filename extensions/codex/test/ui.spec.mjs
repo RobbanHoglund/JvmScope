@@ -1,0 +1,99 @@
+import { test, expect } from '@playwright/test';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { startHost } from './ui-host.mjs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const previewDir = fileURLToPath(new URL('../../../build/codex-previews/', import.meta.url));
+let host;
+test.beforeAll(async () => { host = await startHost(); });
+test.afterAll(async () => { await host?.close(); });
+const widget = page => page.frameLocator('iframe');
+const overflow = frame => frame.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1);
+
+test('deadlock graph exposes exact source evidence on click and keyboard activation', async ({ page }) => {
+    await page.goto(host.url);
+    const f = widget(page);
+    await expect(f.getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
+    await expect(f.locator('.edge')).toHaveCount(2);
+    await expect(f.locator('.node')).toHaveCount(2);
+    await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
+    await expect(f.locator('.evidence')).toContainText('4  "alpha"');
+    await expect(f.locator('.evidence')).toContainText('waiting to lock <0x00000000aaaabbbb>');
+    expect(host.calls.at(-1).arguments.sha256).toMatch(/^[a-f0-9]{64}$/);
+    await f.getByRole('button', { name: /^beta\. Waits for/ }).focus();
+    await page.keyboard.press('Enter');
+    await expect(f.locator('.evidence')).toContainText('10  "beta"');
+    expect(await overflow(f)).toBe(false);
+});
+
+test('cycles stay separate and snapshot paging returns actual next-page data', async ({ page }) => {
+    await page.goto(host.url + '?case=multi');
+    const f = widget(page);
+    await expect(f.getByRole('combobox', { name: 'Cycle', exact: true })).toBeVisible();
+    await f.getByRole('combobox', { name: 'Cycle', exact: true }).selectOption('1');
+    await expect(f.getByRole('button', { name: /^gamma\. Waits for/ })).toBeVisible();
+    await expect(f.getByRole('button', { name: /^alpha\. Waits for/ })).toHaveCount(0);
+    await page.goto(host.url + '?case=series');
+    await expect(f.getByText('Displayed snapshots: 1–1 / 2')).toBeVisible();
+    await f.getByRole('button', { name: 'Next snapshots' }).click();
+    await expect(f.getByText('Displayed snapshots: 2–2 / 2')).toBeVisible();
+    await expect(f.getByRole('heading', { name: 'No JVM-reported deadlock in this snapshot' })).toBeVisible();
+    await f.getByRole('button', { name: 'Previous snapshots' }).click();
+    await expect(f.getByText('Displayed snapshots: 1–1 / 2')).toBeVisible();
+    await page.goto(host.url + '?case=paged');
+    await expect(f.getByText('Displayed snapshots: 1–2 / 3')).toBeVisible();
+    await f.getByRole('button', { name: 'Next snapshots' }).click();
+    await expect(f.getByText('Displayed snapshots: 3–3 / 3')).toBeVisible();
+    await f.getByRole('button', { name: 'Previous snapshots' }).click();
+    await expect(f.getByText('Displayed snapshots: 1–2 / 3')).toBeVisible();
+});
+
+test('changed capture is reported instead of displaying stale evidence', async ({ page }) => {
+    await page.goto(host.url);
+    const f = widget(page);
+    await expect(f.locator('.node')).toHaveCount(2);
+    await writeFile(host.capture, 'changed capture');
+    try {
+        await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
+        await expect(f.locator('.error')).toContainText('changed since analysis');
+        await expect(f.locator('.evidence')).toHaveCount(0);
+    } finally { await writeFile(host.capture, host.original); }
+});
+
+test('unmapped participants have no invented arrows and unavailable tools degrade explicitly', async ({ page }) => {
+    await page.goto(host.url + '?case=unmapped');
+    const f = widget(page);
+    await expect(f.getByText(/Some participants or owners could not be matched/)).toBeVisible();
+    await expect(f.locator('.edge')).toHaveCount(0);
+    await page.goto(host.url + '?noTools=1');
+    await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
+    await expect(f.getByText(/Interactive source tools are unavailable/)).toBeVisible();
+    await expect(f.getByRole('button', { name: 'Source evidence', exact: true })).toBeDisabled();
+});
+
+test('untrusted labels render as text and outside messages cannot replace the report', async ({ page }) => {
+    let dialogs = 0; page.on('dialog', async d => { dialogs++; await d.dismiss(); });
+    await page.goto(host.url + '?case=injection');
+    const f = widget(page);
+    await expect(f.locator('.node').first()).toContainText('<svg/onload=alert(1)>');
+    await expect(f.locator('[onload]')).toHaveCount(0);
+    await f.locator('body').evaluate(() => window.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/host-context-changed', params: { locale: 'sv' } }, '*'));
+    await expect(f.getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
+    expect(dialogs).toBe(0);
+});
+
+test('dark, light and narrow layouts have no horizontal overflow and respond to host context', async ({ page }) => {
+    await mkdir(previewDir, { recursive: true });
+    for (const [theme, width] of [['dark', 1060], ['light', 1060], ['dark', 390]]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.goto(host.url + `?case=long&theme=${theme}`);
+        const f = widget(page);
+        await expect(f.locator('.node')).toHaveCount(2);
+        expect(await overflow(f)).toBe(false);
+        await expect(f.locator('.filename')).toHaveText('production-payments-service-capture-2026-10-23-region-eu-north-cluster-primary-thread-dump.txt');
+        await page.screenshot({ path: path.join(previewDir, `threads-${theme}-${width}.png`), fullPage: true });
+    }
+    await page.evaluate(() => window.sendHostContext({ locale: 'sv-SE', theme: 'light' }));
+    await expect(widget(page).getByRole('heading', { name: 'Trådanalys', exact: true })).toBeVisible();
+    await expect(widget(page).locator('html')).toHaveAttribute('data-theme', 'light');
+});

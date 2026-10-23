@@ -52,9 +52,9 @@ after(async () => {
     assert.equal(stderr, '', 'Protocol or worker errors must not be hidden');
 });
 
-test('relocated bundle exposes seven read-only tools with validated schemas', async () => {
+test('relocated bundle exposes eight read-only tools with validated schemas', async () => {
     const tools = (await client.listTools()).tools;
-    assert.equal(tools.length, 7);
+    assert.equal(tools.length, 8);
     for (const tool of tools) {
         assert.equal(tool.annotations.readOnlyHint, true);
         assert.equal(tool.annotations.destructiveHint, false);
@@ -92,7 +92,7 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
     const standalone = new Client({ name: 'jvmscope-single-plugin-test', version: '1.0.0' });
     try {
         await standalone.connect(new StdioClientTransport({ command: process.execPath, args: [server], cwd: installed }));
-        assert.equal((await standalone.listTools()).tools.length, 7);
+        assert.equal((await standalone.listTools()).tools.length, 8);
         const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
         assert.ok(!result.isError);
         const capture = result.structuredContent.samples[0].path;
@@ -128,6 +128,43 @@ test('confirmed deadlock retains severity, participant evidence and physical lin
     const evidence = await call('read_capture_lines', { path: result.sources[0].path, sha256: result.sources[0].sha256, startLine: thread.startLine, endLine: thread.endLine });
     assert.ok(evidence.lines[0].text.includes(`"${thread.name}"`));
     assert.ok(evidence.lines.some(l => l.text.includes('waiting to lock')));
+    const cycle = snapshot.deadlocks.items[0];
+    const [alpha, beta] = cycle.participants.items;
+    assert.equal(alpha.ownerId, beta.id);
+    assert.equal(beta.ownerId, alpha.id);
+    assert.equal(alpha.waitingLockId, '0x00000000aaaabbbb');
+    assert.equal(alpha.evidence.startLine, 4);
+});
+
+test('MCP Apps report resolves its bundled UI and preserves cached evidence without rereading', async () => {
+    const filename = path.join(temporary, 'render-cache.txt');
+    await cp(sample('confirmed-deadlock.txt'), filename);
+    const report = await call('analyze_thread_dumps', { paths: [filename] });
+    const descriptor = (await client.listTools()).tools.find(t => t.name === 'render_thread_report');
+    const uri = descriptor._meta.ui.resourceUri;
+    assert.ok((await client.listResources()).resources.some(r => r.uri === uri));
+    const resource = (await client.readResource({ uri })).contents[0];
+    assert.equal(resource.mimeType, 'text/html;profile=mcp-app');
+    assert.match(resource.text, /ui\/initialize/);
+    assert.match(resource.text, /ui\/notifications\/tool-result/);
+    assert.deepEqual(resource._meta.ui.csp.connectDomains, []);
+    await writeFile(filename, 'changed after analysis');
+    const rendered = await client.callTool({ name: 'render_thread_report', arguments: { reportId: report.reportId } });
+    assert.ok(!rendered.isError);
+    assert.deepEqual(rendered._meta.jvmscopeReport, report);
+    await fails('read_capture_lines', { path: filename, sha256: report.sources[0].sha256, startLine: 4, endLine: 9 }, /changed/);
+    await fails('render_thread_report', { reportId: '00000000-0000-4000-8000-000000000000' }, /expired|another session/);
+});
+
+test('multiple reported deadlocks remain separate and unresolved owners are never invented', async () => {
+    const report = await call('analyze_thread_dumps', { paths: [path.join(repo, 'extensions/codex/test/fixtures/multiple-deadlocks.txt')] });
+    assert.equal(report.snapshots.items[0].deadlocks.total, 2);
+    assert.deepEqual(report.snapshots.items[0].deadlocks.items.map(c => c.participants.items.map(t => t.name)), [['alpha', 'beta'], ['gamma', 'delta']]);
+    const unmapped = await call('analyze_thread_dumps', { paths: [fixture('unmapped-deadlock-participants.txt')] });
+    for (const p of unmapped.snapshots.items[0].deadlocks.items.flatMap(c => c.participants.items)) {
+        assert.equal(p.ownerId, null);
+        assert.equal(p.evidence, null);
+    }
 });
 
 test('series comparison uses the unchanged engine and snapshot pagination', async () => {
@@ -288,8 +325,12 @@ test('modern MCP negotiation discovers and calls the same packaged server', asyn
     const wire = new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary, stderr: 'pipe' });
     try {
         await modern.connect(wire);
-        assert.equal((await modern.listTools()).tools.length, 7);
+        assert.equal((await modern.listTools()).tools.length, 8);
         const response = await modern.callTool({ name: 'search_knowledge', arguments: { query: 'gc' } });
         assert.ok(!response.isError);
+        const analysis = await modern.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [sample('confirmed-deadlock.txt')] } });
+        const rendered = await modern.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.structuredContent.reportId } });
+        assert.ok(!rendered.isError);
+        assert.equal(rendered._meta.jvmscopeReport.findingCounts.critical, 1);
     } finally { await modern.close(); }
 });

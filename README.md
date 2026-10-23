@@ -55,8 +55,10 @@ Use JvmScope's shared thread, TLS and GC analysis engines directly from a local
 Codex conversation, with structured findings, source-line evidence and bundled
 Java guidance. The self-contained package includes samples and requires Node.js
 22 or later. Parsing runs locally; returned evidence is shared with the AI host.
-[Install/build the Codex plugin](extensions/codex/README.md). Interactive charts
-remain in the web application and VS Code extension. Public directory submission
+[Install/build the Codex plugin](extensions/codex/README.md). Version 0.2.0 adds
+interactive thread reports and deadlock graphs for MCP Apps-compatible hosts,
+with a concise text fallback. Full TLS/GC visualizations remain in the web
+application and VS Code extension. Public directory submission
 is a separate step requiring eligibility for local MCP plugins.
 
 ## VS Code extension

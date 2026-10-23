@@ -37,6 +37,12 @@ jobs:
         run: npm run package --prefix extensions/codex
       - name: Exercise extracted bundle through real MCP client
         run: npm test --prefix extensions/codex
+      - name: Install browser for MCP Apps UI checks
+        if: matrix.os == 'ubuntu-latest'
+        run: npx --prefix extensions/codex playwright install --with-deps chromium
+      - name: Verify visual reports in a sandboxed MCP Apps test host
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run test:ui --prefix extensions/codex
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu-latest'
         with:

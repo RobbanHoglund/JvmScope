@@ -1,4 +1,4 @@
-# JvmScope for Codex — local preview 0.1.0
+# JvmScope for Codex — local preview 0.2.0
 
 Analyze Java thread dumps, SunJSSE TLS logs and HotSpot GC logs using the same engines as the JvmScope web application and VS Code extension. Includes a Java knowledge base, TLS explanations, public samples and source-line evidence. This is an independently developed local plugin, not an OpenAI-approved directory listing.
 
@@ -8,13 +8,13 @@ The build produces two different archives:
 
 | Archive | Purpose |
 | --- | --- |
-| `jvmscope-codex-plugin-0.1.0.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
-| `jvmscope-codex-0.1.0.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
+| `jvmscope-codex-plugin-0.2.0.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
+| `jvmscope-codex-0.2.0.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
 
 For the desktop **Add plugin / New plugin** file picker, try the **single-plugin** archive without unpacking it. Its structure and MCP runtime are tested, but acceptance by that upload service is not verified. ZIP import support does not by itself establish support for local stdio MCP servers. If the app rejects it, retain the detailed error if available and use the documented local marketplace route below. Do not remove the MCP configuration to make an upload pass: the analysis tools depend on it. Public-directory local MCP restrictions are separate from this personal import flow.
 
 1. Install **Node.js 22 or later** and ensure `node --version` works in the desktop app's environment. No Java runtime, npm install, API key or running web server is needed to use the packaged plugin.
-2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.1.0.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
+2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.2.0.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
 3. Add that **extracted marketplace folder** using a current Codex CLI:
    ```sh
    codex plugin marketplace add "/absolute/path/to/JvmScope-Codex"
@@ -34,7 +34,8 @@ If your client lacks the documented plugin marketplace commands, update it. As a
 - UTF-8 text only; gzip and binary input are rejected. At most 50 thread files and 64 MiB combined per analysis; TLS/GC accept one file. Two workers maximum, 512 MiB old-generation heap per worker, 60-second deadline. Large inputs may require smaller intervals.
 - Results are paged and bounded to 512 KiB; evidence ranges are at most 200 lines / 24,000 JSON characters. Analysis must be rerun if the source SHA-256 changes. Keep files stable while analyzing.
 - Thread snapshot comparison retains the shared engine's process/timestamp/counter checks. GC sessions are analyzed independently. GC pause budget defaults to 200 ms, a review threshold rather than a JVM requirement.
-- Interactive timelines and graphs remain available in the existing JvmScope application and VS Code extension. This plugin version produces structured analysis and AI explanations.
+- Thread analysis includes an optional MCP Apps report with status cards, per-snapshot deadlock graphs, multiple cycle selection and hash-checked source evidence. Compatible host support must be tested in your client; text analysis remains available. Full TLS/GC visualizations remain in the existing application and VS Code extension.
+- Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Rendering uses this cache without rereading captures. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
 
 ## Build and test from source
 
@@ -44,6 +45,8 @@ From the repository root:
 npm ci --prefix extensions/codex
 npm run package --prefix extensions/codex
 npm test --prefix extensions/codex
+npx --prefix extensions/codex playwright install chromium
+npm run test:ui --prefix extensions/codex
 codex plugin marketplace add "/absolute/path/to/JvmScope/build/codex-marketplace"
 ```
 
@@ -59,3 +62,7 @@ Verified documentation (2026-10-23):
 - https://developers.openai.com/plugins/build/plugins
 - https://developers.openai.com/plugins/deploy/desktop-only
 - https://developers.openai.com/plugins/deploy/submission
+
+## Desktop UI acceptance (0.2.0)
+
+Install the updated single-plugin ZIP and start a fresh local conversation. Ask for a visual analysis of the bundled deadlock sample. Confirm `analyze_thread_dumps` and `render_thread_report` are called and an interactive JvmScope card appears. Select alpha in the graph and verify its hash-checked source lines. Try the snapshot/cycle selectors and light/dark theme. If only text appears, the MCP Apps UI is not established in that client: keep the concise text fallback and record the client version. The automated browser harness exercises the documented protocol; it is not the Codex desktop application.

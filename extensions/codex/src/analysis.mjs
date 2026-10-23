@@ -5,7 +5,7 @@ import { parseGcLog, analyzeGc } from '../../../frontend/assets/javautils/gc/par
 import { sourceInfo } from './captures.mjs';
 
 export function page(items, offset = 0, limit = 10) {
-    return { total: items.length, offset, nextOffset: offset + limit < items.length ? offset + limit : null, items: items.slice(offset, offset + limit) };
+    return { total: items.length, offset, limit, nextOffset: offset + limit < items.length ? offset + limit : null, items: items.slice(offset, offset + limit) };
 }
 const tally = values => values.reduce((result, value) => { result[value] = (result[value] || 0) + 1; return result; }, {});
 const overview = captures => ({ schemaVersion: 1, sources: captures.map(sourceInfo), privacy: 'Parsed locally. Returned evidence is visible to the connected AI host; this is not offline AI.' });
@@ -16,7 +16,18 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
     if (!result.parsedDumps.length) throw new Error(`No supported thread snapshots. ${result.parserResult.warnings.join(' ')}`);
     const snapshots = result.parsedDumps.map(d => {
         const source = captures[Number(d.sourceId.split(':')[1])];
-        const findThread = ref => d.threads.find(t => t.sourceKey === ref.sourceKey);
+        const threadsByKey = new Map(d.threads.map(t => [t.sourceKey, t]));
+        const findThread = ref => threadsByKey.get(ref.sourceKey);
+        const evidenceFor = t => t?.format === 'hotspot-classic' && Number.isInteger(t.rawStartLine)
+            ? { startLine: d.sourceStartLine + t.rawStartLine - 1, endLine: d.sourceStartLine + t.rawEndLine - 1 } : null;
+        const deadlocks = page(d.deadlocks.map(cycle => ({ id: cycle.id,
+            participants: page(cycle.threads.map((ref, i) => {
+                const thread = findThread(ref);
+                return { id: ref.sourceKey || `unmapped:${i}`, name: ref.threadName, mappingStatus: ref.mappingStatus,
+                    ownerId: ref.heldBySourceKey || null, ownerName: ref.heldBy, ownerMappingStatus: ref.heldByMappingStatus,
+                    waitingLockId: ref.waitingLockId, waitingLockType: ref.waitingLockType,
+                    topFrame: thread?.topFrame || null, evidence: evidenceFor(thread) };
+            }), 0, 40) })), 0, 20);
         const findings = d.smartAnalysis.findings.map(f => ({
             ...f,
             facts: page(f.facts || [], 0, 20), resourceIds: page(f.resourceIds || [], 0, 20),
@@ -28,7 +39,7 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
                     endLine: hasLines ? d.sourceStartLine + t.rawEndLine - 1 : null };
             }), 0, 20),
         }));
-        return { index: d.index, sourcePath: source.path, sourceStartLine: d.sourceStartLine,
+        return { index: d.index, sourcePath: source.path, sourceStartLine: d.sourceStartLine, deadlocks,
             collectionScope: d.collectionScope, parsingStatus: d.parsingStatus, diagnostics: d.diagnostics,
             snapshotTime: d.snapshotTime, threadCount: d.threads.length, states: tally(d.threads.map(t => t.javaState || 'UNKNOWN')),
             changes: d.threadChanges ? { baselineCount: d.threadChanges.baselineCount, newCount: d.threadChanges.newCount,
