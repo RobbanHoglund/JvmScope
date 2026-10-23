@@ -1,0 +1,45 @@
+name: Codex plugin checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codex-plugin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packaged-plugin:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: extensions/codex/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - run: npm ci --prefix extensions/codex
+      - name: Build complete local plugin and marketplace ZIP
+        run: npm run package --prefix extensions/codex
+      - name: Exercise extracted bundle through real MCP client
+        run: npm test --prefix extensions/codex
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: jvmscope-codex
+          path: build/jvmscope-codex-*.zip
+          if-no-files-found: error
