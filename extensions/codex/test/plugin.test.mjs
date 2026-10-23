@@ -78,6 +78,32 @@ test('ZIP includes discoverable marketplace, manifests, skill, icon and dependen
     assert.ok((await readFile(path.join(plugin, 'LICENSE'))).length > 100);
 });
 
+test('single-plugin ZIP has a root manifest and runs independently of the marketplace', async () => {
+    const installed = path.join(temporary, 'single plugin import');
+    const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+    execFileSync('python3', ['-m', 'zipfile', '-e', path.join(repo, `build/jvmscope-codex-plugin-${version}.zip`), installed]);
+    const manifest = JSON.parse(await readFile(path.join(installed, 'plugin.json'), 'utf8'));
+    assert.equal(manifest.name, 'jvmscope');
+    const mcp = JSON.parse(await readFile(path.join(installed, 'mcp.json'), 'utf8'));
+    const server = mcp.mcpServers.jvmscope.args[0].replace('${PLUGIN_ROOT}', installed);
+    assert.equal(path.normalize(server), path.join(installed, 'server/server.mjs'));
+    await assert.rejects(readFile(path.join(installed, '.agents/plugins/marketplace.json')), { code: 'ENOENT' });
+    assert.deepEqual(await readFile(server), await readFile(path.join(plugin, 'server/server.mjs')));
+    const standalone = new Client({ name: 'jvmscope-single-plugin-test', version: '1.0.0' });
+    try {
+        await standalone.connect(new StdioClientTransport({ command: process.execPath, args: [server], cwd: installed }));
+        assert.equal((await standalone.listTools()).tools.length, 7);
+        const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
+        assert.ok(!result.isError);
+        const capture = result.structuredContent.samples[0].path;
+        assert.ok(capture.startsWith(installed + path.sep));
+        const analysis = await standalone.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [capture] } });
+        assert.ok(!analysis.isError, JSON.stringify(analysis));
+    } finally {
+        await standalone.close();
+    }
+});
+
 test('all bundled samples are present and analyzed through the real MCP transport', async () => {
     const { samples } = await call('list_samples');
     assert.equal(samples.length, 11);
