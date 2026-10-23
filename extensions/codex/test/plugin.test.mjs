@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
-import { cp, mkdtemp, readFile, writeFile, mkdir, rm, truncate } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, writeFile, mkdir, rm, truncate, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -96,7 +96,8 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
         const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
         assert.ok(!result.isError);
         const capture = result.structuredContent.samples[0].path;
-        assert.ok(capture.startsWith(installed + path.sep));
+        // Node resolves the server's symlinks (for example /var -> /private/var on macOS).
+        assert.ok(capture.startsWith(await realpath(installed) + path.sep));
         const analysis = await standalone.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [capture] } });
         assert.ok(!analysis.isError, JSON.stringify(analysis));
     } finally {
