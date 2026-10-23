@@ -95,9 +95,10 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
         assert.equal((await standalone.listTools()).tools.length, 8);
         const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
         assert.ok(!result.isError);
-        const capture = result.structuredContent.samples[0].path;
-        // Node resolves the server's symlinks (for example /var -> /private/var on macOS).
-        assert.ok(capture.startsWith(await realpath(installed) + path.sep));
+        const returnedSample = result.structuredContent.samples[0];
+        const capture = returnedSample.path;
+        // Canonicalize both files: macOS has /var symlinks and Windows may change path casing.
+        assert.equal(await realpath(capture), await realpath(path.join(installed, 'samples', returnedSample.file)));
         const analysis = await standalone.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [capture] } });
         assert.ok(!analysis.isError, JSON.stringify(analysis));
     } finally {
