@@ -179,6 +179,20 @@ test('Java, GC and TLS knowledge is available without network access', async () 
     await fails('get_knowledge_article', { id: '../secrets' }, /Unknown article/);
 });
 
+test('knowledge search follows nextOffset without repeating articles', async () => {
+    const first = await call('search_knowledge', { query: 'gc', limit: 1 });
+    assert.ok(first.total > 1);
+    assert.equal(first.nextOffset, 1);
+    const second = await call('search_knowledge', { query: 'gc', offset: first.nextOffset, limit: 1 });
+    assert.equal(second.total, first.total);
+    assert.equal(second.items.length, 1);
+    assert.notEqual(second.items[0].id, first.items[0].id);
+    const end = await call('search_knowledge', { query: 'gc', offset: first.total, limit: 1 });
+    assert.deepEqual(end.items, []);
+    assert.equal(end.nextOffset, null);
+    await fails('search_knowledge', { query: 'gc', offset: -1 }, /Invalid|small|greater|nonnegative/i);
+});
+
 test('wrong format and malformed arguments fail explicitly without poisoning the next request', async () => {
     await fails('analyze_gc_log', { path: sample('confirmed-deadlock.txt') }, /GC/);
     await fails('analyze_tls_log', { path: sample('java27-g1.log') }, /recognizable/);

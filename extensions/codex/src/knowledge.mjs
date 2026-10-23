@@ -5,11 +5,11 @@ import { page } from './analysis.mjs';
 const tlsArticles = TLS_ISSUE_CATALOG.map(issue => ({ id: `tls-${issue.id}`, title: issue.matchKey, sections: issue.sections,
     scope: 'Bundled JvmScope TLS explanation; verify the actual alert direction and capture evidence. Placeholders such as {AlertEndpoint} are contextual, not observed values.' }));
 
-export function searchKnowledge({ query, limit = 10 }) {
+export function searchKnowledge({ query, offset = 0, limit = 10 }) {
     const tokens = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
     const tls = tlsArticles.filter(a => tokens.every(t => JSON.stringify(a).toLowerCase().includes(t)));
     return page([...filterArticles({ query }), ...tls].map(a => ({ id: a.id, title: a.title, summary: a.summary,
-        verifiedDate: a.verifiedDate ?? null, topics: a.topics ?? ['tls'] })), 0, limit);
+        verifiedDate: a.verifiedDate ?? null, topics: a.topics ?? ['tls'] })), offset, limit);
 }
 
 export function knowledgeArticle({ id }) {
