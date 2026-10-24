@@ -1,3 +1,4 @@
+import { version } from '../package.json';
 import { createBridge } from './bridge.mjs';
 import { findingCopy } from './finding-copy.mjs';
 import { createDeadlockGraph } from './deadlock-graph.mjs';
@@ -198,7 +199,7 @@ function render() {
     for (const warning of [...(report.warnings || []), ...(snapshot.analysis?.limitations || []), ...(report.limitations || [])]) list.append(el('li', '', warning));
     for (const s of report.sourceResults || []) if (!s.accepted) list.append(el('li', '', `Rejected input: ${s.name || s.label || s.sourceId}`));
     limitations.append(el('p', 'muted', t('original')), list); root.append(limitations);
-    append(root, append(el('footer', 'footer'), el('span', '', t('local')), el('span', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms · v0.2.0`)));
+    append(root, append(el('footer', 'footer'), el('span', '', t('local')), el('span', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms · v${version}`)));
 }
 void bridge.initialize();
 
