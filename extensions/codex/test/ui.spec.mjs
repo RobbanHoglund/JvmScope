@@ -98,6 +98,76 @@ test('report language follows the conversation and keeps evidence qualifications
     await expect(f.locator('.finding').first()).toContainText('2 JVM-reported cycles with 5 reported participant entries');
 });
 
+test('real three-snapshot report keeps counts scoped, text readable and all cycle edges usable at chat widths', async ({ page }) => {
+    await mkdir(previewDir, { recursive: true });
+    for (const theme of ['light', 'dark']) {
+        await page.goto(host.url + `?case=real&theme=${theme}`);
+        const f = widget(page);
+        await expect(f.locator('.summary strong')).toHaveText(['2', '5', '3']);
+        await expect(f.locator('.observation')).toContainText('Snapshots with reported cycles: 3/3');
+        for (const width of [1060, 735, 640, 390]) {
+            await page.setViewportSize({ width, height: 1000 });
+            for (const [cycle, count] of [[0, 2], [1, 3]]) {
+                await f.getByRole('combobox', { name: 'Cycle', exact: true }).selectOption(String(cycle));
+                await expect(f.locator('.node')).toHaveCount(count);
+                await expect(f.locator('.edge')).toHaveCount(count);
+                expect(await overflow(f)).toBe(false);
+                await expect.poll(() => f.locator('.graph').evaluate(graph => {
+                    const bounds = graph.getBoundingClientRect(), nodes = [...graph.querySelectorAll('.node')];
+                    return nodes.every(node => {
+                        const r = node.getBoundingClientRect(), name = node.querySelector('.node-name');
+                        return parseFloat(getComputedStyle(name).fontSize) >= 14 && r.left >= bounds.left && r.right <= bounds.right
+                            && node.scrollWidth <= node.clientWidth + 1;
+                    });
+                })).toBe(true);
+                await expect.poll(() => f.locator('.graph').evaluate(graph => {
+                    const nodes = [...graph.querySelectorAll('.node')].map(n => n.getBoundingClientRect());
+                    return [...graph.querySelectorAll('.edge')].every(edge => {
+                        const matrix = edge.getScreenCTM(), length = edge.getTotalLength();
+                        for (let k = 1; k < 40; k++) {
+                            const p = edge.getPointAtLength(length * k / 40).matrixTransform(matrix);
+                            if (nodes.some(r => p.x > r.left && p.x < r.right && p.y > r.top && p.y < r.bottom)) return false;
+                        }
+                        return true;
+                    });
+                })).toBe(true);
+                if (width === 735 || width === 390) await page.screenshot({ path: path.join(previewDir, `real-${theme}-${width}-cycle-${cycle + 1}.png`), fullPage: true });
+            }
+        }
+    }
+});
+
+test('every real snapshot exposes the selected participant source, including after resize', async ({ page }) => {
+    await page.goto(host.url + '?case=real');
+    const f = widget(page);
+    for (const snapshot of ['0', '1', '2']) {
+        await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption(snapshot);
+        await f.locator('.node').first().click();
+        const name = await f.locator('.node-name').first().textContent();
+        await expect(f.locator('.evidence')).toContainText(`"${name}"`);
+        await expect(f.locator('.evidence')).toContainText('waiting to lock');
+        await expect(f.locator('.node').first()).toBeFocused();
+        const evidence = await f.locator('.evidence').textContent();
+        await page.setViewportSize({ width: 735 - Number(snapshot) * 100, height: 1000 });
+        await expect(f.locator('.evidence')).toHaveText(evidence);
+        await expect(f.locator('.summary strong')).toHaveText(['2', '5', '3']);
+    }
+});
+
+test('large cycle discloses omitted participants and never invents a closing edge', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 1000 });
+    await page.goto(host.url + '?case=many');
+    const f = widget(page);
+    await expect(f.locator('.summary strong')).toHaveText(['1', '9', '1']);
+    await expect(f.locator('.node')).toHaveCount(8);
+    await expect(f.locator('.edge')).toHaveCount(7);
+    await expect(f.getByText(/Graph limited to the first 8 reported participants/)).toBeVisible();
+    expect(await overflow(f)).toBe(false);
+    await f.locator('.node').last().click();
+    await expect(f.locator('.evidence')).toContainText('"worker-7-with-a-long-descriptive-thread-name"');
+    await expect(f.locator('#detail')).toContainText('Held by: worker-8-with-a-long-descriptive-thread-name');
+});
+
 test('dark, light and narrow layouts have no horizontal overflow and respond to host context', async ({ page }) => {
     await mkdir(previewDir, { recursive: true });
     for (const [theme, width] of [['dark', 1060], ['light', 1060], ['dark', 390]]) {

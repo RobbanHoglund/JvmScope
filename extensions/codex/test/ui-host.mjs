@@ -20,6 +20,20 @@ export async function startHost() {
     await writeFile(longName, original);
     const paged = path.join(temporary, 'three-snapshots.txt');
     await writeFile(paged, [original, original, original].join('\n'));
+    // Synthetic stress case: the ninth participant is intentionally beyond the graph bound.
+    const many = path.join(temporary, 'nine-participants.txt');
+    const name = i => `worker-${i}-with-a-long-descriptive-thread-name`;
+    const lock = i => `0x${(4096 + i).toString(16)}`;
+    const threads = Array.from({ length: 9 }, (_, i) => `"${name(i)}" #${i + 1} prio=5 tid=0x${i + 1} nid=0x${i + 1} waiting for monitor entry
+ java.lang.Thread.State: BLOCKED (on object monitor)
+ at example.Worker.run(Worker.java:12)
+ - waiting to lock <${lock(i)}> (a example.Lock)
+ - locked <${lock((i + 8) % 9)}> (a example.Lock)
+`).join('\n');
+    const cycles = Array.from({ length: 9 }, (_, i) => `"${name(i)}":
+ waiting to lock monitor 0x${i + 1} (object ${lock(i)}, a example.Lock),
+ which is held by "${name((i + 1) % 9)}"`).join('\n\n');
+    await writeFile(many, `Full thread dump OpenJDK 64-Bit Server VM:\n\n${threads}\nFound one Java-level deadlock:\n=============================\n${cycles}\n\nJava stack information for the threads listed above:\n`);
     const client = new Client({ name: 'jvmscope-ui-host-test', version: '1.0.0' });
     await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary }));
     const rendered = {}, calls = [];
@@ -29,6 +43,7 @@ export async function startHost() {
         ['unmapped', [path.join(repo, 'frontend/test/tda/fixtures/unmapped-deadlock-participants.txt')]],
         ['series', [path.join(plugin, 'samples/repeated-contention.txt')], 1],
         ['paged', [paged], 2],
+        ['many', [many]],
         ['real', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')]],
         ['realSv', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')], undefined, 'sv'],
     ]) {
