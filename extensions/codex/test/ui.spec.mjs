@@ -26,6 +26,21 @@ test('deadlock graph exposes exact source evidence on click and keyboard activat
     expect(await overflow(f)).toBe(false);
 });
 
+test('single snapshots omit series controls while a one-item series page keeps navigation', async ({ page }) => {
+    await page.goto(host.url);
+    const f = widget(page);
+    await expect(f.locator('.node')).toHaveCount(2);
+    await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toHaveCount(0);
+    await expect(f.locator('.observation')).toHaveCount(0);
+    await expect(f.getByText('deadlock.txt', { exact: true })).toHaveCount(1);
+    await page.goto(host.url + '?case=series');
+    await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toBeVisible();
+    await expect(f.locator('.observation')).toBeVisible();
+    await f.getByRole('button', { name: 'Next snapshots' }).click();
+    await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toBeVisible();
+    await expect(f.getByRole('button', { name: 'Previous snapshots' })).toBeEnabled();
+});
+
 test('cycles stay separate and snapshot paging returns actual next-page data', async ({ page }) => {
     await page.goto(host.url + '?case=multi');
     const f = widget(page);

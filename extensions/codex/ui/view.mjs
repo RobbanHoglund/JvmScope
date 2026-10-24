@@ -141,8 +141,9 @@ function render() {
     for (const [value, label, alert] of [[deadlock?.cycles ?? snapshot.deadlocks?.total ?? 0, t('cyclesCount'), !!snapshot.deadlocks?.total], [deadlock?.matchedThreads ?? '—', t('threadsCount')], [report.snapshotCount, t('snapshots')]])
         stats.append(append(el('div', `stat${alert ? ' alert' : ''}`), el('strong', '', value), el('span', '', label)));
     root.append(stats);
-    if (report.deadlockObservations) root.append(el('p', 'muted observation', `${t('observed')}: ${report.deadlockObservations.snapshotsWithCycles}/${report.snapshotCount}. ${t('cycleHint')}`));
+    if (report.snapshotCount > 1 && report.deadlockObservations) root.append(el('p', 'muted observation', `${t('observed')}: ${report.deadlockObservations.snapshotsWithCycles}/${report.snapshotCount}. ${t('cycleHint')}`));
     if (deadlock && deadlock.reportedParticipants !== deadlock.matchedThreads) root.append(el('p', 'note', `${t('originalCount')}: ${deadlock.reportedParticipants} · ${t('threadsCount')}: ${deadlock.matchedThreads}`));
+    if (report.snapshotCount > 1) {
     const toolbar = el('div', 'toolbar'), select = el('select'); select.setAttribute('aria-label', t('snapshot'));
     items(report.snapshots).forEach((s, i) => { const source = report.sources.find(c => c.path === s.sourcePath); const o = el('option', '', `${s.index + 1} · ${source?.name || s.sourcePath}`); o.value = i; select.append(o); });
     select.value = snapshotIndex; select.addEventListener('change', () => { snapshotIndex = Number(select.value); cycleIndex = 0; selection = null; render(); });
@@ -150,6 +151,7 @@ function render() {
     if (report.snapshots.offset) { const b = button(t('previous'), () => loadPage(Math.max(0, report.snapshots.offset - (report.snapshots.limit || 10)), b)); b.disabled = !bridge.canCallTools; toolbar.append(b); }
     if (report.snapshots.nextOffset != null) { const b = button(t('next'), () => loadPage(report.snapshots.nextOffset, b)); b.disabled = !bridge.canCallTools; toolbar.append(b); }
     root.append(toolbar);
+    }
     if (report.snapshots.total > items(report.snapshots).length) root.append(el('p', 'muted', `${t('viewRange')}: ${report.snapshots.offset + 1}–${report.snapshots.offset + items(report.snapshots).length} / ${report.snapshots.total}`));
     const src = report.sources.find(s => s.path === snapshot.sourcePath);
     const filename = el('p', 'filename', src?.name || snapshot.sourcePath); filename.title = snapshot.sourcePath; root.append(filename);
