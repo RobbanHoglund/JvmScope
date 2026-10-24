@@ -27,6 +27,8 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
                 return { id: ref.sourceKey || `unmapped:${i}`, name: ref.threadName, mappingStatus: ref.mappingStatus,
                     ownerId: ref.heldBySourceKey || null, ownerName: ref.heldBy, ownerMappingStatus: ref.heldByMappingStatus,
                     waitingLockId: ref.waitingLockId, waitingLockType: ref.waitingLockType,
+                    // Only explicit ownership from the matched thread block, never cycle order.
+                    heldLocks: page(thread?.heldLocks || [], 0, 40),
                     topFrame: thread?.topFrame || null, evidence: evidenceFor(thread) };
             }), 0, 40) })), 0, 20);
         const findings = d.smartAnalysis.findings.map(f => ({

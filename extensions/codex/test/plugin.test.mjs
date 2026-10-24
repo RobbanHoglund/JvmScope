@@ -136,6 +136,22 @@ test('confirmed deadlock retains severity, participant evidence and physical lin
     assert.equal(beta.ownerId, alpha.id);
     assert.equal(alpha.waitingLockId, '0x00000000aaaabbbb');
     assert.equal(alpha.evidence.startLine, 4);
+    assert.deepEqual(alpha.heldLocks.items.map(l => l.lockId), ['0x00000000ccccdddd']);
+    assert.deepEqual(beta.heldLocks.items.map(l => l.lockId), ['0x00000000aaaabbbb']);
+});
+
+test('held-lock cards preserve explicit synchronizers and exclude released Object.wait monitors', async () => {
+    const filename = path.join(temporary, 'explicit-lock-evidence.txt');
+    const original = await readFile(sample('confirmed-deadlock.txt'), 'utf8');
+    const changed = original.replace(' - locked <0x00000000ccccdddd> (a example.LockB)',
+        ' - locked <0x00000000ccccdddd> (a example.LockB)\n - waiting on <0x00000000ccccdddd> (a example.LockB)\n Locked ownable synchronizers:\n - <0x12345678> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)');
+    assert.notEqual(changed, original);
+    await writeFile(filename, changed);
+    const report = await call('analyze_thread_dumps', { paths: [filename] });
+    const alpha = report.snapshots.items[0].deadlocks.items[0].participants.items.find(p => p.name === 'alpha');
+    assert.deepEqual(alpha.heldLocks.items, [{ lockId: '0x12345678', lockType: 'a java.util.concurrent.locks.ReentrantLock$NonfairSync', kind: 'ownable-synchronizer' }]);
+    // The footer's owner relation must not reintroduce the released lexical monitor.
+    assert.ok(!alpha.heldLocks.items.some(l => l.lockId === '0x00000000ccccdddd'));
 });
 
 test('real HotSpot standard captures expose exact evidence in every snapshot', async () => {
@@ -195,6 +211,7 @@ test('multiple reported deadlocks remain separate and unresolved owners are neve
     for (const p of unmapped.snapshots.items[0].deadlocks.items.flatMap(c => c.participants.items)) {
         assert.equal(p.ownerId, null);
         assert.equal(p.evidence, null);
+        assert.equal(p.heldLocks.total, 0);
     }
 });
 

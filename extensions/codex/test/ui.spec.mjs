@@ -16,6 +16,8 @@ test('deadlock graph exposes exact source evidence on click and keyboard activat
     await expect(f.getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
     await expect(f.locator('.edge')).toHaveCount(2);
     await expect(f.locator('.node')).toHaveCount(2);
+    await expect(f.locator('.node-holding').first()).toContainText('Holds:example.LockB');
+    await expect(f.locator('.node-holding').first()).toContainText('0x00000000ccccdddd');
     await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
     await expect(f.locator('.evidence')).toContainText('4  "alpha"');
     await expect(f.locator('.evidence')).toContainText('waiting to lock <0x00000000aaaabbbb>');
@@ -80,6 +82,7 @@ test('unmapped participants have no invented arrows and unavailable tools degrad
     const f = widget(page);
     await expect(f.getByText(/Some participants or owners could not be matched/)).toBeVisible();
     await expect(f.locator('.edge')).toHaveCount(0);
+    await expect(f.locator('.node-holding').first()).toContainText('Not established in the matched thread block');
     await page.goto(host.url + '?noTools=1');
     await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
     await expect(f.getByText(/Interactive source tools are unavailable/)).toBeVisible();

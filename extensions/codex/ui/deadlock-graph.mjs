@@ -1,6 +1,7 @@
 // Text lives in ordinary HTML cards: it never shrinks with an SVG viewBox.
 // SVG contains only measured connectors between explicitly resolved participants.
 const ns = 'http://www.w3.org/2000/svg';
+const lockType = value => value?.replace(/^an?\s+/, '') || '—';
 function svg(tag, attributes = {}) {
     const node = document.createElementNS(ns, tag);
     for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
@@ -21,10 +22,20 @@ export function createDeadlockGraph({ participants, selectedId, label, t, onSele
     const nodes = new Map();
     for (const p of shown) {
         const card = document.createElement('button'); card.type = 'button'; card.className = `node${selectedId === p.id ? ' selected' : ''}`;
-        card.dataset.participant = p.id; card.setAttribute('aria-label', `${p.name}. ${t('waiting')} ${p.waitingLockType || p.waitingLockId || '—'}. ${t('source')}`);
+        card.dataset.participant = p.id; card.setAttribute('aria-label', `${p.name}. ${t('waiting')} ${p.waitingLockType || p.waitingLockId || '—'}. ${t('holding')} ${(p.heldLocks?.items || []).map(l => `${l.lockType || ''} ${l.lockId}`).join(', ') || t('unknownHolding')}. ${t('source')}`);
         card.setAttribute('aria-pressed', selectedId === p.id ? 'true' : 'false');
-        card.append(textNode('strong', 'node-name', p.name), textNode('span', 'node-state', t(p.mappingStatus === 'resolved' ? 'mappedParticipant' : 'unmappedParticipant')));
-        const lock = textNode('span', 'node-lock', `${t('waiting')}: ${p.waitingLockType || '—'}`);
+        card.append(textNode('strong', 'node-name', p.name));
+        if (p.mappingStatus !== 'resolved') card.append(textNode('span', 'node-state', t('unmappedParticipant')));
+        const held = p.heldLocks?.items || [];
+        const holding = textNode('span', 'node-holding', `${t('holding')}:`);
+        if (!held.length) holding.append(textNode('span', 'node-state', t('unknownHolding')));
+        for (const lock of held.slice(0, 2)) {
+            const row = textNode('span', 'node-lock', lockType(lock.lockType));
+            row.append(textNode('code', '', lock.lockId)); holding.append(row);
+        }
+        if (p.heldLocks?.total > 2) holding.append(textNode('span', 'node-state', `+${p.heldLocks.total - 2} ${t('moreLocks')}`));
+        card.append(holding);
+        const lock = textNode('span', 'node-lock', `${t('waiting')}: ${lockType(p.waitingLockType)}`);
         lock.append(textNode('code', '', p.waitingLockId)); card.append(lock);
         card.title = [p.name, p.topFrame].filter(Boolean).join('\n');
         card.addEventListener('click', () => onSelect(p)); cards.append(card); nodes.set(p.id, card);
