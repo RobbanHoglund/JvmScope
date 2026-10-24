@@ -195,6 +195,8 @@ test('MCP Apps report resolves its bundled UI and preserves cached evidence with
     assert.ok(!rendered.isError);
     assert.deepEqual(rendered._meta.jvmscopeReport, report);
     assert.equal(rendered._meta.jvmscopeLanguage, 'en');
+    assert.match(rendered.content[0].text, /diagnostic conclusion and next check/);
+    assert.doesNotMatch(rendered.content[0].text, /if no widget is visible|couldn.t verify/i);
     const swedish = await client.callTool({ name: 'render_thread_report', arguments: { reportId: report.reportId, language: 'sv' } });
     assert.equal(swedish._meta.jvmscopeLanguage, 'sv');
     assert.deepEqual(swedish._meta.jvmscopeReport, report);

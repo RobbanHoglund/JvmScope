@@ -58,7 +58,7 @@ function createServer() {
     }, async ({ reportId, language }) => {
         try {
             const report = reports.get(reportId);
-            return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. Repeated observations are not distinct incidents. Keep the accompanying answer brief; if no widget is visible, give a concise text analysis. Do not create files automatically.` }],
+            return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. Repeated observations are not distinct incidents. Keep the accompanying answer brief: give the diagnostic conclusion and next check. Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
                 structuredContent: { reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
                     findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations },
                 _meta: { jvmscopeReport: report, jvmscopeLanguage: language } };
