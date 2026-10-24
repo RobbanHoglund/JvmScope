@@ -138,6 +138,25 @@ test('confirmed deadlock retains severity, participant evidence and physical lin
     assert.equal(alpha.evidence.startLine, 4);
 });
 
+test('real HotSpot standard captures expose exact evidence in every snapshot', async () => {
+    const filename = path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt');
+    const report = await call('analyze_thread_dumps', { paths: [filename] });
+    assert.equal(report.snapshotCount, 3);
+    for (const snapshot of report.snapshots.items) {
+        assert.equal(snapshot.deadlocks.total, 2);
+        const participants = snapshot.deadlocks.items.flatMap(c => c.participants.items);
+        assert.equal(participants.length, 5);
+        for (const p of participants) {
+            assert.ok(p.evidence.startLine >= snapshot.sourceStartLine);
+            const excerpt = await call('read_capture_lines', { path: filename, sha256: report.sources[0].sha256, ...p.evidence });
+            assert.ok(excerpt.lines[0].text.includes(`"${p.name}"`));
+            assert.ok(excerpt.lines.some(l => l.text.includes('waiting to lock')));
+        }
+        const finding = snapshot.analysis.findings.items.find(f => f.id === 'confirmed-deadlock');
+        assert.deepEqual(finding.threads.items.map(t => t.startLine).sort(), participants.map(t => t.evidence.startLine).sort());
+    }
+});
+
 test('MCP Apps report resolves its bundled UI and preserves cached evidence without rereading', async () => {
     const filename = path.join(temporary, 'render-cache.txt');
     await cp(sample('confirmed-deadlock.txt'), filename);

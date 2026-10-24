@@ -18,7 +18,8 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
         const source = captures[Number(d.sourceId.split(':')[1])];
         const threadsByKey = new Map(d.threads.map(t => [t.sourceKey, t]));
         const findThread = ref => threadsByKey.get(ref.sourceKey);
-        const evidenceFor = t => t?.format === 'hotspot-classic' && Number.isInteger(t.rawStartLine)
+        const evidenceFor = t => Number.isInteger(t?.rawStartLine) && t.rawStartLine > 0
+            && Number.isInteger(t.rawEndLine) && t.rawEndLine >= t.rawStartLine
             ? { startLine: d.sourceStartLine + t.rawStartLine - 1, endLine: d.sourceStartLine + t.rawEndLine - 1 } : null;
         const deadlocks = page(d.deadlocks.map(cycle => ({ id: cycle.id,
             participants: page(cycle.threads.map((ref, i) => {
@@ -34,9 +35,8 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
             threads: page((f.threads || []).map(ref => {
                 const t = findThread(ref);
                 // JSON dumps have no physical per-thread source range in the parser.
-                const hasLines = t?.format === 'hotspot-classic' && Number.isInteger(t.rawStartLine);
-                return { ...ref, startLine: hasLines ? d.sourceStartLine + t.rawStartLine - 1 : null,
-                    endLine: hasLines ? d.sourceStartLine + t.rawEndLine - 1 : null };
+                const lines = evidenceFor(t);
+                return { ...ref, startLine: lines?.startLine ?? null, endLine: lines?.endLine ?? null };
             }), 0, 20),
         }));
         return { index: d.index, sourcePath: source.path, sourceStartLine: d.sourceStartLine, deadlocks,
