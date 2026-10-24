@@ -21,7 +21,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    # Browser OS dependencies can consume ten minutes on a slow Ubuntu mirror.
+    # Keep time for the UI checks after installation; never skip that gate.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
