@@ -10,7 +10,7 @@ const pluginRoot = new URL('../', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('plugin.json', pluginRoot), 'utf8'));
 const samples = JSON.parse(await readFile(new URL('samples/index.json', pluginRoot), 'utf8'));
 const jobs = createJobs();
-const reportUri = 'ui://jvmscope/thread-report-0.2.0.html';
+const reportUri = `ui://jvmscope/thread-report-${manifest.version}.html`;
 const reportHtml = await readFile(new URL('ui/thread-report.html', pluginRoot), 'utf8');
 const file = z.string().min(1).max(4096).describe('Absolute path to a user-selected, stable, uncompressed UTF-8 capture.');
 const pagination = { offset: z.number().int().min(0).default(0), limit: z.number().int().min(1).max(50).default(10) };
@@ -52,15 +52,16 @@ function createServer() {
     server.registerTool('render_thread_report', {
         title: 'Show JvmScope thread report',
         description: 'Display the cached thread analysis as an interactive report with severity, snapshots, deadlock cycles and clickable evidence. Call once after analyze_thread_dumps, using its reportId. Does not reanalyze or write files. On hosts without MCP Apps UI, use the analysis data for a concise text answer.',
-        inputSchema: z.object({ reportId: z.string().uuid() }).strict(), annotations,
+        inputSchema: z.object({ reportId: z.string().uuid(), language: z.enum(['en', 'sv']).default('en').describe('Report language. Match the conversation; English is the fallback for other languages.') }).strict(), annotations,
         _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri,
             'openai/toolInvocation/invoking': 'Preparing thread report', 'openai/toolInvocation/invoked': 'Thread report ready' },
-    }, async ({ reportId }) => {
+    }, async ({ reportId, language }) => {
         try {
             const report = reports.get(reportId);
-            return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; ${report.findingCounts.critical || 0} critical finding occurrences. If no widget is visible, summarize the analysis concisely; do not create files automatically.` }],
-                structuredContent: { reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts },
-                _meta: { jvmscopeReport: report } };
+            return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. Repeated observations are not distinct incidents. Keep the accompanying answer brief; if no widget is visible, give a concise text analysis. Do not create files automatically.` }],
+                structuredContent: { reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
+                    findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations },
+                _meta: { jvmscopeReport: report, jvmscopeLanguage: language } };
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
     server.registerTool('list_samples', { description: 'List bundled public examples with absolute paths and provenance labels for trying JvmScope. Does not scan the user filesystem.',

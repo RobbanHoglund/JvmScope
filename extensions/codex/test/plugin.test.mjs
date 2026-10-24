@@ -142,6 +142,11 @@ test('real HotSpot standard captures expose exact evidence in every snapshot', a
     const filename = path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt');
     const report = await call('analyze_thread_dumps', { paths: [filename] });
     assert.equal(report.snapshotCount, 3);
+    assert.equal(report.findingCounts.critical, 3);
+    assert.deepEqual(report.deadlockObservations, { snapshotsWithCycles: 3, snapshotCount: 3, scope: 'snapshots-not-distinct-incidents' });
+    assert.equal(report.findingCountScope, 'finding-category-occurrences-across-snapshots');
+    const paged = await call('analyze_thread_dumps', { paths: [filename], offset: 1, limit: 1 });
+    assert.deepEqual(paged.deadlockObservations, report.deadlockObservations);
     for (const snapshot of report.snapshots.items) {
         assert.equal(snapshot.deadlocks.total, 2);
         const participants = snapshot.deadlocks.items.flatMap(c => c.participants.items);
@@ -173,6 +178,11 @@ test('MCP Apps report resolves its bundled UI and preserves cached evidence with
     const rendered = await client.callTool({ name: 'render_thread_report', arguments: { reportId: report.reportId } });
     assert.ok(!rendered.isError);
     assert.deepEqual(rendered._meta.jvmscopeReport, report);
+    assert.equal(rendered._meta.jvmscopeLanguage, 'en');
+    const swedish = await client.callTool({ name: 'render_thread_report', arguments: { reportId: report.reportId, language: 'sv' } });
+    assert.equal(swedish._meta.jvmscopeLanguage, 'sv');
+    assert.deepEqual(swedish._meta.jvmscopeReport, report);
+    assert.deepEqual(swedish.structuredContent.deadlockObservations, { snapshotsWithCycles: 1, snapshotCount: 1, scope: 'snapshots-not-distinct-incidents' });
     await fails('read_capture_lines', { path: filename, sha256: report.sources[0].sha256, startLine: 4, endLine: 9 }, /changed/);
     await fails('render_thread_report', { reportId: '00000000-0000-4000-8000-000000000000' }, /expired|another session/);
 });

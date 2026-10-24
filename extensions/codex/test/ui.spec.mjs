@@ -82,6 +82,22 @@ test('untrusted labels render as text and outside messages cannot replace the re
     expect(dialogs).toBe(0);
 });
 
+test('report language follows the conversation and keeps evidence qualifications', async ({ page }) => {
+    await page.goto(host.url + '?case=realSv&locale=en');
+    const f = widget(page);
+    await expect(f.getByRole('heading', { name: 'Trådanalys', exact: true })).toBeVisible();
+    await expect(f.locator('.finding').first()).toContainText('2 JVM-rapporterade cykler med 5 rapporterade deltagarposter');
+    await expect(f.locator('.finding')).not.toContainText([/observed lock holder/, /application threads exceed/]);
+    await page.evaluate(() => window.sendHostContext({ locale: 'en-US', theme: 'light' }));
+    await expect(f.getByRole('heading', { name: 'Trådanalys', exact: true })).toBeVisible();
+    await f.locator('.finding summary').first().click();
+    await expect(f.getByText('Direkt rapporterat i tråddumpen, inte härlett av analysverktyget.', { exact: true })).toBeVisible();
+    await expect(f.getByText('Originaldiagnostik från analysverktyget (engelska)').first()).toBeVisible();
+    await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
+    await expect(f.getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
+    await expect(f.locator('.finding').first()).toContainText('2 JVM-reported cycles with 5 reported participant entries');
+});
+
 test('dark, light and narrow layouts have no horizontal overflow and respond to host context', async ({ page }) => {
     await mkdir(previewDir, { recursive: true });
     for (const [theme, width] of [['dark', 1060], ['light', 1060], ['dark', 390]]) {
@@ -94,6 +110,8 @@ test('dark, light and narrow layouts have no horizontal overflow and respond to 
         await page.screenshot({ path: path.join(previewDir, `threads-${theme}-${width}.png`), fullPage: true });
     }
     await page.evaluate(() => window.sendHostContext({ locale: 'sv-SE', theme: 'light' }));
+    await expect(widget(page).getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
+    await widget(page).getByRole('combobox', { name: 'Report language' }).selectOption('sv');
     await expect(widget(page).getByRole('heading', { name: 'Trådanalys', exact: true })).toBeVisible();
     await expect(widget(page).locator('html')).toHaveAttribute('data-theme', 'light');
 });

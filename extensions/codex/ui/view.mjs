@@ -1,7 +1,8 @@
 import { createBridge } from './bridge.mjs';
+import { findingCopy } from './finding-copy.mjs';
 
 const root = document.getElementById('app');
-let report, snapshotIndex = 0, cycleIndex = 0, selection = null, locale = navigator.language?.startsWith('sv') ? 'sv' : 'en', evidenceEpoch = 0;
+let report, snapshotIndex = 0, cycleIndex = 0, selection = null, locale = 'en', evidenceEpoch = 0;
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
         snapshots: 'Snapshots in this analysis', criticalCount: 'Critical findings · all snapshots', files: 'Selected capture files', snapshot: 'Snapshot',
@@ -21,7 +22,7 @@ const copy = {
         load: 'Loading…', locked: 'JVM-REPORTED DEADLOCK', confirmedTitle: 'Confirmed Java deadlock', noHost: 'This report needs an MCP Apps host. Ask for a concise text analysis if the component is unavailable.',
         viewRange: 'Displayed snapshots', noData: 'The host did not deliver the report data. Ask it to run analyze_thread_dumps, then render_thread_report in this session.',
         cycleHint: 'Cycle counts apply to this snapshot. Repeated observations are not counted as distinct incidents.',
-        refreshed: 'Source hash matches the analyzed capture.', readMore: 'Next source lines' },
+        refreshed: 'Source hash matches the analyzed capture.', readMore: 'Next source lines', language: 'Report language', original: 'Original analyzer diagnostics (English)', originalFinding: 'Untranslated finding (English)'  },
     sv: { title: 'Trådanalys', critical: 'Kritisk', high: 'Hög', medium: 'Granska', info: 'Information', neutral: 'Inga prioriterade fynd',
         snapshots: 'Snapshots i analysen', criticalCount: 'Kritiska fynd · alla snapshots', files: 'Valda dumpfiler', snapshot: 'Snapshot',
         graph: 'Deadlock och låsberoenden', graphNote: 'Rapporterat av JVM · vald snapshot', cycle: 'Cykel', participants: 'rapporterade deltagare',
@@ -40,7 +41,7 @@ const copy = {
         load: 'Laddar…', locked: 'JVM-RAPPORTERAD DEADLOCK', confirmedTitle: 'Bekräftad Java-deadlock', noHost: 'Rapporten behöver en klient med MCP Apps-stöd. Be om en kort textanalys om komponenten inte kan visas.',
         viewRange: 'Visade snapshots', noData: 'Klienten skickade inga rapportdata. Be den köra analyze_thread_dumps och sedan render_thread_report i samma session.',
         cycleHint: 'Cykelantalet gäller vald snapshot. Upprepade observationer räknas inte som separata incidenter.',
-        refreshed: 'Källfilens hash stämmer med den analyserade dumpen.', readMore: 'Nästa källrader' },
+        refreshed: 'Källfilens hash stämmer med den analyserade dumpen.', readMore: 'Nästa källrader', language: 'Rapportspråk', original: 'Originaldiagnostik från analysverktyget (engelska)', originalFinding: 'Ej översatt fynd (engelska)'  },
 };
 const t = key => copy[locale][key] || key;
 const items = value => Array.isArray(value?.items) ? value.items : [];
@@ -59,13 +60,14 @@ function badge(severity) { const type = ['critical', 'high', 'medium', 'info'].i
 const current = () => items(report?.snapshots)[snapshotIndex];
 function applyContext(context) {
     if (['light', 'dark'].includes(context.theme)) document.documentElement.dataset.theme = context.theme;
-    if (context.locale) locale = context.locale.startsWith('sv') ? 'sv' : 'en';
     document.documentElement.lang = locale;
     if (report) render();
 }
 function receive(result) {
     const candidate = result?._meta?.jvmscopeReport || result?.structuredContent;
     if (candidate?.analyzer !== 'threads' || !Array.isArray(candidate.snapshots?.items) || !Array.isArray(candidate.sources)) return;
+    if (['en', 'sv'].includes(result?._meta?.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
+    document.documentElement.lang = locale;
     report = candidate; snapshotIndex = Math.max(0, items(report.snapshots).findIndex(s => s.deadlocks?.total)); cycleIndex = 0; selection = null; evidenceEpoch++;
     clearTimeout(dataDeadline); render();
 }
@@ -177,7 +179,10 @@ function render() {
     const severity = ['critical', 'high', 'medium', 'info'].find(s => counts[s]) || 'neutral';
     const heading = append(el('div'), append(el('div', 'brand'), icon('brand'), el('span', 'eyebrow', 'JVMSCOPE / JAVA DIAGNOSTICS')),
         el('h1', '', t('title')), el('p', 'muted', `${t('files')}: ${report.sources.length} · Snapshots: ${report.snapshotCount}`));
-    append(root, append(el('header', 'header'), heading, badge(severity)));
+    const language = el('select'); language.setAttribute('aria-label', t('language'));
+    for (const [value, label] of [['en', 'English'], ['sv', 'Svenska']]) { const option = el('option', '', label); option.value = value; language.append(option); }
+    language.value = locale; language.addEventListener('change', () => { locale = language.value; document.documentElement.lang = locale; render(); });
+    append(root, append(el('header', 'header'), heading, append(el('div', 'header-actions'), badge(severity), language)));
     const stats = el('div', 'summary');
     for (const [value, label, alert] of [[report.findingCounts?.critical || 0, t('criticalCount'), !!report.findingCounts?.critical], [report.snapshotCount, t('snapshots')], [snapshot.deadlocks?.total || 0, `${t('cycle')} · ${t('snapshot').toLowerCase()} ${snapshot.index + 1}`]])
         stats.append(append(el('div', `stat${alert ? ' alert' : ''}`), el('strong', '', value), el('span', '', label)));
@@ -214,12 +219,14 @@ function render() {
     } else root.append(append(panel, append(el('div', 'no-cycle'), el('h2', '', t('noCycle')), el('p', '', t('noCycleNote')))));
     const findings = el('section', 'findings'); findings.append(el('h2', '', t('findings')));
     for (const f of items(snapshot.analysis?.findings)) {
-        const card = el('article', 'finding');
-        append(card, append(el('div', 'finding-top'), badge(f.severity), el('h3', '', f.id === 'confirmed-deadlock' ? t('confirmedTitle') : f.title)), el('p', '', f.summary));
+        const card = el('article', 'finding'), translated = findingCopy(f, locale);
+        append(card, append(el('div', 'finding-top'), badge(f.severity), el('h3', '', translated.title)), el('p', '', translated.summary));
         const details = append(el('details'), el('summary', '', t('details')));
+        if (translated.original) card.append(el('p', 'muted', t('originalFinding')));
+        append(details, el('p', '', translated.qualification), el('p', 'muted', t('original')));
         append(details, el('p', '', `${f.evidence?.label || ''}: ${f.qualification || f.evidence?.qualification || ''}`));
         for (const fact of items(f.facts)) details.append(el('p', '', `${fact.label}: ${fact.value}`));
-        if (f.id !== 'confirmed-deadlock') details.append(el('p', '', f.recommendation));
+        if (f.id !== 'confirmed-deadlock') card.append(el('p', 'finding-action', translated.recommendation));
         const sourceButtons = el('div', 'evidence-actions');
         for (const thread of items(f.threads)) {
             if (!thread.startLine) continue;
@@ -237,7 +244,7 @@ function render() {
     const limitations = append(el('details', 'coverage'), el('summary', '', t('coverage'))), list = el('ul');
     for (const warning of [...(report.warnings || []), ...(snapshot.analysis?.limitations || []), ...(report.limitations || [])]) list.append(el('li', '', warning));
     for (const s of report.sourceResults || []) if (!s.accepted) list.append(el('li', '', `Rejected input: ${s.name || s.label || s.sourceId}`));
-    limitations.append(list); root.append(limitations);
+    limitations.append(el('p', 'muted', t('original')), list); root.append(limitations);
     append(root, append(el('footer', 'footer'), el('span', '', t('local')), el('span', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms · v0.2.0`)));
 }
 void bridge.initialize();

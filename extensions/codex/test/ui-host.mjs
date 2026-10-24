@@ -23,16 +23,18 @@ export async function startHost() {
     const client = new Client({ name: 'jvmscope-ui-host-test', version: '1.0.0' });
     await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary }));
     const rendered = {}, calls = [];
-    for (const [name, paths, limit] of [
+    for (const [name, paths, limit, language] of [
         ['deadlock', [capture]], ['long', [longName]], ['injection', [injection]],
         ['multi', [path.join(repo, 'extensions/codex/test/fixtures/multiple-deadlocks.txt')]],
         ['unmapped', [path.join(repo, 'frontend/test/tda/fixtures/unmapped-deadlock-participants.txt')]],
         ['series', [path.join(plugin, 'samples/repeated-contention.txt')], 1],
         ['paged', [paged], 2],
+        ['real', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')]],
+        ['realSv', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')], undefined, 'sv'],
     ]) {
         const result = await client.callTool({ name: 'analyze_thread_dumps', arguments: { paths, ...(limit ? { limit } : {}) } });
         if (result.isError) throw new Error(JSON.stringify(result));
-        rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId: result.structuredContent.reportId } });
+        rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId: result.structuredContent.reportId, ...(language ? { language } : {}) } });
     }
     const uri = (await client.listTools()).tools.find(t => t.name === 'render_thread_report')._meta.ui.resourceUri;
     const html = (await client.readResource({ uri })).contents[0].text;
