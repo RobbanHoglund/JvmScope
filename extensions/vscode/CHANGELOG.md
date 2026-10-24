@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.2 — Clearer Deadlock Counts
+
+- Distinguish JVM-reported deadlock cycles and participants from severity finding categories in the shared thread analysis. Repeated snapshots remain separate observations.
+- Add regression coverage for the real three-snapshot capture and verify existing two/three-thread diagrams at chat-sized editor widths, including theme and source navigation tests.
+
 ## 2.1.1 — Reliable Capture Drops
 
 - Handle external file drops across the entire thread, TLS and GC analyzer pages, before VS Code forwards them to its editor overlay.

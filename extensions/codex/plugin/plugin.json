@@ -1,0 +1,48 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jvmscope",
+  "version": "0.2.1",
+  "description": "Local Java thread-dump, TLS and garbage-collection log analysis with JvmScope's shared engines and knowledge base.",
+  "author": {
+    "name": "Robert H\u00f6glund",
+    "url": "https://github.com/RobbanHoglund"
+  },
+  "homepage": "https://github.com/RobbanHoglund/JvmScope",
+  "repository": "https://github.com/RobbanHoglund/JvmScope",
+  "license": "Apache-2.0",
+  "keywords": [
+    "java",
+    "jvm",
+    "threads",
+    "deadlock",
+    "tls",
+    "gc"
+  ],
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "JvmScope",
+        "shortDescription": "Java runtime diagnostics",
+        "longDescription": "Analyze user-selected Java thread dumps, SunJSSE TLS logs and HotSpot GC logs locally. Thread reports include optional interactive deadlock graphs and source evidence on MCP Apps-compatible hosts. Requires Node.js 22 or later. Tool results are shared with the connected AI host; local parsing is not offline AI.",
+        "developerName": "Robert H\u00f6glund",
+        "category": "Developer Tools",
+        "capabilities": [
+          "Java thread dump analysis",
+          "TLS log analysis",
+          "GC log analysis",
+          "Java knowledge base"
+        ],
+        "websiteURL": "https://github.com/RobbanHoglund/JvmScope",
+        "supportURL": "https://github.com/RobbanHoglund/JvmScope/issues",
+        "logo": "./assets/icon.png",
+        "composerIcon": "./assets/icon.png",
+        "defaultPrompt": [
+          "Try the bundled Java deadlock example and show its interactive report.",
+          "Explain why this TLS handshake failed.",
+          "Analyze this GC log and identify long pauses."
+        ]
+      }
+    }
+  }
+}

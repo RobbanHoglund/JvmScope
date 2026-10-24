@@ -1,0 +1,24 @@
+{
+  "name": "jvmscope-codex",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "package": "npm run build && python3 package.py",
+    "test:ui": "playwright test --config test/playwright.config.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "@playwright/test": "1.63.0",
+    "esbuild": "0.28.2"
+  }
+}

@@ -59,6 +59,8 @@ test('prioritizes a JVM-reported deadlock over measured secondary symptoms', () 
     assert.equal(result.findings[0].evidence.level, 'fact');
     assert.equal(result.findings[0].threads.length, 2);
     assert.equal(result.counts.critical, 1);
+    assert.deepEqual(result.deadlockSummary, { cycles: 1, reportedParticipants: 2, matchedThreads: 2, scope: 'selected-snapshot' });
+    assert.equal(result.headline, '1 JVM-reported deadlock cycle in this snapshot');
     assert.ok(finding(result, 'cpu-hot'));
 });
 
@@ -425,4 +427,19 @@ test('fails closed for null and malformed optional collections', () => {
     const empty = analyzeSnapshotProblems();
     assert.equal(empty.findings.length, 0);
     assert.equal(empty.coverage.threads, 0);
+});
+
+
+test('two deadlock cycles in three real snapshots remain snapshot-scoped', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const { analyzeThreadDumpData } = await import('../../assets/javautils/tda/analysis.js');
+    const text = await readFile(new URL('../../../testdata/thread-dumps/real-java-all-3-snapshots.txt', import.meta.url), 'utf8');
+    const result = analyzeThreadDumpData([{ id: 'real', name: 'real.txt', text }]);
+    assert.equal(result.parsedDumps.length, 3);
+    for (const snapshot of result.parsedDumps) {
+        const analysis = snapshot.smartAnalysis;
+        assert.equal(analysis.counts.critical, 1, 'One finding category groups two reported cycles');
+        assert.deepEqual(analysis.deadlockSummary, { cycles: 2, reportedParticipants: 5, matchedThreads: 5, scope: 'selected-snapshot' });
+        assert.equal(analysis.headline, '2 JVM-reported deadlock cycles in this snapshot');
+    }
 });
