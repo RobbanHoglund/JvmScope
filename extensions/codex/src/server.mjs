@@ -14,10 +14,21 @@ const reportUri = `ui://jvmscope/thread-report-${manifest.version}.html`;
 const reportHtml = await readFile(new URL('ui/thread-report.html', pluginRoot), 'utf8');
 const file = z.string().min(1).max(4096).describe('Absolute path to a user-selected, stable, uncompressed UTF-8 capture.');
 const pagination = { offset: z.number().int().min(0).default(0), limit: z.number().int().min(1).max(50).default(10) };
+const language = z.enum(['en', 'sv']).default('en').describe('Report language. Match the conversation; English is the fallback for other languages.');
 const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
 function result(data) {
     return { content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
+}
+
+function threadReportResult(report, language) {
+    return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. ${report.snapshotCount > 1 ? 'Repeated observations are not distinct incidents. ' : ''}Keep the accompanying answer brief: give the diagnostic conclusion and next check. Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
+        structuredContent: { reportId: report.reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
+            findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations,
+            ...(report.example ? { example: report.example, exampleEvidence: report.exampleEvidence,
+                status: report.status, warnings: report.warnings, limitations: report.limitations,
+                selectedSnapshot: report.snapshots.items[0] } : {}) },
+        _meta: { jvmscopeReport: report, jvmscopeLanguage: language } };
 }
 
 function createServer() {
@@ -52,16 +63,31 @@ function createServer() {
     server.registerTool('render_thread_report', {
         title: 'Show JvmScope thread report',
         description: 'Display the cached thread analysis as an interactive report with severity, snapshots, deadlock cycles and clickable evidence. Call once after analyze_thread_dumps, using its reportId. Does not reanalyze or write files. On hosts without MCP Apps UI, use the analysis data for a concise text answer.',
-        inputSchema: z.object({ reportId: z.string().uuid(), language: z.enum(['en', 'sv']).default('en').describe('Report language. Match the conversation; English is the fallback for other languages.') }).strict(), annotations,
+        inputSchema: z.object({ reportId: z.string().uuid(), language }).strict(), annotations,
         _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri,
             'openai/toolInvocation/invoking': 'Preparing thread report', 'openai/toolInvocation/invoked': 'Thread report ready' },
     }, async ({ reportId, language }) => {
         try {
             const report = reports.get(reportId);
-            return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. Repeated observations are not distinct incidents. Keep the accompanying answer brief: give the diagnostic conclusion and next check. Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
-                structuredContent: { reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
-                    findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations },
-                _meta: { jvmscopeReport: report, jvmscopeLanguage: language } };
+            return threadReportResult(report, language);
+        } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+    });
+    server.registerTool('show_thread_example', {
+        title: 'Try the Java deadlock example',
+        description: 'When the user asks to try the bundled deadlock demo, analyze its fixed synthetic sample, verify source evidence and display its interactive report in one call. No need to list samples, analyze again or render separately. Never use this as analysis of the user’s captures.',
+        inputSchema: z.object({ language }).strict(), annotations,
+        _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri,
+            'openai/toolInvocation/invoking': 'Analyzing the deadlock example', 'openai/toolInvocation/invoked': 'Deadlock example ready' },
+    }, async ({ language }, ctx) => {
+        try {
+            const sample = samples.find(s => s.file === 'confirmed-deadlock.txt' && s.analyzer === 'threads');
+            if (!sample) throw new Error('The bundled deadlock example is unavailable.');
+            const report = await jobs.run('show_thread_example', {
+                paths: [fileURLToPath(new URL(`samples/${sample.file}`, pluginRoot))],
+            }, ctx.mcpReq.signal);
+            report.example = { synthetic: true, name: sample.file, provenance: sample.provenance };
+            report.reportId = reports.add(report);
+            return threadReportResult(report, language);
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
     server.registerTool('list_samples', { description: 'List bundled public examples with absolute paths and provenance labels for trying JvmScope. Does not scan the user filesystem.',

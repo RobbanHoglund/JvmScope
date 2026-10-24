@@ -52,9 +52,9 @@ after(async () => {
     assert.equal(stderr, '', 'Protocol or worker errors must not be hidden');
 });
 
-test('relocated bundle exposes eight read-only tools with validated schemas', async () => {
+test('relocated bundle exposes nine read-only tools with validated schemas', async () => {
     const tools = (await client.listTools()).tools;
-    assert.equal(tools.length, 8);
+    assert.equal(tools.length, 9);
     for (const tool of tools) {
         assert.equal(tool.annotations.readOnlyHint, true);
         assert.equal(tool.annotations.destructiveHint, false);
@@ -92,7 +92,7 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
     const standalone = new Client({ name: 'jvmscope-single-plugin-test', version: '1.0.0' });
     try {
         await standalone.connect(new StdioClientTransport({ command: process.execPath, args: [server], cwd: installed }));
-        assert.equal((await standalone.listTools()).tools.length, 8);
+        assert.equal((await standalone.listTools()).tools.length, 9);
         const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
         assert.ok(!result.isError);
         const returnedSample = result.structuredContent.samples[0];
@@ -104,6 +104,29 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
     } finally {
         await standalone.close();
     }
+});
+
+test('one-call demo returns the same analysis, verified source, provenance and reusable report', async () => {
+    const demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });
+    assert.ok(!demo.isError, JSON.stringify(demo));
+    assert.equal(demo._meta.jvmscopeLanguage, 'sv');
+    const data = demo.structuredContent, report = demo._meta.jvmscopeReport;
+    assert.equal(data.example.synthetic, true);
+    assert.match(data.example.provenance, /Synthetic regression/);
+    assert.equal(data.exampleEvidence.source.sha256, report.sources[0].sha256);
+    assert.equal(data.exampleEvidence.lines[3].text.startsWith('"alpha"'), true);
+    assert.ok(data.exampleEvidence.lines.some(l => l.text.includes('Found one Java-level deadlock')));
+    const direct = await call('analyze_thread_dumps', { paths: [sample('confirmed-deadlock.txt')] });
+    assert.deepEqual(data.selectedSnapshot, direct.snapshots.items[0]);
+    assert.deepEqual(report.snapshots, direct.snapshots);
+    const cached = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId } });
+    assert.deepEqual(cached._meta.jvmscopeReport, report);
+    const tools = (await client.listTools()).tools;
+    assert.equal(tools.find(t => t.name === 'show_thread_example')._meta.ui.resourceUri,
+        tools.find(t => t.name === 'render_thread_report')._meta.ui.resourceUri);
+    await fails('show_thread_example', { path: fixture('unknown-format.txt') }, /unrecognized|invalid|additional/i);
+    // Evidence errors remain explicit: a demo must not succeed with unverified sources.
+    await fails('read_capture_lines', { path: report.sources[0].path, sha256: '0'.repeat(64), startLine: 1, endLine: 10 }, /changed/);
 });
 
 test('all bundled samples are present and analyzed through the real MCP transport', async () => {
@@ -375,7 +398,7 @@ test('modern MCP negotiation discovers and calls the same packaged server', asyn
     const wire = new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary, stderr: 'pipe' });
     try {
         await modern.connect(wire);
-        assert.equal((await modern.listTools()).tools.length, 8);
+        assert.equal((await modern.listTools()).tools.length, 9);
         const response = await modern.callTool({ name: 'search_knowledge', arguments: { query: 'gc' } });
         assert.ok(!response.isError);
         const analysis = await modern.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [sample('confirmed-deadlock.txt')] } });

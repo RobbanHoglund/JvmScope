@@ -43,6 +43,18 @@ test('single snapshots omit series controls while a one-item series page keeps n
     await expect(f.getByRole('button', { name: 'Previous snapshots' })).toBeEnabled();
 });
 
+test('one-call example renders localized provenance and keeps source interaction working', async ({ page }) => {
+    await page.goto(host.url + '?case=demo');
+    const f = widget(page);
+    await expect(f.locator('.example-label')).toHaveText('Syntetiskt exempel · medföljande Java-deadlock');
+    await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toHaveCount(0);
+    await expect(f.locator('.node-holding').first()).toContainText('Håller:example.LockB');
+    await f.locator('.node').first().click();
+    await expect(f.locator('.evidence')).toContainText('4  "alpha"');
+    await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
+    await expect(f.locator('.example-label')).toHaveText('Synthetic example · bundled Java deadlock');
+});
+
 test('cycles stay separate and snapshot paging returns actual next-page data', async ({ page }) => {
     await page.goto(host.url + '?case=multi');
     const f = widget(page);

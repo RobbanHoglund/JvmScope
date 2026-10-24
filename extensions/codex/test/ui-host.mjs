@@ -51,6 +51,7 @@ export async function startHost() {
         if (result.isError) throw new Error(JSON.stringify(result));
         rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId: result.structuredContent.reportId, ...(language ? { language } : {}) } });
     }
+    rendered.demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });
     const uri = (await client.listTools()).tools.find(t => t.name === 'render_thread_report')._meta.ui.resourceUri;
     const html = (await client.readResource({ uri })).contents[0].text;
     const server = createServer(async (req, res) => {
