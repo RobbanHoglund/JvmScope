@@ -203,7 +203,7 @@ function findingCard(f, related = []) {
         sourceButtons.append(button(`${t('source')}: ${thread.name}`, () => {
             selection = { id: thread.sourceKey, name: thread.name, evidence: { startLine: thread.startLine, endLine: thread.endLine } };
             const old = document.getElementById('detail'); if (old) old.remove();
-            card.append(evidencePanel(selection)); void showEvidence(selection, thread.startLine);
+            details.append(evidencePanel(selection)); void showEvidence(selection, thread.startLine);
         }));
     }
     if ([f.threads, f.facts, f.resourceIds].some(p => p?.nextOffset != null)) details.append(el('p', 'note', t('truncated')));

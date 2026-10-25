@@ -340,7 +340,7 @@ test('long stack frames show the exact Java location first and retain the full f
     await expect(stack.locator('.frame')).toBeHidden();
     await stack.locator('summary').focus(); await page.keyboard.press('Enter');
     await expect(stack.locator('.frame')).toBeVisible();
-    await expect(stack.locator('.frame')).toContainText('com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlocks$0');
+    await expect(stack.locator('.frame')).toContainText('com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlock$0');
     await page.setViewportSize({ width: 390, height: 1000 });
     expect(await overflow(f)).toBe(false);
     await expect(stack.locator('.frame')).toContainText('ThreadScenarioRunner.java:458');
