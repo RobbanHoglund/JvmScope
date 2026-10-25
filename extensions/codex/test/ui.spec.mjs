@@ -332,3 +332,16 @@ test('matching contention and bottleneck findings share one overview while retai
     await expect(interpretation.locator('.evidence')).toContainText('1871  "scenario-lock-holder"');
     await expect(interpretation.locator('.evidence-context')).toContainText('Snapshot 3');
 });
+
+test('long stack frames show the exact Java location first and retain the full frame on expansion', async ({ page }) => {
+    await page.goto(host.url + '?case=focused');
+    const f = widget(page), stack = f.locator('.stack-frame');
+    await expect(stack.locator('summary code')).toHaveText('ThreadScenarioRunner.java:458');
+    await expect(stack.locator('.frame')).toBeHidden();
+    await stack.locator('summary').focus(); await page.keyboard.press('Enter');
+    await expect(stack.locator('.frame')).toBeVisible();
+    await expect(stack.locator('.frame')).toContainText('com.robbanhoglund.threaddump.ThreadScenarioRunner.lambda$startDeadlocks$0');
+    await page.setViewportSize({ width: 390, height: 1000 });
+    expect(await overflow(f)).toBe(false);
+    await expect(stack.locator('.frame')).toContainText('ThreadScenarioRunner.java:458');
+});
