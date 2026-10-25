@@ -51,6 +51,7 @@ export async function startHost() {
         if (result.isError) throw new Error(JSON.stringify(result));
         rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId: result.structuredContent.reportId, ...(language ? { language } : {}) } });
     }
+    rendered.comparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId, view: 'comparison', offset: 0, limit: 4 } });
     rendered.focused = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId,
         snapshotIndex: 2, sourceKey: rendered.real._meta.jvmscopeReport.snapshots.items[2].deadlocks.items[0].participants.items[0].id } });
     rendered.demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });

@@ -238,3 +238,61 @@ test('series navigation reads cached pages without rerunning the analyzer', asyn
     await expect(f.getByText('Displayed snapshots: 3–3 / 3')).toBeVisible();
     expect(host.calls.slice(start).map(c => c.name)).toEqual(['render_thread_report']);
 });
+
+
+test('comparison plots CPU and bounded allocation and reads both exact interval endpoints', async ({ page }) => {
+    await page.goto(host.url + '?case=comparison');
+    const f = widget(page);
+    await expect(f.getByRole('heading', { name: 'Snapshot comparison', exact: true })).toBeVisible();
+    await expect(f.locator('.interval-summary')).toHaveCount(2);
+    await expect(f.locator('.interval-summary').first()).toContainText('76.8%');
+    await expect(f.locator('.interval-summary').nth(1)).toContainText('98%');
+    const before = host.calls.length;
+    await f.getByRole('button', { name: 'Allocation', exact: true }).click();
+    const churn = f.locator('.metric-row').filter({ has: f.getByRole('heading', { name: 'scenario-allocation-churn-1', exact: true }) });
+    await expect(churn.locator('.metric-value')).toHaveText(['25.6–26.5 MiB/s', '3.5–4.8 MiB/s']);
+    await expect(churn.locator('.measure-bound')).toHaveCount(2);
+    await churn.locator('.metric-cell').nth(1).focus(); await page.keyboard.press('Enter');
+    await f.getByRole('button', { name: 'Baseline · Snapshot 2', exact: true }).click();
+    await expect(f.locator('.comparison-source .evidence')).toContainText('1397  "scenario-allocation-churn-1"');
+    await expect(f.locator('.comparison-source .evidence-context')).toContainText('Snapshot 2');
+    await f.getByRole('button', { name: 'Endpoint · Snapshot 3', exact: true }).click();
+    await expect(f.locator('.comparison-source .evidence')).toContainText('2239  "scenario-allocation-churn-1"');
+    expect(host.calls.slice(before).map(c => c.name)).toEqual(['read_thread_evidence', 'read_thread_evidence']);
+    await f.getByRole('button', { name: 'View this snapshot 3', exact: true }).click();
+    await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 3 / 3');
+    await expect(f.locator('#detail')).toContainText('scenario-allocation-churn-1');
+});
+
+test('comparison is localized, bounded and readable in dark/light and narrow layouts', async ({ page }) => {
+    await mkdir(previewDir, { recursive: true });
+    for (const theme of ['dark', 'light']) for (const width of [735, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.goto(host.url + `?case=comparison&theme=${theme}`);
+        const f = widget(page);
+        await expect(f.locator('.metric-row')).toHaveCount(8);
+        await f.getByRole('button', { name: 'Allocation', exact: true }).click();
+        await expect(f.locator('.measure-bound').first()).toBeVisible();
+        expect(await overflow(f)).toBe(false);
+        await page.screenshot({ path: path.join(previewDir, `comparison-${theme}-${width}.png`), fullPage: true });
+    }
+    const f = widget(page);
+    await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');
+    await expect(f.getByRole('heading', { name: 'Jämför snapshots', exact: true })).toBeVisible();
+    await expect(f.locator('.metric-chart')).toContainText('3,5–4,8 MiB/s');
+    await expect(f.locator('.metric-legend')).toContainText('osäkerhet');
+    await f.getByRole('button', { name: 'Visa fler trådar' }).click();
+    expect(await f.locator('.metric-row').count()).toBeGreaterThan(8);
+    expect(await overflow(f)).toBe(false);
+});
+
+test('comparison tab reuses already loaded analysis and source controls degrade without host tools', async ({ page }) => {
+    await page.goto(host.url + '?case=real&noTools=1');
+    const f = widget(page), before = host.calls.length;
+    await f.getByRole('button', { name: 'Compare snapshots', exact: true }).click();
+    await expect(f.locator('.interval-summary')).toHaveCount(2);
+    await f.locator('.metric-cell').first().click();
+    await expect(f.getByRole('button', { name: 'Baseline · Snapshot 1', exact: true })).toBeDisabled();
+    await expect(f.getByRole('button', { name: 'Endpoint · Snapshot 2', exact: true })).toBeDisabled();
+    expect(host.calls.length).toBe(before);
+});

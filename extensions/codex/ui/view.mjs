@@ -2,12 +2,13 @@ import { version } from '../package.json';
 import { createBridge } from './bridge.mjs';
 import { findingCopy } from './finding-copy.mjs';
 import { createDeadlockGraph } from './deadlock-graph.mjs';
+import { comparisonView } from './comparison.mjs';
 
 const root = document.getElementById('app');
-let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
+let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
-        context: 'Viewing snapshot', editorContext: 'Evidence inside this report follows the selected snapshot. A file opened from chat may show another snapshot.',
+        compare: 'Compare snapshots', snapshotView: 'Snapshot details', cached: 'Cached analysis', context: 'Viewing snapshot', editorContext: 'Evidence inside this report follows the selected snapshot. A file opened from chat may show another snapshot.',
         example: 'Synthetic example · bundled Java deadlock', holding: 'Holds', unknownHolding: 'Not established in the matched thread block', moreLocks: 'additional reported locks',
         snapshots: 'Snapshots analyzed', cyclesCount: 'Cycles · selected snapshot', threadsCount: 'Matched deadlocked threads', files: 'Selected capture files', snapshot: 'Snapshot',
         graph: 'Deadlock dependencies', graphNote: 'Reported by the JVM · selected snapshot', cycle: 'Cycle', participants: 'participants',
@@ -28,7 +29,7 @@ const copy = {
         cycleHint: 'Cycle counts apply to this snapshot. Repeated observations are not counted as distinct incidents.',
         refreshed: 'Source hash matches the analyzed capture.', readMore: 'Next source lines', language: 'Report language', original: 'Original analyzer diagnostics (English)', originalFinding: 'Untranslated finding (English)', mappedParticipant: 'JVM-reported participant', unmappedParticipant: 'Unmatched participant', observed: 'Snapshots with reported cycles', originalCount: 'Reported participant entries'  },
     sv: { title: 'Trådanalys', critical: 'Kritisk', high: 'Hög', medium: 'Granska', info: 'Information', neutral: 'Inga prioriterade fynd',
-        context: 'Visar snapshot', editorContext: 'Källbevis i rapporten följer vald snapshot. En fil öppnad från chatten kan visa en annan snapshot.',
+        compare: 'Jämför snapshots', snapshotView: 'Snapshotdetaljer', cached: 'Sparad analys', context: 'Visar snapshot', editorContext: 'Källbevis i rapporten följer vald snapshot. En fil öppnad från chatten kan visa en annan snapshot.',
         example: 'Syntetiskt exempel · medföljande Java-deadlock', holding: 'Håller', unknownHolding: 'Inte fastställt i det matchade trådblocket', moreLocks: 'ytterligare rapporterade lås',
         snapshots: 'Analyserade snapshots', cyclesCount: 'Cykler · vald snapshot', threadsCount: 'Matchade deadlock-trådar', files: 'Valda dumpfiler', snapshot: 'Snapshot',
         graph: 'Deadlock och låsberoenden', graphNote: 'Rapporterat av JVM · vald snapshot', cycle: 'Cykel', participants: 'deltagare',
@@ -84,6 +85,10 @@ function receive(result) {
         const cycles = items(current()?.deadlocks);
         const found = cycles.findIndex(c => items(c.participants).some(p => p.id === focus.sourceKey));
         if (found >= 0) { cycleIndex = found; selection = items(cycles[found].participants).find(p => p.id === focus.sourceKey); }
+        else {
+            const metric = current()?.measurements?.threads.items.find(t => t.sourceKey === focus.sourceKey);
+            if (metric) selection = { id: metric.sourceKey, name: metric.name, evidence: metric.current.range };
+        }
     }
     clearTimeout(dataDeadline); render();
 }
@@ -103,8 +108,10 @@ function drawGraph(cycle) {
 }
 function evidencePanel(p) {
     const panel = el('section', 'detail'); panel.id = 'detail';
-    append(panel, el('h3', '', p.name), el('p', '', `${t('waiting')}: ${p.waitingLockType || ''} ${p.waitingLockId || ''}`),
-        el('p', '', `${t('heldBy')}: ${p.ownerName || '—'}`), el('code', 'frame', p.topFrame));
+    panel.append(el('h3', '', p.name));
+    if (p.waitingLockId) panel.append(el('p', '', `${t('waiting')}: ${p.waitingLockType || ''} ${p.waitingLockId}`));
+    if (p.ownerName) panel.append(el('p', '', `${t('heldBy')}: ${p.ownerName}`));
+    if (p.topFrame) panel.append(el('code', 'frame', p.topFrame));
     const source = report.sources.find(s => s.path === current().sourcePath);
     const location = `${t('snapshot')} ${current().index + 1} · ${source?.name || ''}${p.evidence ? ` · ${t('lines')} ${p.evidence.startLine}–${p.evidence.endLine}` : ''}`;
     append(panel, el('p', 'muted', location));
@@ -140,6 +147,35 @@ async function loadPage(offset, b) {
     }
     catch (e) { b.disabled = false; b.textContent = e.message; }
 }
+function footer() {
+    return append(el('footer', 'footer'), el('span', '', t('local')),
+        el('span', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms · v${version}`));
+}
+async function switchView(view, b) {
+    if (view === 'snapshot' || (report.snapshots.offset === 0 && report.snapshots.items.length === report.snapshotCount && report.snapshotCount <= 4)) {
+        activeView = view; render(); return;
+    }
+    b.disabled = true;
+    try { receive(await bridge.callTool('render_thread_report', { reportId: report.reportId, language: locale, view, offset: 0, limit: 4 })); }
+    catch (error) { b.disabled = false; b.textContent = error.message; }
+}
+async function comparisonEvidence(endpoint, content) {
+    const epoch = ++evidenceEpoch;
+    const response = await bridge.callTool('read_thread_evidence', { reportId: report.reportId,
+        snapshotIndex: endpoint.snapshotIndex, sourceKey: endpoint.sourceKey });
+    if (epoch !== evidenceEpoch || !content.isConnected) return;
+    const data = response.structuredContent;
+    if (data.context?.snapshotIndex !== endpoint.snapshotIndex || data.context?.sourceKey !== endpoint.sourceKey || data.source?.sha256 !== endpoint.sha256)
+        throw new Error('The host returned mismatched source evidence.');
+    content.replaceChildren(el('p', 'evidence-context muted', `${t('snapshot')} ${data.context.snapshotNumber} · ${data.context.name} · ${t('lines')} ${data.lines[0]?.line}–${data.lines.at(-1)?.line}`),
+        el('pre', 'evidence', data.lines.map(l => `${l.line}  ${l.text}`).join('\n')));
+    if (data.nextLine) content.append(el('p', 'note', t('truncated')));
+}
+async function focusSnapshot(endpoint) {
+    try { receive(await bridge.callTool('render_thread_report', { reportId: report.reportId, language: locale,
+        snapshotIndex: endpoint.snapshotIndex, sourceKey: endpoint.sourceKey, limit: 1 })); }
+    catch (error) { root.append(el('p', 'error', error.message)); }
+}
 function render() {
     disposeGraph();
     const snapshot = current();
@@ -158,6 +194,23 @@ function render() {
     language.value = locale; language.addEventListener('change', () => { locale = language.value; document.documentElement.lang = locale; render(); });
     append(root, append(el('header', 'header'), heading, append(el('div', 'header-actions'), badge(severity), language)));
     if (report.example?.synthetic) root.append(el('p', 'example-label muted', t('example')));
+    if (report.snapshotCount > 1) {
+        const tabs = el('nav', 'view-tabs'); tabs.setAttribute('aria-label', t('title'));
+        for (const [view, label] of [['snapshot', t('snapshotView')], ['comparison', t('compare')]]) {
+            const b = button(label, () => switchView(view, b)); b.setAttribute('aria-pressed', String(activeView === view)); tabs.append(b);
+        }
+        root.append(tabs);
+    }
+    if (activeView === 'comparison') {
+        root.append(comparisonView({ report, locale, metric: comparisonMetric, rowLimit: comparisonLimit, canRead: bridge.canCallTools,
+            onMetric(metric) { comparisonMetric = metric; comparisonLimit = 8; render(); }, onMore() { comparisonLimit += 8; render(); },
+            onEvidence: comparisonEvidence, onSnapshot: focusSnapshot }));
+        const navigation = el('div', 'toolbar');
+        for (const [offset, label] of [[report.snapshots.offset > 0 ? Math.max(0, report.snapshots.offset - report.snapshots.limit) : null, t('previous')], [report.snapshots.nextOffset, t('next')]]) {
+            if (offset == null) continue; const b = button(label, () => loadPage(offset, b)); b.disabled = !bridge.canCallTools; navigation.append(b);
+        }
+        root.append(navigation, footer()); return;
+    }
     const stats = el('div', 'summary');
     const deadlock = snapshot.analysis?.deadlockSummary;
     for (const [value, label, alert] of [[deadlock?.cycles ?? snapshot.deadlocks?.total ?? 0, t('cyclesCount'), !!snapshot.deadlocks?.total], [deadlock?.matchedThreads ?? '—', t('threadsCount')], [report.snapshotCount, t('snapshots')]])
@@ -194,9 +247,10 @@ function render() {
         if (cycle.participants.total > 8) panel.append(el('p', 'note', t('graphLimited')));
         if (items(cycle.participants).some(p => p.mappingStatus !== 'resolved' || p.ownerMappingStatus !== 'resolved')) panel.append(el('p', 'note', t('unmapped')));
         if (snapshot.deadlocks.nextOffset != null || cycle.participants.nextOffset != null) panel.append(el('p', 'note', t('truncated')));
-        if (selection) panel.append(evidencePanel(selection));
+        if (selection && items(cycle.participants).some(p => p.id === selection.id)) panel.append(evidencePanel(selection));
         append(root, panel, append(el('div', 'action'), el('h3', '', t('action')), el('p', '', t('recommendation'))));
     } else root.append(append(panel, append(el('div', 'no-cycle'), el('h2', '', t('noCycle')), el('p', '', t('noCycleNote')))));
+    if (selection && !cycles.some(c => items(c.participants).some(p => p.id === selection.id))) root.append(evidencePanel(selection));
     const findings = el('section', 'findings'); findings.append(el('h2', '', t('findings')));
     for (const f of items(snapshot.analysis?.findings)) {
         const card = el('article', 'finding'), translated = findingCopy(f, locale);
@@ -226,7 +280,7 @@ function render() {
     for (const warning of [...(report.warnings || []), ...(snapshot.analysis?.limitations || []), ...(report.limitations || [])]) list.append(el('li', '', warning));
     for (const s of report.sourceResults || []) if (!s.accepted) list.append(el('li', '', `Rejected input: ${s.name || s.label || s.sourceId}`));
     limitations.append(el('p', 'muted', t('original')), list); root.append(limitations);
-    append(root, append(el('footer', 'footer'), el('span', '', t('local')), el('span', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms · v${version}`)));
+    root.append(footer());
 }
 void bridge.initialize();
 

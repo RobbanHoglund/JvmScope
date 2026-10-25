@@ -36,3 +36,16 @@ test('single and incomplete captures retain unavailable measurements instead of 
         assert.equal(t.allocation.boundsBytesPerSecond, null);
     }
 });
+
+test('ambiguous or replaced thread identities cannot acquire invented comparison rates', async () => {
+    const report = analyzeThreads([await readCapture(fixture('cross-snapshot-identity.txt'))]);
+    const rows = report.snapshots.items.flatMap(s => s.measurements.threads.items);
+    const unmatched = rows.filter(t => t.identityStatus !== 'matched');
+    assert.ok(unmatched.length > 0);
+    for (const row of unmatched) {
+        assert.equal(row.baseline, null);
+        assert.equal(row.cpu.percent, null);
+        assert.equal(row.allocation.bytesPerSecond, null);
+        assert.equal(row.allocation.boundsBytesPerSecond, null);
+    }
+});
