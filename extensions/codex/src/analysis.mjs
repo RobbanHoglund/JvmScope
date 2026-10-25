@@ -3,6 +3,7 @@ import { analyzeTlsLog } from '../../../frontend/assets/javautils/tls-parser.js'
 import { explainIssueSections } from '../../../frontend/assets/javautils/tls-explanations.js';
 import { parseGcLog, analyzeGc } from '../../../frontend/assets/javautils/gc/parser.js';
 import { sourceInfo } from './captures.mjs';
+import { threadMeasurements } from './thread-metrics.mjs';
 
 export function page(items, offset = 0, limit = 10) {
     return { total: items.length, offset, limit, nextOffset: offset + limit < items.length ? offset + limit : null, items: items.slice(offset, offset + limit) };
@@ -14,7 +15,7 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
     const result = analyzeThreadDumpData(captures.map((c, i) => ({ id: `source:${i}`, name: c.name, label: c.name, text: c.text })));
     const rejected = result.sourceResults.filter(s => !s.accepted);
     if (!result.parsedDumps.length) throw new Error(`No supported thread snapshots. ${result.parserResult.warnings.join(' ')}`);
-    const snapshots = result.parsedDumps.map(d => {
+    const snapshots = result.parsedDumps.map((d, position) => {
         const source = captures[Number(d.sourceId.split(':')[1])];
         const threadsByKey = new Map(d.threads.map(t => [t.sourceKey, t]));
         const findThread = ref => threadsByKey.get(ref.sourceKey);
@@ -41,7 +42,8 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
                 return { ...ref, startLine: lines?.startLine ?? null, endLine: lines?.endLine ?? null };
             }), 0, 20),
         }));
-        return { index: d.index, sourcePath: source.path, sourceStartLine: d.sourceStartLine, deadlocks,
+        return { measurements: threadMeasurements(d, result.parsedDumps[position - 1], captures),
+            index: d.index, sourcePath: source.path, sourceStartLine: d.sourceStartLine, deadlocks,
             collectionScope: d.collectionScope, parsingStatus: d.parsingStatus, diagnostics: d.diagnostics,
             snapshotTime: d.snapshotTime, threadCount: d.threads.length, states: tally(d.threads.map(t => t.javaState || 'UNKNOWN')),
             changes: d.threadChanges ? { baselineCount: d.threadChanges.baselineCount, newCount: d.threadChanges.newCount,
