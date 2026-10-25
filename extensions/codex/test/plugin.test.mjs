@@ -154,6 +154,18 @@ test('cached comparison and focused source share snapshot identity without repar
     await fails('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey }, /changed since analysis/);
 });
 
+test('cached pages keep the public response bound even when more snapshots are retained', async () => {
+    const filename = path.join(temporary, 'large-cached-series.txt');
+    const input = await readFile(path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt'), 'utf8');
+    await writeFile(filename, Array(6).fill(input).join('\n'));
+    const analysis = await call('analyze_thread_dumps', { paths: [filename], limit: 1 });
+    assert.equal(analysis.cache.complete, true);
+    await fails('render_thread_report', { reportId: analysis.reportId, offset: 0, limit: 50 }, /response limit/);
+    const small = await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId, offset: 10, limit: 1 } });
+    assert.ok(!small.isError);
+    assert.equal(small._meta.jvmscopeReport.snapshots.items[0].index, 10);
+});
+
 test('all bundled samples are present and analyzed through the real MCP transport', async () => {
     const { samples } = await call('list_samples');
     assert.equal(samples.length, 11);

@@ -46,3 +46,24 @@ export function threadMeasurements(dump, previous, captures) {
             'Identity and interval validity come from the shared analyzer. Missing rates must not be reconstructed from names.'] };
 }
 const allocationCeiling = row => row.allocation.boundsBytesPerSecond?.maximum ?? row.allocation.bytesPerSecond ?? -1;
+
+// The interactive report retains its wider row set in UI metadata. Keep the model's
+// follow-up payload focused, while disclosing the omitted rows and exact bounds.
+export function comparisonSummary(snapshot) {
+    const m = snapshot.measurements, rows = m.threads.items;
+    const cpu = [...rows].sort((a, b) => (b.cpu.percent ?? -1) - (a.cpu.percent ?? -1)).slice(0, 8);
+    const allocation = [...rows].sort((a, b) => allocationCeiling(b) - allocationCeiling(a)).slice(0, 8);
+    const selected = m.baselineSnapshotIndex == null ? [] : [...new Map([...cpu, ...allocation].map(r => [r.sourceKey, r])).values()];
+    const endpoint = e => e ? { snapshotIndex: e.snapshotIndex, snapshotNumber: e.snapshotNumber, sourceKey: e.sourceKey, range: e.range } : null;
+    return { index: snapshot.index, measurements: { baselineSnapshotIndex: m.baselineSnapshotIndex,
+        endSnapshotIndex: m.endSnapshotIndex, thresholds: m.thresholds, hotCpuThreads: m.hotCpuThreads, hotAllocationThreads: m.hotAllocationThreads,
+        threads: { total: m.threads.total, shown: selected.length, omitted: m.threads.total - selected.length,
+            selection: 'Union of top 8 CPU and allocation rows; the interactive report retains more rows.',
+            items: selected.map(r => ({ sourceKey: r.sourceKey, seriesKey: r.seriesKey, name: r.name, state: r.state,
+                baseline: endpoint(r.baseline), current: endpoint(r.current),
+                cpu: { percent: r.cpu.percent, intervalMs: r.cpu.intervalMs, uncertaintyMs: r.cpu.uncertaintyMs,
+                    quality: r.cpu.quality, status: r.cpu.status },
+                allocation: { bytesPerSecond: r.allocation.bytesPerSecond, boundsBytesPerSecond: r.allocation.boundsBytesPerSecond,
+                    intervalMs: r.allocation.intervalMs, quality: r.allocation.quality, status: r.allocation.status } })) },
+        qualifications: m.qualifications } };
+}

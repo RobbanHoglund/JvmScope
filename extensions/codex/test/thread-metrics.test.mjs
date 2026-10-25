@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readCapture } from '../src/captures.mjs';
 import { analyzeThreads } from '../src/analysis.mjs';
+import { comparisonSummary } from '../src/thread-metrics.mjs';
 import { fileURLToPath } from 'node:url';
 const fixture = name => fileURLToPath(new URL(`../../../frontend/test/tda/fixtures/${name}`, import.meta.url));
 
@@ -48,4 +49,19 @@ test('ambiguous or replaced thread identities cannot acquire invented comparison
         assert.equal(row.allocation.bytesPerSecond, null);
         assert.equal(row.allocation.boundsBytesPerSecond, null);
     }
+});
+
+
+test('model comparison is compact without losing bounds, endpoint identity or omitted counts', async () => {
+    const capture = await readCapture(fileURLToPath(new URL('../../../testdata/thread-dumps/real-java-all-3-snapshots.txt', import.meta.url)));
+    const report = analyzeThreads([capture]);
+    const compact = report.snapshots.items.map(comparisonSummary);
+    assert.ok(JSON.stringify(compact).length < JSON.stringify(report.snapshots.items.map(s => s.measurements)).length / 2);
+    const row = compact[2].measurements.threads.items.find(t => t.name === 'scenario-allocation-churn-1');
+    const original = report.snapshots.items[2].measurements.threads.items.find(t => t.sourceKey === row.sourceKey);
+    assert.deepEqual(row.allocation.boundsBytesPerSecond, original.allocation.boundsBytesPerSecond);
+    assert.equal(row.baseline.snapshotIndex, 1);
+    assert.equal(row.current.snapshotIndex, 2);
+    const list = compact[2].measurements.threads;
+    assert.equal(list.shown + list.omitted, list.total);
 });

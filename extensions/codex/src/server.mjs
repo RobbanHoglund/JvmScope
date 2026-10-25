@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createJobs } from './jobs.mjs';
 import { createReports } from './reports.mjs';
 import { resolveThreadEvidence } from './thread-evidence.mjs';
+import { comparisonSummary } from './thread-metrics.mjs';
 
 const pluginRoot = new URL('../', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('plugin.json', pluginRoot), 'utf8'));
@@ -23,13 +24,14 @@ function result(data) {
 }
 
 function threadReportResult(report, language, { view = 'snapshot', snapshotIndex, sourceKey } = {}) {
+    if (JSON.stringify(report).length > 512 * 1024) throw new Error('Report page exceeds the 512 KiB response limit. Reduce limit and request smaller pages.');
     const selected = report.snapshots.items.find(s => s.index === snapshotIndex) || report.snapshots.items.find(s => s.deadlocks.total) || report.snapshots.items[0];
     return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. ${report.snapshotCount > 1 ? 'Repeated observations are not distinct incidents. ' : ''}Keep the accompanying answer brief: give the diagnostic conclusion and next check. Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
         structuredContent: { reportId: report.reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
             findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations,
             selectedSnapshotIndex: selected?.index, cache: report.cache,
-            ...(view === 'comparison' ? { comparison: { snapshotCount: report.snapshotCount,
-                page: { ...report.snapshots, items: report.snapshots.items.map(s => ({ index: s.index, measurements: s.measurements })) } } } : {}),
+            ...(view === 'comparison' ? { comparison: { snapshotCount: report.snapshotCount, sources: report.sources,
+                page: { ...report.snapshots, items: report.snapshots.items.map(comparisonSummary) } } } : {}),
             ...(report.example ? { example: report.example, exampleEvidence: report.exampleEvidence,
                 status: report.status, warnings: report.warnings, limitations: report.limitations,
                 selectedSnapshot: report.snapshots.items[0] } : {}) },
