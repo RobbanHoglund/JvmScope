@@ -79,6 +79,7 @@ function createServer() {
     }, async ({ reportId, language, ...focus }) => {
         try {
             const report = reports.page(reportId, focus);
+            if (focus.sourceKey && focus.snapshotIndex == null) throw new Error('Supply snapshotIndex with sourceKey so report focus is unambiguous.');
             if (focus.sourceKey) resolveThreadEvidence(reports, reportId, focus.snapshotIndex ?? report.snapshots.items[0]?.index, focus.sourceKey);
             return threadReportResult(report, language, focus);
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }

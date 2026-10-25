@@ -145,6 +145,7 @@ test('cached comparison and focused source share snapshot identity without repar
     assert.match(evidence.citationLabel, /Snapshot 3.*scenario-cpu-and-allocation-hot/);
     const focus = await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey } });
     assert.equal(focus._meta.jvmscopeFocus.snapshotIndex, 2);
+    await fails('render_thread_report', { reportId: analysis.reportId, sourceKey: thread.sourceKey }, /Supply snapshotIndex/);
     await fails('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 0, sourceKey: thread.sourceKey }, /identity.*snapshot/);
     await fails('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey, startLine: 117 }, /does not belong/);
     await writeFile(filename, 'changed since analysis');
