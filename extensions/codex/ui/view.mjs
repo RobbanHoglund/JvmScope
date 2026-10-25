@@ -3,6 +3,7 @@ import { createBridge } from './bridge.mjs';
 import { findingCopy, findingOverview } from './finding-copy.mjs';
 import { createDeadlockGraph } from './deadlock-graph.mjs';
 import { comparisonView } from './comparison.mjs';
+import { groupFindings } from './finding-groups.mjs';
 
 const root = document.getElementById('app');
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
@@ -18,7 +19,7 @@ const copy = {
         hostUnavailable: 'Interactive source tools are unavailable in this host. Ask for these source lines in the conversation.',
         noCycle: 'No JVM-reported deadlock in this snapshot', noCycleNote: 'This does not exclude contention or deadlocks outside the capture’s coverage.',
         action: 'Recommended next check', recommendation: 'Review the lock acquisition paths and make their ordering consistent. Validate the change against the affected code.',
-        findings: 'Findings in this snapshot', details: 'Evidence and qualifications', coverage: 'Coverage and limitations',
+        findings: 'Findings in this snapshot', relatedFinding: 'Related interpretation · same locks and waiting threads', relatedHint: 'Includes a possible bottleneck interpretation for the same locks.', details: 'Evidence and qualifications', coverage: 'Coverage and limitations',
         partial: 'Partial capture or parser warnings — review coverage before drawing conclusions.',
         truncated: 'This view contains a bounded subset. Counts include omitted items; inspect the capture for the remaining evidence.',
         graphLimited: 'Graph limited to the first 8 reported participants. Omitted or unresolved relationships are not drawn.',
@@ -39,7 +40,7 @@ const copy = {
         hostUnavailable: 'Interaktiva källverktyg är inte tillgängliga här. Be om dessa källrader i konversationen.',
         noCycle: 'Ingen JVM-rapporterad deadlock i denna snapshot', noCycleNote: 'Det utesluter inte låskonkurrens eller deadlocks utanför dumpens täckning.',
         action: 'Rekommenderad nästa kontroll', recommendation: 'Granska kodvägarna som tar låsen och gör låsordningen konsekvent. Verifiera ändringen mot den berörda koden.',
-        findings: 'Fynd i denna snapshot', details: 'Bevis och reservationer', coverage: 'Täckning och begränsningar',
+        findings: 'Fynd i denna snapshot', relatedFinding: 'Relaterad tolkning · samma lås och väntande trådar', relatedHint: 'Innehåller en tolkning av möjlig flaskhals vid samma lås.', details: 'Bevis och reservationer', coverage: 'Täckning och begränsningar',
         partial: 'Ofullständigt underlag eller parservarningar — granska täckningen innan du drar slutsatser.',
         truncated: 'Vyn visar ett begränsat urval. Antalen omfattar även utelämnade poster; granska dumpen för resterande bevis.',
         graphLimited: 'Grafen visar högst 8 rapporterade deltagare. Utelämnade eller olösta relationer ritas inte ut.',
@@ -177,6 +178,37 @@ async function focusSnapshot(endpoint) {
         snapshotIndex: endpoint.snapshotIndex, sourceKey: endpoint.sourceKey, limit: 1 })); }
     catch (error) { root.append(el('p', 'error', error.message)); }
 }
+function findingCard(f, related = []) {
+    const card = el('article', 'finding'), translated = findingCopy(f, locale);
+    card.dataset.finding = f.id;
+    const title = el('span', 'finding-title', translated.title); title.setAttribute('role', 'heading'); title.setAttribute('aria-level', '3');
+    const summary = append(el('summary', 'finding-summary'), append(el('span', 'finding-top'), badge(f.severity), title), el('span', 'finding-overview', findingOverview(f, locale)));
+    const details = append(el('details', 'finding-disclosure'), summary);
+    if (translated.original) details.append(el('p', 'muted', t('originalFinding')));
+    append(details, el('p', 'finding-description', translated.summary), el('p', '', translated.qualification));
+    if (f.id !== 'confirmed-deadlock') details.append(el('p', 'finding-action', translated.recommendation));
+    details.append(el('p', 'muted', t('original')));
+    append(details, el('p', '', `${f.evidence?.label || ''}: ${f.qualification || f.evidence?.qualification || ''}`));
+    for (const fact of items(f.facts)) details.append(el('p', '', `${fact.label}: ${fact.value}`));
+    const sourceButtons = el('div', 'evidence-actions');
+    for (const thread of items(f.threads)) {
+        if (!thread.startLine) continue;
+        sourceButtons.append(button(`${t('source')}: ${thread.name}`, () => {
+            selection = { id: thread.sourceKey, name: thread.name, evidence: { startLine: thread.startLine, endLine: thread.endLine } };
+            const old = document.getElementById('detail'); if (old) old.remove();
+            card.append(evidencePanel(selection)); void showEvidence(selection, thread.startLine);
+        }));
+    }
+    if ([f.threads, f.facts, f.resourceIds].some(p => p?.nextOffset != null)) details.append(el('p', 'note', t('truncated')));
+    if (sourceButtons.childElementCount) details.append(sourceButtons);
+    if (related.length) {
+        summary.append(el('span', 'related-hint', t('relatedHint')));
+        const section = append(el('section', 'related-findings'), el('p', 'related-label', t('relatedFinding')));
+        for (const interpretation of related) section.append(findingCard(interpretation));
+        details.append(section);
+    }
+    append(card, details); return card;
+}
 function render() {
     disposeGraph();
     const snapshot = current();
@@ -253,31 +285,7 @@ function render() {
     } else root.append(append(panel, append(el('div', 'no-cycle'), el('h2', '', t('noCycle')), el('p', '', t('noCycleNote')))));
     if (selection && !cycles.some(c => items(c.participants).some(p => p.id === selection.id))) root.append(evidencePanel(selection));
     const findings = el('section', 'findings'); findings.append(el('h2', '', t('findings')));
-    for (const f of items(snapshot.analysis?.findings)) {
-        const card = el('article', 'finding'), translated = findingCopy(f, locale);
-        card.dataset.finding = f.id;
-        const title = el('span', 'finding-title', translated.title); title.setAttribute('role', 'heading'); title.setAttribute('aria-level', '3');
-        const summary = append(el('summary', 'finding-summary'), append(el('span', 'finding-top'), badge(f.severity), title), el('span', 'finding-overview', findingOverview(f, locale)));
-        const details = append(el('details', 'finding-disclosure'), summary);
-        if (translated.original) details.append(el('p', 'muted', t('originalFinding')));
-        append(details, el('p', 'finding-description', translated.summary), el('p', '', translated.qualification));
-        if (f.id !== 'confirmed-deadlock') details.append(el('p', 'finding-action', translated.recommendation));
-        details.append(el('p', 'muted', t('original')));
-        append(details, el('p', '', `${f.evidence?.label || ''}: ${f.qualification || f.evidence?.qualification || ''}`));
-        for (const fact of items(f.facts)) details.append(el('p', '', `${fact.label}: ${fact.value}`));
-        const sourceButtons = el('div', 'evidence-actions');
-        for (const thread of items(f.threads)) {
-            if (!thread.startLine) continue;
-            sourceButtons.append(button(`${t('source')}: ${thread.name}`, () => {
-                selection = { id: thread.sourceKey, name: thread.name, evidence: { startLine: thread.startLine, endLine: thread.endLine } };
-                const old = document.getElementById('detail'); if (old) old.remove();
-                card.append(evidencePanel(selection)); void showEvidence(selection, thread.startLine);
-            }));
-        }
-        if ([f.threads, f.facts, f.resourceIds].some(p => p?.nextOffset != null)) details.append(el('p', 'note', t('truncated')));
-        if (sourceButtons.childElementCount) details.append(sourceButtons);
-        append(card, details); findings.append(card);
-    }
+    for (const { finding, related } of groupFindings(items(snapshot.analysis?.findings))) findings.append(findingCard(finding, related));
     if (snapshot.analysis?.findings?.nextOffset != null) findings.append(el('p', 'note', t('truncated')));
     root.append(findings);
     const limitations = append(el('details', 'coverage'), el('summary', '', t('coverage'))), list = el('ul');

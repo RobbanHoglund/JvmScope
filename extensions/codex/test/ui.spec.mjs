@@ -317,3 +317,18 @@ test('finding overviews expand with the keyboard and retain full evidence and so
     await expect(card.locator('.evidence')).toBeHidden();
     await expect(f.locator('[data-finding="confirmed-deadlock"] summary')).toContainText('Critical');
 });
+
+test('matching contention and bottleneck findings share one overview while retaining distinct evidence', async ({ page }) => {
+    await page.goto(host.url + '?case=focused');
+    const f = widget(page), contention = f.locator('[data-finding="observed-lock-contention"]');
+    await expect(f.locator('.findings > [data-finding="likely-lock-bottleneck"]')).toHaveCount(0);
+    await expect(contention.locator(':scope > details > summary')).toContainText('same locks');
+    await contention.locator(':scope > details > summary').click();
+    const interpretation = contention.locator('[data-finding="likely-lock-bottleneck"]');
+    await expect(interpretation.locator('summary')).toContainText('Review');
+    await interpretation.locator('summary').click();
+    await expect(interpretation.locator('.finding-description')).toContainText('root cause remains an inference');
+    await interpretation.getByRole('button', { name: 'Source evidence: scenario-lock-holder', exact: true }).click();
+    await expect(interpretation.locator('.evidence')).toContainText('1871  "scenario-lock-holder"');
+    await expect(interpretation.locator('.evidence-context')).toContainText('Snapshot 3');
+});
