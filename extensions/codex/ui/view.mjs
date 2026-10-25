@@ -4,9 +4,10 @@ import { findingCopy } from './finding-copy.mjs';
 import { createDeadlockGraph } from './deadlock-graph.mjs';
 
 const root = document.getElementById('app');
-let report, snapshotIndex = 0, cycleIndex = 0, selection = null, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
+let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
+        context: 'Viewing snapshot', editorContext: 'Evidence inside this report follows the selected snapshot. A file opened from chat may show another snapshot.',
         example: 'Synthetic example · bundled Java deadlock', holding: 'Holds', unknownHolding: 'Not established in the matched thread block', moreLocks: 'additional reported locks',
         snapshots: 'Snapshots analyzed', cyclesCount: 'Cycles · selected snapshot', threadsCount: 'Matched deadlocked threads', files: 'Selected capture files', snapshot: 'Snapshot',
         graph: 'Deadlock dependencies', graphNote: 'Reported by the JVM · selected snapshot', cycle: 'Cycle', participants: 'participants',
@@ -27,6 +28,7 @@ const copy = {
         cycleHint: 'Cycle counts apply to this snapshot. Repeated observations are not counted as distinct incidents.',
         refreshed: 'Source hash matches the analyzed capture.', readMore: 'Next source lines', language: 'Report language', original: 'Original analyzer diagnostics (English)', originalFinding: 'Untranslated finding (English)', mappedParticipant: 'JVM-reported participant', unmappedParticipant: 'Unmatched participant', observed: 'Snapshots with reported cycles', originalCount: 'Reported participant entries'  },
     sv: { title: 'Trådanalys', critical: 'Kritisk', high: 'Hög', medium: 'Granska', info: 'Information', neutral: 'Inga prioriterade fynd',
+        context: 'Visar snapshot', editorContext: 'Källbevis i rapporten följer vald snapshot. En fil öppnad från chatten kan visa en annan snapshot.',
         example: 'Syntetiskt exempel · medföljande Java-deadlock', holding: 'Håller', unknownHolding: 'Inte fastställt i det matchade trådblocket', moreLocks: 'ytterligare rapporterade lås',
         snapshots: 'Analyserade snapshots', cyclesCount: 'Cykler · vald snapshot', threadsCount: 'Matchade deadlock-trådar', files: 'Valda dumpfiler', snapshot: 'Snapshot',
         graph: 'Deadlock och låsberoenden', graphNote: 'Rapporterat av JVM · vald snapshot', cycle: 'Cykel', participants: 'deltagare',
@@ -72,7 +74,17 @@ function receive(result) {
     if (candidate?.analyzer !== 'threads' || !Array.isArray(candidate.snapshots?.items) || !Array.isArray(candidate.sources)) return;
     if (['en', 'sv'].includes(result?._meta?.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
     document.documentElement.lang = locale;
-    report = candidate; snapshotIndex = Math.max(0, items(report.snapshots).findIndex(s => s.deadlocks?.total)); cycleIndex = 0; selection = null; evidenceEpoch++;
+    const focus = result?._meta?.jvmscopeFocus;
+    report = candidate;
+    activeView = focus?.view || 'snapshot';
+    snapshotIndex = Math.max(0, focus?.snapshotIndex != null ? items(report.snapshots).findIndex(s => s.index === focus.snapshotIndex)
+        : items(report.snapshots).findIndex(s => s.deadlocks?.total));
+    cycleIndex = 0; selection = null; evidenceEpoch++;
+    if (focus?.sourceKey) {
+        const cycles = items(current()?.deadlocks);
+        const found = cycles.findIndex(c => items(c.participants).some(p => p.id === focus.sourceKey));
+        if (found >= 0) { cycleIndex = found; selection = items(cycles[found].participants).find(p => p.id === focus.sourceKey); }
+    }
     clearTimeout(dataDeadline); render();
 }
 const bridge = createBridge({ onResult: receive, onContext: applyContext, onUnavailable() {
@@ -94,7 +106,7 @@ function evidencePanel(p) {
     append(panel, el('h3', '', p.name), el('p', '', `${t('waiting')}: ${p.waitingLockType || ''} ${p.waitingLockId || ''}`),
         el('p', '', `${t('heldBy')}: ${p.ownerName || '—'}`), el('code', 'frame', p.topFrame));
     const source = report.sources.find(s => s.path === current().sourcePath);
-    const location = `${source?.name || ''}${p.evidence ? ` · ${t('lines')} ${p.evidence.startLine}–${p.evidence.endLine}` : ''}`;
+    const location = `${t('snapshot')} ${current().index + 1} · ${source?.name || ''}${p.evidence ? ` · ${t('lines')} ${p.evidence.startLine}–${p.evidence.endLine}` : ''}`;
     append(panel, el('p', 'muted', location));
     const content = el('div'); content.id = 'source-content'; content.setAttribute('aria-live', 'polite');
     content.textContent = p.evidence ? (bridge.canCallTools ? t('select') : t('hostUnavailable')) : t('evidenceUnavailable');
@@ -108,17 +120,24 @@ async function showEvidence(p, startLine) {
     const source = report.sources.find(s => s.path === current().sourcePath);
     const endLine = Math.min(p.evidence.endLine, startLine + 59);
     try {
-        const response = await bridge.callTool('read_capture_lines', { path: source.path, sha256: source.sha256, startLine, endLine });
+        const response = await bridge.callTool('read_thread_evidence', { reportId: report.reportId, snapshotIndex: current().index, sourceKey: p.id, startLine });
         if (epoch !== evidenceEpoch || !container.isConnected) return;
         const data = response.structuredContent;
-        if (!data?.lines || data.source?.sha256 !== source.sha256) throw new Error('The host returned mismatched source evidence.');
-        container.replaceChildren(el('p', 'muted', t('refreshed')), el('pre', 'evidence', data.lines.map(l => `${l.line}  ${l.text}`).join('\n')));
+        if (!data?.lines || data.source?.sha256 !== source.sha256 || data.context?.snapshotIndex !== current().index || data.context?.sourceKey !== p.id) throw new Error('The host returned mismatched source evidence.');
+        container.replaceChildren(el('p', 'evidence-context muted', `${t('snapshot')} ${data.context.snapshotNumber} · ${source.name} · ${t('lines')} ${data.lines[0]?.line}–${data.lines.at(-1)?.line}`), el('p', 'muted', t('refreshed')), el('pre', 'evidence', data.lines.map(l => `${l.line}  ${l.text}`).join('\n')));
         if (endLine < p.evidence.endLine) container.append(button(t('readMore'), () => showEvidence(p, endLine + 1)));
     } catch (error) { if (epoch === evidenceEpoch && container.isConnected) container.replaceChildren(el('p', 'error', error.message)); }
 }
 async function loadPage(offset, b) {
     b.disabled = true; b.textContent = t('load');
-    try { receive(await bridge.callTool('analyze_thread_dumps', { paths: report.sources.map(s => s.path), offset, limit: report.snapshots.limit || 10 })); }
+    try {
+        try { receive(await bridge.callTool('render_thread_report', { reportId: report.reportId, language: locale,
+            view: activeView, offset, limit: report.snapshots.limit || 10 })); }
+        catch (error) {
+            if (!error.message.startsWith('SNAPSHOTS_NOT_CACHED:')) throw error;
+            receive(await bridge.callTool('analyze_thread_dumps', { paths: report.sources.map(s => s.path), offset, limit: report.snapshots.limit || 10 }));
+        }
+    }
     catch (e) { b.disabled = false; b.textContent = e.message; }
 }
 function render() {
@@ -157,12 +176,15 @@ function render() {
     }
     if (report.snapshots.total > items(report.snapshots).length) root.append(el('p', 'muted', `${t('viewRange')}: ${report.snapshots.offset + 1}–${report.snapshots.offset + items(report.snapshots).length} / ${report.snapshots.total}`));
     const src = report.sources.find(s => s.path === snapshot.sourcePath);
-    const filename = el('p', 'filename', src?.name || snapshot.sourcePath); filename.title = snapshot.sourcePath; root.append(filename);
+    const context = el('div', 'snapshot-context');
+    context.append(el('strong', '', `${t('context')} ${snapshot.index + 1} / ${report.snapshotCount}`));
+    const filename = el('p', 'filename', src?.name || snapshot.sourcePath); filename.title = snapshot.sourcePath;
+    context.append(filename, el('p', 'muted', t('editorContext'))); root.append(context);
     if (report.status === 'partial' || report.warnings?.length) root.append(el('p', 'note', t('partial')));
     const cycles = items(snapshot.deadlocks), panel = el('section', 'panel');
     if (cycles.length) {
         const cycle = cycles[cycleIndex] || cycles[0];
-        const head = append(el('div', 'panel-head'), append(el('div'), el('h2', '', t('graph')), el('p', 'muted', t('graphNote'))));
+        const head = append(el('div', 'panel-head'), append(el('div'), el('h2', '', t('graph')), el('p', 'muted', `${t('graphNote')} ${snapshot.index + 1}`)));
         if (cycles.length > 1) {
             const chooser = el('select'); chooser.setAttribute('aria-label', t('cycle'));
             cycles.forEach((c, i) => { const o = el('option', '', `${t('cycle')} ${c.id} · ${c.participants.total} ${t('participants')}`); o.value = i; chooser.append(o); });

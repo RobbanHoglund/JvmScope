@@ -51,6 +51,8 @@ export async function startHost() {
         if (result.isError) throw new Error(JSON.stringify(result));
         rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId: result.structuredContent.reportId, ...(language ? { language } : {}) } });
     }
+    rendered.focused = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId,
+        snapshotIndex: 2, sourceKey: rendered.real._meta.jvmscopeReport.snapshots.items[2].deadlocks.items[0].participants.items[0].id } });
     rendered.demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });
     const uri = (await client.listTools()).tools.find(t => t.name === 'render_thread_report')._meta.ui.resourceUri;
     const html = (await client.readResource({ uri })).contents[0].text;
@@ -66,7 +68,7 @@ export async function startHost() {
             if (url.pathname === '/tool' && req.method === 'POST') {
                 let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 20000) throw new Error('Oversized request'); }
                 const call = JSON.parse(raw);
-                if (!['read_capture_lines', 'analyze_thread_dumps'].includes(call.name)) throw new Error('Unexpected test tool');
+                if (!['read_capture_lines', 'read_thread_evidence', 'render_thread_report', 'analyze_thread_dumps'].includes(call.name)) throw new Error('Unexpected test tool');
                 calls.push(call); res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(await client.callTool(call))); return;
             }
             res.setHeader('Content-Type', 'text/html');

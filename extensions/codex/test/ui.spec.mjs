@@ -21,7 +21,8 @@ test('deadlock graph exposes exact source evidence on click and keyboard activat
     await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
     await expect(f.locator('.evidence')).toContainText('4  "alpha"');
     await expect(f.locator('.evidence')).toContainText('waiting to lock <0x00000000aaaabbbb>');
-    expect(host.calls.at(-1).arguments.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(host.calls.at(-1).name).toBe('read_thread_evidence');
+    expect(host.calls.at(-1).arguments.snapshotIndex).toBe(0);
     await f.getByRole('button', { name: /^beta\. Waits for/ }).focus();
     await page.keyboard.press('Enter');
     await expect(f.locator('.evidence')).toContainText('10  "beta"');
@@ -214,4 +215,26 @@ test('dark, light and narrow layouts have no horizontal overflow and respond to 
     await widget(page).getByRole('combobox', { name: 'Report language' }).selectOption('sv');
     await expect(widget(page).getByRole('heading', { name: 'Trådanalys', exact: true })).toBeVisible();
     await expect(widget(page).locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
+
+test('focused report, graph and evidence follow the exact global snapshot', async ({ page }) => {
+    await page.goto(host.url + '?case=focused');
+    const f = widget(page);
+    await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 3 / 3');
+    await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toHaveValue('0');
+    await expect(f.locator('.node.selected')).toHaveCount(1);
+    await f.locator('.node.selected').click();
+    await expect(f.locator('.evidence-context')).toContainText('Snapshot 3');
+    await expect(f.locator('.evidence')).toContainText('1801  "scenario-deadlock-2-1"');
+    await expect(f.locator('.evidence')).toContainText('0x000000070920ac70');
+    expect(host.calls.at(-1).arguments.snapshotIndex).toBe(2);
+});
+
+test('series navigation reads cached pages without rerunning the analyzer', async ({ page }) => {
+    await page.goto(host.url + '?case=paged');
+    const f = widget(page), start = host.calls.length;
+    await f.getByRole('button', { name: 'Next snapshots' }).click();
+    await expect(f.getByText('Displayed snapshots: 3–3 / 3')).toBeVisible();
+    expect(host.calls.slice(start).map(c => c.name)).toEqual(['render_thread_report']);
 });
