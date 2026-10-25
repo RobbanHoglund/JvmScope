@@ -1,3 +1,4 @@
+import { version } from '../package.json';
 // MCP Apps host bridge. All messages must come from this iframe's parent.
 export function createBridge({ onResult, onContext, onUnavailable }) {
     let sequence = 0, ready = false, hostCapabilities = {};
@@ -32,7 +33,7 @@ export function createBridge({ onResult, onContext, onUnavailable }) {
         async initialize() {
             if (window.parent === window) { onUnavailable(); return; }
             try {
-                const host = await request('ui/initialize', { appInfo: { name: 'jvmscope-thread-report', version: '0.2.0' }, appCapabilities: {}, protocolVersion: '2026-01-26' }, 6000);
+                const host = await request('ui/initialize', { appInfo: { name: 'jvmscope-thread-report', version }, appCapabilities: {}, protocolVersion: '2026-01-26' }, 6000);
                 hostCapabilities = host?.hostCapabilities || {};
                 ready = true; onContext(host?.hostContext || {});
                 notify('ui/notifications/initialized', {});
