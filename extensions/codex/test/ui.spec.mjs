@@ -345,3 +345,20 @@ test('long stack frames show the exact Java location first and retain the full f
     expect(await overflow(f)).toBe(false);
     await expect(stack.locator('.frame')).toContainText('ThreadScenarioRunner.java:458');
 });
+
+test('technical timing and host guidance live in report information while snapshot identity remains visible', async ({ page }) => {
+    for (const [caseName, information, guidance, timing] of [
+        ['focused', 'Report information', 'A file opened from chat may show another snapshot.', 'Read / analysis:'],
+        ['realSv', 'Rapportinformation', 'En fil öppnad från chatten kan visa en annan snapshot.', 'Läsning / analys:'],
+    ]) {
+        await page.goto(host.url + '?case=' + caseName);
+        const f = widget(page), info = f.locator('.report-information');
+        await expect(f.locator('.snapshot-context')).toBeVisible();
+        await expect(info.locator('summary')).toContainText(information);
+        await expect(info.getByText(guidance, { exact: false })).toBeHidden();
+        await info.locator('summary').focus(); await page.keyboard.press('Enter');
+        await expect(info.getByText(guidance, { exact: false })).toBeVisible();
+        await expect(info.getByText(timing, { exact: false })).toBeVisible();
+        expect(await overflow(f)).toBe(false);
+    }
+});

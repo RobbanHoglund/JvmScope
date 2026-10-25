@@ -24,7 +24,7 @@ const copy = {
         truncated: 'This view contains a bounded subset. Counts include omitted items; inspect the capture for the remaining evidence.',
         graphLimited: 'Graph limited to the first 8 reported participants. Omitted or unresolved relationships are not drawn.',
         unmapped: 'Some participants or owners could not be matched. The JVM report is retained; missing edges are not inferred.',
-        local: 'Parsed locally · results are shared with your AI host', timing: 'Read / analysis', next: 'Next snapshots', previous: 'Previous snapshots',
+        local: 'Parsed locally · results are shared with your AI host', information: 'Report information', timing: 'Read / analysis', next: 'Next snapshots', previous: 'Previous snapshots',
         load: 'Loading…', locked: 'JVM-REPORTED DEADLOCK', confirmedTitle: 'Confirmed Java deadlock', noHost: 'This report needs an MCP Apps host. Ask for a concise text analysis if the component is unavailable.',
         viewRange: 'Displayed snapshots', noData: 'The host did not deliver the report data. Ask it to run analyze_thread_dumps, then render_thread_report in this session.',
         cycleHint: 'Cycle counts apply to this snapshot. Repeated observations are not counted as distinct incidents.',
@@ -45,7 +45,7 @@ const copy = {
         truncated: 'Vyn visar ett begränsat urval. Antalen omfattar även utelämnade poster; granska dumpen för resterande bevis.',
         graphLimited: 'Grafen visar högst 8 rapporterade deltagare. Utelämnade eller olösta relationer ritas inte ut.',
         unmapped: 'Vissa deltagare eller ägare kunde inte matchas. JVM-rapporten finns kvar; saknade pilar gissas inte.',
-        local: 'Parsas lokalt · resultat delas med din AI-klient', timing: 'Läsning / analys', next: 'Nästa snapshots', previous: 'Föregående snapshots',
+        local: 'Parsas lokalt · resultat delas med din AI-klient', information: 'Rapportinformation', timing: 'Läsning / analys', next: 'Nästa snapshots', previous: 'Föregående snapshots',
         load: 'Laddar…', locked: 'JVM-RAPPORTERAD DEADLOCK', confirmedTitle: 'Bekräftad Java-deadlock', noHost: 'Rapporten behöver en klient med MCP Apps-stöd. Be om en kort textanalys om komponenten inte kan visas.',
         viewRange: 'Visade snapshots', noData: 'Klienten skickade inga rapportdata. Be den köra analyze_thread_dumps och sedan render_thread_report i samma session.',
         cycleHint: 'Cykelantalet gäller vald snapshot. Upprepade observationer räknas inte som separata incidenter.',
@@ -156,8 +156,9 @@ async function loadPage(offset, b) {
     catch (e) { b.disabled = false; b.textContent = e.message; }
 }
 function footer() {
-    return append(el('footer', 'footer'), el('span', '', t('local')),
-        el('span', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms · v${version}`));
+    const information = append(el('details', 'report-information'), el('summary', '', `${t('information')} · v${version}`),
+        el('p', '', t('editorContext')), el('p', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms`));
+    return append(el('footer', 'footer'), el('span', '', t('local')), information);
 }
 async function switchView(view, b) {
     if (view === 'snapshot' || (report.snapshots.offset === 0 && report.snapshots.items.length === report.snapshotCount && report.snapshotCount <= 4)) {
@@ -271,7 +272,7 @@ function render() {
     const context = el('div', 'snapshot-context');
     context.append(el('strong', '', `${t('context')} ${snapshot.index + 1} / ${report.snapshotCount}`));
     const filename = el('p', 'filename', src?.name || snapshot.sourcePath); filename.title = snapshot.sourcePath;
-    context.append(filename, el('p', 'muted', t('editorContext'))); root.append(context);
+    context.append(filename); root.append(context);
     if (report.status === 'partial' || report.warnings?.length) root.append(el('p', 'note', t('partial')));
     const cycles = items(snapshot.deadlocks), panel = el('section', 'panel');
     if (cycles.length) {
