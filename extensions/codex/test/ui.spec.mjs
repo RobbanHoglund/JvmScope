@@ -300,3 +300,20 @@ test('comparison tab reuses already loaded analysis and source controls degrade 
     await expect(f.getByRole('button', { name: 'Endpoint · Snapshot 2', exact: true })).toBeDisabled();
     expect(host.calls.length).toBe(before);
 });
+
+test('finding overviews expand with the keyboard and retain full evidence and source actions', async ({ page }) => {
+    await page.goto(host.url + '?case=focused');
+    const f = widget(page), card = f.locator('[data-finding="cpu-hot"]');
+    await expect(card.locator('summary')).toContainText('9 application threads above the configured CPU threshold');
+    await expect(card.locator('.finding-action')).toBeHidden();
+    await card.locator('summary').focus(); await page.keyboard.press('Enter');
+    await expect(card.locator('.finding-action')).toBeVisible();
+    await expect(card.locator('.finding-description')).toContainText('endpoint state describes capture time');
+    await expect(card.getByRole('button').first()).toBeVisible();
+    await card.getByRole('button').first().click();
+    await expect(card.locator('.evidence')).toBeVisible();
+    expect(host.calls.at(-1).arguments.snapshotIndex).toBe(2);
+    await card.locator('summary').click();
+    await expect(card.locator('.evidence')).toBeHidden();
+    await expect(f.locator('[data-finding="confirmed-deadlock"] summary')).toContainText('Critical');
+});

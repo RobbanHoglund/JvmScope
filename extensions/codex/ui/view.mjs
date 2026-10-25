@@ -1,6 +1,6 @@
 import { version } from '../package.json';
 import { createBridge } from './bridge.mjs';
-import { findingCopy } from './finding-copy.mjs';
+import { findingCopy, findingOverview } from './finding-copy.mjs';
 import { createDeadlockGraph } from './deadlock-graph.mjs';
 import { comparisonView } from './comparison.mjs';
 
@@ -255,13 +255,16 @@ function render() {
     const findings = el('section', 'findings'); findings.append(el('h2', '', t('findings')));
     for (const f of items(snapshot.analysis?.findings)) {
         const card = el('article', 'finding'), translated = findingCopy(f, locale);
-        append(card, append(el('div', 'finding-top'), badge(f.severity), el('h3', '', translated.title)), el('p', '', translated.summary));
-        const details = append(el('details'), el('summary', '', t('details')));
-        if (translated.original) card.append(el('p', 'muted', t('originalFinding')));
-        append(details, el('p', '', translated.qualification), el('p', 'muted', t('original')));
+        card.dataset.finding = f.id;
+        const title = el('span', 'finding-title', translated.title); title.setAttribute('role', 'heading'); title.setAttribute('aria-level', '3');
+        const summary = append(el('summary', 'finding-summary'), append(el('span', 'finding-top'), badge(f.severity), title), el('span', 'finding-overview', findingOverview(f, locale)));
+        const details = append(el('details', 'finding-disclosure'), summary);
+        if (translated.original) details.append(el('p', 'muted', t('originalFinding')));
+        append(details, el('p', 'finding-description', translated.summary), el('p', '', translated.qualification));
+        if (f.id !== 'confirmed-deadlock') details.append(el('p', 'finding-action', translated.recommendation));
+        details.append(el('p', 'muted', t('original')));
         append(details, el('p', '', `${f.evidence?.label || ''}: ${f.qualification || f.evidence?.qualification || ''}`));
         for (const fact of items(f.facts)) details.append(el('p', '', `${fact.label}: ${fact.value}`));
-        if (f.id !== 'confirmed-deadlock') card.append(el('p', 'finding-action', translated.recommendation));
         const sourceButtons = el('div', 'evidence-actions');
         for (const thread of items(f.threads)) {
             if (!thread.startLine) continue;

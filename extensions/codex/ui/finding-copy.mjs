@@ -70,3 +70,16 @@ export function findingCopy(finding, language) {
         recommendation: finding.recommendation, original: language === 'sv' };
     return { ...localized, summary: localized.summary(finding), original: false };
 }
+
+// Short, explicit overview; full analyzer wording stays available in the disclosure.
+export function findingOverview(finding, language) {
+    const sv = language === 'sv';
+    const definitions = {
+        'cpu-hot': ['Measured hot threads', n => sv ? `${n} applikationstrådar över inställd CPU-gräns mellan snapshots.` : `${n} application threads above the configured CPU threshold between snapshots.`],
+        'infra-hot': ['Measured hot threads', n => sv ? `${n} infrastrukturtrådar över inställd CPU-gräns mellan snapshots.` : `${n} infrastructure threads above the configured CPU threshold between snapshots.`],
+        'allocation-hot': ['Measured hot allocators', n => sv ? `${n} trådar över inställd allokeringsgräns. Visar inte kvarhållen heap.` : `${n} threads above the configured allocation threshold. Does not measure retained heap.`],
+        'class-initialization-stall': ['Waiting threads', n => sv ? `${n} trådar väntar på klassinitiering; även den initierande tråden väntar.` : `${n} threads await class initialization; the initializer is also waiting.`],
+    };
+    const definition = definitions[finding.id], value = definition && fact(finding, definition[0]);
+    return value != null ? definition[1](value) : findingCopy(finding, language).summary;
+}

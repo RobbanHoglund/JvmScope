@@ -46,3 +46,14 @@ test('future unknown findings preserve original text and explicitly signal untra
     assert.equal(translated.qualification, future.qualification);
     assert.equal(translated.original, true);
 });
+
+test('compact overviews use measured counts and retain allocation scope and unknown findings', async () => {
+    const { findingOverview } = await import('../ui/finding-copy.mjs');
+    const f = { id: 'allocation-hot', facts: { items: [{ label: 'Measured hot allocators', value: '2' }] } };
+    assert.match(findingOverview(f, 'en'), /2 threads.*Does not measure retained heap/);
+    assert.match(findingOverview(f, 'sv'), /2 trådar.*Visar inte kvarhållen heap/);
+    const unknown = { id: 'future-rule', summary: 'A qualified observation; not a diagnosis.' };
+    assert.equal(findingOverview(unknown, 'en'), unknown.summary);
+    const missingCount = { id: 'cpu-hot', summary: 'Counter unavailable.' };
+    assert.equal(findingOverview(missingCount, 'en'), missingCount.summary);
+});
