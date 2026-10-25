@@ -13,7 +13,7 @@ const copy = {
         snapshots: 'Snapshots analyzed', cyclesCount: 'Cycles · selected snapshot', threadsCount: 'Matched deadlocked threads', files: 'Selected capture files', snapshot: 'Snapshot',
         graph: 'Deadlock dependencies', graphNote: 'Reported by the JVM · selected snapshot', cycle: 'Cycle', participants: 'participants',
         legend: 'Arrow: waiting thread → thread holding the named lock.', select: 'Select a thread to inspect its source evidence.',
-        waiting: 'Waits for', heldBy: 'Held by', source: 'Source evidence', pending: 'Checking source hash…', lines: 'Lines',
+        waiting: 'Waits for', heldBy: 'Held by', source: 'Source evidence', viewLines: 'View source lines', pending: 'Checking source hash…', lines: 'Lines',
         evidenceUnavailable: 'Exact source lines are unavailable for this participant. Inspect its identity in the capture.',
         hostUnavailable: 'Interactive source tools are unavailable in this host. Ask for these source lines in the conversation.',
         noCycle: 'No JVM-reported deadlock in this snapshot', noCycleNote: 'This does not exclude contention or deadlocks outside the capture’s coverage.',
@@ -34,7 +34,7 @@ const copy = {
         snapshots: 'Analyserade snapshots', cyclesCount: 'Cykler · vald snapshot', threadsCount: 'Matchade deadlock-trådar', files: 'Valda dumpfiler', snapshot: 'Snapshot',
         graph: 'Deadlock och låsberoenden', graphNote: 'Rapporterat av JVM · vald snapshot', cycle: 'Cykel', participants: 'deltagare',
         legend: 'Pil: väntande tråd → tråden som håller det angivna låset.', select: 'Välj en tråd för att granska källbevisen.',
-        waiting: 'Väntar på', heldBy: 'Hålls av', source: 'Källbevis', pending: 'Kontrollerar källfilens hash…', lines: 'Rader',
+        waiting: 'Väntar på', heldBy: 'Hålls av', source: 'Källbevis', viewLines: 'Visa källrader', pending: 'Kontrollerar källfilens hash…', lines: 'Rader',
         evidenceUnavailable: 'Exakta källrader saknas för deltagaren. Granska trådens identitet i dumpen.',
         hostUnavailable: 'Interaktiva källverktyg är inte tillgängliga här. Be om dessa källrader i konversationen.',
         noCycle: 'Ingen JVM-rapporterad deadlock i denna snapshot', noCycleNote: 'Det utesluter inte låskonkurrens eller deadlocks utanför dumpens täckning.',
@@ -116,8 +116,9 @@ function evidencePanel(p) {
     const location = `${t('snapshot')} ${current().index + 1} · ${source?.name || ''}${p.evidence ? ` · ${t('lines')} ${p.evidence.startLine}–${p.evidence.endLine}` : ''}`;
     append(panel, el('p', 'muted', location));
     const content = el('div'); content.id = 'source-content'; content.setAttribute('aria-live', 'polite');
-    content.textContent = p.evidence ? (bridge.canCallTools ? t('select') : t('hostUnavailable')) : t('evidenceUnavailable');
-    const read = button(t('source'), () => showEvidence(p, p.evidence?.startLine)); read.disabled = !p.evidence || !bridge.canCallTools;
+    content.textContent = p.evidence ? (bridge.canCallTools ? '' : t('hostUnavailable')) : t('evidenceUnavailable');
+    const label = p.evidence ? `${t('viewLines')} ${p.evidence.startLine}–${p.evidence.endLine}` : t('source');
+    const read = button(label, () => showEvidence(p, p.evidence?.startLine)); read.disabled = !p.evidence || !bridge.canCallTools;
     append(panel, append(el('div', 'evidence-actions'), read), content); return panel;
 }
 async function showEvidence(p, startLine) {

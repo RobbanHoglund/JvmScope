@@ -99,7 +99,7 @@ test('unmapped participants have no invented arrows and unavailable tools degrad
     await page.goto(host.url + '?noTools=1');
     await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
     await expect(f.getByText(/Interactive source tools are unavailable/)).toBeVisible();
-    await expect(f.getByRole('button', { name: 'Source evidence', exact: true })).toBeDisabled();
+    await expect(f.getByRole('button', { name: /^View source lines / })).toBeDisabled();
 });
 
 test('untrusted labels render as text and outside messages cannot replace the report', async ({ page }) => {
@@ -224,6 +224,10 @@ test('focused report, graph and evidence follow the exact global snapshot', asyn
     await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 3 / 3');
     await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toHaveValue('0');
     await expect(f.locator('.node.selected')).toHaveCount(1);
+    await expect(f.locator('#source-content')).toBeEmpty();
+    await expect(f.getByRole('button', { name: 'View source lines 1801–1814', exact: true })).toBeVisible();
+    await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');
+    await expect(f.getByRole('button', { name: 'Visa källrader 1801–1814', exact: true })).toBeVisible();
     await f.locator('.node.selected').click();
     await expect(f.locator('.evidence-context')).toContainText('Snapshot 3');
     await expect(f.locator('.evidence')).toContainText('1801  "scenario-deadlock-2-1"');
