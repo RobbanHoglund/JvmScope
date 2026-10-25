@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createJobs } from './jobs.mjs';
 import { createReports } from './reports.mjs';
+import { resolveThreadEvidence } from './thread-evidence.mjs';
 
 const pluginRoot = new URL('../', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('plugin.json', pluginRoot), 'utf8'));
@@ -21,14 +22,18 @@ function result(data) {
     return { content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
 }
 
-function threadReportResult(report, language) {
+function threadReportResult(report, language, { view = 'snapshot', snapshotIndex, sourceKey } = {}) {
+    const selected = report.snapshots.items.find(s => s.index === snapshotIndex) || report.snapshots.items.find(s => s.deadlocks.total) || report.snapshots.items[0];
     return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. ${report.snapshotCount > 1 ? 'Repeated observations are not distinct incidents. ' : ''}Keep the accompanying answer brief: give the diagnostic conclusion and next check. Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
         structuredContent: { reportId: report.reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
             findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations,
+            selectedSnapshotIndex: selected?.index, cache: report.cache,
+            ...(view === 'comparison' ? { comparison: { snapshotCount: report.snapshotCount,
+                page: { ...report.snapshots, items: report.snapshots.items.map(s => ({ index: s.index, measurements: s.measurements })) } } } : {}),
             ...(report.example ? { example: report.example, exampleEvidence: report.exampleEvidence,
                 status: report.status, warnings: report.warnings, limitations: report.limitations,
                 selectedSnapshot: report.snapshots.items[0] } : {}) },
-        _meta: { jvmscopeReport: report, jvmscopeLanguage: language } };
+        _meta: { jvmscopeReport: report, jvmscopeLanguage: language, jvmscopeFocus: { view, snapshotIndex: selected?.index, sourceKey } } };
 }
 
 function createServer() {
@@ -62,14 +67,35 @@ function createServer() {
     }] }));
     server.registerTool('render_thread_report', {
         title: 'Show JvmScope thread report',
-        description: 'Display the cached thread analysis as an interactive report with severity, snapshots, deadlock cycles and clickable evidence. Call once after analyze_thread_dumps, using its reportId. Does not reanalyze or write files. On hosts without MCP Apps UI, use the analysis data for a concise text answer.',
-        inputSchema: z.object({ reportId: z.string().uuid(), language }).strict(), annotations,
+        description: 'Display the cached thread analysis as an interactive report with severity, snapshots, deadlock cycles and clickable evidence. Use its reportId; set view=comparison for CPU/allocation follow-ups. Reuse cached results for follow-ups and pagination; no parsing, file reads or writes. Match snapshotIndex/sourceKey to cited evidence. On hosts without MCP Apps UI, use the analysis data for a concise text answer.',
+        inputSchema: z.object({ reportId: z.string().uuid(), language, view: z.enum(['snapshot', 'comparison']).default('snapshot'),
+            snapshotIndex: z.number().int().min(0).optional().describe('Zero-based global snapshot index to focus, matching the cited evidence.'),
+            offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(50).optional(),
+            sourceKey: z.string().max(400).optional().describe('Exact thread sourceKey from the selected snapshot.') }).strict(), annotations,
         _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri,
             'openai/toolInvocation/invoking': 'Preparing thread report', 'openai/toolInvocation/invoked': 'Thread report ready' },
-    }, async ({ reportId, language }) => {
+    }, async ({ reportId, language, ...focus }) => {
         try {
-            const report = reports.get(reportId);
-            return threadReportResult(report, language);
+            const report = reports.page(reportId, focus);
+            if (focus.sourceKey) resolveThreadEvidence(reports, reportId, focus.snapshotIndex ?? report.snapshots.items[0]?.index, focus.sourceKey);
+            return threadReportResult(report, language, focus);
+        } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+    });
+    server.registerTool('read_thread_evidence', {
+        description: 'Read hash-checked evidence for an exact thread in a cached snapshot. Returns snapshot number, file, thread identity and citation label together with source lines. Use for thread claims instead of unscoped raw source reads. Cannot control the host editor or previously rendered widgets.',
+        inputSchema: z.object({ reportId: z.string().uuid(), snapshotIndex: z.number().int().min(0),
+            sourceKey: z.string().min(1).max(400), startLine: z.number().int().positive().optional() }).strict(), annotations,
+    }, async ({ reportId, snapshotIndex, sourceKey, startLine }, ctx) => {
+        try {
+            const evidence = resolveThreadEvidence(reports, reportId, snapshotIndex, sourceKey);
+            if (!evidence.range) throw new Error('This thread has no exact physical source range; cite its file, snapshot and identity.');
+            startLine ??= evidence.range.startLine;
+            if (startLine < evidence.range.startLine || startLine > evidence.range.endLine) throw new Error('Source range does not belong to the selected thread and snapshot.');
+            const endLine = Math.min(startLine + 59, evidence.range.endLine);
+            const data = await jobs.run('read_capture_lines', { path: evidence.path, sha256: evidence.sha256, startLine, endLine }, ctx.mcpReq.signal);
+            return result({ ...data, context: evidence,
+                citationLabel: `Snapshot ${snapshotIndex + 1} · ${evidence.name} · ${evidence.threadName} · lines ${startLine}–${endLine}`,
+                nextLine: endLine < evidence.range.endLine ? endLine + 1 : null });
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
     server.registerTool('show_thread_example', {

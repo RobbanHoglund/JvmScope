@@ -11,7 +11,7 @@ export function page(items, offset = 0, limit = 10) {
 const tally = values => values.reduce((result, value) => { result[value] = (result[value] || 0) + 1; return result; }, {});
 const overview = captures => ({ schemaVersion: 1, sources: captures.map(sourceInfo), privacy: 'Parsed locally. Returned evidence is visible to the connected AI host; this is not offline AI.' });
 
-export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
+export function analyzeThreads(captures, { offset = 0, limit = 10, includeCachedSnapshots = false } = {}) {
     const result = analyzeThreadDumpData(captures.map((c, i) => ({ id: `source:${i}`, name: c.name, label: c.name, text: c.text })));
     const rejected = result.sourceResults.filter(s => !s.accepted);
     if (!result.parsedDumps.length) throw new Error(`No supported thread snapshots. ${result.parserResult.warnings.join(' ')}`);
@@ -57,6 +57,9 @@ export function analyzeThreads(captures, { offset = 0, limit = 10 } = {}) {
         deadlockObservations: { snapshotsWithCycles: snapshots.filter(s => s.analysis.deadlockSummary.cycles > 0).length,
             snapshotCount: snapshots.length, scope: 'snapshots-not-distinct-incidents' },
         snapshots: page(snapshots, offset, limit),
+        // Private worker payload: keep ordinary reports small and bound cache memory.
+        ...(includeCachedSnapshots ? { _cachedSnapshots: JSON.stringify(snapshots).length <= 2 * 1024 * 1024
+            ? snapshots : snapshots.slice(offset, offset + limit) } : {}),
         limitations: ['Input order is preserved. Cross-snapshot rates require comparable process identity, counters and timestamps.',
             'No findings does not establish health. Read per-snapshot limitations and rejected sources.',
             'Evidence sublists are bounded and expose totals; use source ranges to inspect omitted details.'] };

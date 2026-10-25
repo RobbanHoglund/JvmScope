@@ -13,7 +13,7 @@ try {
     else {
         const captures = await readCaptures(args.paths || [args.path]);
         const readFinished = performance.now();
-        result = ({ analyze_thread_dumps: analyzeThreads, show_thread_example: analyzeThreads, analyze_tls_log: analyzeTls, analyze_gc_log: analyzeGarbageCollection })[name](captures, args);
+        result = ({ analyze_thread_dumps: analyzeThreads, show_thread_example: analyzeThreads, analyze_tls_log: analyzeTls, analyze_gc_log: analyzeGarbageCollection })[name](captures, { ...args, includeCachedSnapshots: true });
         result.timing = { readMs: Math.round(readFinished - started), analysisMs: Math.round(performance.now() - readFinished) };
         if (name === 'show_thread_example') {
             // The fixed public example is small; return independently hash-checked source
@@ -23,6 +23,7 @@ try {
         }
     }
     // Never silently truncate an evidence string or JSON result.
-    if (JSON.stringify(result).length > 512 * 1024) throw new Error('Result exceeds the 512 KiB response limit. Reduce limit or select a smaller capture interval.');
+    const { _cachedSnapshots, ...publicResult } = result;
+    if (JSON.stringify(publicResult).length > 512 * 1024) throw new Error('Result exceeds the 512 KiB response limit. Reduce limit or select a smaller capture interval.');
     parentPort.postMessage({ result });
 } catch (error) { parentPort.postMessage({ error: error.message }); }

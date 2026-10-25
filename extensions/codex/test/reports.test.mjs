@@ -15,3 +15,19 @@ test('report cache expires, evicts oldest entries and isolates connections', () 
     time = 10;
     assert.throws(() => reports.get(third), /expired/);
 });
+
+test('cached pages keep global snapshot identity and never leak private cache payloads', () => {
+    const reports = createReports();
+    const snapshots = [0, 1, 2].map(index => ({ index }));
+    const report = { analyzer: 'threads', snapshotCount: 3,
+        snapshots: { total: 3, items: snapshots.slice(0, 1), offset: 0, limit: 1 }, _cachedSnapshots: snapshots };
+    const id = reports.add(report);
+    assert.equal(report._cachedSnapshots, undefined);
+    assert.equal(report.cache.complete, true);
+    const page = reports.page(id, { offset: 2, limit: 1 });
+    assert.deepEqual(page.snapshots.items, [{ index: 2 }]);
+    assert.equal(page.snapshots.nextOffset, null);
+    assert.equal(reports.get(id).snapshots.offset, 0);
+    assert.equal(reports.page(id, { snapshotIndex: 1 }).snapshots.items[0].index, 1);
+    assert.throws(() => reports.snapshot(id, 3), /SNAPSHOTS_NOT_CACHED/);
+});

@@ -52,9 +52,9 @@ after(async () => {
     assert.equal(stderr, '', 'Protocol or worker errors must not be hidden');
 });
 
-test('relocated bundle exposes nine read-only tools with validated schemas', async () => {
+test('relocated bundle exposes ten read-only tools with validated schemas', async () => {
     const tools = (await client.listTools()).tools;
-    assert.equal(tools.length, 9);
+    assert.equal(tools.length, 10);
     for (const tool of tools) {
         assert.equal(tool.annotations.readOnlyHint, true);
         assert.equal(tool.annotations.destructiveHint, false);
@@ -92,7 +92,7 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
     const standalone = new Client({ name: 'jvmscope-single-plugin-test', version: '1.0.0' });
     try {
         await standalone.connect(new StdioClientTransport({ command: process.execPath, args: [server], cwd: installed }));
-        assert.equal((await standalone.listTools()).tools.length, 9);
+        assert.equal((await standalone.listTools()).tools.length, 10);
         const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
         assert.ok(!result.isError);
         const returnedSample = result.structuredContent.samples[0];
@@ -127,6 +127,31 @@ test('one-call demo returns the same analysis, verified source, provenance and r
     await fails('show_thread_example', { path: fixture('unknown-format.txt') }, /unrecognized|invalid|additional/i);
     // Evidence errors remain explicit: a demo must not succeed with unverified sources.
     await fails('read_capture_lines', { path: report.sources[0].path, sha256: '0'.repeat(64), startLine: 1, endLine: 10 }, /changed/);
+});
+
+test('cached comparison and focused source share snapshot identity without reparsing files', async () => {
+    const filename = path.join(temporary, 'cached-series.txt');
+    await cp(path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt'), filename);
+    const analysis = await call('analyze_thread_dumps', { paths: [filename], limit: 1 });
+    assert.equal(analysis._cachedSnapshots, undefined);
+    assert.equal(analysis.cache.complete, true);
+    const view = await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId, view: 'comparison', offset: 0, limit: 4 } });
+    assert.ok(!view.isError);
+    assert.equal(view.structuredContent.comparison.page.items.length, 3);
+    const thread = view.structuredContent.comparison.page.items[2].measurements.threads.items.find(t => t.name === 'scenario-cpu-and-allocation-hot');
+    const evidence = await call('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey });
+    assert.equal(evidence.context.snapshotNumber, 3);
+    assert.equal(evidence.lines[0].line, 2270);
+    assert.match(evidence.citationLabel, /Snapshot 3.*scenario-cpu-and-allocation-hot/);
+    const focus = await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey } });
+    assert.equal(focus._meta.jvmscopeFocus.snapshotIndex, 2);
+    await fails('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 0, sourceKey: thread.sourceKey }, /identity.*snapshot/);
+    await fails('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey, startLine: 117 }, /does not belong/);
+    await writeFile(filename, 'changed since analysis');
+    const cached = await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId, view: 'comparison', offset: 0, limit: 4 } });
+    assert.ok(!cached.isError);
+    assert.deepEqual(cached.structuredContent.comparison, view.structuredContent.comparison);
+    await fails('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey }, /changed since analysis/);
 });
 
 test('all bundled samples are present and analyzed through the real MCP transport', async () => {
@@ -398,7 +423,7 @@ test('modern MCP negotiation discovers and calls the same packaged server', asyn
     const wire = new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary, stderr: 'pipe' });
     try {
         await modern.connect(wire);
-        assert.equal((await modern.listTools()).tools.length, 9);
+        assert.equal((await modern.listTools()).tools.length, 10);
         const response = await modern.callTool({ name: 'search_knowledge', arguments: { query: 'gc' } });
         assert.ok(!response.isError);
         const analysis = await modern.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [sample('confirmed-deadlock.txt')] } });
