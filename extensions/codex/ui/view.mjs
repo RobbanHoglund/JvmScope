@@ -11,7 +11,7 @@ let focusedThreads = null;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
-        compare: 'Compare snapshots', snapshotView: 'Snapshot details', cached: 'Cached analysis', context: 'Viewing snapshot', editorContext: 'Evidence inside this report follows the selected snapshot. A file opened from chat may show another snapshot.',
+        comparisonTitle: 'Snapshot comparison', compare: 'Compare snapshots', snapshotView: 'Snapshot details', cached: 'Cached analysis', context: 'Viewing snapshot', editorContext: 'Evidence inside this report follows the selected snapshot. A file opened from chat may show another snapshot.',
         example: 'Synthetic example · bundled Java deadlock', holding: 'Holds', unknownHolding: 'Not established in the matched thread block', moreLocks: 'additional reported locks',
         snapshots: 'Snapshots analyzed', cyclesCount: 'Cycles · selected snapshot', threadsCount: 'Matched deadlocked threads', files: 'Selected capture files', snapshot: 'Snapshot',
         graph: 'Deadlock dependencies', graphNote: 'Reported by the JVM · selected snapshot', cycle: 'Cycle', participants: 'participants',
@@ -32,7 +32,7 @@ const copy = {
         cycleHint: 'Cycle counts apply to this snapshot. Repeated observations are not counted as distinct incidents.',
         refreshed: 'Source hash matches the analyzed capture.', readMore: 'Next source lines', language: 'Report language', original: 'Original analyzer diagnostics (English)', originalFinding: 'Untranslated finding (English)', mappedParticipant: 'JVM-reported participant', unmappedParticipant: 'Unmatched participant', observed: 'Snapshots with reported cycles', originalCount: 'Reported participant entries'  },
     sv: { title: 'Trådanalys', critical: 'Kritisk', high: 'Hög', medium: 'Granska', info: 'Information', neutral: 'Inga prioriterade fynd',
-        compare: 'Jämför snapshots', snapshotView: 'Snapshotdetaljer', cached: 'Sparad analys', context: 'Visar snapshot', editorContext: 'Källbevis i rapporten följer vald snapshot. En fil öppnad från chatten kan visa en annan snapshot.',
+        comparisonTitle: 'Jämför snapshots', compare: 'Jämför snapshots', snapshotView: 'Snapshotdetaljer', cached: 'Sparad analys', context: 'Visar snapshot', editorContext: 'Källbevis i rapporten följer vald snapshot. En fil öppnad från chatten kan visa en annan snapshot.',
         example: 'Syntetiskt exempel · medföljande Java-deadlock', holding: 'Håller', unknownHolding: 'Inte fastställt i det matchade trådblocket', moreLocks: 'ytterligare rapporterade lås',
         snapshots: 'Analyserade snapshots', cyclesCount: 'Cykler · vald snapshot', threadsCount: 'Matchade deadlock-trådar', files: 'Valda dumpfiler', snapshot: 'Snapshot',
         graph: 'Deadlock och låsberoenden', graphNote: 'Rapporterat av JVM · vald snapshot', cycle: 'Cykel', participants: 'deltagare',
@@ -251,7 +251,7 @@ function render() {
     const counts = snapshot.analysis?.counts || {};
     const severity = ['critical', 'high', 'medium', 'info'].find(s => counts[s]) || 'neutral';
     const heading = append(el('div'), append(el('div', 'brand'), icon('brand'), el('span', 'eyebrow', 'JVMSCOPE / JAVA DIAGNOSTICS')),
-        el('h1', '', t('title')), el('p', 'muted', `${t('files')}: ${report.sources.length} · Snapshots: ${report.snapshotCount}`));
+        el('h1', '', t(activeView === 'comparison' ? 'comparisonTitle' : 'title')), activeView !== 'comparison' ? el('p', 'muted', `${t('files')}: ${report.sources.length} · Snapshots: ${report.snapshotCount}`) : null);
     const language = el('select'); language.setAttribute('aria-label', t('language'));
     for (const [value, label] of [['en', 'English'], ['sv', 'Svenska']]) { const option = el('option', '', label); option.value = value; language.append(option); }
     language.value = locale; language.addEventListener('change', () => { locale = language.value; document.documentElement.lang = locale; render(); });

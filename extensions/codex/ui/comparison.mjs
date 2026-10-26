@@ -5,7 +5,7 @@ const words = {
         allocationNote: 'Solid bar: lower bound. Striped end: uncertainty from rounded counters. Allocation is not retained memory.',
         snapshot: 'Snapshot', baseline: 'Baseline', endpoint: 'Endpoint', source: 'Source evidence', view: 'View thread · snapshot',
         missing: 'Unavailable', notShown: 'Not in the retained rows', noIntervals: 'No adjacent interval is available on this page. Select a page with later snapshots.',
-        scope: 'Retained thread rows', rows: 'Displayed series', more: 'Show more threads', pending: 'Checking source hash…',
+        summary: 'Interval summary and coverage', shortLimits: 'Selected rows; missing values are not zero.', scope: 'Retained thread rows', rows: 'Displayed series', more: 'Show more threads', pending: 'Checking source hash…',
         noSource: 'No exact physical source range is available.', original: 'Original analyzer diagnostics',
         window: 'Snapshot window', limits: 'Rows are selected from each interval’s top CPU and allocation rates. Missing cells are not zero.',
         editor: 'These source controls include their snapshot. Chat links and the host editor are independent.', unavailableTools: 'Source tools are unavailable in this host.' },
@@ -15,7 +15,7 @@ const words = {
         allocationNote: 'Fylld stapel: nedre gräns. Randigt slut: osäkerhet från avrundade räknare. Allokering är inte kvarhållet minne.',
         snapshot: 'Snapshot', baseline: 'Start', endpoint: 'Slut', source: 'Källbevis', view: 'Visa tråd · snapshot',
         missing: 'Ej tillgängligt', notShown: 'Saknas i det sparade urvalet', noIntervals: 'Inget intilliggande intervall finns på denna sida. Välj en sida med senare snapshots.',
-        scope: 'Sparade trådrader', rows: 'Visade serier', more: 'Visa fler trådar', pending: 'Kontrollerar källfilens hash…',
+        summary: 'Intervallsammanfattning och täckning', shortLimits: 'Urval; saknade värden är inte noll.', scope: 'Sparade trådrader', rows: 'Visade serier', more: 'Visa fler trådar', pending: 'Kontrollerar källfilens hash…',
         noSource: 'Exakta fysiska källrader saknas.', original: 'Analysverktygets originaldiagnostik',
         window: 'Snapshot-urval', limits: 'Rader väljs bland varje intervalls högsta CPU- och allokeringsvärden. Saknade celler betyder inte noll.',
         editor: 'Källkontrollerna visar sin snapshot. Chattlänkar och klientens editor fungerar oberoende.', unavailableTools: 'Källverktyg är inte tillgängliga i denna klient.' },
@@ -37,7 +37,6 @@ export function formatRate(row, metric, locale) {
 }
 export function comparisonView({ report, locale, metric, rowLimit, canRead, onMetric, onMore, onEvidence, onSnapshot }) {
     const t = key => words[locale][key], container = el('section', 'comparison');
-    const head = el('div', 'comparison-head'); head.append(el('h2', '', t('title')), el('p', 'muted', t('subtitle'))); container.append(head);
     const intervals = report.snapshots.items.filter(s => s.measurements?.baselineSnapshotIndex != null);
     container.append(el('p', 'muted comparison-window', `${t('window')}: ${report.snapshots.offset + 1}–${report.snapshots.offset + report.snapshots.items.length} / ${report.snapshotCount}`));
     if (!intervals.length) { container.append(el('p', 'note', t('noIntervals'))); return container; }
@@ -54,7 +53,6 @@ export function comparisonView({ report, locale, metric, rowLimit, canRead, onMe
         }
         card.append(el('p', 'muted', `${t('scope')}: ${m.threads.shown}/${m.threads.total}`)); summaries.append(card);
     }
-    container.append(summaries);
     const controls = el('div', 'metric-controls'); controls.setAttribute('aria-label', t('title'));
     for (const key of ['cpu', 'allocation']) { const b = button(t(key), () => onMetric(key)); b.setAttribute('aria-pressed', String(key === metric)); controls.append(b); }
     container.append(controls, el('p', 'metric-legend muted', t(metric === 'cpu' ? 'cpuNote' : 'allocationNote')));
@@ -68,7 +66,7 @@ export function comparisonView({ report, locale, metric, rowLimit, canRead, onMe
     const active = ranked.filter(r => r.maximum > 0);
     const visible = (rowLimit <= 8 && active.length ? active : ranked).slice(0, rowLimit);
     const maximum = Math.max(metric === 'cpu' ? 100 : 1, ...ranked.map(r => r.maximum));
-    container.append(el('p', 'comparison-count muted', `${t('rows')}: ${visible.length} / ${ranked.length}. ${t('limits')}`));
+    container.append(el('p', 'comparison-count muted', `${t('rows')}: ${visible.length} / ${ranked.length}. ${t('shortLimits')}`));
     const chart = el('div', `metric-chart ${metric}`); chart.setAttribute('aria-label', t(metric));
     for (const group of visible) {
         const track = el('article', 'metric-row'); track.append(el('h3', 'metric-thread', group.name));
@@ -114,8 +112,9 @@ export function comparisonView({ report, locale, metric, rowLimit, canRead, onMe
     container.append(chart);
     if (ranked.length > visible.length) container.append(button(t('more'), onMore));
     const threshold = intervals[0].measurements.thresholds;
-    container.append(el('p', 'muted comparison-thresholds', `${t('hot')}: CPU ≥ ${threshold.cpuPercent}% · ${t('allocation')} ≥ ${threshold.allocationBytesPerSecond / 2 ** 20} MiB/s.`));
-    const details = el('details', 'coverage'); details.append(el('summary', '', t('original')));
+    const details = el('details', 'coverage comparison-information'); details.append(el('summary', '', t('summary')), summaries, el('p', '', t('limits')));
+    details.append(el('p', 'muted comparison-thresholds', `${t('hot')}: CPU ≥ ${threshold.cpuPercent}% · ${t('allocation')} ≥ ${threshold.allocationBytesPerSecond / 2 ** 20} MiB/s.`));
+    details.append(el('p', 'muted', t('original')));
     for (const text of [...(report.warnings || []), ...(report.limitations || []), ...intervals[0].measurements.qualifications]) details.append(el('p', '', text));
     container.append(details); return container;
 }

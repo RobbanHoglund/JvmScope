@@ -399,3 +399,19 @@ test('focused follow-ups support both themes, narrow widths, language changes an
     }
 });
 
+test('comparison leads with the chart while preserving interval summaries and coverage on demand', async ({ page }) => {
+    await page.setViewportSize({ width: 735, height: 1000 });
+    await page.goto(host.url + '?case=comparison');
+    const f = widget(page);
+    await expect(f.getByRole('heading', { name: 'Snapshot comparison', exact: true })).toHaveCount(1);
+    await expect(f.locator('.interval-summaries')).toBeHidden();
+    await expect(f.locator('.metric-row').first()).toBeVisible();
+    const chartTop = await f.locator('.metric-chart').evaluate(x => x.getBoundingClientRect().top);
+    expect(chartTop).toBeLessThan(350);
+    await f.locator('.comparison-information > summary').click();
+    await expect(f.locator('.interval-summaries')).toBeVisible();
+    await expect(f.locator('.interval-summary').first()).toContainText('76.8%');
+    await expect(f.locator('.interval-summary').nth(1)).toContainText('291.7–296.5 MiB/s');
+    await expect(f.locator('.comparison-information')).toContainText('28/67');
+    await expect(f.locator('.comparison-information')).toContainText('CPU ≥ 2%');
+});
