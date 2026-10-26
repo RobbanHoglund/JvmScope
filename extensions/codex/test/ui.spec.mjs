@@ -5,7 +5,11 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const previewDir = fileURLToPath(new URL('../../../build/codex-previews/', import.meta.url));
 let host;
-test.beforeAll(async () => { host = await startHost(); });
+test.beforeAll(async () => {
+    // Build all independent real MCP fixtures before testing browser interactions.
+    test.setTimeout(120_000);
+    host = await startHost();
+});
 test.afterAll(async () => { await host?.close(); });
 const widget = page => page.frameLocator('iframe');
 const overflow = frame => frame.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1);
@@ -414,4 +418,21 @@ test('comparison leads with the chart while preserving interval summaries and co
     await expect(f.locator('.interval-summary').nth(1)).toContainText('291.7–296.5 MiB/s');
     await expect(f.locator('.comparison-information')).toContainText('28/67');
     await expect(f.locator('.comparison-information')).toContainText('CPU ≥ 2%');
+});
+
+test('focused stack paging retains the selected identity and untrusted labels remain plain text', async ({ page }) => {
+    let dialogs = 0; page.on('dialog', async d => { dialogs++; await d.dismiss(); });
+    await page.goto(host.url + '?case=threadInjection');
+    const f = widget(page);
+    await expect(f.locator('.thread-focus-card h2')).toContainText('<svg/onload=alert(1)>');
+    await expect(f.locator('[onload]')).toHaveCount(0);
+    expect(dialogs).toBe(0);
+    await page.goto(host.url + '?case=deep');
+    await f.locator('.thread-stack summary').click();
+    await expect(f.locator('.thread-stack pre')).not.toContainText('Service.java:80');
+    await f.getByRole('button', { name: 'Next source lines', exact: true }).click();
+    await expect(f.locator('.thread-stack pre')).toContainText('Service.java:80');
+    await expect(f.getByRole('button', { name: 'Next source lines', exact: true })).toHaveCount(0);
+    expect(host.calls.at(-1).name).toBe('read_thread_evidence');
+    expect(host.calls.at(-1).arguments.snapshotIndex).toBe(0);
 });

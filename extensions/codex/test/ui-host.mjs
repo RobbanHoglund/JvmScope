@@ -59,6 +59,14 @@ export async function startHost() {
     rendered.threads = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys } });
     rendered.threadSv = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys, language: 'sv' } });
     rendered.demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });
+    rendered.threadInjection = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.injection.structuredContent.reportId, snapshotIndex: 0,
+        sourceKeys: [rendered.injection._meta.jvmscopeReport.snapshots.items[0].deadlocks.items[0].participants.items[0].id] } });
+    const longStack = path.join(temporary, 'long-stack.txt');
+    await writeFile(longStack, 'Full thread dump OpenJDK 64-Bit Server VM:\n\n"long-worker" #1 prio=5 tid=0x1 nid=0x1 runnable\n java.lang.Thread.State: RUNNABLE\n'
+        + Array.from({ length: 80 }, (_, i) => ` at sample.Service.step${i}(Service.java:${i + 1})`).join('\n') + '\n');
+    const deep = (await client.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [longStack] } })).structuredContent;
+    rendered.deep = await client.callTool({ name: 'render_thread_details', arguments: { reportId: deep.reportId, snapshotIndex: 0, sourceKeys: [deep.snapshots.items[0].measurements.threads.items[0].sourceKey] } });
+
     const uri = (await client.listTools()).tools.find(t => t.name === 'render_thread_report')._meta.ui.resourceUri;
     const html = (await client.readResource({ uri })).contents[0].text;
     const server = createServer(async (req, res) => {

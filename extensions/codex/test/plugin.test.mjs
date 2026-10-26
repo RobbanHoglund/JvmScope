@@ -480,3 +480,22 @@ test('focused multi-thread report returns exact measurements and verified stacks
     await writeFile(filename, 'changed after analysis');
     await fails('render_thread_details', args, /changed since analysis/);
 });
+
+test('focused stacks disclose truncation and page only inside the selected thread', async () => {
+    const filename = path.join(temporary, 'long-thread.txt');
+    const header = 'Full thread dump OpenJDK 64-Bit Server VM:\n\n"long-worker" #1 prio=5 tid=0x1 nid=0x1 runnable\n java.lang.Thread.State: RUNNABLE\n';
+    await writeFile(filename, header + Array.from({ length: 80 }, (_, i) => ` at sample.Service.step${i}(Service.java:${i + 1})`).join('\n') + '\n');
+    const analysis = await call('analyze_thread_dumps', { paths: [filename] });
+    const row = analysis.snapshots.items[0].measurements.threads.items[0];
+    const response = await client.callTool({ name: 'render_thread_details', arguments: { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [row.sourceKey] } });
+    assert.ok(!response.isError);
+    const thread = response.structuredContent.threads[0];
+    assert.equal(thread.lines.length, 60);
+    assert.equal(thread.nextLine, thread.lines.at(-1).line + 1);
+    const next = await call('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 0, sourceKey: row.sourceKey, startLine: thread.nextLine });
+    assert.equal(next.lines[0].line, thread.nextLine);
+    assert.equal(next.nextLine, null);
+    assert.match(next.lines.at(-1).text, /Service.java:80/);
+    assert.equal(thread.cpu.percent, null);
+    assert.equal(thread.allocation.bytesPerSecond, null);
+});
