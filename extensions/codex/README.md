@@ -1,4 +1,4 @@
-# JvmScope for Codex — local preview 0.3.1
+# JvmScope for Codex — local preview 0.4.0
 
 Analyze Java thread dumps, SunJSSE TLS logs and HotSpot GC logs using the same engines as the JvmScope web application and VS Code extension. Includes a Java knowledge base, TLS explanations, public samples and source-line evidence. This is an independently developed local plugin, not an OpenAI-approved directory listing.
 
@@ -8,13 +8,13 @@ The build produces two different archives:
 
 | Archive | Purpose |
 | --- | --- |
-| `jvmscope-codex-plugin-0.3.1.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
-| `jvmscope-codex-0.3.1.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
+| `jvmscope-codex-plugin-0.4.0.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
+| `jvmscope-codex-0.4.0.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
 
 For the desktop **Add plugin / New plugin** file picker, select the **single-plugin** archive without unpacking it. The maintainer verified the 0.2.2 import and interactive report in a real desktop conversation. In that session, removing the older installed plugin before importing the replacement resolved a generic import error; this is an observed workaround, not a guarantee for every client. Start a fresh local conversation after updating. Do not remove the MCP configuration: the analysis tools depend on it. Public-directory eligibility is separate from personal import.
 
 1. Install **Node.js 22 or later** and ensure `node --version` works in the desktop app's environment. No Java runtime, npm install, API key or running web server is needed to use the packaged plugin.
-2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.3.1.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
+2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.4.0.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
 3. Add that **extracted marketplace folder** using a current Codex CLI:
    ```sh
    codex plugin marketplace add "/absolute/path/to/JvmScope-Codex"
@@ -35,7 +35,7 @@ If your client lacks the documented plugin marketplace commands, update it. As a
 - Results are paged and bounded to 512 KiB; evidence ranges are at most 200 lines / 24,000 JSON characters. Analysis must be rerun if the source SHA-256 changes. Keep files stable while analyzing.
 - Thread snapshot comparison retains the shared engine's process/timestamp/counter checks. GC sessions are analyzed independently. GC pause budget defaults to 200 ms, a review threshold rather than a JVM requirement.
 - Thread analysis includes an optional MCP Apps report with status cards, per-snapshot deadlock graphs, multiple cycle selection and hash-checked source evidence. Compatible host support must be tested in your client; text analysis remains available. Full TLS/GC visualizations remain in the existing application and VS Code extension.
-- Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Rendering, comparison and cached snapshot pagination use this cache without rereading or reparsing captures. Additional snapshots are cached when their serialized array fits within 2 Mi characters; otherwise only the requested page is retained and a cache miss is explicit. Public pages retain the 512 KiB response guard. Source clicks always recheck the file hash. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
+- Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Overview rendering, comparison and cached snapshot pagination use this cache without rereading or reparsing captures. Selected-thread details reuse cached measurements and read/hash the selected capture once for up to five verified stack ranges, without rerunning the parser. Additional snapshots are cached when their serialized array fits within 2 Mi characters; otherwise only the requested page is retained and a cache miss is explicit. Public pages retain the 512 KiB response guard. Source clicks always recheck the file hash. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
 
 ## Build and test from source
 
@@ -52,7 +52,7 @@ codex plugin marketplace add "/absolute/path/to/JvmScope/build/codex-marketplace
 
 The build bundles the official MCP SDK, input validation and existing frontend analysis engines. It copies skill/manifest/assets and public samples into `build/codex-marketplace`. The marketplace ZIP includes that complete directory; the single-plugin ZIP contains only the plugin directory's contents. No generated parser fork or runtime npm installation is required. Do not add the unbuilt Git repository as a marketplace: the distribution directory is generated by the build.
 
-Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. The maintainer confirmed desktop import, report rendering and source interaction for 0.2.2. Desktop screenshots of 0.3.0 confirmed the snapshot 3 graph and cited lock addresses match the displayed capture. Version 0.3.1 is covered by packaged protocol and sandboxed host tests; its compact disclosures and the comparison workflow still need a desktop smoke test. Protocol tests do not simulate Codex reasoning.
+Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. The maintainer confirmed desktop import, report rendering and source interaction for 0.2.2. Desktop screenshots of 0.3.0 confirmed the snapshot 3 graph and cited lock addresses match the displayed capture. Desktop screenshots of 0.3.1 confirmed the compact report and comparison render, while exposing a redundant overview during stack follow-ups. Version 0.4.0 is covered by packaged protocol and sandboxed host tests; its selected-thread workflow still needs a desktop smoke test. Protocol tests do not simulate Codex reasoning.
 
 ## Publication path
 
@@ -62,6 +62,25 @@ Verified documentation (2026-10-23):
 - https://developers.openai.com/plugins/build/plugins
 - https://developers.openai.com/plugins/deploy/desktop-only
 - https://developers.openai.com/plugins/deploy/submission
+
+## 0.4.0 selected-thread follow-ups
+
+- `render_thread_details` presents one to five exact thread identities from one cached snapshot, with CPU/allocation rates, baseline interval, a prominent Java source location and expandable verified source. It does not repeat the full snapshot findings or deadlock graph. Initial evidence is bounded to 60 lines per thread; deeper stacks page through the existing identity- and hash-checked source tool.
+- Follow-ups about named threads or the stacks behind a comparison use this single call. Already returned evidence can support a short interpretation without another widget. The skill preserves allocation intervals and avoids treating thread names, selected frames or stack call sites as proof of method implementation or diagnosis.
+- Comparison charts start directly below the interval and metric controls. Interval summary cards and detailed coverage remain available in a keyboard-accessible disclosure below the chart. Missing rates, omitted row counts and allocation uncertainty remain visible.
+- Batch evidence reads and hashes the capture once. Exact report/snapshot/thread identity, source bounds, changed hashes and public payload limits remain enforced. Source labels are plain text. Recorded-frame highlights use package-name heuristics and may include library code.
+
+Validation: 45 package/data/protocol tests and 25 sandboxed browser journeys pass. Added checks cover focused navigation, one read with zero parser runs, long-stack paging, changed captures, malformed identity selections, untrusted labels, unavailable measurements, narrow/wide layouts, both themes and English/Swedish. An isolated skill trial selected all three requested identities in one focused call and returned a short Swedish explanation without another overview or duplicated full stacks. Shared web/VS Code analyzers and versions are unchanged by these refinements.
+
+Reproduce the selected-thread transport benchmark after packaging:
+
+```sh
+node extensions/codex/test/benchmark-thread-details.mjs
+```
+
+On 2026-10-26, Node 24.22.1 in the Linux test environment, seven alternating trials measured median 495 ms for three individual source reads plus an overview, versus 239 ms for one selected-thread call. Model-facing content totaled 11,928 versus 9,715 JSON characters. This is a reproducible comparison of tool workflows, not a reconstruction of the desktop trace. It excludes model reasoning and desktop rendering and does not explain the observed 38–60 second conversation times.
+
+Desktop check: import the 0.4.0 single-plugin ZIP and start a fresh local conversation. Analyze `real-java-all-3-snapshots.txt`, compare CPU/allocation, then request the allocation-hot thread and the two highest-CPU threads in snapshot 3. Verify three selected cards with rates for interval 2 → 3, source locations 634/532, expandable stacks and no repeated deadlock overview. Test navigation back to the comparison and snapshot, both themes and a narrow window. A brief interpretation follow-up should reuse existing evidence.
 
 ## 0.3.1 compact report refinements
 
