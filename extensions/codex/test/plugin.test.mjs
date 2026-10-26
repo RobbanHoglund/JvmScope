@@ -52,9 +52,9 @@ after(async () => {
     assert.equal(stderr, '', 'Protocol or worker errors must not be hidden');
 });
 
-test('relocated bundle exposes ten read-only tools with validated schemas', async () => {
+test('relocated bundle exposes eleven read-only tools with validated schemas', async () => {
     const tools = (await client.listTools()).tools;
-    assert.equal(tools.length, 10);
+    assert.equal(tools.length, 11);
     for (const tool of tools) {
         assert.equal(tool.annotations.readOnlyHint, true);
         assert.equal(tool.annotations.destructiveHint, false);
@@ -92,7 +92,7 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
     const standalone = new Client({ name: 'jvmscope-single-plugin-test', version: '1.0.0' });
     try {
         await standalone.connect(new StdioClientTransport({ command: process.execPath, args: [server], cwd: installed }));
-        assert.equal((await standalone.listTools()).tools.length, 10);
+        assert.equal((await standalone.listTools()).tools.length, 11);
         const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
         assert.ok(!result.isError);
         const returnedSample = result.structuredContent.samples[0];
@@ -436,7 +436,7 @@ test('modern MCP negotiation discovers and calls the same packaged server', asyn
     const wire = new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary, stderr: 'pipe' });
     try {
         await modern.connect(wire);
-        assert.equal((await modern.listTools()).tools.length, 10);
+        assert.equal((await modern.listTools()).tools.length, 11);
         const response = await modern.callTool({ name: 'search_knowledge', arguments: { query: 'gc' } });
         assert.ok(!response.isError);
         const analysis = await modern.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [sample('confirmed-deadlock.txt')] } });
@@ -444,4 +444,39 @@ test('modern MCP negotiation discovers and calls the same packaged server', asyn
         assert.ok(!rendered.isError);
         assert.equal(rendered._meta.jvmscopeReport.findingCounts.critical, 1);
     } finally { await modern.close(); }
+});
+
+test('focused multi-thread report returns exact measurements and verified stacks in one bounded call', async () => {
+    const filename = path.join(temporary, 'focused-series.txt');
+    await cp(path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt'), filename);
+    const analysis = await call('analyze_thread_dumps', { paths: [filename] });
+    const rows = analysis.snapshots.items[2].measurements.threads.items;
+    const names = ['scenario-cpu-and-allocation-hot', 'scenario-livelock-2-agent-1', 'scenario-livelock-2-agent-2'];
+    const selected = names.map(name => rows.find(t => t.name === name));
+    const args = { reportId: analysis.reportId, snapshotIndex: 2, sourceKeys: selected.map(t => t.sourceKey), language: 'sv' };
+    const response = await client.callTool({ name: 'render_thread_details', arguments: args });
+    assert.ok(!response.isError, JSON.stringify(response));
+    const data = response.structuredContent;
+    assert.deepEqual(data.threads.map(t => t.name), names);
+    assert.equal(data.snapshotNumber, 3);
+    assert.equal(data.timing.captureReads, 1); assert.equal(data.timing.parserRuns, 0);
+    assert.equal(data.source.sha256, analysis.sources[0].sha256);
+    assert.equal(data.snapshotDeadlockCycles, 2);
+    assert.equal(response._meta.jvmscopeReport, undefined, 'follow-ups must not resend the entire report');
+    for (const [i, thread] of data.threads.entries()) {
+        assert.deepEqual(thread.cpu, selected[i].cpu);
+        assert.deepEqual(thread.allocation, selected[i].allocation);
+        assert.equal(thread.context.snapshotIndex, 2);
+        assert.ok(thread.lines[0].text.includes(thread.name));
+        assert.equal(thread.lines[0].line, selected[i].current.range.startLine);
+    }
+    assert.match(data.threads[0].highlights.items[0].text, /ThreadScenarioRunner.java:634/);
+    assert.match(data.threads[1].highlights.items[0].text, /ThreadScenarioRunner.java:532/);
+    assert.ok(JSON.stringify(data).length < 20000);
+    await fails('render_thread_details', { ...args, snapshotIndex: 0 }, /identity.*snapshot/);
+    await fails('render_thread_details', { ...args, sourceKeys: [args.sourceKeys[0], args.sourceKeys[0]] }, /distinct/);
+    await fails('render_thread_details', { ...args, sourceKeys: [] }, /Too small|at least|>=1/);
+    await fails('render_thread_details', { ...args, sourceKeys: Array(6).fill(args.sourceKeys[0]) }, /Too big|at most|<=5/);
+    await writeFile(filename, 'changed after analysis');
+    await fails('render_thread_details', args, /changed since analysis/);
 });

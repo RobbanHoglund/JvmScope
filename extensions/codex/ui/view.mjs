@@ -4,8 +4,10 @@ import { findingCopy, findingOverview } from './finding-copy.mjs';
 import { createDeadlockGraph } from './deadlock-graph.mjs';
 import { comparisonView } from './comparison.mjs';
 import { groupFindings } from './finding-groups.mjs';
+import { threadDetailsView } from './thread-details.mjs';
 
 const root = document.getElementById('app');
+let focusedThreads = null;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
@@ -69,15 +71,21 @@ const current = () => items(report?.snapshots)[snapshotIndex];
 function applyContext(context) {
     if (['light', 'dark'].includes(context.theme)) document.documentElement.dataset.theme = context.theme;
     document.documentElement.lang = locale;
-    if (report) render();
+    if (report || focusedThreads) render();
 }
 function receive(result) {
+    const focused = result?._meta?.jvmscopeThreadDetails;
+    if (focused?.view === 'threads' && Array.isArray(focused.threads) && focused.source) {
+        if (['en', 'sv'].includes(result._meta.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
+        document.documentElement.lang = locale; focusedThreads = focused; evidenceEpoch++;
+        clearTimeout(dataDeadline); render(); return;
+    }
     const candidate = result?._meta?.jvmscopeReport || result?.structuredContent;
     if (candidate?.analyzer !== 'threads' || !Array.isArray(candidate.snapshots?.items) || !Array.isArray(candidate.sources)) return;
     if (['en', 'sv'].includes(result?._meta?.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
     document.documentElement.lang = locale;
     const focus = result?._meta?.jvmscopeFocus;
-    report = candidate;
+    report = candidate; focusedThreads = null;
     activeView = focus?.view || 'snapshot';
     snapshotIndex = Math.max(0, focus?.snapshotIndex != null ? items(report.snapshots).findIndex(s => s.index === focus.snapshotIndex)
         : items(report.snapshots).findIndex(s => s.deadlocks?.total));
@@ -181,8 +189,8 @@ async function comparisonEvidence(endpoint, content) {
     if (data.nextLine) content.append(el('p', 'note', t('truncated')));
 }
 async function focusSnapshot(endpoint) {
-    try { receive(await bridge.callTool('render_thread_report', { reportId: report.reportId, language: locale,
-        snapshotIndex: endpoint.snapshotIndex, sourceKey: endpoint.sourceKey, limit: 1 })); }
+    try { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+        snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] })); }
     catch (error) { root.append(el('p', 'error', error.message)); }
 }
 function findingCard(f, related = []) {
@@ -218,6 +226,21 @@ function findingCard(f, related = []) {
 }
 function render() {
     disposeGraph();
+    if (focusedThreads) {
+        const data = focusedThreads;
+        root.replaceChildren(threadDetailsView({ data, locale, version, canRead: bridge.canCallTools,
+            onLanguage(language) { locale = language; document.documentElement.lang = locale; render(); },
+            async onNavigate(view) { receive(await bridge.callTool('render_thread_report', { reportId: data.reportId, language: locale, view,
+                ...(view === 'comparison' ? { offset: 0, limit: 4 } : { snapshotIndex: data.snapshotIndex, limit: 1 }) })); },
+            async onNext(thread) {
+                const response = await bridge.callTool('read_thread_evidence', { reportId: data.reportId, snapshotIndex: data.snapshotIndex,
+                    sourceKey: thread.sourceKey, startLine: thread.nextLine });
+                const result = response.structuredContent;
+                if (result.context?.sourceKey !== thread.sourceKey || result.context?.snapshotIndex !== data.snapshotIndex || result.source?.sha256 !== data.source.sha256)
+                    throw new Error('The host returned mismatched source evidence.');
+                return result;
+            } })); return;
+    }
     const snapshot = current();
     if (!snapshot) {
         const back = button(t('previous'), () => loadPage(0, back)); back.disabled = !bridge.canCallTools;

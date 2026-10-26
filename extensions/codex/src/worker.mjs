@@ -1,5 +1,5 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { readCaptures, captureLines } from './captures.mjs';
+import { readCaptures, captureLines, captureRanges } from './captures.mjs';
 import { analyzeThreads, analyzeTls, analyzeGarbageCollection } from './analysis.mjs';
 import { searchKnowledge, knowledgeArticle } from './knowledge.mjs';
 
@@ -8,6 +8,7 @@ try {
     const { name, args } = workerData;
     let result;
     if (name === 'read_capture_lines') result = await captureLines(args);
+    else if (name === 'read_thread_ranges') result = await captureRanges(args);
     else if (name === 'search_knowledge') result = searchKnowledge(args);
     else if (name === 'get_knowledge_article') result = knowledgeArticle(args);
     else {

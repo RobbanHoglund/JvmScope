@@ -263,9 +263,9 @@ test('comparison plots CPU and bounded allocation and reads both exact interval 
     await f.getByRole('button', { name: 'Endpoint · Snapshot 3', exact: true }).click();
     await expect(f.locator('.comparison-source .evidence')).toContainText('2239  "scenario-allocation-churn-1"');
     expect(host.calls.slice(before).map(c => c.name)).toEqual(['read_thread_evidence', 'read_thread_evidence']);
-    await f.getByRole('button', { name: 'View this snapshot 3', exact: true }).click();
-    await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 3 / 3');
-    await expect(f.locator('#detail')).toContainText('scenario-allocation-churn-1');
+    await f.getByRole('button', { name: 'View thread · snapshot 3', exact: true }).click();
+    await expect(f.locator('.snapshot-context')).toContainText('Snapshot 3 / 3');
+    await expect(f.locator('.thread-focus-card')).toContainText('scenario-allocation-churn-1');
 });
 
 test('comparison is localized, bounded and readable in dark/light and narrow layouts', async ({ page }) => {
@@ -362,3 +362,40 @@ test('technical timing and host guidance live in report information while snapsh
         expect(await overflow(f)).toBe(false);
     }
 });
+
+test('stack follow-up opens only requested threads with metrics and verified evidence already present', async ({ page }) => {
+    const before = host.calls.length;
+    await page.goto(host.url + '?case=threads');
+    const f = widget(page);
+    await expect(f.getByRole('heading', { name: 'Selected threads', exact: true })).toBeVisible();
+    await expect(f.locator('.thread-focus-card')).toHaveCount(3);
+    await expect(f.locator('.graph')).toHaveCount(0);
+    await expect(f.locator('.findings')).toHaveCount(0);
+    const allocation = f.locator('.thread-focus-card').filter({ has: f.getByRole('heading', { name: 'scenario-cpu-and-allocation-hot', exact: true }) });
+    await expect(allocation.locator('.thread-rates')).toContainText('291.7–296.5 MiB/s');
+    await expect(allocation.locator('.frame-location')).toHaveText('ThreadScenarioRunner.java:634');
+    await expect(allocation.locator('pre')).toBeHidden();
+    await allocation.locator('.thread-stack summary').focus(); await page.keyboard.press('Enter');
+    await expect(allocation.locator('pre')).toContainText('2270  "scenario-cpu-and-allocation-hot"');
+    expect(host.calls.length).toBe(before, 'opening preverified stacks does not invoke more tools');
+    await f.getByRole('button', { name: 'Snapshot overview', exact: true }).click();
+    await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 3 / 3');
+    await expect(f.locator('.node')).toHaveCount(2);
+});
+
+test('focused follow-ups support both themes, narrow widths, language changes and missing host tools', async ({ page }) => {
+    for (const [theme, width] of [['dark', 735], ['light', 390]]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.goto(host.url + `?case=threadSv&theme=${theme}&noTools=1`);
+        const f = widget(page);
+        await expect(f.getByRole('heading', { name: 'Valda trådar', exact: true })).toBeVisible();
+        await expect(f.getByRole('button', { name: 'Snapshotöversikt', exact: true })).toBeDisabled();
+        expect(await overflow(f)).toBe(false);
+        await f.locator('.thread-stack summary').first().click();
+        await expect(f.locator('.thread-stack pre').first()).toBeVisible();
+        await page.screenshot({ path: path.join(previewDir, `selected-threads-${theme}-${width}.png`), fullPage: true });
+        await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
+        await expect(f.getByRole('heading', { name: 'Selected threads', exact: true })).toBeVisible();
+    }
+});
+

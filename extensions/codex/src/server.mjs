@@ -7,6 +7,7 @@ import { createJobs } from './jobs.mjs';
 import { createReports } from './reports.mjs';
 import { resolveThreadEvidence } from './thread-evidence.mjs';
 import { comparisonSummary } from './thread-metrics.mjs';
+import { threadDetails } from './thread-details.mjs';
 
 const pluginRoot = new URL('../', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('plugin.json', pluginRoot), 'utf8'));
@@ -82,6 +83,20 @@ function createServer() {
             if (focus.sourceKey && focus.snapshotIndex == null) throw new Error('Supply snapshotIndex with sourceKey so report focus is unambiguous.');
             if (focus.sourceKey) resolveThreadEvidence(reports, reportId, focus.snapshotIndex ?? report.snapshots.items[0]?.index, focus.sourceKey);
             return threadReportResult(report, language, focus);
+        } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+    });
+    server.registerTool('render_thread_details', {
+        title: 'Show selected Java threads',
+        description: 'For stack/CPU/allocation follow-ups about one to five specific threads, show a focused view with cached measurements and hash-checked stack evidence in ONE call. Use reportId, the exact snapshotIndex and sourceKeys already returned by analysis/comparison. Reads and hashes that capture once, without reparsing. Do not additionally read the same evidence or render the full deadlock overview.',
+        inputSchema: z.object({ reportId: z.string().uuid(), language, snapshotIndex: z.number().int().min(0),
+            sourceKeys: z.array(z.string().min(1).max(400)).min(1).max(5) }).strict(), annotations,
+        _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri },
+    }, async ({ language, ...args }, ctx) => {
+        try {
+            const data = await threadDetails(reports, jobs, args, ctx.mcpReq.signal);
+            if (JSON.stringify(data).length > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
+            return { content: [{ type: 'text', text: 'Focused thread report with verified evidence. Explain the selected threads briefly using these lines and measured intervals. Do not repeat full stack blocks or render a general report again. Stack frames do not reveal method bodies or prove a livelock/leak.' }],
+                structuredContent: data, _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language } };
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
     server.registerTool('read_thread_evidence', {

@@ -58,3 +58,20 @@ export async function captureLines({ path: filename, startLine, endLine, sha256 
     if (JSON.stringify(selected).length > 24000) throw new Error('Selected evidence is too long. Request a smaller line range.');
     return { source: sourceInfo(capture), totalLines: lines.length, lines: selected };
 }
+
+// A focused follow-up verifies the capture once for all selected thread blocks.
+export async function captureRanges({ path: filename, sha256, ranges }) {
+    if (!Array.isArray(ranges) || ranges.length > 5 || ranges.some(r => !Number.isInteger(r.startLine)
+        || !Number.isInteger(r.endLine) || r.startLine < 1 || r.endLine < r.startLine || r.endLine - r.startLine >= 60))
+        throw new Error('Choose up to five ordered thread ranges of at most 60 lines each.');
+    const started = performance.now(), capture = await readCapture(filename);
+    if (capture.sha256 !== sha256) throw new Error('Capture changed since analysis. Analyze it again before requesting evidence.');
+    const lines = capture.text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
+    const selected = ranges.map(r => {
+        if (r.startLine > lines.length) throw new Error('Start line is beyond the end of this capture.');
+        const selectedLines = lines.slice(r.startLine - 1, r.endLine).map((text, index) => ({ line: r.startLine + index, text }));
+        if (JSON.stringify(selectedLines).length > 24000) throw new Error('Selected evidence is too long. Request a smaller line range with read_thread_evidence.');
+        return { sourceKey: r.sourceKey, lines: selectedLines };
+    });
+    return { source: sourceInfo(capture), ranges: selected, timing: { readAndHashMs: Math.round(performance.now() - started), captureReads: 1, parserRuns: 0 } };
+}

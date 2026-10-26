@@ -54,6 +54,10 @@ export async function startHost() {
     rendered.comparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId, view: 'comparison', offset: 0, limit: 4 } });
     rendered.focused = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId,
         snapshotIndex: 2, sourceKey: rendered.real._meta.jvmscopeReport.snapshots.items[2].deadlocks.items[0].participants.items[0].id } });
+    const focusKeys = rendered.real._meta.jvmscopeReport.snapshots.items[2].measurements.threads.items
+        .filter(t => ['scenario-cpu-and-allocation-hot', 'scenario-livelock-2-agent-1', 'scenario-livelock-2-agent-2'].includes(t.name)).map(t => t.sourceKey);
+    rendered.threads = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys } });
+    rendered.threadSv = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys, language: 'sv' } });
     rendered.demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });
     const uri = (await client.listTools()).tools.find(t => t.name === 'render_thread_report')._meta.ui.resourceUri;
     const html = (await client.readResource({ uri })).contents[0].text;
@@ -69,7 +73,7 @@ export async function startHost() {
             if (url.pathname === '/tool' && req.method === 'POST') {
                 let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 20000) throw new Error('Oversized request'); }
                 const call = JSON.parse(raw);
-                if (!['read_capture_lines', 'read_thread_evidence', 'render_thread_report', 'analyze_thread_dumps'].includes(call.name)) throw new Error('Unexpected test tool');
+                if (!['read_capture_lines', 'read_thread_evidence', 'render_thread_report', 'render_thread_details', 'analyze_thread_dumps'].includes(call.name)) throw new Error('Unexpected test tool');
                 calls.push(call); res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(await client.callTool(call))); return;
             }
             res.setHeader('Content-Type', 'text/html');
