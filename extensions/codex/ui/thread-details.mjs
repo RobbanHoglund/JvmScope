@@ -1,4 +1,5 @@
 import { formatRate } from './comparison.mjs';
+import { aiConclusionView } from './ai-conclusion.mjs';
 const words = {
     en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads', selectedSingle: 'selected thread',
         overview: 'Snapshot overview', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
@@ -23,13 +24,16 @@ const words = {
 };
 function el(tag, className, text) { const n = document.createElement(tag); n.className = className || ''; if (text != null) n.textContent = text; return n; }
 function button(label, action) { const b = el('button', '', label); b.type = 'button'; b.addEventListener('click', action); return b; }
-export function threadDetailsView({ data, locale, version, canRead, onLanguage, onNavigate, onNext }) {
+export function threadDetailsView({ data, locale, version, conclusion, canRead, onLanguage, onNavigate, onNext }) {
     const t = key => words[locale][key], view = el('section', 'thread-focus');
     const header = el('header', 'header'), heading = el('div');
     heading.append(el('span', 'eyebrow', 'JVMSCOPE / JAVA DIAGNOSTICS'), el('h1', '', t('title')));
     const language = el('select'); language.setAttribute('aria-label', t('language'));
     for (const [key, label] of [['en', 'English'], ['sv', 'Svenska']]) { const o = el('option', '', label); o.value = key; language.append(o); }
     language.value = locale; language.addEventListener('change', () => onLanguage(language.value)); header.append(heading, language); view.append(header);
+    const assessment = aiConclusionView({ conclusion, reportId: data.reportId, locale,
+        scope: { view: 'threads', snapshots: [data.snapshotIndex], sourceKeys: data.threads.map(t => t.sourceKey).sort() } });
+    if (assessment) view.append(assessment);
     const context = el('div', 'snapshot-context');
     context.append(el('strong', '', `${t('snapshot')} ${data.snapshotNumber} / ${data.snapshotCount} · ${data.threads.length} ${t(data.threads.length === 1 ? 'selectedSingle' : 'selected')}`), el('p', 'filename', data.source.name)); view.append(context);
     const nav = el('nav', 'focus-navigation');

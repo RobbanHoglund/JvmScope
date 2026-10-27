@@ -309,6 +309,36 @@ test('multiple reported deadlocks remain separate and unresolved owners are neve
     }
 });
 
+test('AI conclusion is carried into the widget without changing findings or leaking across scope', async () => {
+    const data = await call('analyze_thread_dumps', { paths: [sample('repeated-contention.txt')] });
+    const conclusion = { summary: 'Snapshot 1: observed contention needs source review.', nextCheck: 'Compare the owner and waiter stacks.' };
+    const args = { reportId: data.reportId, snapshotIndex: 0, language: 'en', conclusion };
+    const r = await client.callTool({ name: 'render_thread_report', arguments: args });
+    assert.ok(!r.isError, JSON.stringify(r));
+    assert.deepEqual(r.structuredContent.conclusion, r._meta.jvmscopeConclusion);
+    assert.equal(r._meta.jvmscopeConclusion.summary, conclusion.summary);
+    assert.deepEqual(r._meta.jvmscopeConclusion.scope, { view: 'snapshot', snapshots: [0] });
+    assert.deepEqual(r._meta.jvmscopeReport.snapshots.items[0].analysis, data.snapshots.items[0].analysis);
+    assert.match(r.content[0].text, /do not repeat them below/);
+    const next = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, snapshotIndex: 1 } });
+    assert.equal(next._meta.jvmscopeConclusion, null);
+    const back = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, snapshotIndex: 0, language: 'sv' } });
+    assert.deepEqual(back._meta.jvmscopeConclusion, r._meta.jvmscopeConclusion);
+    assert.equal(back._meta.jvmscopeLanguage, 'sv');
+    await fails('render_thread_report', { ...args, conclusion: { ...conclusion, summary: 'x'.repeat(901) } }, /Too big|<=900|at most/i);
+    await fails('render_thread_report', { ...args, conclusion: { ...conclusion, summary: '  ' } }, /Too small|>=1|at least/i);
+    await fails('render_thread_report', { ...args, conclusion: { ...conclusion, nextCheck: 'x'.repeat(401) } }, /Too big|<=400|at most/i);
+    await fails('render_thread_report', { ...args, conclusion: { ...conclusion, reportId: data.reportId } }, /Unrecognized/i);
+    const comparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, view: 'comparison', conclusion } });
+    assert.deepEqual(comparison._meta.jvmscopeConclusion.scope, { view: 'comparison', snapshots: [0, 1] });
+    const partial = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, view: 'comparison', offset: 1, limit: 1 } });
+    assert.equal(partial._meta.jvmscopeConclusion, null);
+    const row = data.snapshots.items[0].threadInventory.items[0];
+    const focus = await client.callTool({ name: 'render_thread_details', arguments: { reportId: data.reportId, snapshotIndex: 0, sourceKeys: [row.sourceKey], conclusion } });
+    assert.ok(!focus.isError, JSON.stringify(focus));
+    assert.deepEqual(focus._meta.jvmscopeConclusion.scope, { view: 'threads', snapshots: [0], sourceKeys: [row.sourceKey] });
+});
+
 test('series comparison uses the unchanged engine and snapshot pagination', async () => {
     const paths = [fixture('ga-regressions/allocation-before.txt'), fixture('ga-regressions/allocation-after.txt')];
     const direct = analyzeThreadDumpData(await Promise.all(paths.map(async (p, i) => ({ id: `source:${i}`, name: path.basename(p), text: await readFile(p, 'utf8') }))));

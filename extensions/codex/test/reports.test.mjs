@@ -31,3 +31,25 @@ test('cached pages keep global snapshot identity and never leak private cache pa
     assert.equal(reports.page(id, { snapshotIndex: 1 }).snapshots.items[0].index, 1);
     assert.throws(() => reports.snapshot(id, 3), /SNAPSHOTS_NOT_CACHED/);
 });
+
+test('AI conclusions survive navigation but remain scoped, bounded and tied to report lifetime', () => {
+    let time = 0;
+    const reports = createReports({ ttlMs: 10, now: () => time });
+    const first = reports.add({}), other = reports.add({});
+    const scope = { view: 'snapshot', snapshots: [0] };
+    const text = { summary: 'Observed wait.', nextCheck: 'Compare another capture.' };
+    reports.conclusion(first, scope, 'en', text);
+    assert.equal(reports.conclusion(first, scope, 'sv').language, 'en');
+    assert.equal(reports.conclusion(first, scope, 'sv').summary, text.summary);
+    assert.equal(reports.conclusion(other, scope, 'en'), null);
+    assert.equal(reports.conclusion(first, { view: 'snapshot', snapshots: [1] }, 'en'), null);
+    assert.equal(reports.conclusion(first, { view: 'comparison', snapshots: [0] }, 'en'), null);
+    const focused = { view: 'threads', snapshots: [0], sourceKeys: ['one'] };
+    reports.conclusion(first, focused, 'sv', text);
+    assert.equal(reports.conclusion(first, { ...focused, sourceKeys: ['two'] }, 'sv'), null);
+    for (let i = 1; i <= 24; i++) reports.conclusion(first, { view: 'snapshot', snapshots: [i] }, 'en', text);
+    assert.equal(reports.conclusion(first, scope, 'en'), null);
+    assert.equal(reports.conclusion(first, { view: 'snapshot', snapshots: [24] }, 'en').origin, 'assistant');
+    time = 10;
+    assert.throws(() => reports.conclusion(first, scope, 'en'), /expired/);
+});

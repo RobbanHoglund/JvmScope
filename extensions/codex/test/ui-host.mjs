@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 
-export async function startHost({ inventoryOnly = false, capturePath } = {}) {
+export async function startHost({ inventoryOnly = false, conclusionOnly = false, capturePath } = {}) {
+    inventoryOnly ||= conclusionOnly;
     const repo = fileURLToPath(new URL('../../../', import.meta.url));
     const plugin = path.join(repo, 'build/codex-marketplace/plugins/jvmscope');
     const temporary = await mkdtemp(path.join(tmpdir(), 'jvmscope UI '));
@@ -56,10 +57,35 @@ export async function startHost({ inventoryOnly = false, capturePath } = {}) {
         ['real', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')]],
         ['realSv', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')], undefined, 'sv'],
     ];
+    if (conclusionOnly) {
+        const series = path.join(temporary, 'assessment-series.txt');
+        const text = await readFile(noFindings, 'utf8'); await writeFile(series, text + '\n' + text);
+        fixtures.push(['assessmentSeries', [series]], ['assessmentSv', [noFindings], undefined, 'sv'], ['assessmentDeadlock', [capture]]);
+    }
     for (const [name, paths, limit, language] of fixtures) {
         const result = await client.callTool({ name: 'analyze_thread_dumps', arguments: { paths, ...(limit ? { limit } : {}) } });
         if (result.isError) throw new Error(JSON.stringify(result));
         rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId: result.structuredContent.reportId, ...(language ? { language } : {}) } });
+    }
+    if (conclusionOnly) {
+        const summaries = {
+            noFindings: { summary: 'No JVM-reported deadlock in snapshot 1. main is parked in an HTTP send call; its duration is not established.', nextCheck: 'Inspect the request timeout and response handling, then compare another capture.' },
+            assessmentSv: { summary: 'Ingen JVM-rapporterad deadlock i snapshot 1. main väntar i ett HTTP-anrop; väntans längd är inte fastställd.', nextCheck: 'Granska anropets timeout och svarshantering och jämför sedan en ny dump.' },
+            assessmentSeries: { summary: 'Assessment of snapshot 1 only.', nextCheck: 'Inspect the next capture separately.' },
+            assessmentDeadlock: { summary: 'The JVM reports a deadlock cycle in snapshot 1.', nextCheck: 'Review the opposing lock acquisition paths.' },
+            large: { summary: '<img src=x onerror=alert(1)> & literal text', nextCheck: '<script>alert(1)</script>' },
+        };
+        for (const [name, conclusion] of Object.entries(summaries)) {
+            const reportId = rendered[name].structuredContent.reportId;
+            rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId, snapshotIndex: 0,
+                language: name === 'assessmentSv' ? 'sv' : 'en', conclusion } });
+        }
+        const reportId = rendered.assessmentSeries.structuredContent.reportId;
+        rendered.assessmentComparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId, view: 'comparison',
+            conclusion: { summary: 'These two captures have no comparable rates.', nextCheck: 'Collect comparable counters and timestamps.' } } });
+        const row = rendered.noFindings._meta.jvmscopeReport.snapshots.items[0].threadInventory.items[0];
+        rendered.assessmentThread = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.noFindings.structuredContent.reportId,
+            snapshotIndex: 0, sourceKeys: [row.sourceKey], conclusion: summaries.noFindings } });
     }
     if (!inventoryOnly) {
         rendered.comparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId, view: 'comparison', offset: 0, limit: 4 } });

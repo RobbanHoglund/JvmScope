@@ -8,10 +8,12 @@ import { threadDetailsView } from './thread-details.mjs';
 import { threadInventoryView } from './thread-inventory.mjs';
 import { overviewThread } from '../src/stack-context.mjs';
 import { overviewThreadView } from './overview-thread.mjs';
+import { aiConclusionView } from './ai-conclusion.mjs';
 
 const root = document.getElementById('app');
 let focusedThreads = null;
 let reportTimings = null;
+let aiConclusion = null;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
@@ -85,6 +87,7 @@ function applyContext(context) {
 }
 function receive(result) {
     reportTimings = result?._meta?.jvmscopeTimings || null;
+    aiConclusion = result?._meta?.jvmscopeConclusion || null;
     const focused = result?._meta?.jvmscopeThreadDetails;
     if (focused?.view === 'threads' && Array.isArray(focused.threads) && focused.source) {
         if (['en', 'sv'].includes(result._meta.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
@@ -250,7 +253,7 @@ function renderContent() {
     disposeGraph();
     if (focusedThreads) {
         const data = focusedThreads;
-        root.replaceChildren(threadDetailsView({ data, locale, version, canRead: bridge.canCallTools,
+        root.replaceChildren(threadDetailsView({ data, locale, version, conclusion: aiConclusion, canRead: bridge.canCallTools,
             onLanguage(language) { locale = language; document.documentElement.lang = locale; render(); },
             async onNavigate(view) { receive(await bridge.callTool('render_thread_report', { reportId: data.reportId, language: locale, view,
                 ...(view === 'comparison' ? { offset: 0, limit: 4 } : { snapshotIndex: data.snapshotIndex, limit: 1 }) })); },
@@ -278,6 +281,9 @@ function renderContent() {
     for (const [value, label] of [['en', 'English'], ['sv', 'Svenska']]) { const option = el('option', '', label); option.value = value; language.append(option); }
     language.value = locale; language.addEventListener('change', () => { locale = language.value; document.documentElement.lang = locale; render(); });
     append(root, append(el('header', 'header'), heading, append(el('div', 'header-actions'), badge(severity), language)));
+    const assessment = aiConclusionView({ conclusion: aiConclusion, reportId: report.reportId, locale,
+        scope: { view: activeView, snapshots: activeView === 'comparison' ? report.snapshots.items.map(s => s.index) : [snapshot.index] } });
+    if (assessment) root.append(assessment);
     if (report.example?.synthetic) root.append(el('p', 'example-label muted', t('example')));
     if (report.snapshotCount > 1) {
         const tabs = el('nav', 'view-tabs'); tabs.setAttribute('aria-label', t('title'));

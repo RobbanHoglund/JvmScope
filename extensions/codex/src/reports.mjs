@@ -13,7 +13,7 @@ export function createReports({ maxEntries = 12, ttlMs = 600000, now = Date.now 
             delete report._cachedSnapshots;
             if (report.analyzer === 'threads') report.cache = { snapshotCount: snapshots.length,
                 complete: snapshots.length === report.snapshotCount, analyzedAt: new Date().toISOString() };
-            entries.set(id, { report, snapshots, expires: now() + ttlMs });
+            entries.set(id, { report, snapshots, conclusions: new Map(), expires: now() + ttlMs });
             return id;
         },
         snapshot(id, index) {
@@ -21,6 +21,16 @@ export function createReports({ maxEntries = 12, ttlMs = 600000, now = Date.now 
             const snapshot = entries.get(id).snapshots.find(s => s.index === index);
             if (!snapshot) throw new Error('SNAPSHOTS_NOT_CACHED: Analyze the requested page again with offset/limit.');
             return snapshot;
+        },
+        conclusion(id, scope, language, input) {
+            this.get(id);
+            const saved = entries.get(id).conclusions, key = JSON.stringify(scope);
+            if (input) {
+                saved.delete(key);
+                while (saved.size >= 24) saved.delete(saved.keys().next().value);
+                saved.set(key, { ...input, language, scope, reportId: id, origin: 'assistant' });
+            }
+            return saved.get(key) || null;
         },
         page(id, { offset, limit, snapshotIndex } = {}) {
             const report = this.get(id);

@@ -19,18 +19,23 @@ const reportHtml = await readFile(new URL('ui/thread-report.html', pluginRoot), 
 const file = z.string().min(1).max(4096).describe('Absolute path to a user-selected, stable, uncompressed UTF-8 capture.');
 const pagination = { offset: z.number().int().min(0).default(0), limit: z.number().int().min(1).max(50).default(10) };
 const language = z.enum(['en', 'sv']).default('en').describe('Report language. Match the conversation; English is the fallback for other languages.');
+const conclusion = z.object({
+    summary: z.string().trim().min(1).max(900).describe('Your diagnostic conclusion in plain text, in the report language. Use only the existing analysis and verified evidence; preserve uncertainty.'),
+    nextCheck: z.string().trim().min(1).max(400).describe('One concrete next check, in plain text in the report language.'),
+}).strict().optional().describe('Supply your AI assessment here when presenting analysis to the user. It appears at the TOP of the report, before all statistics, graphs and lists. This is assistant interpretation, not an engine finding. Omit only for UI navigation or if no assessment is yet supported by evidence.');
 const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 
 function result(data) {
     return { content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data };
 }
 
-function threadReportResult(report, language, { view = 'snapshot', snapshotIndex, sourceKey } = {}) {
+function threadReportResult(report, language, { view = 'snapshot', snapshotIndex, sourceKey } = {}, aiConclusion = null) {
     const started = performance.now();
     if (JSON.stringify(report).length > 512 * 1024) throw new Error('Report page exceeds the 512 KiB response limit. Reduce limit and request smaller pages.');
     const selected = report.snapshots.items.find(s => s.index === snapshotIndex) || report.snapshots.items.find(s => s.deadlocks.total) || report.snapshots.items[0];
-    return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. ${report.snapshotCount > 1 ? 'Repeated observations are not distinct incidents. ' : ''}Keep the accompanying answer brief: give the diagnostic conclusion and next check. Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
+    return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. ${report.snapshotCount > 1 ? 'Repeated observations are not distinct incidents. ' : ''}${aiConclusion ? 'The supplied AI conclusion and next check are included at the top of the report; do not repeat them below the widget.' : 'Keep the accompanying answer brief: give the diagnostic conclusion and next check.'} Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
         structuredContent: { reportId: report.reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
+            conclusion: aiConclusion,
             findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations,
             selectedSnapshotIndex: selected?.index, cache: report.cache,
             selectedThreadObservation: overviewThread(selected, sourceKey),
@@ -42,7 +47,7 @@ function threadReportResult(report, language, { view = 'snapshot', snapshotIndex
             ...(report.example ? { example: report.example, exampleEvidence: report.exampleEvidence,
                 status: report.status, warnings: report.warnings, limitations: report.limitations,
                 selectedSnapshot: report.snapshots.items[0] } : {}) },
-        _meta: { jvmscopeReport: report, jvmscopeLanguage: language, jvmscopeFocus: { view, snapshotIndex: selected?.index, sourceKey },
+        _meta: { jvmscopeReport: report, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion, jvmscopeFocus: { view, snapshotIndex: selected?.index, sourceKey },
             jvmscopeTimings: { reportPreparationMs: Math.round((performance.now() - started) * 100) / 100,
                 captureReads: 0, parserRuns: 0, scope: 'Cached report preparation only; excludes transport, AI and host rendering.' } } };
 }
@@ -78,33 +83,40 @@ function createServer() {
     }] }));
     server.registerTool('render_thread_report', {
         title: 'Show JvmScope thread report',
-        description: 'Display the cached thread analysis as an interactive report with severity, snapshots, deadlock cycles and clickable evidence. Use its reportId; set view=comparison for CPU/allocation follow-ups. Reuse cached results for follow-ups and pagination; no parsing, file reads or writes. Match snapshotIndex/sourceKey to cited evidence. On hosts without MCP Apps UI, use the analysis data for a concise text answer.',
-        inputSchema: z.object({ reportId: z.string().uuid(), language, view: z.enum(['snapshot', 'comparison']).default('snapshot'),
+        description: 'Present the cached analysis with your AI conclusion at the TOP: supply conclusion.summary and conclusion.nextCheck based on analysis and already verified evidence. Do not leave the actual conclusion only in text after the widget. Use reportId; set view=comparison for CPU/allocation follow-ups. Reuse cached results for follow-ups and pagination; no parsing, file reads or writes. Match snapshotIndex/sourceKey to cited evidence. On hosts without MCP Apps UI, give a concise text answer.',
+        inputSchema: z.object({ reportId: z.string().uuid(), language, conclusion, view: z.enum(['snapshot', 'comparison']).default('snapshot'),
             snapshotIndex: z.number().int().min(0).optional().describe('Zero-based global snapshot index to focus, matching the cited evidence.'),
             offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(50).optional(),
             sourceKey: z.string().max(400).optional().describe('Exact thread sourceKey from the selected snapshot.') }).strict(), annotations,
         _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri,
             'openai/toolInvocation/invoking': 'Preparing thread report', 'openai/toolInvocation/invoked': 'Thread report ready' },
-    }, async ({ reportId, language, ...focus }) => {
+    }, async ({ reportId, language, conclusion, ...focus }) => {
         try {
             const report = reports.page(reportId, focus);
             if (focus.sourceKey && focus.snapshotIndex == null) throw new Error('Supply snapshotIndex with sourceKey so report focus is unambiguous.');
             if (focus.sourceKey) resolveThreadEvidence(reports, reportId, focus.snapshotIndex ?? report.snapshots.items[0]?.index, focus.sourceKey);
-            return threadReportResult(report, language, focus);
+            const selected = report.snapshots.items.find(s => s.index === focus.snapshotIndex) || report.snapshots.items.find(s => s.deadlocks.total) || report.snapshots.items[0];
+            if (!selected) {
+                if (conclusion) throw new Error('Cannot attach a conclusion to an empty snapshot page.');
+                return threadReportResult(report, language, focus);
+            }
+            const scope = { view: focus.view, snapshots: focus.view === 'comparison' ? report.snapshots.items.map(s => s.index) : [selected.index] };
+            return threadReportResult(report, language, focus, reports.conclusion(reportId, scope, language, conclusion));
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
     server.registerTool('render_thread_details', {
         title: 'Show selected Java threads',
-        description: 'For stack/CPU/allocation follow-ups about one to five specific threads, show a focused view with cached measurements and hash-checked stack evidence in ONE call. Use reportId, the exact snapshotIndex and sourceKeys already returned by analysis/comparison. Reads and hashes that capture once, without reparsing. Do not additionally read the same evidence or render the full deadlock overview.',
-        inputSchema: z.object({ reportId: z.string().uuid(), language, snapshotIndex: z.number().int().min(0),
+        description: 'For stack/CPU/allocation follow-ups about one to five specific threads, show a focused view with cached measurements and hash-checked stack evidence in ONE call. Supply conclusion when existing evidence already supports your assessment; it appears at the top. Use reportId, the exact snapshotIndex and sourceKeys already returned by analysis/comparison. Reads and hashes that capture once, without reparsing. Do not additionally read the same evidence or render the full deadlock overview.',
+        inputSchema: z.object({ reportId: z.string().uuid(), language, conclusion, snapshotIndex: z.number().int().min(0),
             sourceKeys: z.array(z.string().min(1).max(400)).min(1).max(5) }).strict(), annotations,
         _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri },
-    }, async ({ language, ...args }, ctx) => {
+    }, async ({ language, conclusion, ...args }, ctx) => {
         try {
             const data = await threadDetails(reports, jobs, args, ctx.mcpReq.signal);
             if (JSON.stringify(data).length > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
-            return { content: [{ type: 'text', text: 'Focused thread report with verified evidence. Explain the selected threads briefly using these lines and measured intervals. Do not repeat full stack blocks or render a general report again. Stack frames do not reveal method bodies or prove a livelock/leak.' }],
-                structuredContent: data, _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language } };
+            const aiConclusion = reports.conclusion(args.reportId, { view: 'threads', snapshots: [args.snapshotIndex], sourceKeys: [...args.sourceKeys].sort() }, language, conclusion);
+            return { content: [{ type: 'text', text: `Focused thread report with verified evidence. ${aiConclusion ? 'Your supplied conclusion is included at the top; do not repeat it below the widget.' : 'Explain the selected threads briefly using these lines and measured intervals.'} Do not repeat full stack blocks or render a general report again. Stack frames do not reveal method bodies or prove a livelock/leak.` }],
+                structuredContent: { ...data, conclusion: aiConclusion }, _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion } };
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
     server.registerTool('read_thread_evidence', {
