@@ -18,7 +18,8 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
     await expect(f.locator('.inventory-limits')).toContainText('One snapshot');
     await expect(f.getByRole('heading', { name: 'Findings in this snapshot' })).toHaveCount(0);
     await expect(f.locator('.no-findings')).toContainText('does not establish health');
-    await expect(f.locator('.inventory-row')).toHaveCount(22);
+    await expect(f.locator('.inventory-row')).toHaveCount(8);
+    await expect(f.getByRole('button', { name: 'Show all 22', exact: true })).toHaveAttribute('aria-expanded', 'false');
     const offset = host.calls.length;
     await f.getByRole('button', { name: 'Inspect thread: main', exact: true }).focus(); await page.keyboard.press('Enter');
     await expect(f.locator('.thread-focus-card')).toHaveCount(1);
@@ -29,7 +30,12 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
     await expect(f.locator('.evidence')).toContainText('CompletableFuture.get');
     expect(host.calls.slice(offset).map(c => c.name)).toEqual(['render_thread_details']);
     await f.getByRole('button', { name: 'Snapshot overview' }).click();
+    await expect(f.locator('.inventory-row')).toHaveCount(8);
+    await f.getByRole('button', { name: 'Show all 22', exact: true }).click();
     await expect(f.locator('.inventory-row')).toHaveCount(22);
+    await f.getByRole('button', { name: 'Show fewer threads' }).focus(); await page.keyboard.press('Enter');
+    await expect(f.locator('.inventory-row')).toHaveCount(8);
+    await expect(f.getByRole('button', { name: 'Show all 22', exact: true })).toBeFocused();
 });
 
 test('VM records outside the measurement leaders remain inspectable without invented Java states', async ({ page }) => {
@@ -49,12 +55,12 @@ test('VM records outside the measurement leaders remain inspectable without inve
 test('inventory filtering and bounded paging preserve duplicate identities and escaped labels', async ({ page }) => {
     let dialogs = 0; page.on('dialog', async d => { dialogs++; await d.dismiss(); });
     await page.goto(host.url + '?case=large'); const f = widget(page);
-    await expect(f.locator('.inventory-row')).toHaveCount(25);
+    await expect(f.locator('.inventory-row')).toHaveCount(8);
     await expect(f.locator('.inventory-status')).toContainText('200 retained of 240');
     await expect(f.locator('.inventory-omitted')).toContainText('not searched');
     const before = host.calls.length;
-    await f.getByRole('button', { name: 'Show more threads' }).click();
-    await expect(f.locator('.inventory-row')).toHaveCount(50);
+    await f.getByRole('button', { name: 'Show all 200', exact: true }).click();
+    await expect(f.locator('.inventory-row')).toHaveCount(200);
     await f.getByRole('searchbox', { name: 'Find a thread' }).fill('worker-239');
     await expect(f.locator('.inventory-list')).toContainText('No matching records in this retained list');
     await f.getByRole('searchbox', { name: 'Find a thread' }).fill('<svg');

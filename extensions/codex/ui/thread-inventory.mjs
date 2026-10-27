@@ -4,7 +4,7 @@ const copy = {
         nativeOnly: 'Only header-only VM records were parsed. Java states, Java stacks and application lock dependencies are unavailable in these records.',
         scope: 'RUNNABLE is a Java state, not measured CPU use. A thread can be waiting in a native call.',
         single: 'One snapshot: CPU and allocation rates, wait duration and progress cannot be established. Cumulative counters remain in the source.',
-        shown: 'Displayed', matching: 'matching records', retained: 'retained', of: 'of', more: 'Show more threads',
+        shown: 'Displayed', matching: 'matching records', retained: 'retained', of: 'of', more: 'Show all', less: 'Show fewer threads',
         omitted: 'Records beyond the retained source-order subset are not searched. Inspect the original capture for the remaining records.',
         noMatch: 'No matching records in this retained list.', noFrames: 'No stack frames recorded', open: 'Inspect thread',
         unavailable: 'Thread inventory is unavailable in this older report. Analyze the capture again.',
@@ -14,7 +14,7 @@ const copy = {
         nativeOnly: 'Enbart VM-poster med trådhuvuden lästes in. Java-tillstånd, Java-stackar och applikationens låsberoenden saknas i dessa poster.',
         scope: 'RUNNABLE är ett Java-tillstånd, inte uppmätt CPU-användning. Tråden kan vänta i ett native-anrop.',
         single: 'En snapshot: CPU- och allokeringstakt, väntetid och framsteg kan inte fastställas. Ackumulerade räknare finns i källan.',
-        shown: 'Visar', matching: 'matchande poster', retained: 'tillgängliga i listan', of: 'av', more: 'Visa fler trådar',
+        shown: 'Visar', matching: 'matchande poster', retained: 'tillgängliga i listan', of: 'av', more: 'Visa alla', less: 'Visa färre trådar',
         omitted: 'Poster utanför det sparade urvalet i källordning ingår inte i sökningen. Granska originaldumpen för övriga poster.',
         noMatch: 'Inga matchande poster i denna sparade lista.', noFrames: 'Inga stackramar registrerade', open: 'Granska tråd',
         unavailable: 'Trådlistan saknas i den äldre rapporten. Analysera dumpen igen.',
@@ -48,13 +48,14 @@ export function threadInventoryView({ snapshot, snapshotCount, locale, canRead, 
     }
     stateLabel.append(filter); controls.append(searchLabel, stateLabel); section.append(controls);
     const status = el('p', 'muted inventory-status'); status.setAttribute('aria-live', 'polite');
-    const list = el('div', 'inventory-list'), more = el('button', '', t('more')); more.type = 'button';
-    let limit = 25;
+    const list = el('div', 'inventory-list'), more = el('button', 'inventory-expand', t('more')); more.type = 'button';
+    list.id = 'thread-inventory-list'; more.setAttribute('aria-controls', list.id);
+    let expanded = false;
     function draw() {
         const query = search.value.trim().toLocaleLowerCase();
         const matched = inventory.items.filter(row => (!filter.value || (row.state || 'UNKNOWN') === filter.value)
             && (!query || `${row.name}\n${row.topFrame || ''}`.toLocaleLowerCase().includes(query)));
-        const rows = matched.slice(0, limit); list.replaceChildren();
+        const rows = expanded ? matched : matched.slice(0, 8); list.replaceChildren();
         status.textContent = `${t('shown')} ${rows.length} / ${matched.length} ${t('matching')} · ${inventory.items.length} ${t('retained')} ${t('of')} ${inventory.total}`;
         for (const row of rows) {
             const button = el('button', 'inventory-row'); button.type = 'button'; button.dataset.sourceKey = row.sourceKey;
@@ -71,11 +72,13 @@ export function threadInventoryView({ snapshot, snapshotCount, locale, canRead, 
             list.append(button);
         }
         if (!rows.length) list.append(el('p', 'muted', t('noMatch')));
-        more.hidden = rows.length >= matched.length;
+        more.hidden = matched.length <= 8;
+        more.textContent = expanded ? t('less') : `${t('more')} ${matched.length}`;
+        more.setAttribute('aria-expanded', String(expanded));
     }
-    search.addEventListener('input', () => { limit = 25; draw(); });
-    filter.addEventListener('change', () => { limit = 25; draw(); });
-    more.addEventListener('click', () => { limit += 25; draw(); });
+    search.addEventListener('input', () => { expanded = false; draw(); });
+    filter.addEventListener('change', () => { expanded = false; draw(); });
+    more.addEventListener('click', () => { expanded = !expanded; draw(); });
     section.append(status, list, more);
     if (inventory.items.length < inventory.total) section.append(el('p', 'note inventory-omitted', t('omitted')));
     if (!canRead) section.append(el('p', 'note', t('host')));
