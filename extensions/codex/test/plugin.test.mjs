@@ -234,6 +234,8 @@ test('held-lock cards preserve explicit synchronizers and exclude released Objec
     assert.notEqual(changed, original);
     await writeFile(filename, changed);
     const report = await call('analyze_thread_dumps', { paths: [filename] });
+    assert.ok(Number.isFinite(report.timing.workerRoundTripMs));
+    assert.ok(report.timing.workerRoundTripMs + 2 >= report.timing.readMs + report.timing.analysisMs);
     const alpha = report.snapshots.items[0].deadlocks.items[0].participants.items.find(p => p.name === 'alpha');
     assert.deepEqual(alpha.heldLocks.items, [{ lockId: '0x12345678', lockType: 'a java.util.concurrent.locks.ReentrantLock$NonfairSync', kind: 'ownable-synchronizer' }]);
     // The footer's owner relation must not reintroduce the released lexical monitor.
@@ -281,6 +283,10 @@ test('MCP Apps report resolves its bundled UI and preserves cached evidence with
     assert.ok(!rendered.isError);
     assert.deepEqual(rendered._meta.jvmscopeReport, report);
     assert.equal(rendered._meta.jvmscopeLanguage, 'en');
+    assert.ok(Number.isFinite(rendered._meta.jvmscopeTimings.reportPreparationMs));
+    assert.equal(rendered._meta.jvmscopeTimings.captureReads, 0);
+    assert.equal(rendered._meta.jvmscopeTimings.parserRuns, 0);
+    assert.match(rendered._meta.jvmscopeTimings.scope, /excludes transport, AI and host rendering/);
     assert.match(rendered.content[0].text, /diagnostic conclusion and next check/);
     assert.doesNotMatch(rendered.content[0].text, /if no widget is visible|couldn.t verify/i);
     const swedish = await client.callTool({ name: 'render_thread_report', arguments: { reportId: report.reportId, language: 'sv' } });

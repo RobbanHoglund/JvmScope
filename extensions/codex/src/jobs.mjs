@@ -4,6 +4,7 @@ export function createJobs({ workerUrl = new URL('./worker.mjs', import.meta.url
     const active = new Set();
     return {
         async run(name, args, signal) {
+            const started = performance.now();
             if (signal?.aborted) throw new Error('Analysis cancelled.');
             if (active.size >= 2) throw new Error('Two analyses are already running. Wait for one to finish.');
             return new Promise((resolve, reject) => {
@@ -15,7 +16,11 @@ export function createJobs({ workerUrl = new URL('./worker.mjs', import.meta.url
                     settled = true; clearTimeout(timer); signal?.removeEventListener('abort', cancel);
                     void worker.terminate().then(() => {
                         active.delete(worker);
-                        if (error) reject(error); else resolve(result);
+                        if (error) reject(error);
+                        else {
+                            if (result?.timing) result.timing.workerRoundTripMs = Math.round(performance.now() - started);
+                            resolve(result);
+                        }
                     }, terminationError => { active.delete(worker); reject(terminationError); });
                 };
                 const cancel = () => finish(new Error('Analysis cancelled.'));

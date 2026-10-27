@@ -363,6 +363,8 @@ test('technical timing and host guidance live in report information while snapsh
         await info.locator('summary').focus(); await page.keyboard.press('Enter');
         await expect(info.getByText(guidance, { exact: false })).toBeVisible();
         await expect(info.getByText(timing, { exact: false })).toBeVisible();
+        await expect(info.locator('.ui-timing')).toContainText(/\d+\.\d+ ms/);
+        await expect(info).toContainText(caseName === 'focused' ? 'excludes layout and paint' : 'exkluderar layout och uppritning');
         expect(await overflow(f)).toBe(false);
     }
 });

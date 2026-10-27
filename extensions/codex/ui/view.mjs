@@ -11,6 +11,7 @@ import { overviewThreadView } from './overview-thread.mjs';
 
 const root = document.getElementById('app');
 let focusedThreads = null;
+let reportTimings = null;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
@@ -32,7 +33,7 @@ const copy = {
         truncated: 'This view contains a bounded subset. Counts include omitted items; inspect the capture for the remaining evidence.',
         graphLimited: 'Graph limited to the first 8 reported participants. Omitted or unresolved relationships are not drawn.',
         unmapped: 'Some participants or owners could not be matched. The JVM report is retained; missing edges are not inferred.',
-        local: 'Parsed locally · results are shared with your AI host', information: 'Report information', timing: 'Read / analysis', next: 'Next snapshots', previous: 'Previous snapshots',
+        local: 'Parsed locally · results are shared with your AI host', information: 'Report information', timing: 'Read / analysis', workerTiming: 'Worker round trip, including read and analysis', reportTiming: 'Cached report preparation', uiTiming: 'Local UI construction', timingScope: 'These timings exclude AI reasoning and host display latency; local UI construction excludes layout and paint.', next: 'Next snapshots', previous: 'Previous snapshots',
         load: 'Loading…', locked: 'JVM-REPORTED DEADLOCK', confirmedTitle: 'Confirmed Java deadlock', noHost: 'This report needs an MCP Apps host. Ask for a concise text analysis if the component is unavailable.',
         viewRange: 'Displayed snapshots', noData: 'The host did not deliver the report data. Ask it to run analyze_thread_dumps, then render_thread_report in this session.',
         cycleHint: 'Cycle counts apply to this snapshot. Repeated observations are not counted as distinct incidents.',
@@ -56,7 +57,7 @@ const copy = {
         truncated: 'Vyn visar ett begränsat urval. Antalen omfattar även utelämnade poster; granska dumpen för resterande bevis.',
         graphLimited: 'Grafen visar högst 8 rapporterade deltagare. Utelämnade eller olösta relationer ritas inte ut.',
         unmapped: 'Vissa deltagare eller ägare kunde inte matchas. JVM-rapporten finns kvar; saknade pilar gissas inte.',
-        local: 'Parsas lokalt · resultat delas med din AI-klient', information: 'Rapportinformation', timing: 'Läsning / analys', next: 'Nästa snapshots', previous: 'Föregående snapshots',
+        local: 'Parsas lokalt · resultat delas med din AI-klient', information: 'Rapportinformation', timing: 'Läsning / analys', workerTiming: 'Workeranrop, inklusive läsning och analys', reportTiming: 'Förberedelse av sparad rapport', uiTiming: 'Lokal uppbyggnad av vyn', timingScope: 'Tiderna inkluderar inte AI-modellens arbete eller klientens visningsfördröjning; lokal uppbyggnad exkluderar layout och uppritning.', next: 'Nästa snapshots', previous: 'Föregående snapshots',
         load: 'Laddar…', locked: 'JVM-RAPPORTERAD DEADLOCK', confirmedTitle: 'Bekräftad Java-deadlock', noHost: 'Rapporten behöver en klient med MCP Apps-stöd. Be om en kort textanalys om komponenten inte kan visas.',
         viewRange: 'Visade snapshots', noData: 'Klienten skickade inga rapportdata. Be den köra analyze_thread_dumps och sedan render_thread_report i samma session.',
         cycleHint: 'Cykelantalet gäller vald snapshot. Upprepade observationer räknas inte som separata incidenter.',
@@ -83,6 +84,7 @@ function applyContext(context) {
     if (report || focusedThreads) render();
 }
 function receive(result) {
+    reportTimings = result?._meta?.jvmscopeTimings || null;
     const focused = result?._meta?.jvmscopeThreadDetails;
     if (focused?.view === 'threads' && Array.isArray(focused.threads) && focused.source) {
         if (['en', 'sv'].includes(result._meta.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
@@ -176,7 +178,10 @@ async function loadPage(offset, b) {
 }
 function footer() {
     const information = append(el('details', 'report-information'), el('summary', '', `${t('information')} · v${version}`),
-        el('p', '', t('editorContext')), el('p', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms`));
+        el('p', '', t('editorContext')), el('p', '', `${t('timing')}: ${report.timing?.readMs ?? '—'} / ${report.timing?.analysisMs ?? '—'} ms`),
+        el('p', '', `${t('workerTiming')}: ${report.timing?.workerRoundTripMs ?? '—'} ms`),
+        el('p', '', `${t('reportTiming')}: ${reportTimings?.reportPreparationMs ?? '—'} ms`),
+        el('p', 'ui-timing'), el('p', '', t('timingScope')));
     return append(el('footer', 'footer'), el('span', '', t('local')), information);
 }
 async function switchView(view, b) {
@@ -236,6 +241,12 @@ function findingCard(f, related = []) {
     append(card, details); return card;
 }
 function render() {
+    const started = performance.now();
+    renderContent();
+    const timing = root.querySelector('.ui-timing');
+    if (timing) timing.textContent = `${t('uiTiming')}: ${(performance.now() - started).toFixed(2)} ms`;
+}
+function renderContent() {
     disposeGraph();
     if (focusedThreads) {
         const data = focusedThreads;

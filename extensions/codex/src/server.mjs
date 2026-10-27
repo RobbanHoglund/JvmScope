@@ -26,6 +26,7 @@ function result(data) {
 }
 
 function threadReportResult(report, language, { view = 'snapshot', snapshotIndex, sourceKey } = {}) {
+    const started = performance.now();
     if (JSON.stringify(report).length > 512 * 1024) throw new Error('Report page exceeds the 512 KiB response limit. Reduce limit and request smaller pages.');
     const selected = report.snapshots.items.find(s => s.index === snapshotIndex) || report.snapshots.items.find(s => s.deadlocks.total) || report.snapshots.items[0];
     return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. ${report.snapshotCount > 1 ? 'Repeated observations are not distinct incidents. ' : ''}Keep the accompanying answer brief: give the diagnostic conclusion and next check. Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
@@ -41,7 +42,9 @@ function threadReportResult(report, language, { view = 'snapshot', snapshotIndex
             ...(report.example ? { example: report.example, exampleEvidence: report.exampleEvidence,
                 status: report.status, warnings: report.warnings, limitations: report.limitations,
                 selectedSnapshot: report.snapshots.items[0] } : {}) },
-        _meta: { jvmscopeReport: report, jvmscopeLanguage: language, jvmscopeFocus: { view, snapshotIndex: selected?.index, sourceKey } } };
+        _meta: { jvmscopeReport: report, jvmscopeLanguage: language, jvmscopeFocus: { view, snapshotIndex: selected?.index, sourceKey },
+            jvmscopeTimings: { reportPreparationMs: Math.round((performance.now() - started) * 100) / 100,
+                captureReads: 0, parserRuns: 0, scope: 'Cached report preparation only; excludes transport, AI and host rendering.' } } };
 }
 
 function createServer() {
