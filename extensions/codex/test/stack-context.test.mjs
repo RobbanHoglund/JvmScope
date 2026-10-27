@@ -39,4 +39,10 @@ test('overview distinguishes a selected observation from a finding and avoids am
     snapshot.threadInventory.items.push({ ...focus.thread, sourceKey: 'duplicate-main' });
     assert.equal(overviewThread(snapshot), null);
     assert.equal(overviewThread(snapshot, focus.thread.sourceKey).reason, 'selected');
+    const measured = snapshot.measurements.threads.items[0];
+    snapshot.threadInventory.items = [];
+    const outside = overviewThread(snapshot, measured.sourceKey);
+    assert.equal(outside.thread.state, measured.state);
+    assert.deepEqual(outside.thread.range, measured.current.range);
+    assert.equal(outside.thread.stackContext, null);
 });

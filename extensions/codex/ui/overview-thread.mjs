@@ -5,14 +5,14 @@ const copy = {
         next: 'Next check: inspect the request timeout and response handling; compare another capture if the wait persists.',
         frame: 'Recorded frame', frameNote: 'Frame selected by package name; may belong to application or library code.',
         neutral: 'Selection is for inspection; it does not add a rule finding.', stack: 'Inspect stack', opening: 'Opening thread…',
-        source: 'Source lines', noFrames: 'No stack frames recorded.', noTools: 'Ask for this thread in the conversation to inspect its stack.' },
+        source: 'Source lines', noFrames: 'No stack frame is retained in this overview.', noTools: 'Ask for this thread in the conversation to inspect its stack.' },
     sv: { selected: 'Vald tråd', observed: 'Huvudtråd · stackobservation', state: 'Java-tillstånd', unknown: 'Ej registrerat',
         http: 'Parkerad i CompletableFuture.get under HttpClient.send vid fångsttillfället.',
         limits: 'Observationen fastställer inte väntans längd eller orsak.',
         next: 'Nästa kontroll: granska anropets timeout och svarshantering; jämför en ny dump om väntan kvarstår.',
         frame: 'Registrerad stackram', frameNote: 'Ramen väljs utifrån paketnamnet och kan tillhöra applikationen eller ett bibliotek.',
         neutral: 'Tråden är vald för granskning; det tillför inget regelfynd.', stack: 'Granska stack', opening: 'Öppnar tråd…',
-        source: 'Källrader', noFrames: 'Inga stackramar registrerade.', noTools: 'Be om denna tråd i konversationen för att granska stacken.' },
+        source: 'Källrader', noFrames: 'Ingen stackram finns sparad i denna översikt.', noTools: 'Be om denna tråd i konversationen för att granska stacken.' },
 };
 function el(tag, cls, text) { const n = document.createElement(tag); n.className = cls || ''; if (text != null) n.textContent = text; return n; }
 export function overviewThreadView({ focus, locale, canRead, onOpen }) {

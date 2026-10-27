@@ -31,7 +31,10 @@ export function overviewThread(snapshot, sourceKey) {
     const rows = snapshot?.threadInventory?.items || [];
     if (sourceKey) {
         const thread = rows.find(t => t.sourceKey === sourceKey);
-        return thread ? { thread, reason: 'selected' } : null;
+        if (thread) return { thread, reason: 'selected' };
+        const measured = snapshot?.measurements?.threads?.items.find(t => t.sourceKey === sourceKey);
+        return measured ? { reason: 'selected', thread: { sourceKey, name: measured.name, state: measured.state,
+            range: measured.current.range, stackContext: null } } : null;
     }
     if (snapshot?.analysis?.findings.total || snapshot?.deadlocks?.total || snapshot?.parsingStatus !== 'success') return null;
     const mains = rows.filter(t => t.name === 'main');
