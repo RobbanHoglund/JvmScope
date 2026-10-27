@@ -42,7 +42,17 @@ export function analyzeThreads(captures, { offset = 0, limit = 10, includeCached
                 return { ...ref, startLine: lines?.startLine ?? null, endLine: lines?.endLine ?? null };
             }), 0, 20),
         }));
+        // Keep ordinary threads inspectable even when no rule produces a finding.
+        // This source-ordered list is independent of the bounded rate-leader list.
+        const inventory = d.threads.slice(0, 200).map(t => ({ sourceKey: t.sourceKey, name: t.threadName,
+            state: t.javaState || null, topFrame: t.topFrame || null, stackFrames: t.stackFrames,
+            range: evidenceFor(t) }));
         return { measurements: threadMeasurements(d, result.parsedDumps[position - 1], captures),
+            threadInventory: { total: d.threads.length, shown: inventory.length, omitted: d.threads.length - inventory.length,
+                items: inventory, selection: 'First 200 parsed thread records in source order; omitted records are not searched or displayed. Inspect the original capture for other records.' },
+            threadSummary: { total: d.threads.length, withJavaState: d.threads.filter(t => t.javaState).length,
+                withStackFrames: d.threads.filter(t => t.stackFrames > 0).length,
+                headerOnlyVmThreads: d.diagnostics.headerOnlyVmThreads || 0 },
             index: d.index, sourcePath: source.path, sourceStartLine: d.sourceStartLine, deadlocks,
             collectionScope: d.collectionScope, parsingStatus: d.parsingStatus, diagnostics: d.diagnostics,
             snapshotTime: d.snapshotTime, threadCount: d.threads.length, states: tally(d.threads.map(t => t.javaState || 'UNKNOWN')),

@@ -5,12 +5,15 @@ import { createDeadlockGraph } from './deadlock-graph.mjs';
 import { comparisonView } from './comparison.mjs';
 import { groupFindings } from './finding-groups.mjs';
 import { threadDetailsView } from './thread-details.mjs';
+import { threadInventoryView } from './thread-inventory.mjs';
 
 const root = document.getElementById('app');
 let focusedThreads = null;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
+        records: 'Parsed thread records', javaStates: 'With Java state', prioritized: 'Prioritized findings',
+        noFindings: 'No prioritized findings from the available evidence. This does not establish health; inspect the threads and capture limits below.',
         comparisonTitle: 'Snapshot comparison', compare: 'Compare snapshots', snapshotView: 'Snapshot details', cached: 'Cached analysis', context: 'Viewing snapshot', editorContext: 'Evidence inside this report follows the selected snapshot. A file opened from chat may show another snapshot.',
         example: 'Synthetic example · bundled Java deadlock', holding: 'Holds', unknownHolding: 'Not established in the matched thread block', moreLocks: 'additional reported locks',
         snapshots: 'Snapshots analyzed', cyclesCount: 'Cycles · selected snapshot', threadsCount: 'Matched deadlocked threads', files: 'Selected capture files', snapshot: 'Snapshot',
@@ -32,6 +35,8 @@ const copy = {
         cycleHint: 'Cycle counts apply to this snapshot. Repeated observations are not counted as distinct incidents.',
         refreshed: 'Source hash matches the analyzed capture.', readMore: 'Next source lines', language: 'Report language', original: 'Original analyzer diagnostics (English)', originalFinding: 'Untranslated finding (English)', mappedParticipant: 'JVM-reported participant', unmappedParticipant: 'Unmatched participant', observed: 'Snapshots with reported cycles', originalCount: 'Reported participant entries'  },
     sv: { title: 'Trådanalys', critical: 'Kritisk', high: 'Hög', medium: 'Granska', info: 'Information', neutral: 'Inga prioriterade fynd',
+        records: 'Inlästa trådposter', javaStates: 'Med Java-tillstånd', prioritized: 'Prioriterade fynd',
+        noFindings: 'Inga prioriterade fynd utifrån tillgängligt underlag. Det bevisar inte att allt fungerar; granska trådarna och begränsningarna nedan.',
         comparisonTitle: 'Jämför snapshots', compare: 'Jämför snapshots', snapshotView: 'Snapshotdetaljer', cached: 'Sparad analys', context: 'Visar snapshot', editorContext: 'Källbevis i rapporten följer vald snapshot. En fil öppnad från chatten kan visa en annan snapshot.',
         example: 'Syntetiskt exempel · medföljande Java-deadlock', holding: 'Håller', unknownHolding: 'Inte fastställt i det matchade trådblocket', moreLocks: 'ytterligare rapporterade lås',
         snapshots: 'Analyserade snapshots', cyclesCount: 'Cykler · vald snapshot', threadsCount: 'Matchade deadlock-trådar', files: 'Valda dumpfiler', snapshot: 'Snapshot',
@@ -276,7 +281,10 @@ function render() {
     }
     const stats = el('div', 'summary');
     const deadlock = snapshot.analysis?.deadlockSummary;
-    for (const [value, label, alert] of [[deadlock?.cycles ?? snapshot.deadlocks?.total ?? 0, t('cyclesCount'), !!snapshot.deadlocks?.total], [deadlock?.matchedThreads ?? '—', t('threadsCount')], [report.snapshotCount, t('snapshots')]])
+    const cards = snapshot.deadlocks?.total
+        ? [[deadlock?.cycles ?? snapshot.deadlocks.total, t('cyclesCount'), true], [deadlock?.matchedThreads ?? '—', t('threadsCount')], [report.snapshotCount, t('snapshots')]]
+        : [[snapshot.threadCount, t('records')], [snapshot.threadSummary?.withJavaState ?? '—', t('javaStates')], [snapshot.analysis?.findings.total ?? 0, t('prioritized')]];
+    for (const [value, label, alert] of cards)
         stats.append(append(el('div', `stat${alert ? ' alert' : ''}`), el('strong', '', value), el('span', '', label)));
     root.append(stats);
     if (report.snapshotCount > 1 && report.deadlockObservations) root.append(el('p', 'muted observation', `${t('observed')}: ${report.deadlockObservations.snapshotsWithCycles}/${report.snapshotCount}. ${t('cycleHint')}`));
@@ -312,12 +320,21 @@ function render() {
         if (snapshot.deadlocks.nextOffset != null || cycle.participants.nextOffset != null) panel.append(el('p', 'note', t('truncated')));
         if (selection && items(cycle.participants).some(p => p.id === selection.id)) panel.append(evidencePanel(selection));
         append(root, panel, append(el('div', 'action'), el('h3', '', t('action')), el('p', '', t('recommendation'))));
-    } else root.append(append(panel, append(el('div', 'no-cycle'), el('h2', '', t('noCycle')), el('p', '', t('noCycleNote')))));
+    } else {
+        const hasFindings = snapshot.analysis?.findings.total > 0;
+        panel.classList.toggle('no-findings-panel', !hasFindings);
+        root.append(append(panel, append(el('div', 'no-cycle'), el('h2', '', t('noCycle')),
+            el('p', hasFindings ? '' : 'no-findings', t(hasFindings ? 'noCycleNote' : 'noFindings')))));
+    }
     if (selection && !cycles.some(c => items(c.participants).some(p => p.id === selection.id))) root.append(evidencePanel(selection));
-    const findings = el('section', 'findings'); findings.append(el('h2', '', t('findings')));
+    const findings = el('section', 'findings');
+    if (snapshot.analysis?.findings.total) findings.append(el('h2', '', t('findings')));
     for (const { finding, related } of groupFindings(items(snapshot.analysis?.findings))) findings.append(findingCard(finding, related));
     if (snapshot.analysis?.findings?.nextOffset != null) findings.append(el('p', 'note', t('truncated')));
-    root.append(findings);
+    if (snapshot.analysis?.findings.total) root.append(findings);
+    root.append(threadInventoryView({ snapshot, snapshotCount: report.snapshotCount, locale, canRead: bridge.canCallTools,
+        async onOpen(endpoint) { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+            snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] })); } }));
     const limitations = append(el('details', 'coverage'), el('summary', '', t('coverage'))), list = el('ul');
     for (const warning of [...(report.warnings || []), ...(snapshot.analysis?.limitations || []), ...(report.limitations || [])]) list.append(el('li', '', warning));
     for (const s of report.sourceResults || []) if (!s.accepted) list.append(el('li', '', `Rejected input: ${s.name || s.label || s.sourceId}`));

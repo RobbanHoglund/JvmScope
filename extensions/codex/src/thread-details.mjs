@@ -26,9 +26,10 @@ export async function threadDetails(reports, jobs, { reportId, snapshotIndex, so
             endLine: Math.min(e.range.endLine, e.range.startLine + 59) })) }, signal);
     const threads = selected.map(context => {
         const measured = snapshot.measurements.threads.items.find(t => t.sourceKey === context.sourceKey);
+        const listed = snapshot.threadInventory?.items.find(t => t.sourceKey === context.sourceKey);
         const ref = snapshot.analysis.findings.items.flatMap(f => f.threads.items).find(t => t.sourceKey === context.sourceKey);
         const lines = evidence.ranges.find(r => r.sourceKey === context.sourceKey)?.lines || [];
-        return { sourceKey: context.sourceKey, name: context.threadName, state: measured?.state || ref?.state || null,
+        return { sourceKey: context.sourceKey, name: context.threadName, state: measured?.state || listed?.state || ref?.state || null,
             cpu: measured?.cpu || { percent: null, status: 'not-retained' },
             allocation: measured?.allocation || { bytesPerSecond: null, boundsBytesPerSecond: null, status: 'not-retained' },
             baseline: measured?.baseline || null, context, lines, highlights: stackHighlights(lines),

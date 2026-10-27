@@ -1,6 +1,6 @@
 import { formatRate } from './comparison.mjs';
 const words = {
-    en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads',
+    en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads', selectedSingle: 'selected thread',
         overview: 'Snapshot overview', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
         interval: 'Rates over snapshot interval', noInterval: 'No comparable baseline; rates are unavailable.',
         scope: 'CPU is relative to one logical CPU. Allocation rate is not retained memory.',
@@ -10,7 +10,7 @@ const words = {
         cycles: 'JVM-reported deadlock cycles elsewhere or among these threads in this snapshot', info: 'Report information',
         local: 'Parsed locally · results are shared with your AI host', timing: 'Evidence / plugin work',
         host: 'Source links and the host editor are independent. Timings exclude model reasoning and host rendering.' },
-    sv: { title: 'Valda trådar', language: 'Rapportspråk', snapshot: 'Snapshot', selected: 'valda trådar',
+    sv: { title: 'Valda trådar', language: 'Rapportspråk', snapshot: 'Snapshot', selected: 'valda trådar', selectedSingle: 'vald tråd',
         overview: 'Snapshotöversikt', compare: 'Jämför snapshots', allocation: 'Allokering', state: 'Tillstånd', unknown: 'Ej tillgängligt',
         interval: 'Mätvärden över snapshotintervallet', noInterval: 'Jämförbar startpunkt saknas; mätvärden är inte tillgängliga.',
         scope: 'CPU anges relativt en logisk CPU. Allokeringstakt är inte kvarhållet minne.',
@@ -31,7 +31,7 @@ export function threadDetailsView({ data, locale, version, canRead, onLanguage, 
     for (const [key, label] of [['en', 'English'], ['sv', 'Svenska']]) { const o = el('option', '', label); o.value = key; language.append(o); }
     language.value = locale; language.addEventListener('change', () => onLanguage(language.value)); header.append(heading, language); view.append(header);
     const context = el('div', 'snapshot-context');
-    context.append(el('strong', '', `${t('snapshot')} ${data.snapshotNumber} / ${data.snapshotCount} · ${data.threads.length} ${t('selected')}`), el('p', 'filename', data.source.name)); view.append(context);
+    context.append(el('strong', '', `${t('snapshot')} ${data.snapshotNumber} / ${data.snapshotCount} · ${data.threads.length} ${t(data.threads.length === 1 ? 'selectedSingle' : 'selected')}`), el('p', 'filename', data.source.name)); view.append(context);
     const nav = el('nav', 'focus-navigation');
     for (const [key, label] of [['snapshot', t('overview')], ['comparison', t('compare')]]) {
         if (key === 'comparison' && data.snapshotCount < 2) continue;

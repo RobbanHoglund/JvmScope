@@ -78,6 +78,26 @@ test('ZIP includes discoverable marketplace, manifests, skill, icon and dependen
     assert.ok((await readFile(path.join(plugin, 'LICENSE'))).length > 100);
 });
 
+test('no-findings reports retain Java and VM counts and verify source outside the rate leaders', async () => {
+    const capture = path.join(temporary, 'ordinary-java25.txt');
+    await cp(path.join(repo, 'extensions/codex/test/fixtures/no-findings-java25.txt'), capture);
+    const analysis = await call('analyze_thread_dumps', { paths: [capture] });
+    const rendered = await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId } });
+    assert.ok(!rendered.isError);
+    assert.equal(rendered.structuredContent.selectedThreadSummary.total, 22);
+    assert.equal(rendered.structuredContent.selectedThreadSummary.withJavaState, 20);
+    assert.equal(rendered.structuredContent.selectedThreadSummary.headerOnlyVmThreads, 2);
+    const snapshot = rendered._meta.jvmscopeReport.snapshots.items[0];
+    assert.equal(snapshot.threadInventory.items.length, 22);
+    const sourceKey = snapshot.threadInventory.items.at(-1).sourceKey;
+    const focused = await client.callTool({ name: 'render_thread_details', arguments: { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [sourceKey] } });
+    assert.ok(!focused.isError);
+    assert.match(focused.structuredContent.threads[0].lines[0].text, /VM Periodic Task Thread/);
+    assert.equal(focused.structuredContent.threads[0].cpu.percent, null);
+    await writeFile(capture, 'changed');
+    await fails('render_thread_details', { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [sourceKey] }, /changed since analysis/);
+});
+
 test('single-plugin ZIP has a root manifest and runs independently of the marketplace', async () => {
     const installed = path.join(temporary, 'single plugin import');
     const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));

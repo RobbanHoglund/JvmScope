@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 
-export async function startHost() {
+export async function startHost({ inventoryOnly = false, capturePath } = {}) {
     const repo = fileURLToPath(new URL('../../../', import.meta.url));
     const plugin = path.join(repo, 'build/codex-marketplace/plugins/jvmscope');
     const temporary = await mkdtemp(path.join(tmpdir(), 'jvmscope UI '));
@@ -37,7 +37,16 @@ export async function startHost() {
     const client = new Client({ name: 'jvmscope-ui-host-test', version: '1.0.0' });
     await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary }));
     const rendered = {}, calls = [];
-    for (const [name, paths, limit, language] of [
+    const noFindings = path.join(temporary, path.basename(capturePath || 'no-findings-java25.txt'));
+    const nativeOnly = path.join(temporary, 'vm-only.txt');
+    const large = path.join(temporary, 'bounded-inventory.txt');
+    if (inventoryOnly) {
+        await writeFile(noFindings, await readFile(capturePath || path.join(repo, 'extensions/codex/test/fixtures/no-findings-java25.txt')));
+        await writeFile(nativeOnly, 'Full thread dump OpenJDK 64-Bit Server VM:\n\n"VM Thread" os_prio=0 cpu=1.00ms elapsed=2.00s tid=0x1 nid=1 runnable\n');
+        await writeFile(large, 'Full thread dump OpenJDK 64-Bit Server VM:\n\n' + Array.from({ length: 240 }, (_, i) =>
+            `"${i < 2 ? '<svg/onload=alert(1)>' : `worker-${i}`}" #${i + 1} prio=5 tid=0x${(i + 1).toString(16)} nid=0x${(i + 1).toString(16)} runnable\n java.lang.Thread.State: RUNNABLE\n at sample.Service.run(Service.java:8)\n`).join('\n'));
+    }
+    const fixtures = inventoryOnly ? [['noFindings', [noFindings]], ['nativeOnly', [nativeOnly]], ['large', [large]]] : [
         ['deadlock', [capture]], ['long', [longName]], ['injection', [injection]],
         ['multi', [path.join(repo, 'extensions/codex/test/fixtures/multiple-deadlocks.txt')]],
         ['unmapped', [path.join(repo, 'frontend/test/tda/fixtures/unmapped-deadlock-participants.txt')]],
@@ -46,26 +55,29 @@ export async function startHost() {
         ['many', [many]],
         ['real', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')]],
         ['realSv', [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')], undefined, 'sv'],
-    ]) {
+    ];
+    for (const [name, paths, limit, language] of fixtures) {
         const result = await client.callTool({ name: 'analyze_thread_dumps', arguments: { paths, ...(limit ? { limit } : {}) } });
         if (result.isError) throw new Error(JSON.stringify(result));
         rendered[name] = await client.callTool({ name: 'render_thread_report', arguments: { reportId: result.structuredContent.reportId, ...(language ? { language } : {}) } });
     }
-    rendered.comparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId, view: 'comparison', offset: 0, limit: 4 } });
-    rendered.focused = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId,
-        snapshotIndex: 2, sourceKey: rendered.real._meta.jvmscopeReport.snapshots.items[2].deadlocks.items[0].participants.items[0].id } });
-    const focusKeys = rendered.real._meta.jvmscopeReport.snapshots.items[2].measurements.threads.items
-        .filter(t => ['scenario-cpu-and-allocation-hot', 'scenario-livelock-2-agent-1', 'scenario-livelock-2-agent-2'].includes(t.name)).map(t => t.sourceKey);
-    rendered.threads = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys } });
-    rendered.threadSv = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys, language: 'sv' } });
-    rendered.demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });
-    rendered.threadInjection = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.injection.structuredContent.reportId, snapshotIndex: 0,
-        sourceKeys: [rendered.injection._meta.jvmscopeReport.snapshots.items[0].deadlocks.items[0].participants.items[0].id] } });
-    const longStack = path.join(temporary, 'long-stack.txt');
-    await writeFile(longStack, 'Full thread dump OpenJDK 64-Bit Server VM:\n\n"long-worker" #1 prio=5 tid=0x1 nid=0x1 runnable\n java.lang.Thread.State: RUNNABLE\n'
-        + Array.from({ length: 80 }, (_, i) => ` at sample.Service.step${i}(Service.java:${i + 1})`).join('\n') + '\n');
-    const deep = (await client.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [longStack] } })).structuredContent;
-    rendered.deep = await client.callTool({ name: 'render_thread_details', arguments: { reportId: deep.reportId, snapshotIndex: 0, sourceKeys: [deep.snapshots.items[0].measurements.threads.items[0].sourceKey] } });
+    if (!inventoryOnly) {
+        rendered.comparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId, view: 'comparison', offset: 0, limit: 4 } });
+        rendered.focused = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId,
+            snapshotIndex: 2, sourceKey: rendered.real._meta.jvmscopeReport.snapshots.items[2].deadlocks.items[0].participants.items[0].id } });
+        const focusKeys = rendered.real._meta.jvmscopeReport.snapshots.items[2].measurements.threads.items
+            .filter(t => ['scenario-cpu-and-allocation-hot', 'scenario-livelock-2-agent-1', 'scenario-livelock-2-agent-2'].includes(t.name)).map(t => t.sourceKey);
+        rendered.threads = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys } });
+        rendered.threadSv = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.real.structuredContent.reportId, snapshotIndex: 2, sourceKeys: focusKeys, language: 'sv' } });
+        rendered.demo = await client.callTool({ name: 'show_thread_example', arguments: { language: 'sv' } });
+        rendered.threadInjection = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.injection.structuredContent.reportId, snapshotIndex: 0,
+            sourceKeys: [rendered.injection._meta.jvmscopeReport.snapshots.items[0].deadlocks.items[0].participants.items[0].id] } });
+        const longStack = path.join(temporary, 'long-stack.txt');
+        await writeFile(longStack, 'Full thread dump OpenJDK 64-Bit Server VM:\n\n"long-worker" #1 prio=5 tid=0x1 nid=0x1 runnable\n java.lang.Thread.State: RUNNABLE\n'
+            + Array.from({ length: 80 }, (_, i) => ` at sample.Service.step${i}(Service.java:${i + 1})`).join('\n') + '\n');
+        const deep = (await client.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [longStack] } })).structuredContent;
+        rendered.deep = await client.callTool({ name: 'render_thread_details', arguments: { reportId: deep.reportId, snapshotIndex: 0, sourceKeys: [deep.snapshots.items[0].measurements.threads.items[0].sourceKey] } });
+    }
 
     const uri = (await client.listTools()).tools.find(t => t.name === 'render_thread_report')._meta.ui.resourceUri;
     const html = (await client.readResource({ uri })).contents[0].text;
