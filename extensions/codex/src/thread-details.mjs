@@ -1,18 +1,6 @@
 import { resolveThreadEvidence } from './thread-evidence.mjs';
-
-export function stackHighlights(lines) {
-    const frames = lines.flatMap(({ line, text }) => {
-        const match = text.match(/^\s*at\s+(.+?)\s*$/);
-        if (!match) return [];
-        const frame = match[1], method = frame.slice(0, frame.indexOf('(')).replace(/^.*?\//, '');
-        return [{ line, text: frame, jdk: /^(java\.|javax\.|jdk\.|sun\.|com\.sun\.)/.test(method) }];
-    });
-    // This is a display filter, not proof that a frame belongs to the application.
-    const outside = frames.filter(f => !f.jdk && !f.text.includes('$$Lambda'));
-    return { items: (outside.length ? outside : frames).slice(0, 3),
-        selection: outside.length ? 'outside-jdk-packages' : 'first-recorded-frames',
-        recordedFrames: frames.length };
-}
+import { stackHighlights } from './stack-context.mjs';
+export { stackHighlights } from './stack-context.mjs';
 
 export async function threadDetails(reports, jobs, { reportId, snapshotIndex, sourceKeys }, signal) {
     const started = performance.now();

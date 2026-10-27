@@ -6,6 +6,8 @@ import { comparisonView } from './comparison.mjs';
 import { groupFindings } from './finding-groups.mjs';
 import { threadDetailsView } from './thread-details.mjs';
 import { threadInventoryView } from './thread-inventory.mjs';
+import { overviewThread } from '../src/stack-context.mjs';
+import { overviewThreadView } from './overview-thread.mjs';
 
 const root = document.getElementById('app');
 let focusedThreads = null;
@@ -13,7 +15,8 @@ let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 's
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
         records: 'Parsed thread records', javaStates: 'With Java state', prioritized: 'Prioritized findings',
-        noFindings: 'No prioritized findings from the available evidence. This does not establish health; inspect the threads and capture limits below.',
+        noFindings: 'No prioritized findings from the available evidence. This does not establish health.',
+        conclusion: 'Snapshot conclusion', cycleConclusion: 'JVM-reported deadlock cycles', nextCapture: 'If symptoms persist, compare another capture and inspect the relevant thread stacks.',
         comparisonTitle: 'Snapshot comparison', compare: 'Compare snapshots', snapshotView: 'Snapshot details', cached: 'Cached analysis', context: 'Viewing snapshot', editorContext: 'Evidence inside this report follows the selected snapshot. A file opened from chat may show another snapshot.',
         example: 'Synthetic example · bundled Java deadlock', holding: 'Holds', unknownHolding: 'Not established in the matched thread block', moreLocks: 'additional reported locks',
         snapshots: 'Snapshots analyzed', cyclesCount: 'Cycles · selected snapshot', threadsCount: 'Matched deadlocked threads', files: 'Selected capture files', snapshot: 'Snapshot',
@@ -36,7 +39,8 @@ const copy = {
         refreshed: 'Source hash matches the analyzed capture.', readMore: 'Next source lines', language: 'Report language', original: 'Original analyzer diagnostics (English)', originalFinding: 'Untranslated finding (English)', mappedParticipant: 'JVM-reported participant', unmappedParticipant: 'Unmatched participant', observed: 'Snapshots with reported cycles', originalCount: 'Reported participant entries'  },
     sv: { title: 'Trådanalys', critical: 'Kritisk', high: 'Hög', medium: 'Granska', info: 'Information', neutral: 'Inga prioriterade fynd',
         records: 'Inlästa trådposter', javaStates: 'Med Java-tillstånd', prioritized: 'Prioriterade fynd',
-        noFindings: 'Inga prioriterade fynd utifrån tillgängligt underlag. Det bevisar inte att allt fungerar; granska trådarna och begränsningarna nedan.',
+        noFindings: 'Inga prioriterade fynd utifrån tillgängligt underlag. Det bevisar inte att allt fungerar.',
+        conclusion: 'Slutsats för denna snapshot', cycleConclusion: 'JVM-rapporterade deadlockcykler', nextCapture: 'Om symtomen kvarstår, jämför en ny dump och granska de berörda trådarnas stackar.',
         comparisonTitle: 'Jämför snapshots', compare: 'Jämför snapshots', snapshotView: 'Snapshotdetaljer', cached: 'Sparad analys', context: 'Visar snapshot', editorContext: 'Källbevis i rapporten följer vald snapshot. En fil öppnad från chatten kan visa en annan snapshot.',
         example: 'Syntetiskt exempel · medföljande Java-deadlock', holding: 'Håller', unknownHolding: 'Inte fastställt i det matchade trådblocket', moreLocks: 'ytterligare rapporterade lås',
         snapshots: 'Analyserade snapshots', cyclesCount: 'Cykler · vald snapshot', threadsCount: 'Matchade deadlock-trådar', files: 'Valda dumpfiler', snapshot: 'Snapshot',
@@ -101,7 +105,9 @@ function receive(result) {
         if (found >= 0) { cycleIndex = found; selection = items(cycles[found].participants).find(p => p.id === focus.sourceKey); }
         else {
             const metric = current()?.measurements?.threads.items.find(t => t.sourceKey === focus.sourceKey);
-            if (metric) selection = { id: metric.sourceKey, name: metric.name, evidence: metric.current.range };
+            const listed = current()?.threadInventory?.items.find(t => t.sourceKey === focus.sourceKey);
+            if (listed) selection = { id: listed.sourceKey, name: listed.name, evidence: listed.range };
+            else if (metric) selection = { id: metric.sourceKey, name: metric.name, evidence: metric.current.range };
         }
     }
     clearTimeout(dataDeadline); render();
@@ -281,6 +287,21 @@ function render() {
     }
     const stats = el('div', 'summary');
     const deadlock = snapshot.analysis?.deadlockSummary;
+    const focus = overviewThread(snapshot, selection?.id);
+    const conclusion = el('section', 'snapshot-conclusion');
+    conclusion.setAttribute('aria-label', t('conclusion'));
+    conclusion.append(el('span', 'muted', `${t('conclusion')} · ${snapshot.index + 1} / ${report.snapshotCount}`),
+        el('h2', '', snapshot.deadlocks?.total ? `${snapshot.deadlocks.total} ${t('cycleConclusion')}` : t('noCycle')));
+    if (report.status === 'partial' || report.warnings?.length) conclusion.append(el('p', 'note', t('partial')));
+    const firstFinding = items(snapshot.analysis?.findings)[0];
+    if (snapshot.deadlocks?.total) conclusion.append(el('p', '', t('recommendation')));
+    else if (firstFinding) conclusion.append(el('p', '', findingOverview(firstFinding, locale)), el('p', 'muted', t('noCycleNote')));
+    else conclusion.append(el('p', 'no-findings', t('noFindings')));
+    if (focus && !snapshot.deadlocks?.total) conclusion.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
+        async onOpen(sourceKey) { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+            snapshotIndex: snapshot.index, sourceKeys: [sourceKey] })); } }));
+    else if (!snapshot.deadlocks?.total && !firstFinding) conclusion.append(el('p', 'muted', t('nextCapture')));
+    root.append(conclusion);
     const cards = snapshot.deadlocks?.total
         ? [[deadlock?.cycles ?? snapshot.deadlocks.total, t('cyclesCount'), true], [deadlock?.matchedThreads ?? '—', t('threadsCount')], [report.snapshotCount, t('snapshots')]]
         : [[snapshot.threadCount, t('records')], [snapshot.threadSummary?.withJavaState ?? '—', t('javaStates')], [snapshot.analysis?.findings.total ?? 0, t('prioritized')]];
@@ -304,7 +325,6 @@ function render() {
     context.append(el('strong', '', `${t('context')} ${snapshot.index + 1} / ${report.snapshotCount}`));
     const filename = el('p', 'filename', src?.name || snapshot.sourcePath); filename.title = snapshot.sourcePath;
     context.append(filename); root.append(context);
-    if (report.status === 'partial' || report.warnings?.length) root.append(el('p', 'note', t('partial')));
     const cycles = items(snapshot.deadlocks), panel = el('section', 'panel');
     if (cycles.length) {
         const cycle = cycles[cycleIndex] || cycles[0];
@@ -319,14 +339,14 @@ function render() {
         if (items(cycle.participants).some(p => p.mappingStatus !== 'resolved' || p.ownerMappingStatus !== 'resolved')) panel.append(el('p', 'note', t('unmapped')));
         if (snapshot.deadlocks.nextOffset != null || cycle.participants.nextOffset != null) panel.append(el('p', 'note', t('truncated')));
         if (selection && items(cycle.participants).some(p => p.id === selection.id)) panel.append(evidencePanel(selection));
-        append(root, panel, append(el('div', 'action'), el('h3', '', t('action')), el('p', '', t('recommendation'))));
-    } else {
-        const hasFindings = snapshot.analysis?.findings.total > 0;
-        panel.classList.toggle('no-findings-panel', !hasFindings);
-        root.append(append(panel, append(el('div', 'no-cycle'), el('h2', '', t('noCycle')),
-            el('p', hasFindings ? '' : 'no-findings', t(hasFindings ? 'noCycleNote' : 'noFindings')))));
+        root.append(panel);
     }
-    if (selection && !cycles.some(c => items(c.participants).some(p => p.id === selection.id))) root.append(evidencePanel(selection));
+    if (selection && !cycles.some(c => items(c.participants).some(p => p.id === selection.id))) {
+        if (focus && cycles.length) root.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
+            async onOpen(sourceKey) { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+                snapshotIndex: snapshot.index, sourceKeys: [sourceKey] })); } }));
+        else if (!focus) root.append(evidencePanel(selection));
+    }
     const findings = el('section', 'findings');
     if (snapshot.analysis?.findings.total) findings.append(el('h2', '', t('findings')));
     for (const { finding, related } of groupFindings(items(snapshot.analysis?.findings))) findings.append(findingCard(finding, related));

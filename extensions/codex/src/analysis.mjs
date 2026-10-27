@@ -4,6 +4,7 @@ import { explainIssueSections } from '../../../frontend/assets/javautils/tls-exp
 import { parseGcLog, analyzeGc } from '../../../frontend/assets/javautils/gc/parser.js';
 import { sourceInfo } from './captures.mjs';
 import { threadMeasurements } from './thread-metrics.mjs';
+import { stackContext } from './stack-context.mjs';
 
 export function page(items, offset = 0, limit = 10) {
     return { total: items.length, offset, limit, nextOffset: offset + limit < items.length ? offset + limit : null, items: items.slice(offset, offset + limit) };
@@ -46,7 +47,7 @@ export function analyzeThreads(captures, { offset = 0, limit = 10, includeCached
         // This source-ordered list is independent of the bounded rate-leader list.
         const inventory = d.threads.slice(0, 200).map(t => ({ sourceKey: t.sourceKey, name: t.threadName,
             state: t.javaState || null, topFrame: t.topFrame || null, stackFrames: t.stackFrames,
-            range: evidenceFor(t) }));
+            range: evidenceFor(t), stackContext: stackContext(t.stackLines, t.javaState) }));
         return { measurements: threadMeasurements(d, result.parsedDumps[position - 1], captures),
             threadInventory: { total: d.threads.length, shown: inventory.length, omitted: d.threads.length - inventory.length,
                 items: inventory, selection: 'First 200 parsed thread records in source order; omitted records are not searched or displayed. Inspect the original capture for other records.' },

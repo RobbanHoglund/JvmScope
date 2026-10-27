@@ -87,6 +87,11 @@ test('no-findings reports retain Java and VM counts and verify source outside th
     assert.equal(rendered.structuredContent.selectedThreadSummary.total, 22);
     assert.equal(rendered.structuredContent.selectedThreadSummary.withJavaState, 20);
     assert.equal(rendered.structuredContent.selectedThreadSummary.headerOnlyVmThreads, 2);
+    const observation = rendered.structuredContent.selectedThreadObservation;
+    assert.equal(observation.reason, 'main-http-wait');
+    assert.equal(observation.thread.state, 'WAITING');
+    assert.equal(observation.thread.stackContext.observation, 'jdk-http-send-wait');
+    assert.match(observation.thread.stackContext.frame, /StatusClient\.java:152/);
     const snapshot = rendered._meta.jvmscopeReport.snapshots.items[0];
     assert.equal(snapshot.threadInventory.items.length, 22);
     const sourceKey = snapshot.threadInventory.items.at(-1).sourceKey;

@@ -18,6 +18,11 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
     await expect(f.locator('.inventory-limits')).toContainText('One snapshot');
     await expect(f.getByRole('heading', { name: 'Findings in this snapshot' })).toHaveCount(0);
     await expect(f.locator('.no-findings')).toContainText('does not establish health');
+    await expect(f.locator('.snapshot-conclusion')).toContainText('No JVM-reported deadlock');
+    await expect(f.locator('.overview-thread')).toContainText('Parked in CompletableFuture.get inside HttpClient.send');
+    await expect(f.locator('.overview-frame')).toContainText('StatusClient.java:152');
+    expect(await f.locator('.snapshot-conclusion').evaluate(n => n.compareDocumentPosition(document.querySelector('.summary')) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
+    expect((await f.locator('.overview-next').boundingBox()).y).toBeLessThan(600);
     await expect(f.locator('.inventory-row')).toHaveCount(8);
     await expect(f.getByRole('button', { name: 'Show all 22', exact: true })).toHaveAttribute('aria-expanded', 'false');
     const offset = host.calls.length;
@@ -50,6 +55,7 @@ test('VM records outside the measurement leaders remain inspectable without inve
     await page.goto(host.url + '?case=nativeOnly');
     await expect(f.locator('.inventory-native-only')).toContainText('Only header-only VM records');
     await expect(f.locator('.summary strong')).toHaveText(['1', '0', '0']);
+    await expect(f.locator('.overview-thread')).toHaveCount(0);
 });
 
 test('inventory filtering and bounded paging preserve duplicate identities and escaped labels', async ({ page }) => {
@@ -83,6 +89,8 @@ test('no-findings overview remains readable in both themes, languages and narrow
         await expect(f.getByRole('heading', { name: 'Trådar i denna snapshot' })).toBeVisible();
         await expect(f.locator('.inventory-summary')).toContainText('20 med Java-tillstånd');
         await expect(f.locator('.inventory-limits')).toContainText('En snapshot');
+        await expect(f.locator('.overview-thread')).toContainText('Nästa kontroll:');
+        await expect(f.getByRole('button', { name: 'Visa alla 22', exact: true })).toBeVisible();
         expect(await f.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1)).toBe(false);
         await page.screenshot({ path: previews + `no-findings-${theme}-${width}.png`, fullPage: true });
     }
@@ -91,4 +99,21 @@ test('no-findings overview remains readable in both themes, languages and narrow
     await f.getByRole('searchbox', { name: 'Find a thread' }).fill('main');
     await expect(f.locator('.inventory-row')).toHaveCount(1);
     await expect(f.getByText('This host cannot open thread details. Ask for the named thread in the conversation.')).toBeVisible();
+});
+
+test('overview stack action opens only the observed thread and language follows navigation', async ({ page }) => {
+    await page.goto(host.url + '?case=noFindings&locale=sv'); const f = widget(page);
+    // The explicit tool language is authoritative, even with a Swedish host locale.
+    await expect(f.getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
+    const before = host.calls.length;
+    await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');
+    await f.getByRole('button', { name: 'Granska stack', exact: true }).click();
+    await expect(f.locator('.snapshot-context')).toContainText('1 vald tråd');
+    await expect(f.locator('.frame-location')).toHaveText('StatusClient.java:152');
+    expect(host.calls.slice(before).map(c => c.name)).toEqual(['render_thread_details']);
+    expect(host.calls.at(-1).arguments.language).toBe('sv');
+    await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
+    await f.getByRole('button', { name: 'Snapshot overview' }).click();
+    await expect(f.locator('.overview-next')).toContainText('Next check:');
+    expect(host.calls.at(-1).arguments.language).toBe('en');
 });

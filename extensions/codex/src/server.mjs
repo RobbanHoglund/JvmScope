@@ -8,6 +8,7 @@ import { createReports } from './reports.mjs';
 import { resolveThreadEvidence } from './thread-evidence.mjs';
 import { comparisonSummary } from './thread-metrics.mjs';
 import { threadDetails } from './thread-details.mjs';
+import { overviewThread } from './stack-context.mjs';
 
 const pluginRoot = new URL('../', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('plugin.json', pluginRoot), 'utf8'));
@@ -31,6 +32,7 @@ function threadReportResult(report, language, { view = 'snapshot', snapshotIndex
         structuredContent: { reportId: report.reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
             findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations,
             selectedSnapshotIndex: selected?.index, cache: report.cache,
+            selectedThreadObservation: overviewThread(selected, sourceKey),
             selectedThreadSummary: selected ? { ...selected.threadSummary, states: selected.states,
                 parsingStatus: selected.parsingStatus, diagnostics: selected.diagnostics,
                 qualification: 'Thread records with Java states and header-only VM records are different counts. No findings does not establish health.' } : null,
