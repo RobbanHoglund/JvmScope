@@ -84,3 +84,29 @@ test('late navigation errors do not disturb a newer selection', async ({ page })
         await expect(f.getByText('Delayed old error')).toHaveCount(0);
     } finally { held.release(); }
 });
+
+test('a cache miss during comparison paging preserves the requested view, page and language', async ({ page }) => {
+    await page.goto(host.url + '?case=assessmentSeries'); const f = widget(page);
+    await page.evaluate(async () => {
+        const data = await (await fetch('/data?case=assessmentSeries')).json();
+        const result = await (await fetch('/tool', { method: 'POST', body: JSON.stringify({ name: 'render_thread_report', arguments: {
+            reportId: data.structuredContent.reportId, view: 'comparison', language: 'sv', offset: 0, limit: 1 } }) })).json();
+        document.querySelector('iframe').contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: result }, '*');
+    });
+    await expect(f.getByRole('heading', { name: 'Jämför snapshots', exact: true })).toBeVisible();
+    let missed = false;
+    await page.route('**/tool', async route => {
+        const call = route.request().postDataJSON();
+        if (!missed && call.name === 'render_thread_report' && call.arguments.offset === 1) {
+            missed = true;
+            await route.fulfill({ json: { isError: true, content: [{ type: 'text', text: 'SNAPSHOTS_NOT_CACHED: Analyze the requested page again with offset/limit.' }] } });
+        } else await route.continue();
+    });
+    await f.getByRole('button', { name: 'Nästa snapshots', exact: true }).click();
+    await expect(f.getByRole('button', { name: 'Föregående snapshots', exact: true })).toBeVisible();
+    await expect(f.getByRole('heading', { name: 'Jämför snapshots', exact: true })).toBeVisible();
+    await expect(f.getByRole('combobox', { name: 'Rapportspråk', exact: true })).toHaveValue('sv');
+    const calls = await page.evaluate(() => window.completedCalls);
+    expect(calls.map(c => c.name)).toEqual(['render_thread_report', 'analyze_thread_dumps', 'render_thread_report']);
+    expect(calls.at(-1).arguments).toMatchObject({ view: 'comparison', language: 'sv', offset: 1, limit: 1 });
+});

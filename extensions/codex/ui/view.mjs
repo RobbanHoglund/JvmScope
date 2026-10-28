@@ -191,7 +191,9 @@ async function loadPage(offset, b) {
             catch (error) {
                 if (!isCurrent()) return;
                 if (!error.message.startsWith('SNAPSHOTS_NOT_CACHED:')) throw error;
-                return bridge.callTool('analyze_thread_dumps', { paths, offset, limit: args.limit });
+                const analysis = await bridge.callTool('analyze_thread_dumps', { paths, offset, limit: args.limit });
+                if (!isCurrent()) return;
+                return bridge.callTool('render_thread_report', { ...args, reportId: analysis.structuredContent.reportId });
             }
         });
     }
