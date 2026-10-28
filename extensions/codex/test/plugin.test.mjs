@@ -322,7 +322,7 @@ test('MCP Apps report resolves its bundled UI and preserves cached evidence with
     assert.equal(rendered._meta.jvmscopeTimings.captureReads, 0);
     assert.equal(rendered._meta.jvmscopeTimings.parserRuns, 0);
     assert.match(rendered._meta.jvmscopeTimings.scope, /excludes transport, AI and host rendering/);
-    assert.match(rendered.content[0].text, /diagnostic conclusion and next check/);
+    assert.match(rendered.content[0].text, /diagnostic conclusion.*next check/);
     assert.doesNotMatch(rendered.content[0].text, /if no widget is visible|couldn.t verify/i);
     const swedish = await client.callTool({ name: 'render_thread_report', arguments: { reportId: report.reportId, language: 'sv' } });
     assert.equal(swedish._meta.jvmscopeLanguage, 'sv');
@@ -354,7 +354,11 @@ test('AI conclusion is carried into the widget without changing findings or leak
     assert.equal(r._meta.jvmscopeConclusion.summary, conclusion.summary);
     assert.deepEqual(r._meta.jvmscopeConclusion.scope, { view: 'snapshot', snapshots: [0] });
     assert.deepEqual(r._meta.jvmscopeReport.snapshots.items[0].analysis, data.snapshots.items[0].analysis);
-    assert.match(r.content[0].text, /do not repeat them below/);
+    assert.match(r.content[0].text, /Answer the user in chat/);
+    assert.doesNotMatch(r.content[0].text, /do not repeat them below|short acknowledgment/i);
+    assert.equal(r.structuredContent.chatAnswer.summary, conclusion.summary);
+    assert.equal(r.structuredContent.chatAnswer.nextCheck, conclusion.nextCheck);
+    assert.ok(r.content[0].text.includes(conclusion.summary));
     const next = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, snapshotIndex: 1 } });
     assert.equal(next._meta.jvmscopeConclusion, null);
     const back = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, snapshotIndex: 0, language: 'sv' } });
@@ -370,6 +374,10 @@ test('AI conclusion is carried into the widget without changing findings or leak
     assert.equal(partial._meta.jvmscopeConclusion, null);
     const row = data.snapshots.items[0].threadInventory.items[0];
     const focus = await client.callTool({ name: 'render_thread_details', arguments: { reportId: data.reportId, snapshotIndex: 0, sourceKeys: [row.sourceKey], conclusion } });
+    assert.deepEqual(focus.structuredContent.chatAnswer, r.structuredContent.chatAnswer);
+    assert.match(focus.content[0].text, /Answer the user in chat/);
+    assert.ok(focus.content[0].text.includes(conclusion.nextCheck));
+    assert.doesNotMatch(focus.content[0].text, /Do not repeat them below/);
     assert.ok(!focus.isError, JSON.stringify(focus));
     assert.deepEqual(focus._meta.jvmscopeConclusion.scope, { view: 'threads', snapshots: [0], sourceKeys: [row.sourceKey] });
 });
