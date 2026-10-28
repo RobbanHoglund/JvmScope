@@ -339,6 +339,20 @@ test('AI conclusion is carried into the widget without changing findings or leak
     assert.deepEqual(focus._meta.jvmscopeConclusion.scope, { view: 'threads', snapshots: [0], sourceKeys: [row.sourceKey] });
 });
 
+test('thread-specific overview assessments cannot replace another thread or the snapshot assessment', async () => {
+    const data = await call('analyze_thread_dumps', { paths: [sample('confirmed-deadlock.txt')] });
+    const [one, two] = data.snapshots.items[0].threadInventory.items;
+    const render = args => client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, snapshotIndex: 0, ...args } });
+    const general = { summary: 'Snapshot-wide assessment.', nextCheck: 'Review both participants.' };
+    const focused = { summary: 'Assessment of the first thread only.', nextCheck: 'Review its acquisition path.' };
+    await render({ conclusion: general });
+    const first = await render({ sourceKey: one.sourceKey, conclusion: focused });
+    assert.deepEqual(first._meta.jvmscopeConclusion.scope, { view: 'snapshot', snapshots: [0], sourceKeys: [one.sourceKey] });
+    assert.equal((await render({ sourceKey: two.sourceKey }))._meta.jvmscopeConclusion, null);
+    assert.equal((await render({}))._meta.jvmscopeConclusion.summary, general.summary);
+    assert.equal((await render({ sourceKey: one.sourceKey }))._meta.jvmscopeConclusion.summary, focused.summary);
+});
+
 test('series comparison uses the unchanged engine and snapshot pagination', async () => {
     const paths = [fixture('ga-regressions/allocation-before.txt'), fixture('ga-regressions/allocation-after.txt')];
     const direct = analyzeThreadDumpData(await Promise.all(paths.map(async (p, i) => ({ id: `source:${i}`, name: path.basename(p), text: await readFile(p, 'utf8') }))));
@@ -614,5 +628,5 @@ test('explicit snapshot focus cannot silently fall back to a different page or c
     assert.equal(selected.structuredContent.selectedSnapshotIndex, 2);
     assert.equal(selected._meta.jvmscopeFocus.snapshotIndex, 2);
     assert.equal(selected._meta.jvmscopeFocus.sourceKey, sourceKey);
-    assert.deepEqual(selected._meta.jvmscopeConclusion.scope, { view: 'snapshot', snapshots: [2] });
+    assert.deepEqual(selected._meta.jvmscopeConclusion.scope, { view: 'snapshot', snapshots: [2], sourceKeys: [sourceKey] });
 });

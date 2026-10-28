@@ -14,6 +14,7 @@ const root = document.getElementById('app');
 let focusedThreads = null;
 let reportTimings = null;
 let aiConclusion = null;
+let overviewSourceKey = null;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
@@ -99,6 +100,7 @@ function receive(result) {
     if (['en', 'sv'].includes(result?._meta?.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
     document.documentElement.lang = locale;
     const focus = result?._meta?.jvmscopeFocus;
+    overviewSourceKey = focus?.sourceKey || null;
     report = candidate; focusedThreads = null;
     activeView = focus?.view || 'snapshot';
     snapshotIndex = Math.max(0, focus?.snapshotIndex != null ? items(report.snapshots).findIndex(s => s.index === focus.snapshotIndex)
@@ -282,7 +284,8 @@ function renderContent() {
     language.value = locale; language.addEventListener('change', () => { locale = language.value; document.documentElement.lang = locale; render(); });
     append(root, append(el('header', 'header'), heading, append(el('div', 'header-actions'), badge(severity), language)));
     const assessment = aiConclusionView({ conclusion: aiConclusion, reportId: report.reportId, locale,
-        scope: { view: activeView, snapshots: activeView === 'comparison' ? report.snapshots.items.map(s => s.index) : [snapshot.index] } });
+        scope: { view: activeView, snapshots: activeView === 'comparison' ? report.snapshots.items.map(s => s.index) : [snapshot.index],
+            ...(activeView === 'snapshot' && overviewSourceKey ? { sourceKeys: selection ? [selection.id] : [] } : {}) } });
     if (assessment) root.append(assessment);
     if (report.example?.synthetic) root.append(el('p', 'example-label muted', t('example')));
     if (report.snapshotCount > 1) {

@@ -86,6 +86,10 @@ export async function startHost({ inventoryOnly = false, conclusionOnly = false,
         const row = rendered.noFindings._meta.jvmscopeReport.snapshots.items[0].threadInventory.items[0];
         rendered.assessmentThread = await client.callTool({ name: 'render_thread_details', arguments: { reportId: rendered.noFindings.structuredContent.reportId,
             snapshotIndex: 0, sourceKeys: [row.sourceKey], conclusion: summaries.noFindings } });
+        const participant = rendered.assessmentDeadlock._meta.jvmscopeReport.snapshots.items[0].deadlocks.items[0].participants.items[0];
+        rendered.assessmentFocusedOverview = await client.callTool({ name: 'render_thread_report', arguments: {
+            reportId: rendered.assessmentDeadlock.structuredContent.reportId, snapshotIndex: 0, sourceKey: participant.id,
+            conclusion: { summary: 'Assessment of this participant only.', nextCheck: 'Inspect its lock acquisition path.' } } });
     }
     if (!inventoryOnly) {
         rendered.comparison = await client.callTool({ name: 'render_thread_report', arguments: { reportId: rendered.real.structuredContent.reportId, view: 'comparison', offset: 0, limit: 4 } });

@@ -100,7 +100,8 @@ function createServer() {
                 if (conclusion) throw new Error('Cannot attach a conclusion to an empty snapshot page.');
                 return threadReportResult(report, language, focus);
             }
-            const scope = { view: focus.view, snapshots: focus.view === 'comparison' ? report.snapshots.items.map(s => s.index) : [selected.index] };
+            const scope = { view: focus.view, snapshots: focus.view === 'comparison' ? report.snapshots.items.map(s => s.index) : [selected.index],
+                ...(focus.view === 'snapshot' && focus.sourceKey ? { sourceKeys: [focus.sourceKey] } : {}) };
             return threadReportResult(report, language, focus, reports.conclusion(reportId, scope, language, conclusion));
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });

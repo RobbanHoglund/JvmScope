@@ -96,3 +96,13 @@ test('overview to a main-thread explanation presents the new assessment before t
     await f.getByRole('button', { name: 'Granska stack', exact: true }).click();
     await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);
 });
+
+test('a thread-specific overview assessment disappears when another graph participant is selected', async ({ page }) => {
+    await page.goto(host.url + '?case=assessmentFocusedOverview'); const f = widget(page);
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of this participant only.');
+    const selected = await f.locator('.node[aria-pressed="true"]').getAttribute('data-participant');
+    await f.locator('.node[aria-pressed="false"]').click();
+    await expect(f.locator('.ai-conclusion')).toHaveCount(0);
+    await f.locator('.node').evaluateAll((nodes, selected) => nodes.find(n => n.dataset.participant === selected).click(), selected);
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of this participant only.');
+});
