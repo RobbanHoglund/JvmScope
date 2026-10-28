@@ -106,3 +106,32 @@ test('a thread-specific overview assessment disappears when another graph partic
     await f.locator('.node').evaluateAll((nodes, selected) => nodes.find(n => n.dataset.participant === selected).click(), selected);
     await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of this participant only.');
 });
+
+test('switching between overview and comparison restores each cached assessment', async ({ page }) => {
+    await page.goto(host.url + '?case=assessmentComparison'); const f = widget(page);
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('These two captures have no comparable rates.');
+    await f.getByRole('button', { name: 'Snapshot details', exact: true }).click();
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
+    await f.getByRole('button', { name: 'Compare snapshots', exact: true }).click();
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('These two captures have no comparable rates.');
+    await f.getByRole('button', { name: 'Snapshot details', exact: true }).click();
+    await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption('1');
+    await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 2');
+    await expect(f.locator('.ai-conclusion')).toHaveCount(0);
+    await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption('0');
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
+});
+
+test('hosts without tools keep local snapshot and view navigation without inventing assessments', async ({ page }) => {
+    await page.goto(host.url + '?case=assessmentSeries&noTools'); const f = widget(page);
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
+    await f.getByRole('button', { name: 'Compare snapshots', exact: true }).click();
+    await expect(f.locator('.comparison')).toBeVisible();
+    await expect(f.locator('.ai-conclusion')).toHaveCount(0);
+    await f.getByRole('button', { name: 'Snapshot details', exact: true }).click();
+    await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption('1');
+    await expect(f.locator('.ai-conclusion')).toHaveCount(0);
+    await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption('0');
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
+    expect(await page.evaluate(() => window.completedCalls.length)).toBe(0);
+});

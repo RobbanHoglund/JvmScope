@@ -206,12 +206,25 @@ function footer() {
     return append(el('footer', 'footer'), el('span', '', t('local')), information);
 }
 async function switchView(view, b) {
-    if (view === 'snapshot' || (report.snapshots.offset === 0 && report.snapshots.items.length === report.snapshotCount && report.snapshotCount <= 4)) {
+    if (view === activeView) return;
+    if (!bridge.canCallTools) {
+        if (view === 'comparison' && !canCompareLocally()) return;
         activeView = view; render(); return;
     }
     b.disabled = true;
-    try { await navigateTool('render_thread_report', { reportId: report.reportId, language: locale, view, offset: 0, limit: 4 }); }
+    try { await navigateTool('render_thread_report', { reportId: report.reportId, language: locale, view,
+        ...(view === 'comparison' ? { offset: 0, limit: 4 } : {
+            snapshotIndex: current().index, offset: report.snapshots.offset, limit: report.snapshots.limit || 10 }) }); }
     catch (error) { b.disabled = false; b.textContent = error.message; }
+}
+const canCompareLocally = () => report.snapshots.offset === 0 && report.snapshots.items.length === report.snapshotCount && report.snapshotCount <= 4;
+async function switchSnapshot(select) {
+    const index = Number(select.value);
+    if (!bridge.canCallTools) { snapshotIndex = index; cycleIndex = 0; selection = null; render(); return; }
+    select.disabled = true;
+    try { await navigateTool('render_thread_report', { reportId: report.reportId, language: locale, view: 'snapshot',
+        snapshotIndex: report.snapshots.items[index].index, offset: report.snapshots.offset, limit: report.snapshots.limit || 10 }); }
+    catch (error) { select.disabled = false; select.value = snapshotIndex; root.append(el('p', 'error', error.message)); }
 }
 async function comparisonEvidence(endpoint, content) {
     const epoch = ++evidenceEpoch;
@@ -308,7 +321,8 @@ function renderContent() {
     if (report.snapshotCount > 1) {
         const tabs = el('nav', 'view-tabs'); tabs.setAttribute('aria-label', t('title'));
         for (const [view, label] of [['snapshot', t('snapshotView')], ['comparison', t('compare')]]) {
-            const b = button(label, () => switchView(view, b)); b.setAttribute('aria-pressed', String(activeView === view)); tabs.append(b);
+            const b = button(label, () => switchView(view, b)); b.setAttribute('aria-pressed', String(activeView === view));
+            b.disabled = !bridge.canCallTools && view === 'comparison' && !canCompareLocally(); tabs.append(b);
         }
         root.append(tabs);
     }
@@ -350,7 +364,7 @@ function renderContent() {
     if (report.snapshotCount > 1) {
     const toolbar = el('div', 'toolbar'), select = el('select'); select.setAttribute('aria-label', t('snapshot'));
     items(report.snapshots).forEach((s, i) => { const source = report.sources.find(c => c.path === s.sourcePath); const o = el('option', '', `${s.index + 1} · ${source?.name || s.sourcePath}`); o.value = i; select.append(o); });
-    select.value = snapshotIndex; select.addEventListener('change', () => { snapshotIndex = Number(select.value); cycleIndex = 0; selection = null; render(); });
+    select.value = snapshotIndex; select.addEventListener('change', () => { void switchSnapshot(select); });
     toolbar.append(append(el('label', '', t('snapshot')), select));
     if (report.snapshots.offset) { const b = button(t('previous'), () => loadPage(Math.max(0, report.snapshots.offset - (report.snapshots.limit || 10)), b)); b.disabled = !bridge.canCallTools; toolbar.append(b); }
     if (report.snapshots.nextOffset != null) { const b = button(t('next'), () => loadPage(report.snapshots.nextOffset, b)); b.disabled = !bridge.canCallTools; toolbar.append(b); }

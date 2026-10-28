@@ -65,7 +65,7 @@ test('changing snapshot while a stack loads keeps the new snapshot selected', as
         await held.ready;
         await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption('1');
         await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 2');
-        held.release(); await delivered(page, 1);
+        held.release(); await delivered(page, 2);
         await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 2');
         await expect(f.locator('.thread-focus-card')).toHaveCount(0);
     } finally { held.release(); }
