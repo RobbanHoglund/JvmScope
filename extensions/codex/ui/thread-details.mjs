@@ -3,7 +3,8 @@ import { aiConclusionView } from './ai-conclusion.mjs';
 const words = {
     en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads', selectedSingle: 'selected thread',
         overview: 'Snapshot overview', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
-        interval: 'Rates over snapshot interval', noInterval: 'No comparable baseline; rates are unavailable.',
+        interval: 'Rates over snapshot interval', noInterval: 'No comparable baseline; CPU and allocation rates are unavailable.',
+        noCounters: 'CPU and allocation rates are unavailable for this thread; review measurement coverage below.',
         evidenceOnly: 'Stack evidence — no separate AI assessment has been prepared for this selection.',
         scope: 'CPU is relative to one logical CPU. Allocation rate is not retained memory.',
         stack: 'Recorded stack', frameNote: 'Highlights use package names to select frames outside the JDK; they may be application or library code.',
@@ -14,7 +15,8 @@ const words = {
         host: 'Source links and the host editor are independent. Timings exclude model reasoning and host rendering.' },
     sv: { title: 'Valda trådar', language: 'Rapportspråk', snapshot: 'Snapshot', selected: 'valda trådar', selectedSingle: 'vald tråd',
         overview: 'Snapshotöversikt', compare: 'Jämför snapshots', allocation: 'Allokering', state: 'Tillstånd', unknown: 'Ej tillgängligt',
-        interval: 'Mätvärden över snapshotintervallet', noInterval: 'Jämförbar startpunkt saknas; mätvärden är inte tillgängliga.',
+        interval: 'Mätvärden över snapshotintervallet', noInterval: 'Jämförbar startpunkt saknas; CPU- och allokeringstakt kan inte beräknas.',
+        noCounters: 'CPU- och allokeringstakt saknas för denna tråd; se mätunderlaget nedan.',
         evidenceOnly: 'Stackunderlag — ingen separat AI-bedömning har gjorts för detta urval.',
         scope: 'CPU anges relativt en logisk CPU. Allokeringstakt är inte kvarhållet minne.',
         stack: 'Registrerad stack', frameNote: 'Urvalet använder paketnamn för ramar utanför JDK; de kan tillhöra applikationen eller ett bibliotek.',
@@ -45,15 +47,21 @@ export function threadDetailsView({ data, locale, version, conclusion, canRead, 
         const b = button(label, async () => { b.disabled = true; try { await onNavigate(key); } catch (e) { b.disabled = !canRead; view.append(el('p', 'error', e.message)); } });
         b.disabled = !canRead; nav.append(b);
     }
-    view.append(nav, el('p', 'muted focus-scope', t('scope')));
+    view.append(nav);
     for (const thread of data.threads) {
         const card = el('article', 'thread-focus-card'); card.dataset.sourceKey = thread.sourceKey;
         const head = el('div', 'focus-card-head'); head.append(el('h2', '', thread.name), el('span', 'thread-state', thread.state || t('unknown'))); card.append(head);
-        const metrics = el('div', 'thread-rates');
-        for (const [key, label] of [['cpu', 'CPU'], ['allocation', t('allocation')]]) {
-            const m = el('div'); m.append(el('span', 'muted', label), el('strong', '', formatRate(thread, key, locale))); metrics.append(m);
+        const hasRate = thread.cpu.percent != null || thread.allocation.bytesPerSecond != null || thread.allocation.boundsBytesPerSecond != null;
+        if (hasRate) {
+            const metrics = el('div', 'thread-rates');
+            for (const [key, label] of [['cpu', 'CPU'], ['allocation', t('allocation')]]) {
+                const m = el('div'); m.append(el('span', 'muted', label), el('strong', '', formatRate(thread, key, locale))); metrics.append(m);
+            }
+            card.append(metrics, el('p', 'muted thread-interval', thread.baseline ? `${t('interval')}: ${thread.baseline.snapshotNumber} → ${data.snapshotNumber}` : t('noInterval')),
+                el('p', 'muted focus-scope', t('scope')));
+        } else {
+            card.append(el('p', 'muted thread-metrics-note', t(thread.baseline ? 'noCounters' : 'noInterval')));
         }
-        card.append(metrics, el('p', 'muted thread-interval', thread.baseline ? `${t('interval')}: ${thread.baseline.snapshotNumber} → ${data.snapshotNumber}` : t('noInterval')));
         const highlight = thread.highlights.items[0];
         if (highlight) {
             const match = highlight.text.match(/^(.*)\(([^()]*)\)$/), line = el('div', 'stack-highlight');

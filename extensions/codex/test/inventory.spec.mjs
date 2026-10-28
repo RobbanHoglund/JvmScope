@@ -31,7 +31,8 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
     await expect(f.locator('.thread-focus-card')).toHaveCount(1);
     await expect(f.locator('.snapshot-context')).toContainText('1 selected thread');
     await expect(f.locator('.frame-location')).toHaveText('StatusClient.java:152');
-    await expect(f.locator('.thread-rates')).not.toContainText('0%');
+    await expect(f.locator('.thread-rates')).toHaveCount(0);
+    await expect(f.locator('.thread-metrics-note')).toContainText('rates are unavailable');
     await expect(f.locator('.thread-stack pre')).toBeVisible();
     await expect(f.locator('.evidence')).toContainText('CompletableFuture.get');
     expect(host.calls.slice(offset).map(c => c.name)).toEqual(['inspect_thread_details']);
