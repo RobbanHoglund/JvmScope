@@ -39,7 +39,7 @@ test('assessment remains bound to its snapshot and survives returning from a sta
     await expect(f.locator('.thread-focus-card')).toHaveCount(1);
     await expect(f.locator('.ai-conclusion')).toHaveCount(0);
     await expect(f.locator('.focus-evidence-only')).toContainText('no separate AI assessment');
-    await f.getByRole('button', { name: 'Snapshot overview' }).click();
+    await f.getByRole('button', { name: /^All threads · snapshot / }).click();
     await expect(f.locator('.ai-conclusion-summary')).toContainText('main is parked');
     await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');
     await expect(f.locator('.ai-conclusion-language')).toHaveText('Originalspråk: English');
@@ -92,7 +92,7 @@ test('overview to a main-thread explanation presents the new assessment before t
     await expect(f.locator('.evidence')).toContainText('HttpClientImpl.send');
     await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);
     expect(await f.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1)).toBe(false);
-    await f.getByRole('button', { name: 'Snapshotöversikt' }).click();
+    await f.getByRole('button', { name: /^Alla trådar · snapshot / }).click();
     await expect(f.locator('.ai-conclusion-summary')).toContainText('main väntar i ett HTTP-anrop');
     await f.getByRole('button', { name: 'Granska stack', exact: true }).click();
     await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);

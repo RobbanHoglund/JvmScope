@@ -1,0 +1,35 @@
+{
+  "provenance": {
+    "kind": "independent-model-conversation",
+    "recorded": "2026-10-28",
+    "capture": "no-findings-java25.txt",
+    "toolSequence": [
+      "analyze_thread_dumps",
+      "read_thread_evidence",
+      "render_thread_report",
+      "render_thread_details"
+    ],
+    "replay": "AI-authored assessments and final answers, replayed through fresh packaged MCP calls; CI does not rerun the model."
+  },
+  "language": "sv",
+  "turns": [
+    {
+      "prompt": "Analysera den bifogade tråddumpen och berätta vad du hittar.",
+      "tool": "render_thread_report",
+      "conclusion": {
+        "summary": "Inga prioriterade regelträffar och ingen JVM-rapporterad deadlock i denna ögonblicksbild av plattformstrådar (snapshot 1). Tråden main väntar i HttpClientImpl.send från StatusClient.runOneCycle (rad 152), men en enda dump visar inte väntans varaktighet eller att anropet har fastnat och bevisar inte att applikationen är frisk.",
+        "nextCheck": "Om problemet kvarstår, jämför nya tråddumpar tagna med några sekunders mellanrum för att se om main gör framsteg."
+      },
+      "chatAnswer": "Inga prioriterade regelträffar och ingen JVM-rapporterad deadlock i denna ögonblicksbild av plattformstrådar (snapshot 1). Tråden `main` väntar i `HttpClientImpl.send` från `StatusClient.runOneCycle` (rad 152), men en enda dump visar inte väntans varaktighet eller att anropet har fastnat och bevisar inte att applikationen är frisk.\n\nOm problemet kvarstår, jämför nya tråddumpar tagna med några sekunders mellanrum för att se om `main` gör framsteg."
+    },
+    {
+      "prompt": "Visa stacken för main och förklara vad den väntar på.",
+      "tool": "render_thread_details",
+      "conclusion": {
+        "summary": "I snapshot 1 är main parkerad i Unsafe.park via CompletableFuture.get medan HttpClientImpl.send inväntar att HTTP-anropet slutförs; anropet kommer från StatusClient.runOneCycle på rad 152. Stacken visar inte om väntan beror på nätverket, servern eller HTTP-klientens interna arbete, hur länge den varat eller om en timeout finns.",
+        "nextCheck": "Kontrollera anropsloggar och timeoutinställningar för detta anrop, och jämför med en ny dump om väntan fortsätter."
+      },
+      "chatAnswer": "I snapshot 1 är `main` parkerad i `Unsafe.park` via `CompletableFuture.get` medan `HttpClientImpl.send` inväntar att HTTP-anropet slutförs; anropet kommer från `StatusClient.runOneCycle` på rad 152. Stacken visar inte om väntan beror på nätverket, servern eller HTTP-klientens interna arbete, hur länge den varat eller om en timeout finns.\n\nKontrollera anropsloggar och timeoutinställningar för detta anrop, och jämför med en ny dump om väntan fortsätter."
+    }
+  ]
+}

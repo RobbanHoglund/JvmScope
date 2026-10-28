@@ -36,7 +36,7 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
     await expect(f.locator('.thread-stack pre')).toBeVisible();
     await expect(f.locator('.evidence')).toContainText('CompletableFuture.get');
     expect(host.calls.slice(offset).map(c => c.name)).toEqual(['inspect_thread_details']);
-    await f.getByRole('button', { name: 'Snapshot overview' }).click();
+    await f.getByRole('button', { name: /^All threads · snapshot / }).click();
     await expect(f.locator('.inventory-row')).toHaveCount(8);
     await f.getByRole('button', { name: 'Show all 22', exact: true }).click();
     await expect(f.locator('.inventory-row')).toHaveCount(22);
@@ -115,7 +115,7 @@ test('overview stack action opens only the observed thread and language follows 
     expect(host.calls.slice(before).map(c => c.name)).toEqual(['inspect_thread_details']);
     expect(host.calls.at(-1).arguments.language).toBe('sv');
     await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
-    await f.getByRole('button', { name: 'Snapshot overview' }).click();
+    await f.getByRole('button', { name: /^All threads · snapshot / }).click();
     await expect(f.locator('.overview-next')).toContainText('Next check:');
     expect(host.calls.at(-1).arguments.language).toBe('en');
 });

@@ -114,6 +114,10 @@ export async function startHost({ inventoryOnly = false, conclusionOnly = false,
     const server = createServer(async (req, res) => {
         const url = new URL(req.url, 'http://127.0.0.1');
         try {
+            if (url.pathname === '/conversation') {
+                res.setHeader('Content-Type', 'text/html');
+                res.end(await readFile(new URL('./conversation-host.html', import.meta.url), 'utf8')); return;
+            }
             if (url.pathname === '/widget') {
                 res.setHeader('Content-Type', 'text/html');
                 res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'");

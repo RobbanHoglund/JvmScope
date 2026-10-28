@@ -2,7 +2,7 @@ import { formatRate } from './comparison.mjs';
 import { aiConclusionView } from './ai-conclusion.mjs';
 const words = {
     en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads', selectedSingle: 'selected thread',
-        overview: 'Snapshot overview', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
+        overview: 'All threads', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
         interval: 'Rates over snapshot interval', noInterval: 'No comparable baseline; CPU and allocation rates are unavailable.',
         noCounters: 'CPU and allocation rates are unavailable for this thread; review measurement coverage below.',
         evidenceOnly: 'Stack evidence — no separate AI assessment has been prepared for this selection.',
@@ -14,7 +14,7 @@ const words = {
         local: 'Parsed locally · results are shared with your AI host', timing: 'Evidence / plugin work',
         host: 'Source links and the host editor are independent. Timings exclude model reasoning and host rendering.' },
     sv: { title: 'Valda trådar', language: 'Rapportspråk', snapshot: 'Snapshot', selected: 'valda trådar', selectedSingle: 'vald tråd',
-        overview: 'Snapshotöversikt', compare: 'Jämför snapshots', allocation: 'Allokering', state: 'Tillstånd', unknown: 'Ej tillgängligt',
+        overview: 'Alla trådar', compare: 'Jämför snapshots', allocation: 'Allokering', state: 'Tillstånd', unknown: 'Ej tillgängligt',
         interval: 'Mätvärden över snapshotintervallet', noInterval: 'Jämförbar startpunkt saknas; CPU- och allokeringstakt kan inte beräknas.',
         noCounters: 'CPU- och allokeringstakt saknas för denna tråd; se mätunderlaget nedan.',
         evidenceOnly: 'Stackunderlag — ingen separat AI-bedömning har gjorts för detta urval.',
@@ -42,7 +42,7 @@ export function threadDetailsView({ data, locale, version, conclusion, canRead, 
     const context = el('div', 'snapshot-context');
     context.append(el('strong', '', `${t('snapshot')} ${data.snapshotNumber} / ${data.snapshotCount} · ${data.threads.length} ${t(data.threads.length === 1 ? 'selectedSingle' : 'selected')}`), el('p', 'filename', data.source.name)); view.append(context);
     const nav = el('nav', 'focus-navigation');
-    for (const [key, label] of [['snapshot', t('overview')], ['comparison', t('compare')]]) {
+    for (const [key, label] of [['snapshot', `${t('overview')} · snapshot ${data.snapshotNumber}`], ['comparison', t('compare')]]) {
         if (key === 'comparison' && data.snapshotCount < 2) continue;
         const b = button(label, async () => { b.disabled = true; try { await onNavigate(key); } catch (e) { b.disabled = !canRead; view.append(el('p', 'error', e.message)); } });
         b.disabled = !canRead; nav.append(b);

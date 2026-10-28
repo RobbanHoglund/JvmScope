@@ -1,9 +1,9 @@
 const copy = {
-    en: { open: 'Open analysis', opening: 'Opening…', back: 'Back to summary',
-        fallback: 'Analysis opened here. Use “Back to summary” to keep the conversation compact.',
+    en: { open: 'Open analysis', opening: 'Opening…', back: 'Compact view',
+        fallback: 'Analysis opened here. Use “Compact view” to show the assessment and next check.',
         stay: 'The host kept this view open. Use its close control to return to the conversation.' },
-    sv: { open: 'Öppna analys', opening: 'Öppnar…', back: 'Till sammanfattningen',
-        fallback: 'Analysen visas här. Välj ”Till sammanfattningen” för att göra konversationen kompakt igen.',
+    sv: { open: 'Öppna analys', opening: 'Öppnar…', back: 'Visa kompakt vy',
+        fallback: 'Analysen visas här. Välj ”Visa kompakt vy” för att visa bedömningen och nästa kontroll.',
         stay: 'Klienten behöll den här vyn öppen. Använd dess stängningsknapp för att återgå till konversationen.' },
 };
 function el(tag, cls, text) { const n = document.createElement(tag); n.className = cls; if (text) n.textContent = text; return n; }
@@ -17,7 +17,7 @@ export function createReportSurface({ container, analysis, bridge, locale, compa
         if (expanded) {
             const bar = el('div', 'analysis-toolbar'), back = el('button', 'surface-back', t('back'));
             back.type = 'button'; back.disabled = busy; back.addEventListener('click', close);
-            bar.append(back, el('span', 'muted', 'JvmScope'));
+            bar.append(el('span', 'muted', 'JvmScope'), back);
             const children = [bar];
             if (notice || fallback) { const status = el('p', 'surface-status', t(notice || 'fallback')); status.setAttribute('role', 'status'); children.push(status); }
             children.push(analysis); container.replaceChildren(...children);

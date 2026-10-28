@@ -384,7 +384,7 @@ test('stack follow-up opens only requested threads with metrics and verified evi
     await expect(allocation.locator('pre')).toBeVisible();
     await expect(allocation.locator('pre')).toContainText('2270  "scenario-cpu-and-allocation-hot"');
     expect(host.calls.length).toBe(before, 'opening preverified stacks does not invoke more tools');
-    await f.getByRole('button', { name: 'Snapshot overview', exact: true }).click();
+    await f.getByRole('button', { name: /^All threads · snapshot /, exact: true }).click();
     await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 3 / 3');
     await expect(f.locator('.node')).toHaveCount(2);
 });
@@ -395,7 +395,7 @@ test('focused follow-ups support both themes, narrow widths, language changes an
         await openAnalysis(page, host.url + `?case=threadSv&theme=${theme}&noTools=1`);
         const f = widget(page);
         await expect(f.getByRole('heading', { name: 'Valda trådar', exact: true })).toBeVisible();
-        await expect(f.getByRole('button', { name: 'Snapshotöversikt', exact: true })).toBeDisabled();
+        await expect(f.getByRole('button', { name: /^Alla trådar · snapshot /, exact: true })).toBeDisabled();
         expect(await overflow(f)).toBe(false);
         await expect(f.locator('.thread-stack pre').first()).toBeVisible();
         await page.screenshot({ path: path.join(previewDir, `selected-threads-${theme}-${width}.png`), fullPage: true });
