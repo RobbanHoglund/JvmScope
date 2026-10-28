@@ -104,21 +104,31 @@ function createServer() {
             return threadReportResult(report, language, focus, reports.conclusion(reportId, scope, language, conclusion));
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
-    server.registerTool('render_thread_details', {
-        title: 'Show selected Java threads',
-        description: 'For stack/CPU/allocation follow-ups about one to five specific threads, show a focused view with cached measurements and hash-checked stack evidence in ONE call. Supply conclusion when existing evidence already supports your assessment; it appears at the top. Use reportId, the exact snapshotIndex and sourceKeys already returned by analysis/comparison. Reads and hashes that capture once, without reparsing. Do not additionally read the same evidence or render the full deadlock overview.',
-        inputSchema: z.object({ reportId: z.string().uuid(), language, conclusion, snapshotIndex: z.number().int().min(0),
-            sourceKeys: z.array(z.string().min(1).max(400)).min(1).max(5) }).strict(), annotations,
-        _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri },
-    }, async ({ language, conclusion, ...args }, ctx) => {
+    const threadSelection = { reportId: z.string().uuid(), language, snapshotIndex: z.number().int().min(0),
+        sourceKeys: z.array(z.string().min(1).max(400)).min(1).max(5) };
+    const focusedResult = async ({ language, conclusion, ...args }, ctx, present) => {
         try {
             const data = await threadDetails(reports, jobs, args, ctx.mcpReq.signal);
-            if (JSON.stringify(data).length > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
             const aiConclusion = reports.conclusion(args.reportId, { view: 'threads', snapshots: [args.snapshotIndex], sourceKeys: [...args.sourceKeys].sort() }, language, conclusion);
-            return { content: [{ type: 'text', text: `Focused thread report with verified evidence. ${aiConclusion ? 'Your supplied conclusion is included at the top; do not repeat it below the widget.' : 'Explain the selected threads briefly using these lines and measured intervals.'} Do not repeat full stack blocks or render a general report again. Stack frames do not reveal method bodies or prove a livelock/leak.` }],
-                structuredContent: { ...data, conclusion: aiConclusion }, _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion } };
+            const structuredContent = { ...data, conclusion: aiConclusion,
+                presentation: present ? 'report-with-assessment' : 'evidence-only',
+                ...(!present ? { nextAction: 'No report or new AI assessment has been presented by this data tool. Read these verified lines, then call render_thread_details with your conclusion.summary and conclusion.nextCheck answering the user’s question. Do not claim that a detailed assessment is already in a report. Stack frames do not reveal method bodies or establish wait duration.' } : {}) };
+            if (JSON.stringify(structuredContent).length > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
+            return { ...result(structuredContent), ...(present ? { content: [{ type: 'text', text: 'Selected-thread report includes your supplied AI assessment and next check at the top. Do not repeat them below the widget or render a general report again. If this host cannot display reports, give the actual assessment as text; never replace it with a claim that it is visible elsewhere.' }] } : {}),
+                _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion } };
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
-    });
+    };
+    server.registerTool('inspect_thread_details', {
+        title: 'Inspect selected Java threads',
+        description: 'Get verified stack lines and cached CPU/allocation measurements for one to five exact threads, WITHOUT presenting a widget. Use this before answering a stack follow-up when the needed evidence is not already available. Read the returned lines, then call render_thread_details with your assessment. Uses reportId, snapshotIndex and sourceKeys from analysis/comparison; one capture read/hash, no parsing. UI stack clicks also use this tool directly.',
+        inputSchema: z.object(threadSelection).strict(), annotations,
+    }, (args, ctx) => focusedResult(args, ctx, false));
+    server.registerTool('render_thread_details', {
+        title: 'Show selected Java threads',
+        description: 'Present the selected threads WITH your required evidence-based AI conclusion at the top. First inspect_thread_details if you need stack evidence to answer the user’s question. Supply conclusion.summary and conclusion.nextCheck in the conversation language; an empty assessment is rejected. Rechecks the selected capture hash before showing it, without parsing. Do not render a full overview for a stack follow-up.',
+        inputSchema: z.object({ ...threadSelection, conclusion: conclusion.unwrap() }).strict(), annotations,
+        _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri },
+    }, (args, ctx) => focusedResult(args, ctx, true));
     server.registerTool('read_thread_evidence', {
         description: 'Read hash-checked evidence for an exact thread in a cached snapshot. Returns snapshot number, file, thread identity and citation label together with source lines. Use for thread claims instead of unscoped raw source reads. Cannot control the host editor or previously rendered widgets.',
         inputSchema: z.object({ reportId: z.string().uuid(), snapshotIndex: z.number().int().min(0),

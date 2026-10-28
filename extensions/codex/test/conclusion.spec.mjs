@@ -37,6 +37,7 @@ test('assessment remains bound to its snapshot and survives returning from a sta
     await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
     await expect(f.locator('.thread-focus-card')).toHaveCount(1);
     await expect(f.locator('.ai-conclusion')).toHaveCount(0);
+    await expect(f.locator('.focus-evidence-only')).toContainText('no separate AI assessment');
     await f.getByRole('button', { name: 'Snapshot overview' }).click();
     await expect(f.locator('.ai-conclusion-summary')).toContainText('main is parked');
     await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');
@@ -58,4 +59,40 @@ test('conclusions render as text and stay above deadlock, comparison and focused
     await expect(f.locator('.thread-focus-card')).toHaveCount(1); await before(f, '.thread-focus-card');
     await page.goto(host.url + '?case=nativeOnly');
     await expect(f.locator('.ai-conclusion')).toHaveCount(0);
+});
+
+test('overview to a main-thread explanation presents the new assessment before the stack', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 1000 });
+    await page.goto(host.url + '?case=assessmentSv');
+    const f = widget(page);
+    await expect(f.locator('.ai-conclusion-summary')).toContainText('main väntar i ett HTTP-anrop');
+    const summary = 'main väntar på att HTTP-anropet ska slutföras via CompletableFuture.get. Den här snapshoten visar inte om anropet har fastnat.';
+    const nextCheck = 'Jämför en senare dump med anropets start, svar och timeout.';
+    await page.evaluate(async ({ summary, nextCheck }) => {
+        const overview = await (await fetch('/data?case=assessmentSv')).json();
+        const args = { reportId: overview.structuredContent.reportId, snapshotIndex: 0, language: 'sv',
+            sourceKeys: [overview._meta.jvmscopeReport.snapshots.items[0].threadInventory.items[0].sourceKey] };
+        const call = async (name, arguments_) => {
+            const r = await (await fetch('/tool', { method: 'POST', body: JSON.stringify({ name, arguments: arguments_ }) })).json();
+            if (r.isError) throw new Error(JSON.stringify(r));
+            return r;
+        };
+        const evidence = await call('inspect_thread_details', args);
+        if (evidence.structuredContent.presentation !== 'evidence-only') throw new Error('Premature presentation');
+        const rendered = await call('render_thread_details', { ...args, conclusion: { summary, nextCheck } });
+        document.querySelector('iframe').contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: rendered }, '*');
+    }, { summary, nextCheck });
+    await expect(f.getByRole('heading', { name: 'Valda trådar', exact: true })).toBeVisible();
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);
+    await expect(f.locator('.ai-conclusion-next')).toContainText(nextCheck);
+    await expect(f.locator('.focus-evidence-only')).toHaveCount(0);
+    await before(f, '.thread-focus-card');
+    await f.getByText('Hela trådblocket', { exact: false }).click();
+    await expect(f.locator('.evidence')).toContainText('HttpClientImpl.send');
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);
+    expect(await f.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1)).toBe(false);
+    await f.getByRole('button', { name: 'Snapshotöversikt' }).click();
+    await expect(f.locator('.ai-conclusion-summary')).toContainText('main väntar i ett HTTP-anrop');
+    await f.getByRole('button', { name: 'Granska stack', exact: true }).click();
+    await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);
 });

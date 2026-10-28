@@ -33,7 +33,7 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
     await expect(f.locator('.thread-rates')).not.toContainText('0%');
     await f.locator('.thread-stack summary').click();
     await expect(f.locator('.evidence')).toContainText('CompletableFuture.get');
-    expect(host.calls.slice(offset).map(c => c.name)).toEqual(['render_thread_details']);
+    expect(host.calls.slice(offset).map(c => c.name)).toEqual(['inspect_thread_details']);
     await f.getByRole('button', { name: 'Snapshot overview' }).click();
     await expect(f.locator('.inventory-row')).toHaveCount(8);
     await f.getByRole('button', { name: 'Show all 22', exact: true }).click();
@@ -110,7 +110,7 @@ test('overview stack action opens only the observed thread and language follows 
     await f.getByRole('button', { name: 'Granska stack', exact: true }).click();
     await expect(f.locator('.snapshot-context')).toContainText('1 vald tråd');
     await expect(f.locator('.frame-location')).toHaveText('StatusClient.java:152');
-    expect(host.calls.slice(before).map(c => c.name)).toEqual(['render_thread_details']);
+    expect(host.calls.slice(before).map(c => c.name)).toEqual(['inspect_thread_details']);
     expect(host.calls.at(-1).arguments.language).toBe('sv');
     await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
     await f.getByRole('button', { name: 'Snapshot overview' }).click();

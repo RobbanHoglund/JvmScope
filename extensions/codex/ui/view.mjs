@@ -208,7 +208,7 @@ async function comparisonEvidence(endpoint, content) {
     if (data.nextLine) content.append(el('p', 'note', t('truncated')));
 }
 async function focusSnapshot(endpoint) {
-    try { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+    try { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
         snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] })); }
     catch (error) { root.append(el('p', 'error', error.message)); }
 }
@@ -315,7 +315,7 @@ function renderContent() {
     else if (firstFinding) conclusion.append(el('p', '', findingOverview(firstFinding, locale)), el('p', 'muted', t('noCycleNote')));
     else conclusion.append(el('p', 'no-findings', t('noFindings')));
     if (focus && !snapshot.deadlocks?.total) conclusion.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
-        async onOpen(sourceKey) { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+        async onOpen(sourceKey) { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
             snapshotIndex: snapshot.index, sourceKeys: [sourceKey] })); } }));
     else if (!snapshot.deadlocks?.total && !firstFinding) conclusion.append(el('p', 'muted', t('nextCapture')));
     root.append(conclusion);
@@ -360,7 +360,7 @@ function renderContent() {
     }
     if (selection && !cycles.some(c => items(c.participants).some(p => p.id === selection.id))) {
         if (focus && cycles.length) root.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
-            async onOpen(sourceKey) { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+            async onOpen(sourceKey) { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
                 snapshotIndex: snapshot.index, sourceKeys: [sourceKey] })); } }));
         else if (!focus) root.append(evidencePanel(selection));
     }
@@ -370,7 +370,7 @@ function renderContent() {
     if (snapshot.analysis?.findings?.nextOffset != null) findings.append(el('p', 'note', t('truncated')));
     if (snapshot.analysis?.findings.total) root.append(findings);
     root.append(threadInventoryView({ snapshot, snapshotCount: report.snapshotCount, locale, canRead: bridge.canCallTools,
-        async onOpen(endpoint) { receive(await bridge.callTool('render_thread_details', { reportId: report.reportId, language: locale,
+        async onOpen(endpoint) { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
             snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] })); } }));
     const limitations = append(el('details', 'coverage'), el('summary', '', t('coverage'))), list = el('ul');
     for (const warning of [...(report.warnings || []), ...(snapshot.analysis?.limitations || []), ...(report.limitations || [])]) list.append(el('li', '', warning));

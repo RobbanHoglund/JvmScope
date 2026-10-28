@@ -33,8 +33,13 @@ try {
             for (const sourceKey of sourceKeys) await call('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 2, sourceKey });
             await call('render_thread_report', { reportId: analysis.reportId, snapshotIndex: 2, language: 'sv' });
         }));
-        focused.push(await trial(() => call('render_thread_details', args)));
+        focused.push(await trial(async () => {
+            await call('inspect_thread_details', args);
+            await call('render_thread_details', { ...args, conclusion: {
+                summary: 'De valda trådarna har jämförbara mätvärden i snapshot 3. Namn och stackramar bevisar inte livelock.',
+                nextCheck: 'Granska de verifierade kodpositionerna och jämför nästa intervall.' } });
+        }));
     }
-    console.log(JSON.stringify({ scope: 'Packaged stdio tools only; this does not reconstruct the desktop screenshot timings.', node: process.version,
+    console.log(JSON.stringify({ scope: 'Packaged stdio tools with a fixed test assessment; excludes AI reasoning. The focused flow inspects evidence and then presents it.', node: process.version,
         separate: summary(separate), focused: summary(focused) }, null, 2));
 } finally { await client.close(); await rm(directory, { recursive: true, force: true }); }

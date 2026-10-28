@@ -4,6 +4,7 @@ const words = {
     en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads', selectedSingle: 'selected thread',
         overview: 'Snapshot overview', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
         interval: 'Rates over snapshot interval', noInterval: 'No comparable baseline; rates are unavailable.',
+        evidenceOnly: 'Stack evidence — no separate AI assessment has been prepared for this selection.',
         scope: 'CPU is relative to one logical CPU. Allocation rate is not retained memory.',
         stack: 'Recorded stack', frameNote: 'Highlights use package names to select frames outside the JDK; they may be application or library code.',
         full: 'Full thread block', more: 'Next source lines', lines: 'Lines', noSource: 'No exact physical source range is available for this thread.',
@@ -14,6 +15,7 @@ const words = {
     sv: { title: 'Valda trådar', language: 'Rapportspråk', snapshot: 'Snapshot', selected: 'valda trådar', selectedSingle: 'vald tråd',
         overview: 'Snapshotöversikt', compare: 'Jämför snapshots', allocation: 'Allokering', state: 'Tillstånd', unknown: 'Ej tillgängligt',
         interval: 'Mätvärden över snapshotintervallet', noInterval: 'Jämförbar startpunkt saknas; mätvärden är inte tillgängliga.',
+        evidenceOnly: 'Stackunderlag — ingen separat AI-bedömning har gjorts för detta urval.',
         scope: 'CPU anges relativt en logisk CPU. Allokeringstakt är inte kvarhållet minne.',
         stack: 'Registrerad stack', frameNote: 'Urvalet använder paketnamn för ramar utanför JDK; de kan tillhöra applikationen eller ett bibliotek.',
         full: 'Hela trådblocket', more: 'Nästa källrader', lines: 'Rader', noSource: 'Exakta fysiska källrader saknas för denna tråd.',
@@ -34,6 +36,7 @@ export function threadDetailsView({ data, locale, version, conclusion, canRead, 
     const assessment = aiConclusionView({ conclusion, reportId: data.reportId, locale,
         scope: { view: 'threads', snapshots: [data.snapshotIndex], sourceKeys: data.threads.map(t => t.sourceKey).sort() } });
     if (assessment) view.append(assessment);
+    else view.append(el('p', 'muted focus-evidence-only', t('evidenceOnly')));
     const context = el('div', 'snapshot-context');
     context.append(el('strong', '', `${t('snapshot')} ${data.snapshotNumber} / ${data.snapshotCount} · ${data.threads.length} ${t(data.threads.length === 1 ? 'selectedSingle' : 'selected')}`), el('p', 'filename', data.source.name)); view.append(context);
     const nav = el('nav', 'focus-navigation');

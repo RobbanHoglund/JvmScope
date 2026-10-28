@@ -52,9 +52,9 @@ after(async () => {
     assert.equal(stderr, '', 'Protocol or worker errors must not be hidden');
 });
 
-test('relocated bundle exposes eleven read-only tools with validated schemas', async () => {
+test('relocated bundle exposes twelve read-only tools with validated schemas', async () => {
     const tools = (await client.listTools()).tools;
-    assert.equal(tools.length, 11);
+    assert.equal(tools.length, 12);
     for (const tool of tools) {
         assert.equal(tool.annotations.readOnlyHint, true);
         assert.equal(tool.annotations.destructiveHint, false);
@@ -95,12 +95,12 @@ test('no-findings reports retain Java and VM counts and verify source outside th
     const snapshot = rendered._meta.jvmscopeReport.snapshots.items[0];
     assert.equal(snapshot.threadInventory.items.length, 22);
     const sourceKey = snapshot.threadInventory.items.at(-1).sourceKey;
-    const focused = await client.callTool({ name: 'render_thread_details', arguments: { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [sourceKey] } });
+    const focused = await client.callTool({ name: 'inspect_thread_details', arguments: { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [sourceKey] } });
     assert.ok(!focused.isError);
     assert.match(focused.structuredContent.threads[0].lines[0].text, /VM Periodic Task Thread/);
     assert.equal(focused.structuredContent.threads[0].cpu.percent, null);
     await writeFile(capture, 'changed');
-    await fails('render_thread_details', { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [sourceKey] }, /changed since analysis/);
+    await fails('inspect_thread_details', { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [sourceKey] }, /changed since analysis/);
 });
 
 test('single-plugin ZIP has a root manifest and runs independently of the marketplace', async () => {
@@ -117,7 +117,7 @@ test('single-plugin ZIP has a root manifest and runs independently of the market
     const standalone = new Client({ name: 'jvmscope-single-plugin-test', version: '1.0.0' });
     try {
         await standalone.connect(new StdioClientTransport({ command: process.execPath, args: [server], cwd: installed }));
-        assert.equal((await standalone.listTools()).tools.length, 11);
+        assert.equal((await standalone.listTools()).tools.length, 12);
         const result = await standalone.callTool({ name: 'list_samples', arguments: { analyzer: 'threads' } });
         assert.ok(!result.isError);
         const returnedSample = result.structuredContent.samples[0];
@@ -497,7 +497,7 @@ test('modern MCP negotiation discovers and calls the same packaged server', asyn
     const wire = new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary, stderr: 'pipe' });
     try {
         await modern.connect(wire);
-        assert.equal((await modern.listTools()).tools.length, 11);
+        assert.equal((await modern.listTools()).tools.length, 12);
         const response = await modern.callTool({ name: 'search_knowledge', arguments: { query: 'gc' } });
         assert.ok(!response.isError);
         const analysis = await modern.callTool({ name: 'analyze_thread_dumps', arguments: { paths: [sample('confirmed-deadlock.txt')] } });
@@ -507,7 +507,7 @@ test('modern MCP negotiation discovers and calls the same packaged server', asyn
     } finally { await modern.close(); }
 });
 
-test('focused multi-thread report returns exact measurements and verified stacks in one bounded call', async () => {
+test('focused multi-thread inspection returns exact measurements and verified stacks in one bounded call', async () => {
     const filename = path.join(temporary, 'focused-series.txt');
     await cp(path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt'), filename);
     const analysis = await call('analyze_thread_dumps', { paths: [filename] });
@@ -515,7 +515,7 @@ test('focused multi-thread report returns exact measurements and verified stacks
     const names = ['scenario-cpu-and-allocation-hot', 'scenario-livelock-2-agent-1', 'scenario-livelock-2-agent-2'];
     const selected = names.map(name => rows.find(t => t.name === name));
     const args = { reportId: analysis.reportId, snapshotIndex: 2, sourceKeys: selected.map(t => t.sourceKey), language: 'sv' };
-    const response = await client.callTool({ name: 'render_thread_details', arguments: args });
+    const response = await client.callTool({ name: 'inspect_thread_details', arguments: args });
     assert.ok(!response.isError, JSON.stringify(response));
     const data = response.structuredContent;
     assert.deepEqual(data.threads.map(t => t.name), names);
@@ -534,12 +534,12 @@ test('focused multi-thread report returns exact measurements and verified stacks
     assert.match(data.threads[0].highlights.items[0].text, /ThreadScenarioRunner.java:634/);
     assert.match(data.threads[1].highlights.items[0].text, /ThreadScenarioRunner.java:532/);
     assert.ok(JSON.stringify(data).length < 20000);
-    await fails('render_thread_details', { ...args, snapshotIndex: 0 }, /identity.*snapshot/);
-    await fails('render_thread_details', { ...args, sourceKeys: [args.sourceKeys[0], args.sourceKeys[0]] }, /distinct/);
-    await fails('render_thread_details', { ...args, sourceKeys: [] }, /Too small|at least|>=1/);
-    await fails('render_thread_details', { ...args, sourceKeys: Array(6).fill(args.sourceKeys[0]) }, /Too big|at most|<=5/);
+    await fails('inspect_thread_details', { ...args, snapshotIndex: 0 }, /identity.*snapshot/);
+    await fails('inspect_thread_details', { ...args, sourceKeys: [args.sourceKeys[0], args.sourceKeys[0]] }, /distinct/);
+    await fails('inspect_thread_details', { ...args, sourceKeys: [] }, /Too small|at least|>=1/);
+    await fails('inspect_thread_details', { ...args, sourceKeys: Array(6).fill(args.sourceKeys[0]) }, /Too big|at most|<=5/);
     await writeFile(filename, 'changed after analysis');
-    await fails('render_thread_details', args, /changed since analysis/);
+    await fails('inspect_thread_details', args, /changed since analysis/);
 });
 
 test('focused stacks disclose truncation and page only inside the selected thread', async () => {
@@ -548,7 +548,7 @@ test('focused stacks disclose truncation and page only inside the selected threa
     await writeFile(filename, header + Array.from({ length: 80 }, (_, i) => ` at sample.Service.step${i}(Service.java:${i + 1})`).join('\n') + '\n');
     const analysis = await call('analyze_thread_dumps', { paths: [filename] });
     const row = analysis.snapshots.items[0].measurements.threads.items[0];
-    const response = await client.callTool({ name: 'render_thread_details', arguments: { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [row.sourceKey] } });
+    const response = await client.callTool({ name: 'inspect_thread_details', arguments: { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [row.sourceKey] } });
     assert.ok(!response.isError);
     const thread = response.structuredContent.threads[0];
     assert.equal(thread.lines.length, 60);
@@ -559,4 +559,41 @@ test('focused stacks disclose truncation and page only inside the selected threa
     assert.match(next.lines.at(-1).text, /Service.java:80/);
     assert.equal(thread.cpu.percent, null);
     assert.equal(thread.allocation.bytesPerSecond, null);
+});
+
+test('selected-thread explanation cannot present an empty assessment and checks fresh evidence', async () => {
+    const filename = path.join(temporary, 'follow-up-main.txt');
+    await cp(path.join(repo, 'extensions/codex/test/fixtures/no-findings-java25.txt'), filename);
+    const analysis = await call('analyze_thread_dumps', { paths: [filename] });
+    const key = analysis.snapshots.items[0].threadInventory.items.find(t => t.name === 'main').sourceKey;
+    const args = { reportId: analysis.reportId, snapshotIndex: 0, sourceKeys: [key], language: 'sv' };
+    const conclusion = { summary: 'main väntar i HttpClientImpl.send. En snapshot visar inte om anropet har fastnat.', nextCheck: 'Jämför en senare dump och anropets timeoutlogg.' };
+    await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId, language: 'sv', conclusion } });
+    // Having an overview assessment must not make a new focused assessment optional.
+    await fails('render_thread_details', args, /conclusion/);
+    const tools = (await client.listTools()).tools;
+    const inspect = tools.find(t => t.name === 'inspect_thread_details');
+    assert.ok(inspect);
+    assert.equal(inspect._meta?.ui?.resourceUri, undefined);
+    assert.equal(inspect._meta?.['openai/outputTemplate'], undefined);
+    assert.ok(tools.find(t => t.name === 'render_thread_details').inputSchema.required.includes('conclusion'));
+    const evidence = await call('inspect_thread_details', args);
+    assert.equal(evidence.presentation, 'evidence-only');
+    assert.equal(evidence.conclusion, null);
+    assert.match(evidence.nextAction, /render_thread_details/);
+    assert.match(evidence.threads[0].lines.map(l => l.text).join('\n'), /HttpClientImpl.send/);
+    assert.equal(evidence.timing.parserRuns, 0);
+    const shown = await client.callTool({ name: 'render_thread_details', arguments: { ...args, conclusion } });
+    assert.ok(!shown.isError, JSON.stringify(shown));
+    assert.equal(shown.structuredContent.presentation, 'report-with-assessment');
+    assert.equal(shown._meta.jvmscopeConclusion.summary, conclusion.summary);
+    assert.deepEqual(shown._meta.jvmscopeConclusion.scope, { view: 'threads', snapshots: [0], sourceKeys: [key] });
+    assert.deepEqual(shown.structuredContent.threads, evidence.threads);
+    assert.equal(shown.structuredContent.timing.captureReads, 1);
+    assert.equal(shown.structuredContent.timing.parserRuns, 0);
+    assert.equal((await call('inspect_thread_details', args)).conclusion.summary, conclusion.summary);
+    await fails('render_thread_details', { ...args, conclusion: { ...conclusion, summary: ' ' } }, /Too small|at least|>=1/);
+    await writeFile(filename, 'changed between evidence and presentation');
+    await fails('render_thread_details', { ...args, conclusion }, /changed since analysis/);
+    await fails('inspect_thread_details', args, /changed since analysis/);
 });
