@@ -40,6 +40,8 @@ export function createReports({ maxEntries = 12, ttlMs = 600000, now = Date.now 
             limit ??= report.snapshots.limit;
             const items = [];
             for (let index = offset; index < Math.min(report.snapshotCount, offset + limit); index++) items.push(this.snapshot(id, index));
+            if (snapshotIndex != null && !items.some(s => s.index === snapshotIndex))
+                throw new Error('Requested snapshot is outside this report page. Adjust offset/limit to include snapshotIndex.');
             return { ...report, snapshots: { total: report.snapshotCount, offset, limit,
                 nextOffset: offset + limit < report.snapshotCount ? offset + limit : null, items } };
         },

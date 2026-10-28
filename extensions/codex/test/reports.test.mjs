@@ -53,3 +53,15 @@ test('AI conclusions survive navigation but remain scoped, bounded and tied to r
     time = 10;
     assert.throws(() => reports.conclusion(first, scope, 'en'), /expired/);
 });
+
+test('explicit focus must belong to the requested page, including empty pages', () => {
+    const reports = createReports();
+    const snapshots = [0, 1, 2].map(index => ({ index }));
+    const id = reports.add({ analyzer: 'threads', snapshotCount: 3,
+        snapshots: { total: 3, offset: 0, limit: 1, items: snapshots.slice(0, 1) }, _cachedSnapshots: snapshots });
+    for (const args of [{ snapshotIndex: 2, offset: 0, limit: 1 }, { snapshotIndex: 0, offset: 1, limit: 2 }, { snapshotIndex: 2, offset: 3, limit: 1 }])
+        assert.throws(() => reports.page(id, args), /snapshot.*page/);
+    assert.deepEqual(reports.page(id, { snapshotIndex: 2, offset: 1, limit: 2 }).snapshots.items, snapshots.slice(1));
+    assert.deepEqual(reports.page(id, { snapshotIndex: 2 }).snapshots.items, [snapshots[2]]);
+    assert.deepEqual(reports.page(id, { offset: 3, limit: 1 }).snapshots.items, [], 'Unfocused empty pages keep their navigation fallback');
+});

@@ -597,3 +597,22 @@ test('selected-thread explanation cannot present an empty assessment and checks 
     await fails('render_thread_details', { ...args, conclusion }, /changed since analysis/);
     await fails('inspect_thread_details', args, /changed since analysis/);
 });
+
+test('explicit snapshot focus cannot silently fall back to a different page or cache its conclusion there', async () => {
+    const data = await call('analyze_thread_dumps', { paths: [path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt')] });
+    const conclusion = { summary: 'Assessment for snapshot 3 only.', nextCheck: 'Inspect snapshot 3.' };
+    const sourceKey = data.snapshots.items[2].threadInventory.items[0].sourceKey;
+    const args = { reportId: data.reportId, snapshotIndex: 2, sourceKey, offset: 0, limit: 1, conclusion };
+    await fails('render_thread_report', args, /snapshot.*page/i);
+    await fails('render_thread_report', { ...args, sourceKey: undefined }, /snapshot.*page/i);
+    await fails('render_thread_report', { ...args, view: 'comparison' }, /snapshot.*page/i);
+    const first = await client.callTool({ name: 'render_thread_report', arguments: { reportId: data.reportId, snapshotIndex: 0 } });
+    assert.equal(first.structuredContent.selectedSnapshotIndex, 0);
+    assert.equal(first._meta.jvmscopeConclusion, null, 'Rejected assessment must not pollute another snapshot');
+    const selected = await client.callTool({ name: 'render_thread_report', arguments: { ...args, offset: 1, limit: 2 } });
+    assert.ok(!selected.isError, JSON.stringify(selected));
+    assert.equal(selected.structuredContent.selectedSnapshotIndex, 2);
+    assert.equal(selected._meta.jvmscopeFocus.snapshotIndex, 2);
+    assert.equal(selected._meta.jvmscopeFocus.sourceKey, sourceKey);
+    assert.deepEqual(selected._meta.jvmscopeConclusion.scope, { view: 'snapshot', snapshots: [2] });
+});
