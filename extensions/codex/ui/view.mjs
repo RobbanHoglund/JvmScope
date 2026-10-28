@@ -15,6 +15,7 @@ let focusedThreads = null;
 let reportTimings = null;
 let aiConclusion = null;
 let overviewSourceKey = null;
+let navigationEpoch = 0;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
 const copy = {
     en: { title: 'Thread analysis', critical: 'Critical', high: 'High', medium: 'Review', info: 'Information', neutral: 'No prioritized findings',
@@ -124,6 +125,17 @@ const bridge = createBridge({ onResult: receive, onContext: applyContext, onUnav
 } });
 const dataDeadline = setTimeout(() => { const node = document.getElementById('loading'); if (node) node.textContent = t('noData'); }, 12000);
 
+// Responses may arrive out of order. Only the latest still-current user action
+// may replace the view; a new host result or local render invalidates older work.
+async function navigate(request) {
+    const epoch = ++navigationEpoch, isCurrent = () => epoch === navigationEpoch;
+    try {
+        const result = await request(isCurrent);
+        if (isCurrent()) receive(result);
+    } catch (error) { if (isCurrent()) throw error; }
+}
+const navigateTool = (name, args) => navigate(() => bridge.callTool(name, args));
+
 function drawGraph(cycle) {
     const graph = createDeadlockGraph({ participants: items(cycle.participants), selectedId: selection?.id,
         label: `${t('cycle')} ${cycle.id}: ${t('graph')}`, t, onSelect(p) {
@@ -171,13 +183,17 @@ async function showEvidence(p, startLine) {
 }
 async function loadPage(offset, b) {
     b.disabled = true; b.textContent = t('load');
+    const args = { reportId: report.reportId, language: locale, view: activeView, offset, limit: report.snapshots.limit || 10 };
+    const paths = report.sources.map(s => s.path);
     try {
-        try { receive(await bridge.callTool('render_thread_report', { reportId: report.reportId, language: locale,
-            view: activeView, offset, limit: report.snapshots.limit || 10 })); }
-        catch (error) {
-            if (!error.message.startsWith('SNAPSHOTS_NOT_CACHED:')) throw error;
-            receive(await bridge.callTool('analyze_thread_dumps', { paths: report.sources.map(s => s.path), offset, limit: report.snapshots.limit || 10 }));
-        }
+        await navigate(async isCurrent => {
+            try { return await bridge.callTool('render_thread_report', args); }
+            catch (error) {
+                if (!isCurrent()) return;
+                if (!error.message.startsWith('SNAPSHOTS_NOT_CACHED:')) throw error;
+                return bridge.callTool('analyze_thread_dumps', { paths, offset, limit: args.limit });
+            }
+        });
     }
     catch (e) { b.disabled = false; b.textContent = e.message; }
 }
@@ -194,7 +210,7 @@ async function switchView(view, b) {
         activeView = view; render(); return;
     }
     b.disabled = true;
-    try { receive(await bridge.callTool('render_thread_report', { reportId: report.reportId, language: locale, view, offset: 0, limit: 4 })); }
+    try { await navigateTool('render_thread_report', { reportId: report.reportId, language: locale, view, offset: 0, limit: 4 }); }
     catch (error) { b.disabled = false; b.textContent = error.message; }
 }
 async function comparisonEvidence(endpoint, content) {
@@ -210,8 +226,8 @@ async function comparisonEvidence(endpoint, content) {
     if (data.nextLine) content.append(el('p', 'note', t('truncated')));
 }
 async function focusSnapshot(endpoint) {
-    try { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
-        snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] })); }
+    try { await navigateTool('inspect_thread_details', { reportId: report.reportId, language: locale,
+        snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] }); }
     catch (error) { root.append(el('p', 'error', error.message)); }
 }
 function findingCard(f, related = []) {
@@ -246,6 +262,7 @@ function findingCard(f, related = []) {
     append(card, details); return card;
 }
 function render() {
+    navigationEpoch++;
     const started = performance.now();
     renderContent();
     const timing = root.querySelector('.ui-timing');
@@ -257,8 +274,8 @@ function renderContent() {
         const data = focusedThreads;
         root.replaceChildren(threadDetailsView({ data, locale, version, conclusion: aiConclusion, canRead: bridge.canCallTools,
             onLanguage(language) { locale = language; document.documentElement.lang = locale; render(); },
-            async onNavigate(view) { receive(await bridge.callTool('render_thread_report', { reportId: data.reportId, language: locale, view,
-                ...(view === 'comparison' ? { offset: 0, limit: 4 } : { snapshotIndex: data.snapshotIndex, limit: 1 }) })); },
+            async onNavigate(view) { await navigateTool('render_thread_report', { reportId: data.reportId, language: locale, view,
+                ...(view === 'comparison' ? { offset: 0, limit: 4 } : { snapshotIndex: data.snapshotIndex, limit: 1 }) }); },
             async onNext(thread) {
                 const response = await bridge.callTool('read_thread_evidence', { reportId: data.reportId, snapshotIndex: data.snapshotIndex,
                     sourceKey: thread.sourceKey, startLine: thread.nextLine });
@@ -318,8 +335,8 @@ function renderContent() {
     else if (firstFinding) conclusion.append(el('p', '', findingOverview(firstFinding, locale)), el('p', 'muted', t('noCycleNote')));
     else conclusion.append(el('p', 'no-findings', t('noFindings')));
     if (focus && !snapshot.deadlocks?.total) conclusion.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
-        async onOpen(sourceKey) { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
-            snapshotIndex: snapshot.index, sourceKeys: [sourceKey] })); } }));
+        async onOpen(sourceKey) { await navigateTool('inspect_thread_details', { reportId: report.reportId, language: locale,
+            snapshotIndex: snapshot.index, sourceKeys: [sourceKey] }); } }));
     else if (!snapshot.deadlocks?.total && !firstFinding) conclusion.append(el('p', 'muted', t('nextCapture')));
     root.append(conclusion);
     const cards = snapshot.deadlocks?.total
@@ -363,8 +380,8 @@ function renderContent() {
     }
     if (selection && !cycles.some(c => items(c.participants).some(p => p.id === selection.id))) {
         if (focus && cycles.length) root.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
-            async onOpen(sourceKey) { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
-                snapshotIndex: snapshot.index, sourceKeys: [sourceKey] })); } }));
+            async onOpen(sourceKey) { await navigateTool('inspect_thread_details', { reportId: report.reportId, language: locale,
+                snapshotIndex: snapshot.index, sourceKeys: [sourceKey] }); } }));
         else if (!focus) root.append(evidencePanel(selection));
     }
     const findings = el('section', 'findings');
@@ -373,8 +390,8 @@ function renderContent() {
     if (snapshot.analysis?.findings?.nextOffset != null) findings.append(el('p', 'note', t('truncated')));
     if (snapshot.analysis?.findings.total) root.append(findings);
     root.append(threadInventoryView({ snapshot, snapshotCount: report.snapshotCount, locale, canRead: bridge.canCallTools,
-        async onOpen(endpoint) { receive(await bridge.callTool('inspect_thread_details', { reportId: report.reportId, language: locale,
-            snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] })); } }));
+        async onOpen(endpoint) { await navigateTool('inspect_thread_details', { reportId: report.reportId, language: locale,
+            snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] }); } }));
     const limitations = append(el('details', 'coverage'), el('summary', '', t('coverage'))), list = el('ul');
     for (const warning of [...(report.warnings || []), ...(snapshot.analysis?.limitations || []), ...(report.limitations || [])]) list.append(el('li', '', warning));
     for (const s of report.sourceResults || []) if (!s.accepted) list.append(el('li', '', `Rejected input: ${s.name || s.label || s.sourceId}`));

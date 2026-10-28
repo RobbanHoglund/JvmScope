@@ -128,7 +128,7 @@ export async function startHost({ inventoryOnly = false, conclusionOnly = false,
             }
             res.setHeader('Content-Type', 'text/html');
             res.end(`<!doctype html><html><body style="margin:0;background:#101720"><iframe title="JvmScope" sandbox="allow-scripts" src="/widget" style="display:block;width:100%;height:1000px;border:0"></iframe><script>
-                const frame=document.querySelector('iframe'), query=new URLSearchParams(location.search); window.events=[];
+                const frame=document.querySelector('iframe'), query=new URLSearchParams(location.search); window.events=[]; window.completedCalls=[];
                 const send=m=>frame.contentWindow.postMessage({jsonrpc:'2.0',...m},'*');
                 window.sendHostContext=context=>send({method:'ui/notifications/host-context-changed',params:context});
                 addEventListener('message',async e=>{
@@ -137,7 +137,7 @@ export async function startHost({ inventoryOnly = false, conclusionOnly = false,
                     if(m.method==='ui/initialize')send({id:m.id,result:{protocolVersion:'2026-01-26',hostInfo:{name:'JvmScope test host',version:'1'},hostCapabilities:query.has('noTools')?{}:{serverTools:{}},hostContext:{theme:query.get('theme')||'dark',locale:query.get('locale')||'en'}}});
                     else if(m.method==='ui/notifications/initialized'){const r=await fetch('/data?case='+(query.get('case')||'deadlock'));const result=await r.json();send({method:'ui/notifications/tool-input',params:{arguments:{reportId:result.structuredContent.reportId}}});send({method:'ui/notifications/tool-result',params:result});}
                     else if(m.method==='ui/notifications/size-changed')frame.style.height=m.params.height+'px';
-                    else if(m.method==='tools/call'){try{const r=await fetch('/tool',{method:'POST',body:JSON.stringify(m.params)});send({id:m.id,result:await r.json()});}catch(error){send({id:m.id,error:{code:-32603,message:error.message}});}}
+                    else if(m.method==='tools/call'){try{const r=await fetch('/tool',{method:'POST',body:JSON.stringify(m.params)});send({id:m.id,result:await r.json()});}catch(error){send({id:m.id,error:{code:-32603,message:error.message}});}finally{window.completedCalls.push(m.params);}}
                 });
             </script></body></html>`);
         } catch (error) { res.statusCode = 500; res.end(JSON.stringify({ error: error.message })); }
