@@ -5,9 +5,12 @@ const copy = {
         note: 'AI-tolkning av det valda underlaget. Regelfynd och källdetaljer följer nedan.' },
 };
 function el(tag, cls, text) { const n = document.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; }
-export function aiConclusionView({ conclusion, reportId, scope, locale }) {
+export function matchingConclusion(conclusion, reportId, scope) {
+    return conclusion?.reportId === reportId && JSON.stringify(conclusion.scope) === JSON.stringify(scope) ? conclusion : null;
+}
+export function aiConclusionView({ conclusion, reportId, scope, locale, compact = false }) {
     // Never carry an assessment across reports, snapshots or thread selections.
-    if (!conclusion || conclusion.reportId !== reportId || JSON.stringify(conclusion.scope) !== JSON.stringify(scope)) return null;
+    if (!matchingConclusion(conclusion, reportId, scope)) return null;
     const t = key => copy[locale][key], box = el('section', 'ai-conclusion');
     box.setAttribute('aria-label', t('title'));
     const header = el('div', 'ai-conclusion-head');
@@ -18,6 +21,6 @@ export function aiConclusionView({ conclusion, reportId, scope, locale }) {
         const text = el('span', '', conclusion[key]); text.lang = conclusion.language; p.append(text); box.append(p);
     }
     if (conclusion.language !== locale) box.append(el('p', 'muted ai-conclusion-language', `${t('original')}: ${conclusion.language === 'sv' ? 'Svenska' : 'English'}`));
-    box.append(el('p', 'muted ai-conclusion-note', t('note')));
+    if (!compact) box.append(el('p', 'muted ai-conclusion-note', t('note')));
     return box;
 }

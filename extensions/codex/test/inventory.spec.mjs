@@ -1,3 +1,4 @@
+import { openAnalysis } from './ui-navigation.mjs';
 import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +9,7 @@ test.afterAll(async () => host?.close());
 const widget = page => page.frameLocator('iframe');
 
 test('a no-findings report shows parsed content and opens its exact Java stack', async ({ page }) => {
-    await page.goto(host.url + '?case=noFindings'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=noFindings'); const f = widget(page);
     await expect(f.locator('.summary strong')).toHaveText(['22', '20', '0']);
     await expect(f.locator('.inventory-summary')).toHaveText('22 parsed records · 20 with Java state · 2 header-only VM records');
     await expect(f.locator('.state-runnable')).toHaveText('RUNNABLE13');
@@ -44,7 +45,7 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
 });
 
 test('VM records outside the measurement leaders remain inspectable without invented Java states', async ({ page }) => {
-    await page.goto(host.url + '?case=noFindings'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=noFindings'); const f = widget(page);
     await f.getByRole('combobox', { name: 'Java state', exact: true }).selectOption('UNKNOWN');
     await expect(f.locator('.inventory-row')).toHaveCount(2);
     await f.getByRole('button', { name: 'Inspect thread: VM Periodic Task Thread', exact: true }).click();
@@ -52,7 +53,7 @@ test('VM records outside the measurement leaders remain inspectable without inve
     await expect(f.getByText('No stack frames in the available source lines.')).toBeVisible();
     await f.locator('.thread-stack summary').click();
     await expect(f.locator('.evidence')).toContainText('"VM Periodic Task Thread"');
-    await page.goto(host.url + '?case=nativeOnly');
+    await openAnalysis(page, host.url + '?case=nativeOnly');
     await expect(f.locator('.inventory-native-only')).toContainText('Only header-only VM records');
     await expect(f.locator('.summary strong')).toHaveText(['1', '0', '0']);
     await expect(f.locator('.overview-thread')).toHaveCount(0);
@@ -60,7 +61,7 @@ test('VM records outside the measurement leaders remain inspectable without inve
 
 test('inventory filtering and bounded paging preserve duplicate identities and escaped labels', async ({ page }) => {
     let dialogs = 0; page.on('dialog', async d => { dialogs++; await d.dismiss(); });
-    await page.goto(host.url + '?case=large'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=large'); const f = widget(page);
     await expect(f.locator('.inventory-row')).toHaveCount(8);
     await expect(f.locator('.inventory-status')).toContainText('200 retained of 240');
     await expect(f.locator('.inventory-omitted')).toContainText('not searched');
@@ -84,7 +85,7 @@ test('no-findings overview remains readable in both themes, languages and narrow
     await mkdir(previews, { recursive: true });
     for (const [theme, width] of [['dark', 735], ['light', 390]]) {
         await page.setViewportSize({ width, height: 1000 });
-        await page.goto(host.url + `?case=noFindings&theme=${theme}`); const f = widget(page);
+        await openAnalysis(page, host.url + `?case=noFindings&theme=${theme}`); const f = widget(page);
         await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');
         await expect(f.getByRole('heading', { name: 'Trådar i denna snapshot' })).toBeVisible();
         await expect(f.locator('.inventory-summary')).toContainText('20 med Java-tillstånd');
@@ -94,7 +95,7 @@ test('no-findings overview remains readable in both themes, languages and narrow
         expect(await f.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1)).toBe(false);
         await page.screenshot({ path: previews + `no-findings-${theme}-${width}.png`, fullPage: true });
     }
-    await page.goto(host.url + '?case=noFindings&noTools'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=noFindings&noTools'); const f = widget(page);
     await expect(f.locator('.inventory-row').first()).toBeDisabled();
     await f.getByRole('searchbox', { name: 'Find a thread' }).fill('main');
     await expect(f.locator('.inventory-row')).toHaveCount(1);
@@ -102,7 +103,7 @@ test('no-findings overview remains readable in both themes, languages and narrow
 });
 
 test('overview stack action opens only the observed thread and language follows navigation', async ({ page }) => {
-    await page.goto(host.url + '?case=noFindings&locale=sv'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=noFindings&locale=sv'); const f = widget(page);
     // The explicit tool language is authoritative, even with a Swedish host locale.
     await expect(f.getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
     const before = host.calls.length;

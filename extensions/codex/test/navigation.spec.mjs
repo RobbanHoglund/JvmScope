@@ -1,3 +1,4 @@
+import { openAnalysis } from './ui-navigation.mjs';
 import { test, expect } from '@playwright/test';
 import { startHost } from './ui-host.mjs';
 let host;
@@ -27,7 +28,7 @@ async function delivered(page, count) {
 }
 
 test('a slower first thread click cannot replace the most recent thread selection', async ({ page }) => {
-    await page.goto(host.url + '?case=noFindings'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=noFindings'); const f = widget(page);
     const held = await holdFirstCall(page);
     try {
         await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
@@ -40,7 +41,7 @@ test('a slower first thread click cannot replace the most recent thread selectio
 });
 
 test('a pending navigation cannot overwrite a newer host assessment or language', async ({ page }) => {
-    await page.goto(host.url + '?case=noFindings'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=noFindings'); const f = widget(page);
     const held = await holdFirstCall(page);
     try {
         await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
@@ -58,7 +59,7 @@ test('a pending navigation cannot overwrite a newer host assessment or language'
 });
 
 test('changing snapshot while a stack loads keeps the new snapshot selected', async ({ page }) => {
-    await page.goto(host.url + '?case=assessmentSeries'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=assessmentSeries'); const f = widget(page);
     const held = await holdFirstCall(page);
     try {
         await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
@@ -72,7 +73,7 @@ test('changing snapshot while a stack loads keeps the new snapshot selected', as
 });
 
 test('late navigation errors do not disturb a newer selection', async ({ page }) => {
-    await page.goto(host.url + '?case=noFindings'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=noFindings'); const f = widget(page);
     const held = await holdFirstCall(page, 'Delayed old error');
     try {
         await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
@@ -86,7 +87,7 @@ test('late navigation errors do not disturb a newer selection', async ({ page })
 });
 
 test('a cache miss during comparison paging preserves the requested view, page and language', async ({ page }) => {
-    await page.goto(host.url + '?case=assessmentSeries'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=assessmentSeries'); const f = widget(page);
     await page.evaluate(async () => {
         const data = await (await fetch('/data?case=assessmentSeries')).json();
         const result = await (await fetch('/tool', { method: 'POST', body: JSON.stringify({ name: 'render_thread_report', arguments: {

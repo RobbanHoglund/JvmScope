@@ -128,14 +128,21 @@ export async function startHost({ inventoryOnly = false, conclusionOnly = false,
             }
             res.setHeader('Content-Type', 'text/html');
             res.end(`<!doctype html><html><body style="margin:0;background:#101720"><iframe title="JvmScope" sandbox="allow-scripts" src="/widget" style="display:block;width:100%;height:1000px;border:0"></iframe><script>
-                const frame=document.querySelector('iframe'), query=new URLSearchParams(location.search); window.events=[]; window.completedCalls=[];
+                const frame=document.querySelector('iframe'), query=new URLSearchParams(location.search); window.events=[]; window.completedCalls=[]; window.displayRequests=[];
                 const send=m=>frame.contentWindow.postMessage({jsonrpc:'2.0',...m},'*');
                 window.sendHostContext=context=>send({method:'ui/notifications/host-context-changed',params:context});
                 addEventListener('message',async e=>{
                     if(e.source!==frame.contentWindow || e.data?.jsonrpc!=='2.0')return;
                     const m=e.data;window.events.push(m.method);
-                    if(m.method==='ui/initialize')send({id:m.id,result:{protocolVersion:'2026-01-26',hostInfo:{name:'JvmScope test host',version:'1'},hostCapabilities:query.has('noTools')?{}:{serverTools:{}},hostContext:{theme:query.get('theme')||'dark',locale:query.get('locale')||'en'}}});
+                    if(m.method==='ui/initialize'){window.initialization=m.params;send({id:m.id,result:{protocolVersion:'2026-01-26',hostInfo:{name:'JvmScope test host',version:'1'},hostCapabilities:query.has('noTools')?{}:{serverTools:{}},hostContext:{theme:query.get('theme')||'dark',locale:query.get('locale')||'en',displayMode:query.get('mode')||'inline',...(query.has('native')?{availableDisplayModes:['inline','fullscreen']}:{})}}});}
                     else if(m.method==='ui/notifications/initialized'){const r=await fetch('/data?case='+(query.get('case')||'deadlock'));const result=await r.json();send({method:'ui/notifications/tool-input',params:{arguments:{reportId:result.structuredContent.reportId}}});send({method:'ui/notifications/tool-result',params:result});}
+                    else if(m.method==='ui/request-display-mode'){
+                        window.displayRequests.push(m.params); const behavior=query.get('display');
+                        if(behavior==='timeout'){window.delayedDisplay=m;return;}
+                        if(behavior==='error'){send({id:m.id,error:{code:-32601,message:'Unsupported display request'}});return;}
+                        const mode=behavior==='refuse'?'inline':behavior==='refuseClose'&&m.params.mode==='inline'?'fullscreen':m.params.mode;
+                        send({id:m.id,result:{mode}});window.sendHostContext({displayMode:mode});
+                    }
                     else if(m.method==='ui/notifications/size-changed')frame.style.height=m.params.height+'px';
                     else if(m.method==='tools/call'){try{const r=await fetch('/tool',{method:'POST',body:JSON.stringify(m.params)});send({id:m.id,result:await r.json()});}catch(error){send({id:m.id,error:{code:-32603,message:error.message}});}finally{window.completedCalls.push(m.params);}}
                 });

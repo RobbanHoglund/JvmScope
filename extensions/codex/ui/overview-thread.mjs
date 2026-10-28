@@ -15,7 +15,7 @@ const copy = {
         source: 'Källrader', noFrames: 'Ingen stackram finns sparad i denna översikt.', noTools: 'Be om denna tråd i konversationen för att granska stacken.' },
 };
 function el(tag, cls, text) { const n = document.createElement(tag); n.className = cls || ''; if (text != null) n.textContent = text; return n; }
-export function overviewThreadView({ focus, locale, canRead, onOpen }) {
+export function overviewThreadView({ focus, locale, canRead, onOpen, showNextCheck = true }) {
     const t = key => copy[locale][key], { thread, reason } = focus, box = el('section', 'overview-thread');
     box.dataset.sourceKey = thread.sourceKey;
     box.append(el('span', 'overview-thread-label', t(reason === 'selected' ? 'selected' : 'observed')));
@@ -29,7 +29,7 @@ export function overviewThreadView({ focus, locale, canRead, onOpen }) {
         const line = el('p', 'overview-frame'); line.title = t('frameNote');
         line.append(el('span', 'muted', `${t('frame')}: `), el('code', '', frame)); box.append(line);
     } else box.append(el('p', 'muted', t('noFrames')));
-    if (thread.stackContext?.observation === 'jdk-http-send-wait') box.append(el('p', 'overview-next', t('next')));
+    if (showNextCheck && thread.stackContext?.observation === 'jdk-http-send-wait') box.append(el('p', 'overview-next', t('next')));
     const open = el('button', '', t('stack')); open.type = 'button'; open.disabled = !canRead;
     const actions = el('div', 'overview-thread-actions'); actions.append(open);
     if (thread.range) actions.append(el('span', 'muted', `${t('source')} ${thread.range.startLine}–${thread.range.endLine}`));

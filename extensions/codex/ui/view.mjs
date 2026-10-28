@@ -9,8 +9,11 @@ import { threadInventoryView } from './thread-inventory.mjs';
 import { overviewThread } from '../src/stack-context.mjs';
 import { overviewThreadView } from './overview-thread.mjs';
 import { aiConclusionView } from './ai-conclusion.mjs';
+import { compactReport } from './compact-report.mjs';
+import { createReportSurface } from './report-surface.mjs';
 
-const root = document.getElementById('app');
+const app = document.getElementById('app'), root = document.createElement('div');
+root.className = 'analysis-content';
 let focusedThreads = null;
 let reportTimings = null;
 let aiConclusion = null;
@@ -85,7 +88,7 @@ const current = () => items(report?.snapshots)[snapshotIndex];
 function applyContext(context) {
     if (['light', 'dark'].includes(context.theme)) document.documentElement.dataset.theme = context.theme;
     document.documentElement.lang = locale;
-    if (report || focusedThreads) render();
+    surface.context(context);
 }
 function receive(result) {
     reportTimings = result?._meta?.jvmscopeTimings || null;
@@ -123,6 +126,15 @@ function receive(result) {
 const bridge = createBridge({ onResult: receive, onContext: applyContext, onUnavailable() {
     const node = document.getElementById('loading'); if (node) node.textContent = t('noHost');
 } });
+function assessmentScope() {
+    if (focusedThreads) return { view: 'threads', snapshots: [focusedThreads.snapshotIndex], sourceKeys: focusedThreads.threads.map(t => t.sourceKey).sort() };
+    return { view: activeView, snapshots: activeView === 'comparison' ? report.snapshots.items.map(s => s.index) : [current()?.index],
+        ...(activeView === 'snapshot' && overviewSourceKey ? { sourceKeys: selection ? [selection.id] : [] } : {}) };
+}
+const surface = createReportSurface({ container: app, analysis: root, bridge, locale: () => locale,
+    compact: () => compactReport({ report, snapshot: current(), focused: focusedThreads, view: activeView,
+        conclusion: aiConclusion, scope: assessmentScope(), locale,
+        onLanguage(language) { locale = language; document.documentElement.lang = locale; render(); } }) });
 const dataDeadline = setTimeout(() => { const node = document.getElementById('loading'); if (node) node.textContent = t('noData'); }, 12000);
 
 // Responses may arrive out of order. Only the latest still-current user action
@@ -174,12 +186,12 @@ async function showEvidence(p, startLine) {
     const endLine = Math.min(p.evidence.endLine, startLine + 59);
     try {
         const response = await bridge.callTool('read_thread_evidence', { reportId: report.reportId, snapshotIndex: current().index, sourceKey: p.id, startLine });
-        if (epoch !== evidenceEpoch || !container.isConnected) return;
+        if (epoch !== evidenceEpoch || !root.contains(container)) return;
         const data = response.structuredContent;
         if (!data?.lines || data.source?.sha256 !== source.sha256 || data.context?.snapshotIndex !== current().index || data.context?.sourceKey !== p.id) throw new Error('The host returned mismatched source evidence.');
         container.replaceChildren(el('p', 'evidence-context muted', `${t('snapshot')} ${data.context.snapshotNumber} · ${source.name} · ${t('lines')} ${data.lines[0]?.line}–${data.lines.at(-1)?.line}`), el('p', 'muted', t('refreshed')), el('pre', 'evidence', data.lines.map(l => `${l.line}  ${l.text}`).join('\n')));
         if (endLine < p.evidence.endLine) container.append(button(t('readMore'), () => showEvidence(p, endLine + 1)));
-    } catch (error) { if (epoch === evidenceEpoch && container.isConnected) container.replaceChildren(el('p', 'error', error.message)); }
+    } catch (error) { if (epoch === evidenceEpoch && root.contains(container)) container.replaceChildren(el('p', 'error', error.message)); }
 }
 async function loadPage(offset, b) {
     b.disabled = true; b.textContent = t('load');
@@ -232,7 +244,7 @@ async function comparisonEvidence(endpoint, content) {
     const epoch = ++evidenceEpoch;
     const response = await bridge.callTool('read_thread_evidence', { reportId: report.reportId,
         snapshotIndex: endpoint.snapshotIndex, sourceKey: endpoint.sourceKey });
-    if (epoch !== evidenceEpoch || !content.isConnected) return;
+    if (epoch !== evidenceEpoch || !root.contains(content)) return;
     const data = response.structuredContent;
     if (data.context?.snapshotIndex !== endpoint.snapshotIndex || data.context?.sourceKey !== endpoint.sourceKey || data.source?.sha256 !== endpoint.sha256)
         throw new Error('The host returned mismatched source evidence.');
@@ -280,6 +292,7 @@ function render() {
     navigationEpoch++;
     const started = performance.now();
     renderContent();
+    surface.update();
     const timing = root.querySelector('.ui-timing');
     if (timing) timing.textContent = `${t('uiTiming')}: ${(performance.now() - started).toFixed(2)} ms`;
 }
@@ -315,9 +328,7 @@ function renderContent() {
     for (const [value, label] of [['en', 'English'], ['sv', 'Svenska']]) { const option = el('option', '', label); option.value = value; language.append(option); }
     language.value = locale; language.addEventListener('change', () => { locale = language.value; document.documentElement.lang = locale; render(); });
     append(root, append(el('header', 'header'), heading, append(el('div', 'header-actions'), badge(severity), language)));
-    const assessment = aiConclusionView({ conclusion: aiConclusion, reportId: report.reportId, locale,
-        scope: { view: activeView, snapshots: activeView === 'comparison' ? report.snapshots.items.map(s => s.index) : [snapshot.index],
-            ...(activeView === 'snapshot' && overviewSourceKey ? { sourceKeys: selection ? [selection.id] : [] } : {}) } });
+    const assessment = aiConclusionView({ conclusion: aiConclusion, reportId: report.reportId, locale, scope: assessmentScope() });
     if (assessment) root.append(assessment);
     if (report.example?.synthetic) root.append(el('p', 'example-label muted', t('example')));
     if (report.snapshotCount > 1) {
@@ -343,18 +354,22 @@ function renderContent() {
     const focus = overviewThread(snapshot, selection?.id);
     const conclusion = el('section', 'snapshot-conclusion');
     conclusion.setAttribute('aria-label', t('conclusion'));
-    conclusion.append(el('span', 'muted', `${t('conclusion')} · ${snapshot.index + 1} / ${report.snapshotCount}`),
-        el('h2', '', snapshot.deadlocks?.total ? `${snapshot.deadlocks.total} ${t('cycleConclusion')}` : t('noCycle')));
+    conclusion.append(el('span', 'muted', `${assessment ? (locale === 'sv' ? 'Analysunderlag' : 'Analysis evidence') : t('conclusion')} · ${snapshot.index + 1} / ${report.snapshotCount}`));
+    if (!assessment || snapshot.deadlocks?.total)
+        conclusion.append(el('h2', '', snapshot.deadlocks?.total ? `${snapshot.deadlocks.total} ${t('cycleConclusion')}` : t('noCycle')));
     if (report.status === 'partial' || report.warnings?.length) conclusion.append(el('p', 'note', t('partial')));
     const firstFinding = items(snapshot.analysis?.findings)[0];
-    if (snapshot.deadlocks?.total) conclusion.append(el('p', '', t('recommendation')));
-    else if (firstFinding) conclusion.append(el('p', '', findingOverview(firstFinding, locale)), el('p', 'muted', t('noCycleNote')));
-    else conclusion.append(el('p', 'no-findings', t('noFindings')));
+    if (!assessment) {
+        if (snapshot.deadlocks?.total) conclusion.append(el('p', '', t('recommendation')));
+        else if (firstFinding) conclusion.append(el('p', '', findingOverview(firstFinding, locale)), el('p', 'muted', t('noCycleNote')));
+        else conclusion.append(el('p', 'no-findings', t('noFindings')));
+    }
     if (focus && !snapshot.deadlocks?.total) conclusion.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
+        showNextCheck: !assessment,
         async onOpen(sourceKey) { await navigateTool('inspect_thread_details', { reportId: report.reportId, language: locale,
             snapshotIndex: snapshot.index, sourceKeys: [sourceKey] }); } }));
-    else if (!snapshot.deadlocks?.total && !firstFinding) conclusion.append(el('p', 'muted', t('nextCapture')));
-    root.append(conclusion);
+    else if (!assessment && !snapshot.deadlocks?.total && !firstFinding) conclusion.append(el('p', 'muted', t('nextCapture')));
+    if (!assessment || focus || snapshot.deadlocks?.total || report.status === 'partial' || report.warnings?.length) root.append(conclusion);
     const cards = snapshot.deadlocks?.total
         ? [[deadlock?.cycles ?? snapshot.deadlocks.total, t('cyclesCount'), true], [deadlock?.matchedThreads ?? '—', t('threadsCount')], [report.snapshotCount, t('snapshots')]]
         : [[snapshot.threadCount, t('records')], [snapshot.threadSummary?.withJavaState ?? '—', t('javaStates')], [snapshot.analysis?.findings.total ?? 0, t('prioritized')]];

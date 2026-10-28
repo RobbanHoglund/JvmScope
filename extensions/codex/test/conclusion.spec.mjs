@@ -1,3 +1,4 @@
+import { openAnalysis } from './ui-navigation.mjs';
 import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +16,7 @@ test('actual AI conclusion is above rules, counts and threads in both languages 
     for (const [name, locale] of [['noFindings', 'en'], ['assessmentSv', 'sv']]) {
         for (const [theme, width] of [['dark', 735], ['light', 390]]) {
             await page.setViewportSize({ width, height: 1000 });
-            await page.goto(host.url + `?case=${name}&theme=${theme}`); const f = widget(page);
+            await openAnalysis(page, host.url + `?case=${name}&theme=${theme}`); const f = widget(page);
             await expect(f.getByRole('heading', { name: locale === 'sv' ? 'AI-bedömning' : 'AI conclusion', exact: true })).toBeVisible();
             await expect(f.locator('.ai-conclusion-summary')).toContainText(locale === 'sv' ? 'main väntar i ett HTTP-anrop' : 'main is parked in an HTTP send call');
             await before(f, '.snapshot-conclusion'); await before(f, '.summary'); await before(f, '.inventory-list');
@@ -27,13 +28,13 @@ test('actual AI conclusion is above rules, counts and threads in both languages 
 });
 
 test('assessment remains bound to its snapshot and survives returning from a stack', async ({ page }) => {
-    await page.goto(host.url + '?case=assessmentSeries'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=assessmentSeries'); const f = widget(page);
     await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
     await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption('1');
     await expect(f.locator('.ai-conclusion')).toHaveCount(0);
     await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption('0');
     await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
-    await page.goto(host.url + '?case=noFindings');
+    await openAnalysis(page, host.url + '?case=noFindings');
     await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
     await expect(f.locator('.thread-focus-card')).toHaveCount(1);
     await expect(f.locator('.ai-conclusion')).toHaveCount(0);
@@ -47,23 +48,23 @@ test('assessment remains bound to its snapshot and survives returning from a sta
 
 test('conclusions render as text and stay above deadlock, comparison and focused content', async ({ page }) => {
     let dialogs = 0; page.on('dialog', async d => { dialogs++; await d.dismiss(); });
-    await page.goto(host.url + '?case=large'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=large'); const f = widget(page);
     await expect(f.locator('.ai-conclusion-summary')).toContainText('<img src=x onerror=alert(1)>');
     await expect(f.locator('.ai-conclusion img, .ai-conclusion script, .ai-conclusion a')).toHaveCount(0);
     expect(dialogs).toBe(0);
-    await page.goto(host.url + '?case=assessmentDeadlock');
+    await openAnalysis(page, host.url + '?case=assessmentDeadlock');
     await expect(f.locator('.node')).toHaveCount(2); await before(f, '.graph');
-    await page.goto(host.url + '?case=assessmentComparison');
+    await openAnalysis(page, host.url + '?case=assessmentComparison');
     await expect(f.locator('.ai-conclusion-summary')).toContainText('two captures'); await before(f, '.comparison');
-    await page.goto(host.url + '?case=assessmentThread');
+    await openAnalysis(page, host.url + '?case=assessmentThread');
     await expect(f.locator('.thread-focus-card')).toHaveCount(1); await before(f, '.thread-focus-card');
-    await page.goto(host.url + '?case=nativeOnly');
+    await openAnalysis(page, host.url + '?case=nativeOnly');
     await expect(f.locator('.ai-conclusion')).toHaveCount(0);
 });
 
 test('overview to a main-thread explanation presents the new assessment before the stack', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 1000 });
-    await page.goto(host.url + '?case=assessmentSv');
+    await openAnalysis(page, host.url + '?case=assessmentSv');
     const f = widget(page);
     await expect(f.locator('.ai-conclusion-summary')).toContainText('main väntar i ett HTTP-anrop');
     const summary = 'main väntar på att HTTP-anropet ska slutföras via CompletableFuture.get. Den här snapshoten visar inte om anropet har fastnat.';
@@ -98,7 +99,7 @@ test('overview to a main-thread explanation presents the new assessment before t
 });
 
 test('a thread-specific overview assessment disappears when another graph participant is selected', async ({ page }) => {
-    await page.goto(host.url + '?case=assessmentFocusedOverview'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=assessmentFocusedOverview'); const f = widget(page);
     await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of this participant only.');
     const selected = await f.locator('.node[aria-pressed="true"]').getAttribute('data-participant');
     await f.locator('.node[aria-pressed="false"]').click();
@@ -108,7 +109,7 @@ test('a thread-specific overview assessment disappears when another graph partic
 });
 
 test('switching between overview and comparison restores each cached assessment', async ({ page }) => {
-    await page.goto(host.url + '?case=assessmentComparison'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=assessmentComparison'); const f = widget(page);
     await expect(f.locator('.ai-conclusion-summary')).toHaveText('These two captures have no comparable rates.');
     await f.getByRole('button', { name: 'Snapshot details', exact: true }).click();
     await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
@@ -123,7 +124,7 @@ test('switching between overview and comparison restores each cached assessment'
 });
 
 test('hosts without tools keep local snapshot and view navigation without inventing assessments', async ({ page }) => {
-    await page.goto(host.url + '?case=assessmentSeries&noTools'); const f = widget(page);
+    await openAnalysis(page, host.url + '?case=assessmentSeries&noTools'); const f = widget(page);
     await expect(f.locator('.ai-conclusion-summary')).toHaveText('Assessment of snapshot 1 only.');
     await f.getByRole('button', { name: 'Compare snapshots', exact: true }).click();
     await expect(f.locator('.comparison')).toBeVisible();

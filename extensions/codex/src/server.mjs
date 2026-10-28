@@ -20,7 +20,7 @@ const file = z.string().min(1).max(4096).describe('Absolute path to a user-selec
 const pagination = { offset: z.number().int().min(0).default(0), limit: z.number().int().min(1).max(50).default(10) };
 const language = z.enum(['en', 'sv']).default('en').describe('Report language. Match the conversation; English is the fallback for other languages.');
 const conclusion = z.object({
-    summary: z.string().trim().min(1).max(900).describe('Your diagnostic conclusion in plain text, in the report language. Use only the existing analysis and verified evidence; preserve uncertainty.'),
+    summary: z.string().trim().min(1).max(900).describe('Your diagnostic conclusion in 1–3 short plain-text sentences for the compact chat card, in the report language. Use only the existing analysis and verified evidence; preserve uncertainty.'),
     nextCheck: z.string().trim().min(1).max(400).describe('One concrete next check, in plain text in the report language.'),
 }).strict().optional().describe('Supply your AI assessment here when presenting analysis to the user. It appears at the TOP of the report, before all statistics, graphs and lists. This is assistant interpretation, not an engine finding. Omit only for UI navigation or if no assessment is yet supported by evidence.');
 const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
@@ -79,7 +79,9 @@ function createServer() {
         z.object({ id: z.string().min(1).max(100) }).strict());
     server.registerResource('thread-report', reportUri, { mimeType: 'text/html;profile=mcp-app', description: 'JvmScope interactive thread report' }, async () => ({ contents: [{
         uri: reportUri, mimeType: 'text/html;profile=mcp-app', text: reportHtml,
-        _meta: { ui: { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [] } }, 'openai/widgetDescription': 'Thread findings, JVM-reported deadlock graphs and source evidence.' },
+        _meta: { ui: { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [] } },
+            'openai/ui': { availableDisplayModes: ['inline', 'fullscreen'] },
+            'openai/widgetDescription': 'A concise Java thread assessment and next check. Open analysis for thread lists, deadlock graphs, comparison and source evidence.' },
     }] }));
     server.registerTool('render_thread_report', {
         title: 'Show JvmScope thread report',

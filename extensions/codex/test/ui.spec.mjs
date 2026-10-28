@@ -1,3 +1,4 @@
+import { openAnalysis } from './ui-navigation.mjs';
 import { test, expect } from '@playwright/test';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { startHost } from './ui-host.mjs';
@@ -15,7 +16,7 @@ const widget = page => page.frameLocator('iframe');
 const overflow = frame => frame.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1);
 
 test('deadlock graph exposes exact source evidence on click and keyboard activation', async ({ page }) => {
-    await page.goto(host.url);
+    await openAnalysis(page, host.url);
     const f = widget(page);
     await expect(f.getByRole('heading', { name: 'Thread analysis', exact: true })).toBeVisible();
     await expect(f.locator('.edge')).toHaveCount(2);
@@ -34,13 +35,13 @@ test('deadlock graph exposes exact source evidence on click and keyboard activat
 });
 
 test('single snapshots omit series controls while a one-item series page keeps navigation', async ({ page }) => {
-    await page.goto(host.url);
+    await openAnalysis(page, host.url);
     const f = widget(page);
     await expect(f.locator('.node')).toHaveCount(2);
     await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toHaveCount(0);
     await expect(f.locator('.observation')).toHaveCount(0);
     await expect(f.getByText('deadlock.txt', { exact: true })).toHaveCount(1);
-    await page.goto(host.url + '?case=series');
+    await openAnalysis(page, host.url + '?case=series');
     await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toBeVisible();
     await expect(f.locator('.observation')).toBeVisible();
     await f.getByRole('button', { name: 'Next snapshots' }).click();
@@ -49,7 +50,7 @@ test('single snapshots omit series controls while a one-item series page keeps n
 });
 
 test('one-call example renders localized provenance and keeps source interaction working', async ({ page }) => {
-    await page.goto(host.url + '?case=demo');
+    await openAnalysis(page, host.url + '?case=demo');
     const f = widget(page);
     await expect(f.locator('.example-label')).toHaveText('Syntetiskt exempel · medföljande Java-deadlock');
     await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toHaveCount(0);
@@ -61,20 +62,20 @@ test('one-call example renders localized provenance and keeps source interaction
 });
 
 test('cycles stay separate and snapshot paging returns actual next-page data', async ({ page }) => {
-    await page.goto(host.url + '?case=multi');
+    await openAnalysis(page, host.url + '?case=multi');
     const f = widget(page);
     await expect(f.getByRole('combobox', { name: 'Cycle', exact: true })).toBeVisible();
     await f.getByRole('combobox', { name: 'Cycle', exact: true }).selectOption('1');
     await expect(f.getByRole('button', { name: /^gamma\. Waits for/ })).toBeVisible();
     await expect(f.getByRole('button', { name: /^alpha\. Waits for/ })).toHaveCount(0);
-    await page.goto(host.url + '?case=series');
+    await openAnalysis(page, host.url + '?case=series');
     await expect(f.getByText('Displayed snapshots: 1–1 / 2')).toBeVisible();
     await f.getByRole('button', { name: 'Next snapshots' }).click();
     await expect(f.getByText('Displayed snapshots: 2–2 / 2')).toBeVisible();
     await expect(f.getByRole('heading', { name: 'No JVM-reported deadlock in this snapshot' })).toBeVisible();
     await f.getByRole('button', { name: 'Previous snapshots' }).click();
     await expect(f.getByText('Displayed snapshots: 1–1 / 2')).toBeVisible();
-    await page.goto(host.url + '?case=paged');
+    await openAnalysis(page, host.url + '?case=paged');
     await expect(f.getByText('Displayed snapshots: 1–2 / 3')).toBeVisible();
     await f.getByRole('button', { name: 'Next snapshots' }).click();
     await expect(f.getByText('Displayed snapshots: 3–3 / 3')).toBeVisible();
@@ -83,7 +84,7 @@ test('cycles stay separate and snapshot paging returns actual next-page data', a
 });
 
 test('changed capture is reported instead of displaying stale evidence', async ({ page }) => {
-    await page.goto(host.url);
+    await openAnalysis(page, host.url);
     const f = widget(page);
     await expect(f.locator('.node')).toHaveCount(2);
     await writeFile(host.capture, 'changed capture');
@@ -95,12 +96,12 @@ test('changed capture is reported instead of displaying stale evidence', async (
 });
 
 test('unmapped participants have no invented arrows and unavailable tools degrade explicitly', async ({ page }) => {
-    await page.goto(host.url + '?case=unmapped');
+    await openAnalysis(page, host.url + '?case=unmapped');
     const f = widget(page);
     await expect(f.getByText(/Some participants or owners could not be matched/)).toBeVisible();
     await expect(f.locator('.edge')).toHaveCount(0);
     await expect(f.locator('.node-holding').first()).toContainText('Not established in the matched thread block');
-    await page.goto(host.url + '?noTools=1');
+    await openAnalysis(page, host.url + '?noTools=1');
     await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
     await expect(f.getByText(/Interactive source tools are unavailable/)).toBeVisible();
     await expect(f.getByRole('button', { name: /^View source lines / })).toBeDisabled();
@@ -108,7 +109,7 @@ test('unmapped participants have no invented arrows and unavailable tools degrad
 
 test('untrusted labels render as text and outside messages cannot replace the report', async ({ page }) => {
     let dialogs = 0; page.on('dialog', async d => { dialogs++; await d.dismiss(); });
-    await page.goto(host.url + '?case=injection');
+    await openAnalysis(page, host.url + '?case=injection');
     const f = widget(page);
     await expect(f.locator('.node').first()).toContainText('<svg/onload=alert(1)>');
     await expect(f.locator('[onload]')).toHaveCount(0);
@@ -118,7 +119,7 @@ test('untrusted labels render as text and outside messages cannot replace the re
 });
 
 test('report language follows the conversation and keeps evidence qualifications', async ({ page }) => {
-    await page.goto(host.url + '?case=realSv&locale=en');
+    await openAnalysis(page, host.url + '?case=realSv&locale=en');
     const f = widget(page);
     await expect(f.getByRole('heading', { name: 'Trådanalys', exact: true })).toBeVisible();
     await expect(f.locator('.finding').first()).toContainText('2 JVM-rapporterade cykler med 5 rapporterade deltagarposter');
@@ -136,7 +137,7 @@ test('report language follows the conversation and keeps evidence qualifications
 test('real three-snapshot report keeps counts scoped, text readable and all cycle edges usable at chat widths', async ({ page }) => {
     await mkdir(previewDir, { recursive: true });
     for (const theme of ['light', 'dark']) {
-        await page.goto(host.url + `?case=real&theme=${theme}`);
+        await openAnalysis(page, host.url + `?case=real&theme=${theme}`);
         const f = widget(page);
         await expect(f.locator('.summary strong')).toHaveText(['2', '5', '3']);
         await expect(f.locator('.observation')).toContainText('Snapshots with reported cycles: 3/3');
@@ -173,7 +174,7 @@ test('real three-snapshot report keeps counts scoped, text readable and all cycl
 });
 
 test('every real snapshot exposes the selected participant source, including after resize', async ({ page }) => {
-    await page.goto(host.url + '?case=real');
+    await openAnalysis(page, host.url + '?case=real');
     const f = widget(page);
     for (const snapshot of ['0', '1', '2']) {
         await f.getByRole('combobox', { name: 'Snapshot', exact: true }).selectOption(snapshot);
@@ -191,7 +192,7 @@ test('every real snapshot exposes the selected participant source, including aft
 
 test('large cycle discloses omitted participants and never invents a closing edge', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 1000 });
-    await page.goto(host.url + '?case=many');
+    await openAnalysis(page, host.url + '?case=many');
     const f = widget(page);
     await expect(f.locator('.summary strong')).toHaveText(['1', '9', '1']);
     await expect(f.locator('.node')).toHaveCount(8);
@@ -207,7 +208,7 @@ test('dark, light and narrow layouts have no horizontal overflow and respond to 
     await mkdir(previewDir, { recursive: true });
     for (const [theme, width] of [['dark', 1060], ['light', 1060], ['dark', 390]]) {
         await page.setViewportSize({ width, height: 1000 });
-        await page.goto(host.url + `?case=long&theme=${theme}`);
+        await openAnalysis(page, host.url + `?case=long&theme=${theme}`);
         const f = widget(page);
         await expect(f.locator('.node')).toHaveCount(2);
         expect(await overflow(f)).toBe(false);
@@ -223,7 +224,7 @@ test('dark, light and narrow layouts have no horizontal overflow and respond to 
 
 
 test('focused report, graph and evidence follow the exact global snapshot', async ({ page }) => {
-    await page.goto(host.url + '?case=focused');
+    await openAnalysis(page, host.url + '?case=focused');
     const f = widget(page);
     await expect(f.locator('.snapshot-context')).toContainText('Viewing snapshot 3 / 3');
     await expect(f.getByRole('combobox', { name: 'Snapshot', exact: true })).toHaveValue('0');
@@ -240,7 +241,7 @@ test('focused report, graph and evidence follow the exact global snapshot', asyn
 });
 
 test('series navigation reads cached pages without rerunning the analyzer', async ({ page }) => {
-    await page.goto(host.url + '?case=paged');
+    await openAnalysis(page, host.url + '?case=paged');
     const f = widget(page), start = host.calls.length;
     await f.getByRole('button', { name: 'Next snapshots' }).click();
     await expect(f.getByText('Displayed snapshots: 3–3 / 3')).toBeVisible();
@@ -249,7 +250,7 @@ test('series navigation reads cached pages without rerunning the analyzer', asyn
 
 
 test('comparison plots CPU and bounded allocation and reads both exact interval endpoints', async ({ page }) => {
-    await page.goto(host.url + '?case=comparison');
+    await openAnalysis(page, host.url + '?case=comparison');
     const f = widget(page);
     await expect(f.getByRole('heading', { name: 'Snapshot comparison', exact: true })).toBeVisible();
     await expect(f.locator('.interval-summary')).toHaveCount(2);
@@ -276,7 +277,7 @@ test('comparison is localized, bounded and readable in dark/light and narrow lay
     await mkdir(previewDir, { recursive: true });
     for (const theme of ['dark', 'light']) for (const width of [735, 390]) {
         await page.setViewportSize({ width, height: 1000 });
-        await page.goto(host.url + `?case=comparison&theme=${theme}`);
+        await openAnalysis(page, host.url + `?case=comparison&theme=${theme}`);
         const f = widget(page);
         await expect(f.locator('.metric-row')).toHaveCount(8);
         await f.getByRole('button', { name: 'Allocation', exact: true }).click();
@@ -295,7 +296,7 @@ test('comparison is localized, bounded and readable in dark/light and narrow lay
 });
 
 test('comparison tab reuses already loaded analysis and source controls degrade without host tools', async ({ page }) => {
-    await page.goto(host.url + '?case=real&noTools=1');
+    await openAnalysis(page, host.url + '?case=real&noTools=1');
     const f = widget(page), before = host.calls.length;
     await f.getByRole('button', { name: 'Compare snapshots', exact: true }).click();
     await expect(f.locator('.interval-summary')).toHaveCount(2);
@@ -306,7 +307,7 @@ test('comparison tab reuses already loaded analysis and source controls degrade 
 });
 
 test('finding overviews expand with the keyboard and retain full evidence and source actions', async ({ page }) => {
-    await page.goto(host.url + '?case=focused');
+    await openAnalysis(page, host.url + '?case=focused');
     const f = widget(page), card = f.locator('[data-finding="cpu-hot"]');
     await expect(card.locator('summary')).toContainText('9 application threads above the configured CPU threshold');
     await expect(card.locator('.finding-action')).toBeHidden();
@@ -323,7 +324,7 @@ test('finding overviews expand with the keyboard and retain full evidence and so
 });
 
 test('matching contention and bottleneck findings share one overview while retaining distinct evidence', async ({ page }) => {
-    await page.goto(host.url + '?case=focused');
+    await openAnalysis(page, host.url + '?case=focused');
     const f = widget(page), contention = f.locator('[data-finding="observed-lock-contention"]');
     await expect(f.locator('.findings > [data-finding="likely-lock-bottleneck"]')).toHaveCount(0);
     await expect(contention.locator(':scope > details > summary')).toContainText('same locks');
@@ -338,7 +339,7 @@ test('matching contention and bottleneck findings share one overview while retai
 });
 
 test('long stack frames show the exact Java location first and retain the full frame on expansion', async ({ page }) => {
-    await page.goto(host.url + '?case=focused');
+    await openAnalysis(page, host.url + '?case=focused');
     const f = widget(page), stack = f.locator('.stack-frame');
     await expect(stack.locator('summary code')).toHaveText('ThreadScenarioRunner.java:458');
     await expect(stack.locator('.frame')).toBeHidden();
@@ -355,7 +356,7 @@ test('technical timing and host guidance live in report information while snapsh
         ['focused', 'Report information', 'A file opened from chat may show another snapshot.', 'Read / analysis:'],
         ['realSv', 'Rapportinformation', 'En fil öppnad från chatten kan visa en annan snapshot.', 'Läsning / analys:'],
     ]) {
-        await page.goto(host.url + '?case=' + caseName);
+        await openAnalysis(page, host.url + '?case=' + caseName);
         const f = widget(page), info = f.locator('.report-information');
         await expect(f.locator('.snapshot-context')).toBeVisible();
         await expect(info.locator('summary')).toContainText(information);
@@ -371,7 +372,7 @@ test('technical timing and host guidance live in report information while snapsh
 
 test('stack follow-up opens only requested threads with metrics and verified evidence already present', async ({ page }) => {
     const before = host.calls.length;
-    await page.goto(host.url + '?case=threads');
+    await openAnalysis(page, host.url + '?case=threads');
     const f = widget(page);
     await expect(f.getByRole('heading', { name: 'Selected threads', exact: true })).toBeVisible();
     await expect(f.locator('.thread-focus-card')).toHaveCount(3);
@@ -392,7 +393,7 @@ test('stack follow-up opens only requested threads with metrics and verified evi
 test('focused follow-ups support both themes, narrow widths, language changes and missing host tools', async ({ page }) => {
     for (const [theme, width] of [['dark', 735], ['light', 390]]) {
         await page.setViewportSize({ width, height: 1000 });
-        await page.goto(host.url + `?case=threadSv&theme=${theme}&noTools=1`);
+        await openAnalysis(page, host.url + `?case=threadSv&theme=${theme}&noTools=1`);
         const f = widget(page);
         await expect(f.getByRole('heading', { name: 'Valda trådar', exact: true })).toBeVisible();
         await expect(f.getByRole('button', { name: 'Snapshotöversikt', exact: true })).toBeDisabled();
@@ -407,12 +408,14 @@ test('focused follow-ups support both themes, narrow widths, language changes an
 
 test('comparison leads with the chart while preserving interval summaries and coverage on demand', async ({ page }) => {
     await page.setViewportSize({ width: 735, height: 1000 });
-    await page.goto(host.url + '?case=comparison');
+    await openAnalysis(page, host.url + '?case=comparison');
     const f = widget(page);
     await expect(f.getByRole('heading', { name: 'Snapshot comparison', exact: true })).toHaveCount(1);
     await expect(f.locator('.interval-summaries')).toBeHidden();
     await expect(f.locator('.metric-row').first()).toBeVisible();
-    const chartTop = await f.locator('.metric-chart').evaluate(x => x.getBoundingClientRect().top);
+    // The surface return toolbar precedes the analysis. Its chart must still
+    // lead the analysis rather than being pushed below interval detail cards.
+    const chartTop = await f.locator('.metric-chart').evaluate(x => x.getBoundingClientRect().top - document.querySelector('.analysis-content').getBoundingClientRect().top);
     expect(chartTop).toBeLessThan(350);
     await f.locator('.comparison-information > summary').click();
     await expect(f.locator('.interval-summaries')).toBeVisible();
@@ -424,12 +427,12 @@ test('comparison leads with the chart while preserving interval summaries and co
 
 test('focused stack paging retains the selected identity and untrusted labels remain plain text', async ({ page }) => {
     let dialogs = 0; page.on('dialog', async d => { dialogs++; await d.dismiss(); });
-    await page.goto(host.url + '?case=threadInjection');
+    await openAnalysis(page, host.url + '?case=threadInjection');
     const f = widget(page);
     await expect(f.locator('.thread-focus-card h2')).toContainText('<svg/onload=alert(1)>');
     await expect(f.locator('[onload]')).toHaveCount(0);
     expect(dialogs).toBe(0);
-    await page.goto(host.url + '?case=deep');
+    await openAnalysis(page, host.url + '?case=deep');
     await f.locator('.thread-stack summary').click();
     await expect(f.locator('.thread-stack pre')).not.toContainText('Service.java:80');
     await f.getByRole('button', { name: 'Next source lines', exact: true }).click();

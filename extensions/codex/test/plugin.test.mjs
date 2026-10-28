@@ -312,6 +312,7 @@ test('MCP Apps report resolves its bundled UI and preserves cached evidence with
     assert.match(resource.text, /ui\/initialize/);
     assert.match(resource.text, /ui\/notifications\/tool-result/);
     assert.deepEqual(resource._meta.ui.csp.connectDomains, []);
+    assert.deepEqual(resource._meta['openai/ui'].availableDisplayModes, ['inline', 'fullscreen']);
     await writeFile(filename, 'changed after analysis');
     const rendered = await client.callTool({ name: 'render_thread_report', arguments: { reportId: report.reportId } });
     assert.ok(!rendered.isError);
