@@ -88,7 +88,7 @@ test('overview to a main-thread explanation presents the new assessment before t
     await expect(f.locator('.ai-conclusion-next')).toContainText(nextCheck);
     await expect(f.locator('.focus-evidence-only')).toHaveCount(0);
     await before(f, '.thread-focus-card');
-    await f.getByText('Hela trådblocket', { exact: false }).click();
+    await expect(f.locator('.thread-stack pre')).toBeVisible();
     await expect(f.locator('.evidence')).toContainText('HttpClientImpl.send');
     await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);
     expect(await f.locator('body').evaluate(b => b.scrollWidth > b.clientWidth + 1)).toBe(false);

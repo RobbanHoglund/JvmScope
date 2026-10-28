@@ -32,7 +32,7 @@ test('a no-findings report shows parsed content and opens its exact Java stack',
     await expect(f.locator('.snapshot-context')).toContainText('1 selected thread');
     await expect(f.locator('.frame-location')).toHaveText('StatusClient.java:152');
     await expect(f.locator('.thread-rates')).not.toContainText('0%');
-    await f.locator('.thread-stack summary').click();
+    await expect(f.locator('.thread-stack pre')).toBeVisible();
     await expect(f.locator('.evidence')).toContainText('CompletableFuture.get');
     expect(host.calls.slice(offset).map(c => c.name)).toEqual(['inspect_thread_details']);
     await f.getByRole('button', { name: 'Snapshot overview' }).click();
@@ -51,7 +51,7 @@ test('VM records outside the measurement leaders remain inspectable without inve
     await f.getByRole('button', { name: 'Inspect thread: VM Periodic Task Thread', exact: true }).click();
     await expect(f.locator('.thread-focus-card .thread-state')).toHaveText('Unavailable');
     await expect(f.getByText('No stack frames in the available source lines.')).toBeVisible();
-    await f.locator('.thread-stack summary').click();
+    await expect(f.locator('.thread-stack pre')).toBeVisible();
     await expect(f.locator('.evidence')).toContainText('"VM Periodic Task Thread"');
     await openAnalysis(page, host.url + '?case=nativeOnly');
     await expect(f.locator('.inventory-native-only')).toContainText('Only header-only VM records');

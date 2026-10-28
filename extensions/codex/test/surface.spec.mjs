@@ -38,7 +38,7 @@ test('open and close negotiate native display modes and preserve selected thread
     await f.locator('.open-analysis').focus(); await page.keyboard.press('Enter');
     await expect(f.locator('.thread-focus-card')).toHaveCount(1);
     await expect(f.locator('.surface-status')).toHaveCount(0);
-    await f.locator('.thread-stack summary').click();
+    await expect(f.locator('.thread-stack pre')).toBeVisible();
     const stack = await f.locator('.evidence').textContent();
     await f.locator('.surface-back').click();
     await expect(f.locator('.analysis-content')).toHaveCount(0);

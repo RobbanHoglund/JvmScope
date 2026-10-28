@@ -64,6 +64,8 @@ export function threadDetailsView({ data, locale, version, conclusion, canRead, 
         } else card.append(el('p', 'muted', thread.context.range ? t('noFrames') : t('noSource')));
         if (thread.lines.length) {
             const full = el('details', 'thread-stack'), summary = el('summary', '', `${t('full')} · ${t('lines')} ${thread.context.range.startLine}–${thread.context.range.endLine}`);
+            // A focused thread view is an explicit request to inspect its stack.
+            full.open = true;
             const pre = el('pre', 'evidence', thread.lines.map(l => `${l.line}  ${l.text}`).join('\n'));
             full.append(summary, pre);
             if (thread.nextLine) {

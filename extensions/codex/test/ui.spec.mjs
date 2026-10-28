@@ -381,8 +381,7 @@ test('stack follow-up opens only requested threads with metrics and verified evi
     const allocation = f.locator('.thread-focus-card').filter({ has: f.getByRole('heading', { name: 'scenario-cpu-and-allocation-hot', exact: true }) });
     await expect(allocation.locator('.thread-rates')).toContainText('291.7–296.5 MiB/s');
     await expect(allocation.locator('.frame-location')).toHaveText('ThreadScenarioRunner.java:634');
-    await expect(allocation.locator('pre')).toBeHidden();
-    await allocation.locator('.thread-stack summary').focus(); await page.keyboard.press('Enter');
+    await expect(allocation.locator('pre')).toBeVisible();
     await expect(allocation.locator('pre')).toContainText('2270  "scenario-cpu-and-allocation-hot"');
     expect(host.calls.length).toBe(before, 'opening preverified stacks does not invoke more tools');
     await f.getByRole('button', { name: 'Snapshot overview', exact: true }).click();
@@ -398,7 +397,6 @@ test('focused follow-ups support both themes, narrow widths, language changes an
         await expect(f.getByRole('heading', { name: 'Valda trådar', exact: true })).toBeVisible();
         await expect(f.getByRole('button', { name: 'Snapshotöversikt', exact: true })).toBeDisabled();
         expect(await overflow(f)).toBe(false);
-        await f.locator('.thread-stack summary').first().click();
         await expect(f.locator('.thread-stack pre').first()).toBeVisible();
         await page.screenshot({ path: path.join(previewDir, `selected-threads-${theme}-${width}.png`), fullPage: true });
         await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
@@ -433,7 +431,7 @@ test('focused stack paging retains the selected identity and untrusted labels re
     await expect(f.locator('[onload]')).toHaveCount(0);
     expect(dialogs).toBe(0);
     await openAnalysis(page, host.url + '?case=deep');
-    await f.locator('.thread-stack summary').click();
+    await expect(f.locator('.thread-stack pre')).toBeVisible();
     await expect(f.locator('.thread-stack pre')).not.toContainText('Service.java:80');
     await f.getByRole('button', { name: 'Next source lines', exact: true }).click();
     await expect(f.locator('.thread-stack pre')).toContainText('Service.java:80');
