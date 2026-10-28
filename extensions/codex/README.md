@@ -1,4 +1,4 @@
-# JvmScope for Codex — local preview 0.4.3
+# JvmScope for Codex — local preview 0.4.4
 
 Analyze Java thread dumps, SunJSSE TLS logs and HotSpot GC logs using the same engines as the JvmScope web application and VS Code extension. Includes a Java knowledge base, TLS explanations, public samples and source-line evidence. This is an independently developed local plugin, not an OpenAI-approved directory listing.
 
@@ -8,13 +8,13 @@ The build produces two different archives:
 
 | Archive | Purpose |
 | --- | --- |
-| `jvmscope-codex-plugin-0.4.3.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
-| `jvmscope-codex-0.4.3.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
+| `jvmscope-codex-plugin-0.4.4.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
+| `jvmscope-codex-0.4.4.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
 
 For the desktop **Add plugin / New plugin** file picker, select the **single-plugin** archive without unpacking it. The maintainer verified the 0.2.2 import and interactive report in a real desktop conversation. In that session, removing the older installed plugin before importing the replacement resolved a generic import error; this is an observed workaround, not a guarantee for every client. Start a fresh local conversation after updating. Do not remove the MCP configuration: the analysis tools depend on it. Public-directory eligibility is separate from personal import.
 
 1. Install **Node.js 22 or later** and ensure `node --version` works in the desktop app's environment. No Java runtime, npm install, API key or running web server is needed to use the packaged plugin.
-2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.4.3.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
+2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.4.4.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
 3. Add that **extracted marketplace folder** using a current Codex CLI:
    ```sh
    codex plugin marketplace add "/absolute/path/to/JvmScope-Codex"
@@ -35,7 +35,7 @@ If your client lacks the documented plugin marketplace commands, update it. As a
 - Results are paged and bounded to 512 KiB; evidence ranges are at most 200 lines / 24,000 JSON characters. Analysis must be rerun if the source SHA-256 changes. Keep files stable while analyzing.
 - Thread snapshot comparison retains the shared engine's process/timestamp/counter checks. GC sessions are analyzed independently. GC pause budget defaults to 200 ms, a review threshold rather than a JVM requirement.
 - Thread analysis includes an optional MCP Apps report with status cards, per-snapshot deadlock graphs, multiple cycle selection and hash-checked source evidence. Compatible host support must be tested in your client; text analysis remains available. Full TLS/GC visualizations remain in the existing application and VS Code extension.
-- Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Overview rendering, comparison and cached snapshot pagination use this cache without rereading or reparsing captures. Selected-thread details reuse cached measurements and read/hash the selected capture once for up to five verified stack ranges, without rerunning the parser. Additional snapshots are cached when their serialized array fits within 2 Mi characters; otherwise only the requested page is retained and a cache miss is explicit. Public pages retain the 512 KiB response guard. Source clicks always recheck the file hash. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
+- Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Overview rendering, comparison and cached snapshot pagination use this cache without rereading or reparsing captures. Each selected-thread inspection or presentation reuses cached measurements and reads/hashes the selected capture once for up to five verified stack ranges, without rerunning the parser. When new evidence is needed for an AI follow-up, inspect first, then present the assessment; presentation rechecks the hash so a changed capture cannot silently reuse the earlier evidence. Additional snapshots are cached when their serialized array fits within 2 Mi characters; otherwise only the requested page is retained and a cache miss is explicit. Public pages retain the 512 KiB response guard. Source clicks always recheck the file hash. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
 
 ## Build and test from source
 
@@ -52,7 +52,7 @@ codex plugin marketplace add "/absolute/path/to/JvmScope/build/codex-marketplace
 
 The build bundles the official MCP SDK, input validation and existing frontend analysis engines. It copies skill/manifest/assets and public samples into `build/codex-marketplace`. The marketplace ZIP includes that complete directory; the single-plugin ZIP contains only the plugin directory's contents. No generated parser fork or runtime npm installation is required. Do not add the unbuilt Git repository as a marketplace: the distribution directory is generated by the build.
 
-Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. The maintainer confirmed desktop import, report rendering and source interaction for 0.2.2. Desktop screenshots of 0.3.0 confirmed the snapshot 3 graph and cited lock addresses match the displayed capture. Desktop screenshots of 0.3.1 confirmed the compact report and comparison render, while exposing a redundant overview during stack follow-ups. Desktop screenshots of 0.4.1 confirmed the no-findings thread inventory and source interaction. Version 0.4.3 adds a conclusion-first overview and compact inventory, covered by packaged protocol and sandboxed host tests; its new layout still needs a desktop smoke test. Protocol tests do not simulate Codex reasoning.
+Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. The maintainer confirmed desktop import, report rendering and source interaction for 0.2.2. Desktop screenshots of 0.3.0 confirmed the snapshot 3 graph and cited lock addresses match the displayed capture. Desktop screenshots of 0.3.1 confirmed the compact report and comparison render, while exposing a redundant overview during stack follow-ups. Desktop screenshots of 0.4.1 confirmed the no-findings thread inventory and source interaction. Version 0.4.4 adds a conclusion-first overview and compact inventory, covered by packaged protocol and sandboxed host tests; its new layout still needs a desktop smoke test. Protocol tests do not simulate Codex reasoning.
 
 ## Publication path
 
@@ -62,6 +62,21 @@ Verified documentation (2026-10-23):
 - https://developers.openai.com/plugins/build/plugins
 - https://developers.openai.com/plugins/deploy/desktop-only
 - https://developers.openai.com/plugins/deploy/submission
+
+## 0.4.4 complete selected-thread explanations
+
+- Separate stack inspection from presentation. The new `inspect_thread_details` tool returns verified lines and cached measurements without opening a widget. The assistant reads this evidence before calling `render_thread_details`, which now requires a nonempty assessment and next check. The focused report puts them above the selected-thread cards. There are twelve read-only MCP tools.
+- If the conversation already contains the necessary verified evidence, present the focused assessment directly. Otherwise inspect, interpret, then render once. Recheck the capture hash before presentation; neither call reparses the capture. Preserve thread/snapshot identity, missing-not-zero rates, allocation bounds and source limits.
+- Direct UI stack clicks use the inspection tool and remain one call. With no matching assessment, show an explicit evidence-only notice. When returning to the exact previously assessed selection, restore its assessment. An overview assessment is not passed off as a separate answer to a new focused question.
+- The skill must answer the actual follow-up and cannot claim that an assessment is in the report merely because stack data was returned. Existing verified evidence can still support a direct text answer when no new view is requested. The shared web/VS Code engines and versions are unchanged.
+
+Validation: 55 package/data/protocol tests and 34 sandboxed browser journeys pass. Independent two-turn trials returned a substantive Swedish answer from existing evidence, and inspected then rendered an English two-thread follow-up with its own required assessment.
+
+Regression coverage includes the reported overview → explain main sequence, rejecting a missing/blank assessment, ensuring the inspection tool has no UI template, preserving selected identities and rejecting a source changed between inspection and presentation. Browser checks cover assessment placement above the stack, stack expansion, overview/selection return navigation and the evidence-only notice. The earlier 0.4.3 forward tests covered initial overviews but missed this follow-up path.
+
+The current `benchmark-thread-details.mjs` exercises inspection plus presentation with a fixed test assessment. Historical 0.4.0 timings below describe the old single-call flow; they do not measure AI reasoning or predict desktop response time. The data-then-render pattern follows the [MCP Apps guidance](https://developers.openai.com/plugins/build/chatgpt-ui).
+
+Desktop check: import 0.4.4, analyze a selected dump, then ask to show a focused explanation of main and whether it appears stuck. Confirm the AI assessment and next check above the stack, in the conversation language. Expand the source, return to the overview and reopen main. A direct click on a thread without its own assessment should say that the view is stack evidence. Automated host checks do not replace this desktop check.
 
 ## 0.4.3 AI conclusion at the top of the report
 
