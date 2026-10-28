@@ -31,7 +31,7 @@ function result(data) {
 
 function threadReportResult(report, language, { view = 'snapshot', snapshotIndex, sourceKey } = {}, aiConclusion = null) {
     const started = performance.now();
-    if (JSON.stringify(report).length > 512 * 1024) throw new Error('Report page exceeds the 512 KiB response limit. Reduce limit and request smaller pages.');
+    if (Buffer.byteLength(JSON.stringify(report), 'utf8') > 512 * 1024) throw new Error('Report page exceeds the 512 KiB response limit. Reduce limit and request smaller pages.');
     const selected = report.snapshots.items.find(s => s.index === snapshotIndex) || report.snapshots.items.find(s => s.deadlocks.total) || report.snapshots.items[0];
     return { content: [{ type: 'text', text: `JvmScope thread report: ${report.snapshotCount} snapshots; deadlock cycles observed in ${report.deadlockObservations.snapshotsWithCycles} snapshots. ${report.snapshotCount > 1 ? 'Repeated observations are not distinct incidents. ' : ''}${aiConclusion ? 'The supplied AI conclusion and next check are included at the top of the report; do not repeat them below the widget.' : 'Keep the accompanying answer brief: give the diagnostic conclusion and next check.'} Rendering was requested successfully; do not narrate visibility checks or assert that the host displayed the UI. Do not create files automatically.` }],
         structuredContent: { reportId: report.reportId, snapshotCount: report.snapshotCount, findingCounts: report.findingCounts,
@@ -114,7 +114,7 @@ function createServer() {
             const structuredContent = { ...data, conclusion: aiConclusion,
                 presentation: present ? 'report-with-assessment' : 'evidence-only',
                 ...(!present ? { nextAction: 'No report or new AI assessment has been presented by this data tool. Read these verified lines, then call render_thread_details with your conclusion.summary and conclusion.nextCheck answering the user’s question. Do not claim that a detailed assessment is already in a report. Stack frames do not reveal method bodies or establish wait duration.' } : {}) };
-            if (JSON.stringify(structuredContent).length > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
+            if (Buffer.byteLength(JSON.stringify(structuredContent), 'utf8') > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
             return { ...result(structuredContent), ...(present ? { content: [{ type: 'text', text: 'Selected-thread report includes your supplied AI assessment and next check at the top. Do not repeat them below the widget or render a general report again. If this host cannot display reports, give the actual assessment as text; never replace it with a claim that it is visible elsewhere.' }] } : {}),
                 _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion } };
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }

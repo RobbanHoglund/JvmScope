@@ -12,6 +12,7 @@ import { analyzeTlsLog } from '../../../frontend/assets/javautils/tls-parser.js'
 import { parseGcLog, analyzeGc } from '../../../frontend/assets/javautils/gc/parser.js';
 import { readCapture, MAX_CAPTURE_BYTES } from '../src/captures.mjs';
 import { createJobs } from '../src/jobs.mjs';
+import { analyzeThreads } from '../src/analysis.mjs';
 
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 let temporary, plugin, client, transport;
@@ -178,6 +179,24 @@ test('cached comparison and focused source share snapshot identity without repar
     assert.ok(!cached.isError);
     assert.deepEqual(cached.structuredContent.comparison, view.structuredContent.comparison);
     await fails('read_thread_evidence', { reportId: analysis.reportId, snapshotIndex: 2, sourceKey: thread.sourceKey }, /changed since analysis/);
+});
+
+test('UTF-8 response limits count bytes for analysis and cached report pages', async () => {
+    const filename = path.join(temporary, 'unicode-threads.txt');
+    const dump = length => 'Full thread dump OpenJDK 64-Bit Server VM:\n\n' + Array.from({ length: 200 }, (_, i) =>
+        `"${'線'.repeat(length)}-${i}" #${i + 1} prio=5 tid=0x${(i + 1).toString(16)} nid=${i + 1} runnable\n java.lang.Thread.State: RUNNABLE\n at example.Service.run(Service.java:8)\n`).join('\n');
+    await writeFile(filename, dump(700));
+    const json = JSON.stringify(analyzeThreads([await readCapture(filename)]));
+    assert.ok(json.length < 512 * 1024, 'Fixture bypasses the old character-count guard');
+    assert.ok(Buffer.byteLength(json, 'utf8') > 512 * 1024);
+    await fails('analyze_thread_dumps', { paths: [filename] }, /512 KiB response limit/);
+    await writeFile(filename, dump(400) + '\n' + dump(400));
+    const analysis = await call('analyze_thread_dumps', { paths: [filename], limit: 1 });
+    assert.ok(Buffer.byteLength(JSON.stringify(analysis), 'utf8') < 512 * 1024);
+    await fails('render_thread_report', { reportId: analysis.reportId, offset: 0, limit: 2 }, /512 KiB response limit/);
+    const page = await client.callTool({ name: 'render_thread_report', arguments: { reportId: analysis.reportId, offset: 1, limit: 1 } });
+    assert.ok(!page.isError, JSON.stringify(page.content));
+    assert.equal(page._meta.jvmscopeReport.snapshots.items[0].index, 1);
 });
 
 test('cached pages keep the public response bound even when more snapshots are retained', async () => {

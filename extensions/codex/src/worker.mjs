@@ -25,6 +25,6 @@ try {
     }
     // Never silently truncate an evidence string or JSON result.
     const { _cachedSnapshots, ...publicResult } = result;
-    if (JSON.stringify(publicResult).length > 512 * 1024) throw new Error('Result exceeds the 512 KiB response limit. Reduce limit or select a smaller capture interval.');
+    if (Buffer.byteLength(JSON.stringify(publicResult), 'utf8') > 512 * 1024) throw new Error('Result exceeds the 512 KiB response limit. Reduce limit or select a smaller capture interval.');
     parentPort.postMessage({ result });
 } catch (error) { parentPort.postMessage({ error: error.message }); }
