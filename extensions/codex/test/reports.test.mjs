@@ -65,3 +65,16 @@ test('explicit focus must belong to the requested page, including empty pages', 
     assert.deepEqual(reports.page(id, { snapshotIndex: 2 }).snapshots.items, [snapshots[2]]);
     assert.deepEqual(reports.page(id, { offset: 3, limit: 1 }).snapshots.items, [], 'Unfocused empty pages keep their navigation fallback');
 });
+
+test('failed conclusion presentation cannot replace or evict accepted assessments', () => {
+    const reports = createReports(), id = reports.add({});
+    const scope = index => ({ view: 'snapshot', snapshots: [index] });
+    const original = { summary: 'Accepted.', nextCheck: 'Inspect source.' };
+    for (let i = 0; i < 24; i++) reports.conclusion(id, scope(i), 'en', original);
+    const reject = () => { throw new Error('Presentation exceeds budget'); };
+    for (const index of [0, 24]) assert.throws(() => reports.conclusion(id, scope(index), 'sv',
+        { summary: 'Rejected.', nextCheck: 'Do not store.' }, reject), /budget/);
+    assert.equal(reports.conclusion(id, scope(0), 'en').summary, original.summary);
+    assert.equal(reports.conclusion(id, scope(0), 'en').language, 'en');
+    assert.equal(reports.conclusion(id, scope(24), 'en'), null);
+});

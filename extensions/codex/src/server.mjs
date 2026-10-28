@@ -102,7 +102,8 @@ function createServer() {
             }
             const scope = { view: focus.view, snapshots: focus.view === 'comparison' ? report.snapshots.items.map(s => s.index) : [selected.index],
                 ...(focus.view === 'snapshot' && focus.sourceKey ? { sourceKeys: [focus.sourceKey] } : {}) };
-            return threadReportResult(report, language, focus, reports.conclusion(reportId, scope, language, conclusion));
+            return reports.conclusion(reportId, scope, language, conclusion,
+                aiConclusion => threadReportResult(report, language, focus, aiConclusion));
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     });
     const threadSelection = { reportId: z.string().uuid(), language, snapshotIndex: z.number().int().min(0),
@@ -110,13 +111,14 @@ function createServer() {
     const focusedResult = async ({ language, conclusion, ...args }, ctx, present) => {
         try {
             const data = await threadDetails(reports, jobs, args, ctx.mcpReq.signal);
-            const aiConclusion = reports.conclusion(args.reportId, { view: 'threads', snapshots: [args.snapshotIndex], sourceKeys: [...args.sourceKeys].sort() }, language, conclusion);
-            const structuredContent = { ...data, conclusion: aiConclusion,
-                presentation: present ? 'report-with-assessment' : 'evidence-only',
-                ...(!present ? { nextAction: 'No report or new AI assessment has been presented by this data tool. Read these verified lines, then call render_thread_details with your conclusion.summary and conclusion.nextCheck answering the user’s question. Do not claim that a detailed assessment is already in a report. Stack frames do not reveal method bodies or establish wait duration.' } : {}) };
-            if (Buffer.byteLength(JSON.stringify(structuredContent), 'utf8') > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
-            return { ...result(structuredContent), ...(present ? { content: [{ type: 'text', text: 'Selected-thread report includes your supplied AI assessment and next check at the top. Do not repeat them below the widget or render a general report again. If this host cannot display reports, give the actual assessment as text; never replace it with a claim that it is visible elsewhere.' }] } : {}),
-                _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion } };
+            return reports.conclusion(args.reportId, { view: 'threads', snapshots: [args.snapshotIndex], sourceKeys: [...args.sourceKeys].sort() }, language, conclusion, aiConclusion => {
+                const structuredContent = { ...data, conclusion: aiConclusion,
+                    presentation: present ? 'report-with-assessment' : 'evidence-only',
+                    ...(!present ? { nextAction: 'No report or new AI assessment has been presented by this data tool. Read these verified lines, then call render_thread_details with your conclusion.summary and conclusion.nextCheck answering the user’s question. Do not claim that a detailed assessment is already in a report. Stack frames do not reveal method bodies or establish wait duration.' } : {}) };
+                if (Buffer.byteLength(JSON.stringify(structuredContent), 'utf8') > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
+                return { ...result(structuredContent), ...(present ? { content: [{ type: 'text', text: 'Selected-thread report includes your supplied AI assessment and next check at the top. Do not repeat them below the widget or render a general report again. If this host cannot display reports, give the actual assessment as text; never replace it with a claim that it is visible elsewhere.' }] } : {}),
+                    _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion } };
+            });
         } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
     };
     server.registerTool('inspect_thread_details', {

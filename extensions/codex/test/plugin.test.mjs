@@ -211,6 +211,21 @@ test('cached pages keep the public response bound even when more snapshots are r
     assert.equal(small._meta.jvmscopeReport.snapshots.items[0].index, 10);
 });
 
+test('a rejected oversized presentation must not replace the cached assessment', async () => {
+    const filename = path.join(temporary, 'rejected-presentation.txt');
+    const input = await readFile(path.join(repo, 'testdata/thread-dumps/real-java-all-3-snapshots.txt'), 'utf8');
+    await writeFile(filename, Array(6).fill(input).join('\n'));
+    const analysis = await call('analyze_thread_dumps', { paths: [filename], limit: 1 });
+    const args = { reportId: analysis.reportId, snapshotIndex: 0, offset: 0 };
+    const existing = { summary: 'Previously accepted assessment.', nextCheck: 'Inspect this snapshot.' };
+    const saved = await client.callTool({ name: 'render_thread_report', arguments: { ...args, limit: 1, conclusion: existing } });
+    assert.ok(!saved.isError);
+    await fails('render_thread_report', { ...args, limit: 50,
+        conclusion: { summary: 'This rejected assessment must not be shown.', nextCheck: 'Do not cache this.' } }, /response limit/);
+    const restored = await client.callTool({ name: 'render_thread_report', arguments: { ...args, limit: 1 } });
+    assert.deepEqual(restored._meta.jvmscopeConclusion, saved._meta.jvmscopeConclusion);
+});
+
 test('all bundled samples are present and analyzed through the real MCP transport', async () => {
     const { samples } = await call('list_samples');
     assert.equal(samples.length, 11);

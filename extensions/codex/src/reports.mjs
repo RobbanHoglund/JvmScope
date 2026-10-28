@@ -22,15 +22,19 @@ export function createReports({ maxEntries = 12, ttlMs = 600000, now = Date.now 
             if (!snapshot) throw new Error('SNAPSHOTS_NOT_CACHED: Analyze the requested page again with offset/limit.');
             return snapshot;
         },
-        conclusion(id, scope, language, input) {
+        conclusion(id, scope, language, input, present = value => value) {
             this.get(id);
             const saved = entries.get(id).conclusions, key = JSON.stringify(scope);
+            const candidate = input ? { ...input, language, scope, reportId: id, origin: 'assistant' } : saved.get(key) || null;
+            // Build and validate presentation before committing. Failed output must
+            // neither replace an assessment nor evict a previously accepted one.
+            const output = present(candidate);
             if (input) {
                 saved.delete(key);
                 while (saved.size >= 24) saved.delete(saved.keys().next().value);
-                saved.set(key, { ...input, language, scope, reportId: id, origin: 'assistant' });
+                saved.set(key, candidate);
             }
-            return saved.get(key) || null;
+            return output;
         },
         page(id, { offset, limit, snapshotIndex } = {}) {
             const report = this.get(id);
