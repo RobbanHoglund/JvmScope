@@ -1,4 +1,4 @@
-# JvmScope for Codex — local preview 0.4.6
+# JvmScope for Codex — local preview 0.5.0
 
 Analyze Java thread dumps, SunJSSE TLS logs and HotSpot GC logs using the same engines as the JvmScope web application and VS Code extension. Includes a Java knowledge base, TLS explanations, public samples and source-line evidence. This is an independently developed local plugin, not an OpenAI-approved directory listing.
 
@@ -8,13 +8,13 @@ The build produces two different archives:
 
 | Archive | Purpose |
 | --- | --- |
-| `jvmscope-codex-plugin-0.4.6.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
-| `jvmscope-codex-0.4.6.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
+| `jvmscope-codex-plugin-0.5.0.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
+| `jvmscope-codex-0.5.0.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
 
 For the desktop **Add plugin / New plugin** file picker, select the **single-plugin** archive without unpacking it. The maintainer verified the 0.2.2 import and interactive report in a real desktop conversation. In that session, removing the older installed plugin before importing the replacement resolved a generic import error; this is an observed workaround, not a guarantee for every client. Start a fresh local conversation after updating. Do not remove the MCP configuration: the analysis tools depend on it. Public-directory eligibility is separate from personal import.
 
 1. Install **Node.js 22 or later** and ensure `node --version` works in the desktop app's environment. No Java runtime, npm install, API key or running web server is needed to use the packaged plugin.
-2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.4.6.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
+2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.5.0.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
 3. Add that **extracted marketplace folder** using a current Codex CLI:
    ```sh
    codex plugin marketplace add "/absolute/path/to/JvmScope-Codex"
@@ -34,7 +34,7 @@ If your client lacks the documented plugin marketplace commands, update it. As a
 - UTF-8 text only; gzip and binary input are rejected. At most 50 thread files and 64 MiB combined per analysis; TLS/GC accept one file. Two workers maximum, 512 MiB old-generation heap per worker, 60-second deadline. Large inputs may require smaller intervals.
 - Results are paged and bounded to 512 KiB; evidence ranges are at most 200 lines / 24,000 JSON characters. Analysis must be rerun if the source SHA-256 changes. Keep files stable while analyzing.
 - Thread snapshot comparison retains the shared engine's process/timestamp/counter checks. GC sessions are analyzed independently. GC pause budget defaults to 200 ms, a review threshold rather than a JVM requirement.
-- Thread analysis includes an optional MCP Apps report with status cards, per-snapshot deadlock graphs, multiple cycle selection and hash-checked source evidence. Compatible host support must be tested in your client; text analysis remains available. Full TLS/GC visualizations remain in the existing application and VS Code extension.
+- Thread analysis starts with a compact MCP Apps summary: the assessment, next check, input context and critical findings. Open analysis for per-snapshot deadlock graphs, thread inventories, comparison and hash-checked source evidence. Compatible host support must be tested in your client; text analysis remains available. Full TLS/GC visualizations remain in the existing application and VS Code extension.
 - Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Overview rendering, comparison and cached snapshot pagination use this cache without rereading or reparsing captures. Each selected-thread inspection or presentation reuses cached measurements and reads/hashes the selected capture once for up to five verified stack ranges, without rerunning the parser. When new evidence is needed for an AI follow-up, inspect first, then present the assessment; presentation rechecks the hash so a changed capture cannot silently reuse the earlier evidence. Additional snapshots are cached when their serialized array fits within 2 Mi characters; otherwise only the requested page is retained and a cache miss is explicit. Public pages retain the 512 KiB response guard. Source clicks always recheck the file hash. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
 
 ## Build and test from source
@@ -52,7 +52,7 @@ codex plugin marketplace add "/absolute/path/to/JvmScope/build/codex-marketplace
 
 The build bundles the official MCP SDK, input validation and existing frontend analysis engines. It copies skill/manifest/assets and public samples into `build/codex-marketplace`. The marketplace ZIP includes that complete directory; the single-plugin ZIP contains only the plugin directory's contents. No generated parser fork or runtime npm installation is required. Do not add the unbuilt Git repository as a marketplace: the distribution directory is generated by the build.
 
-Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. The maintainer confirmed desktop import, report rendering and source interaction for 0.2.2. Desktop screenshots of 0.3.0 confirmed the snapshot 3 graph and cited lock addresses match the displayed capture. Desktop screenshots of 0.3.1 confirmed the compact report and comparison render, while exposing a redundant overview during stack follow-ups. Desktop screenshots of 0.4.1 confirmed the no-findings thread inventory and source interaction. Version 0.4.6 adds a conclusion-first overview and compact inventory, covered by packaged protocol and sandboxed host tests; its new layout still needs a desktop smoke test. Protocol tests do not simulate Codex reasoning.
+Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. The maintainer has verified earlier desktop imports and rendering; 0.4.6 screenshots confirmed assessment placement but exposed the long inline application. Version 0.5.0 separates the compact conversation summary from the opened analysis. Its 61 package/data/protocol tests and 57 sandboxed browser journeys pass locally. Browser tests exercise a protocol host, not the real Codex desktop application or its model reasoning; actual native display-mode support still needs desktop acceptance.
 
 ## Publication path
 
@@ -62,6 +62,20 @@ Verified documentation (2026-10-23):
 - https://developers.openai.com/plugins/build/plugins
 - https://developers.openai.com/plugins/deploy/desktop-only
 - https://developers.openai.com/plugins/deploy/submission
+
+## 0.5.0 compact chat summary and opened analysis
+
+- The inline card shows one scoped assessment and next check, file/snapshot context and an **Open analysis** action. Critical JVM-reported cycles and partial-input warnings remain visible. Thread lists, charts, stacks, filters and snapshot navigation are rendered only in the opened analysis surface, with no nested scrolling in the summary. A focused follow-up gets its own compact assessment.
+- Prefer the standard MCP Apps `ui/request-display-mode` when the host advertises the requested mode. Feature-detect the optional `window.openai.requestDisplayMode` compatibility helper otherwise. Declare inline/fullscreen support in both initialization and resource metadata. Respect the actual returned mode and host context; do not assume a product name implies fullscreen support.
+- When expansion is unavailable, refused, errors or times out, explicitly expand in place with a **Back to summary** action. Native close refusal stays visible instead of claiming the view closed. Opening/closing preserves the same analysis DOM and its selected snapshot/thread, comparison controls, filters, disclosures and loaded evidence; it does not rerun the parser or make tool calls.
+- A host theme or display change cannot cancel pending navigation. A source response can finish while the analysis is collapsed, without leaving a permanent loading notice on return. Scope/hash checks and stale-navigation guards remain in force.
+- Remove the second conclusion/next-check block when an AI assessment is present. Label the supporting observation **Analysis evidence**. Increase state badge readability and display single-snapshot measurement limits as neutral context. Keep the full original assessment without text truncation; unusually long assessments can make the summary taller.
+
+Validation: 61 Node tests and 57 browser journeys pass, including 15 new complete-surface journeys. Existing detail tests now enter through **Open analysis**. New checks cover compact default height and absence of deep controls, native/unsupported/refused/failed/timed-out expansion, host-initiated modes, compatibility helper, close refusal, English/Swedish, light/dark and 390/735 px layouts, critical findings, partial/empty inputs, long untrusted text, exact assessment scope, focused follow-ups and in-flight source/navigation across collapse. Shared analyzers and VS Code files are unchanged.
+
+Desktop acceptance: import **jvmscope-codex-plugin-0.5.0.zip** and start a new local conversation. Analyze a capture and confirm the short card first. Open analysis, select a thread, expand its stack, return to the summary and reopen; the same detail should remain. Try a follow-up and the bundled deadlock sample. The actual Codex host may open fullscreen or keep the analysis inline; both paths are intentional. Old messages retain their previous widgets. No desktop-native fullscreen or conversation-panel behavior is claimed as verified by these automated tests.
+
+Implementation references: [MCP Apps UI](https://developers.openai.com/plugins/build/chatgpt-ui), [display modes](https://developers.openai.com/plugins/reference), and [UI guidelines](https://developers.openai.com/plugins/concepts/ui-guidelines). Standard display request/response and capability shapes were checked against the official `@modelcontextprotocol/ext-apps` 2.0.4 schema; it is not added as a runtime dependency.
 
 ## 0.4.6 preserve assessments through navigation and failures
 
