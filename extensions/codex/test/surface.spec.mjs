@@ -197,7 +197,8 @@ test('presentation and theme changes cannot cancel an in-flight stack navigation
         await page.evaluate(() => window.sendHostContext({ theme: 'light', displayMode: 'inline' }));
         release();
         await expect(f.locator('.compact-selection')).toHaveText('worker-2');
-        await expect(f.locator('.compact-result')).toContainText('No separate AI assessment');
+        await expect(f.locator('.compact-result')).toContainText('Stack evidence');
+        await expect(f.locator('.ai-conclusion')).toHaveCount(0);
         await expect(f.locator('.analysis-content')).toHaveCount(0);
         await f.locator('.open-analysis').click();
         await expect(f.locator('.thread-focus-card h2')).toHaveText('worker-2');

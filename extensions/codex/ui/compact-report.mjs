@@ -9,7 +9,7 @@ const words = {
         cycles: 'JVM-reported deadlock cycles', cycle: 'JVM-reported deadlock cycle', cyclesScope: 'In the selected snapshot; may include other threads.',
         observed: 'Snapshots with JVM-reported cycles', findings: 'rule findings', rule: 'Analyzer result',
         comparisonNote: 'Open the analysis to compare recorded counters and the availability of each interval.',
-        evidence: 'Stack evidence is available for this selection. No separate AI assessment has been prepared.',
+        evidenceTitle: 'Stack evidence', evidence: 'Inspect the selected threads and their available source evidence.',
         partial: 'Partial capture or parser warnings. Review coverage before drawing conclusions.',
         single: 'One snapshot cannot establish wait duration, progress or CPU/allocation rates.',
         next: 'Next check', inspect: 'Inspect the affected stacks and lock acquisition paths.',
@@ -23,7 +23,7 @@ const words = {
         cycles: 'JVM-rapporterade deadlockcykler', cycle: 'JVM-rapporterad deadlockcykel', cyclesScope: 'I vald snapshot; kan omfatta andra trådar.',
         observed: 'Snapshots med JVM-rapporterade cykler', findings: 'regelfynd', rule: 'Analysresultat',
         comparisonNote: 'Öppna analysen för att jämföra registrerade räknare och underlaget för varje intervall.',
-        evidence: 'Stackunderlag finns för urvalet. Ingen separat AI-bedömning har gjorts.',
+        evidenceTitle: 'Stackunderlag', evidence: 'Granska de valda trådarna och deras tillgängliga källunderlag.',
         partial: 'Ofullständigt underlag eller parservarningar. Granska täckningen innan du drar slutsatser.',
         single: 'En snapshot kan inte fastställa väntans längd, framsteg eller CPU-/allokeringstakt.',
         next: 'Nästa kontroll', inspect: 'Granska berörda stackar och kodvägarnas låsordning.',
@@ -65,7 +65,7 @@ export function compactReport({ report, snapshot, focused, view, conclusion, sco
     const assessment = aiConclusionView({ conclusion, reportId: focused?.reportId || report.reportId, scope, locale, compact: true });
     if (assessment) card.append(assessment);
     else {
-        const result = el('section', 'compact-result'); result.append(el('h2', '', t('rule')));
+        const result = el('section', 'compact-result'); result.append(el('h2', '', t(focused ? 'evidenceTitle' : 'rule')));
         const first = snapshots.flatMap(s => s.analysis?.findings?.items || [])[0];
         result.append(el('p', '', focused ? t('evidence') : comparison ? t('comparisonNote') : first ? findingOverview(first, locale) : t('noCycle')));
         if (!focused && !comparison && !first) result.append(el('p', 'muted', t('noFindings')));

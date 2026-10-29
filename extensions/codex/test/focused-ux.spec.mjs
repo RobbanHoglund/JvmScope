@@ -67,3 +67,21 @@ test('stack reading controls preserve exact evidence and remain usable in a narr
     await expect(f.getByRole('button', { name: 'Limit stack height', exact: true })).toBeVisible();
     await expect(source).toHaveText(original);
 });
+
+test('an assessed overview uses concise source evidence and manual inspection has a neutral label', async ({ page }) => {
+    await page.goto(host.url + '?case=noFindings&native&mode=fullscreen');
+    const f = page.frameLocator('iframe');
+    await expect(f.locator('.ai-conclusion-summary')).toContainText('main is parked');
+    await expect(f.locator('.thread-observation')).toHaveCount(0);
+    await expect(f.locator('.overview-next')).toHaveCount(0);
+    await expect(f.locator('.overview-frame')).toContainText('StatusClient.java:152');
+    expect(await f.locator('.overview-thread').evaluate(n => n.getBoundingClientRect().height)).toBeLessThan(150);
+    await f.getByRole('button', { name: 'Inspect stack', exact: true }).click();
+    await expect(f.locator('.evidence')).toContainText('StatusClient.java:152');
+    await f.getByRole('button', { name: 'All threads · snapshot 1', exact: true }).click();
+    await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
+    await expect(f.locator('.focus-evidence-only')).toHaveText('Stack evidence');
+    await expect(f.locator('.ai-conclusion')).toHaveCount(0);
+    await f.getByRole('button', { name: 'All threads · snapshot 1', exact: true }).click();
+    await expect(f.locator('.ai-conclusion-summary')).toContainText('main is parked');
+});

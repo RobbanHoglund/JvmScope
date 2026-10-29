@@ -38,7 +38,7 @@ test('assessment remains bound to its snapshot and survives returning from a sta
     await f.getByRole('button', { name: 'Inspect thread: worker-2', exact: true }).click();
     await expect(f.locator('.thread-focus-card')).toHaveCount(1);
     await expect(f.locator('.ai-conclusion')).toHaveCount(0);
-    await expect(f.locator('.focus-evidence-only')).toContainText('no separate AI assessment');
+    await expect(f.locator('.focus-evidence-only')).toHaveText('Stack evidence');
     await f.getByRole('button', { name: /^All threads · snapshot / }).click();
     await expect(f.locator('.ai-conclusion-summary')).toContainText('main is parked');
     await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');

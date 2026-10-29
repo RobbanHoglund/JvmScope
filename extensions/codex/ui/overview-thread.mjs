@@ -15,19 +15,23 @@ const copy = {
         source: 'Källrader', noFrames: 'Ingen stackram finns sparad i denna översikt.', noTools: 'Be om denna tråd i konversationen för att granska stacken.' },
 };
 function el(tag, cls, text) { const n = document.createElement(tag); n.className = cls || ''; if (text != null) n.textContent = text; return n; }
-export function overviewThreadView({ focus, locale, canRead, onOpen, showNextCheck = true }) {
+export function overviewThreadView({ focus, locale, canRead, onOpen, showNextCheck = true, concise = false }) {
     const t = key => copy[locale][key], { thread, reason } = focus, box = el('section', 'overview-thread');
     box.dataset.sourceKey = thread.sourceKey;
-    box.append(el('span', 'overview-thread-label', t(reason === 'selected' ? 'selected' : 'observed')));
+    if (concise) box.classList.add('overview-thread-compact');
+    else box.append(el('span', 'overview-thread-label', t(reason === 'selected' ? 'selected' : 'observed')));
     const head = el('div', 'overview-thread-head');
     head.append(el('h3', '', thread.name), el('span', 'thread-state', `${t('state')}: ${thread.state || t('unknown')}`)); box.append(head);
-    if (thread.stackContext?.observation === 'jdk-http-send-wait') {
+    if (!concise && thread.stackContext?.observation === 'jdk-http-send-wait') {
         box.append(el('p', 'thread-observation', t('http')), el('p', 'muted', t('limits')));
-    } else box.append(el('p', 'muted', t('neutral')));
+    } else if (!concise) box.append(el('p', 'muted', t('neutral')));
     const frame = thread.stackContext?.frame || thread.topFrame;
     if (frame) {
-        const line = el('p', 'overview-frame'); line.title = t('frameNote');
-        line.append(el('span', 'muted', `${t('frame')}: `), el('code', '', frame)); box.append(line);
+        const line = el('p', 'overview-frame'); line.title = `${t('frameNote')} ${frame}`;
+        const match = concise && frame.match(/^(.*)\(([^()]*)\)$/);
+        if (match) line.append(el('code', '', `${match[1].split('.').slice(-2).join('.')} · ${match[2]}`));
+        else line.append(el('span', 'muted', `${t('frame')}: `), el('code', '', frame));
+        box.append(line);
     } else box.append(el('p', 'muted', t('noFrames')));
     if (showNextCheck && thread.stackContext?.observation === 'jdk-http-send-wait') box.append(el('p', 'overview-next', t('next')));
     const open = el('button', '', t('stack')); open.type = 'button'; open.disabled = !canRead;

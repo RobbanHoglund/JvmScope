@@ -365,7 +365,7 @@ function renderContent() {
         else conclusion.append(el('p', 'no-findings', t('noFindings')));
     }
     if (focus && !snapshot.deadlocks?.total) conclusion.append(overviewThreadView({ focus, locale, canRead: bridge.canCallTools,
-        showNextCheck: !assessment,
+        showNextCheck: !assessment, concise: !!assessment,
         async onOpen(sourceKey) { await navigateTool('inspect_thread_details', { reportId: report.reportId, language: locale,
             snapshotIndex: snapshot.index, sourceKeys: [sourceKey] }); } }));
     else if (!assessment && !snapshot.deadlocks?.total && !firstFinding) conclusion.append(el('p', 'muted', t('nextCapture')));
