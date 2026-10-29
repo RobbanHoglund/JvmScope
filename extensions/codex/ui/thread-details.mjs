@@ -1,3 +1,4 @@
+import { stackSource } from './stack-source.mjs';
 import { formatRate } from './comparison.mjs';
 import { aiConclusionView } from './ai-conclusion.mjs';
 const words = {
@@ -70,26 +71,7 @@ export function threadDetailsView({ data, locale, version, conclusion, canRead, 
             else line.append(el('code', 'frame-method', highlight.text));
             line.title = highlight.text; card.append(line);
         } else card.append(el('p', 'muted', thread.context.range ? t('noFrames') : t('noSource')));
-        if (thread.lines.length) {
-            const full = el('details', 'thread-stack'), summary = el('summary', '', `${t('full')} · ${t('lines')} ${thread.context.range.startLine}–${thread.context.range.endLine}`);
-            // A focused thread view is an explicit request to inspect its stack.
-            full.open = true;
-            const pre = el('pre', 'evidence', thread.lines.map(l => `${l.line}  ${l.text}`).join('\n'));
-            full.append(summary, pre);
-            if (thread.nextLine) {
-                const more = button(t('more'), async () => {
-                    more.disabled = true; more.textContent = t('loading');
-                    try {
-                        const result = await onNext(thread);
-                        thread.lines.push(...result.lines); thread.nextLine = result.nextLine;
-                        pre.textContent = thread.lines.map(l => `${l.line}  ${l.text}`).join('\n');
-                        if (!thread.nextLine) more.remove();
-                    } catch (e) { full.append(el('p', 'error', e.message)); }
-                    finally { more.disabled = !canRead; more.textContent = t('more'); }
-                }); more.disabled = !canRead; full.append(more);
-            }
-            card.append(full);
-        }
+        if (thread.lines.length) card.append(stackSource({ thread, locale, canRead, onNext }));
         view.append(card);
     }
     if (data.snapshotDeadlockCycles) view.append(el('p', 'muted focus-related', `${data.snapshotDeadlockCycles} ${t('cycles')}.`));

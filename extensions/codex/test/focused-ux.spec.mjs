@@ -43,3 +43,27 @@ test('zero measured CPU remains visible and a missing allocation rate is not inv
     await expect(f.locator('.focus-scope')).toContainText('one logical CPU');
     await expect(f.locator('.thread-metrics-note')).toHaveCount(0);
 });
+
+test('stack reading controls preserve exact evidence and remain usable in a narrow panel', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto(host.url + '?case=assessmentThread&native&mode=fullscreen');
+    const f = page.frameLocator('iframe'), source = f.locator('.thread-stack .evidence');
+    await expect(source).toBeVisible();
+    const original = await source.textContent();
+    expect(Number.parseFloat(await source.evaluate(n => getComputedStyle(n).fontSize))).toBeGreaterThanOrEqual(13);
+    const wrap = f.getByRole('button', { name: 'Wrap lines', exact: true });
+    await expect(wrap).toHaveAttribute('aria-pressed', 'true');
+    await wrap.click();
+    await expect(wrap).toHaveAttribute('aria-pressed', 'false');
+    expect(await source.evaluate(n => getComputedStyle(n).whiteSpace)).toBe('pre');
+    expect(await f.locator('body').evaluate(n => n.scrollWidth > n.clientWidth + 1)).toBe(false);
+    const height = f.getByRole('button', { name: 'Expand stack', exact: true });
+    await height.focus(); await page.keyboard.press('Enter');
+    await expect(f.getByRole('button', { name: 'Limit stack height', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    expect(await source.evaluate(n => getComputedStyle(n).maxHeight)).toBe('none');
+    await expect(source).toHaveText(original);
+    await f.locator('.surface-back').click(); await f.locator('.open-analysis').click();
+    await expect(wrap).toHaveAttribute('aria-pressed', 'false');
+    await expect(f.getByRole('button', { name: 'Limit stack height', exact: true })).toBeVisible();
+    await expect(source).toHaveText(original);
+});
