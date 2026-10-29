@@ -1,5 +1,6 @@
 import { aiConclusionView } from './ai-conclusion.mjs';
 import { findingCopy, findingOverview } from './finding-copy.mjs';
+import { selectionTitle } from './stack-groups.mjs';
 const words = {
     en: { title: 'Thread analysis', focused: 'Thread assessment', comparison: 'Snapshot comparison', language: 'Report language',
         none: 'No prioritized findings', critical: 'Critical', high: 'High priority', medium: 'Review', info: 'Information',
@@ -39,7 +40,7 @@ export function compactReport({ report, snapshot, focused, view, conclusion, sco
     const cycles = focused?.snapshotDeadlockCycles ?? snapshots.reduce((n, s) => n + (s.deadlocks?.total || 0), 0);
     const severity = cycles ? 'critical' : Object.keys(counts).find(k => counts[k]);
     const header = el('header', 'compact-header'), title = el('div', 'compact-title');
-    title.append(el('span', 'eyebrow', 'JVMSCOPE / JAVA'), el('h1', '', t(focused ? 'focused' : comparison ? 'comparison' : 'title')));
+    title.append(el('span', 'eyebrow', 'JVMSCOPE / JAVA'), el('h1', '', focused ? selectionTitle(focused, locale) : t(comparison ? 'comparison' : 'title')));
     const language = el('select', 'compact-language'); language.setAttribute('aria-label', t('language'));
     for (const [key, label] of [['en', 'English'], ['sv', 'Svenska']]) { const o = el('option', '', label); o.value = key; language.append(o); }
     language.value = locale; language.addEventListener('change', () => onLanguage(language.value));

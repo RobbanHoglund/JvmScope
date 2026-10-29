@@ -83,7 +83,7 @@ test('overview to a main-thread explanation presents the new assessment before t
         const rendered = await call('render_thread_details', { ...args, conclusion: { summary, nextCheck } });
         document.querySelector('iframe').contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: rendered }, '*');
     }, { summary, nextCheck });
-    await expect(f.getByRole('heading', { name: 'Valda trådar', exact: true })).toBeVisible();
+    await expect(f.getByRole('heading', { name: 'main · Snapshot 1', exact: true })).toBeVisible();
     await expect(f.locator('.ai-conclusion-summary')).toHaveText(summary);
     await expect(f.locator('.ai-conclusion-next')).toContainText(nextCheck);
     await expect(f.locator('.focus-evidence-only')).toHaveCount(0);

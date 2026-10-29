@@ -374,10 +374,11 @@ test('stack follow-up opens only requested threads with metrics and verified evi
     const before = host.calls.length;
     await openAnalysis(page, host.url + '?case=threads');
     const f = widget(page);
-    await expect(f.getByRole('heading', { name: 'Selected threads', exact: true })).toBeVisible();
+    await expect(f.getByRole('heading', { name: '3 threads · Snapshot 3', exact: true })).toBeVisible();
     await expect(f.locator('.thread-focus-card')).toHaveCount(3);
     await expect(f.locator('.graph')).toHaveCount(0);
     await expect(f.locator('.findings')).toHaveCount(0);
+    await f.getByRole('button', { name: 'scenario-cpu-and-allocation-hot', exact: true }).click();
     const allocation = f.locator('.thread-focus-card').filter({ has: f.getByRole('heading', { name: 'scenario-cpu-and-allocation-hot', exact: true }) });
     await expect(allocation.locator('.thread-rates')).toContainText('291.7–296.5 MiB/s');
     await expect(allocation.locator('.frame-location')).toHaveText('ThreadScenarioRunner.java:634');
@@ -394,13 +395,13 @@ test('focused follow-ups support both themes, narrow widths, language changes an
         await page.setViewportSize({ width, height: 1000 });
         await openAnalysis(page, host.url + `?case=threadSv&theme=${theme}&noTools=1`);
         const f = widget(page);
-        await expect(f.getByRole('heading', { name: 'Valda trådar', exact: true })).toBeVisible();
+        await expect(f.getByRole('heading', { name: '3 trådar · Snapshot 3', exact: true })).toBeVisible();
         await expect(f.getByRole('button', { name: /^Alla trådar · snapshot /, exact: true })).toBeDisabled();
         expect(await overflow(f)).toBe(false);
-        await expect(f.locator('.thread-stack pre').first()).toBeVisible();
+        await expect(f.locator('.thread-focus-card:visible .thread-stack pre')).toBeVisible();
         await page.screenshot({ path: path.join(previewDir, `selected-threads-${theme}-${width}.png`), fullPage: true });
         await f.getByRole('combobox', { name: 'Rapportspråk' }).selectOption('en');
-        await expect(f.getByRole('heading', { name: 'Selected threads', exact: true })).toBeVisible();
+        await expect(f.getByRole('heading', { name: '3 threads · Snapshot 3', exact: true })).toBeVisible();
     }
 });
 

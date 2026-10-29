@@ -9,6 +9,15 @@ without committing the user's diagnostic capture.
 
 `multiple-deadlocks.txt` is the existing synthetic multiple-cycle fixture.
 
+`http-client-selection.txt` is synthetic HotSpot-like Java 25 test data: one
+application thread, four HTTP selector threads with identical frames but distinct
+lock addresses, and one worker with a different stack. It contains no user capture.
+`multi-thread.spec.mjs` drives the packaged MCP server and sandboxed browser host
+through overview, main, HTTP selection and text-only collection advice in English
+and Swedish. Its assessments are scripted protocol/UI inputs, not fresh model
+trials. It checks original source isolation, local selection, panel resizing,
+compact/reopen navigation and old report tabs as well as narrow/light layouts.
+
 `conversation-sv.json` and `conversation-en.json` record two independent model
 trials on 2026-10-28, each with a fresh context reading the bundled skill. The
 model analyzed `no-findings-java25.txt`, inspected the source, presented an
