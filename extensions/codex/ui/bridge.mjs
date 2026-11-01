@@ -1,7 +1,7 @@
 import { version } from '../package.json';
 // MCP Apps host bridge. All messages must come from this iframe's parent.
 export function createBridge({ onResult, onContext, onUnavailable }) {
-    let sequence = 0, ready = false, hostCapabilities = {}, hostContext = {};
+    let sequence = 0, ready = false, hostCapabilities = {}, hostContext = {}, reportContext = null;
     function contextChanged(context) {
         hostContext = { ...hostContext, ...context };
         onContext(context);
@@ -55,6 +55,7 @@ export function createBridge({ onResult, onContext, onUnavailable }) {
             } catch { onUnavailable(); }
         },
         get canCallTools() { return ready && !!hostCapabilities.serverTools; },
+        setReportContext(context) { reportContext = context || null; },
         async requestDisplayMode(mode) {
             if (ready && hostContext.availableDisplayModes?.includes(mode))
                 return request('ui/request-display-mode', { mode }, 2000);
@@ -69,6 +70,8 @@ export function createBridge({ onResult, onContext, onUnavailable }) {
         },
         async callTool(name, args) {
             if (!ready || !hostCapabilities.serverTools) throw new Error('This host does not expose interactive source tools. Ask for the source lines in the conversation.');
+            const cachedTool = ['render_thread_report', 'inspect_thread_details', 'render_thread_details', 'read_thread_evidence'].includes(name);
+            if (cachedTool && !args.reportContext && reportContext?.reportId === args.reportId) args = { ...args, reportContext };
             const response = await request('tools/call', { name, arguments: args }, 65000);
             if (response.isError) throw new Error(response.content?.find(c => c.type === 'text')?.text || 'Tool failed.');
             return response;

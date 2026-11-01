@@ -24,7 +24,7 @@ export async function threadDetails(reports, jobs, { reportId, snapshotIndex, so
             nextLine: lines.length && lines.at(-1).line < context.range.endLine ? lines.at(-1).line + 1 : null,
             citationLabel: `Snapshot ${snapshotIndex + 1} · ${context.threadName}${context.range ? ` · lines ${context.range.startLine}–${context.range.endLine}` : ''}` };
     });
-    return { analyzer: 'threads', view: 'threads', reportId, snapshotIndex, snapshotNumber: snapshotIndex + 1,
+    return { analyzer: 'threads', view: 'threads', reportId, reportContext: report.reportContext, snapshotIndex, snapshotNumber: snapshotIndex + 1,
         snapshotCount: report.snapshotCount, source: evidence.source, threads,
         snapshotDeadlockCycles: snapshot.analysis.deadlockSummary?.cycles || 0,
         warnings: report.warnings || [], qualifications: snapshot.measurements.qualifications,

@@ -11,12 +11,14 @@ import { overviewThreadView } from './overview-thread.mjs';
 import { aiConclusionView } from './ai-conclusion.mjs';
 import { compactReport } from './compact-report.mjs';
 import { createReportSurface } from './report-surface.mjs';
+import { createAssessmentCache } from './assessment-cache.mjs';
 
 const app = document.getElementById('app'), root = document.createElement('div');
 root.className = 'analysis-content';
 let focusedThreads = null;
 let reportTimings = null;
 let aiConclusion = null;
+const assessments = createAssessmentCache();
 let overviewSourceKey = null;
 let navigationEpoch = 0;
 let report, snapshotIndex = 0, cycleIndex = 0, selection = null, activeView = 'snapshot', comparisonMetric = 'cpu', comparisonLimit = 8, locale = 'en', evidenceEpoch = 0, disposeGraph = () => {};
@@ -92,11 +94,13 @@ function applyContext(context) {
 }
 function receive(result) {
     reportTimings = result?._meta?.jvmscopeTimings || null;
-    aiConclusion = result?._meta?.jvmscopeConclusion || null;
+    const incomingConclusion = result?._meta?.jvmscopeConclusion || null;
     const focused = result?._meta?.jvmscopeThreadDetails;
     if (focused?.view === 'threads' && Array.isArray(focused.threads) && focused.source) {
         if (['en', 'sv'].includes(result._meta.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
         document.documentElement.lang = locale; focusedThreads = focused; evidenceEpoch++;
+        bridge.setReportContext(result._meta.jvmscopeReportContext || focused.reportContext);
+        aiConclusion = assessments.resolve(incomingConclusion, focused.reportId, assessmentScope());
         clearTimeout(dataDeadline); render(); return;
     }
     const candidate = result?._meta?.jvmscopeReport || result?.structuredContent;
@@ -106,6 +110,7 @@ function receive(result) {
     const focus = result?._meta?.jvmscopeFocus;
     overviewSourceKey = focus?.sourceKey || null;
     report = candidate; focusedThreads = null;
+    bridge.setReportContext(result?._meta?.jvmscopeReportContext || candidate.reportContext);
     activeView = focus?.view || 'snapshot';
     snapshotIndex = Math.max(0, focus?.snapshotIndex != null ? items(report.snapshots).findIndex(s => s.index === focus.snapshotIndex)
         : items(report.snapshots).findIndex(s => s.deadlocks?.total));
@@ -121,6 +126,7 @@ function receive(result) {
             else if (metric) selection = { id: metric.sourceKey, name: metric.name, evidence: metric.current.range };
         }
     }
+    aiConclusion = assessments.resolve(incomingConclusion, report.reportId, assessmentScope());
     clearTimeout(dataDeadline); render();
 }
 const bridge = createBridge({ onResult: receive, onContext: applyContext, onUnavailable() {

@@ -13,6 +13,9 @@ try {
     else if (name === 'get_knowledge_article') result = knowledgeArticle(args);
     else {
         const captures = await readCaptures(args.paths || [args.path]);
+        if (args.expectedSources && (captures.length !== args.expectedSources.length || captures.some((capture, i) =>
+            capture.path !== args.expectedSources[i].path || capture.sha256 !== args.expectedSources[i].sha256)))
+            throw new Error('Capture changed since analysis. Analyze the changed files again before inspecting this report.');
         const readFinished = performance.now();
         result = ({ analyze_thread_dumps: analyzeThreads, show_thread_example: analyzeThreads, analyze_tls_log: analyzeTls, analyze_gc_log: analyzeGarbageCollection })[name](captures, { ...args, includeCachedSnapshots: true });
         result.timing = { readMs: Math.round(readFinished - started), analysisMs: Math.round(performance.now() - readFinished) };

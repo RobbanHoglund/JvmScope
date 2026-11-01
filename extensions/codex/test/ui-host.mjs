@@ -35,8 +35,12 @@ export async function startHost({ inventoryOnly = false, conclusionOnly = false,
  waiting to lock monitor 0x${i + 1} (object ${lock(i)}, a example.Lock),
  which is held by "${name((i + 1) % 9)}"`).join('\n\n');
     await writeFile(many, `Full thread dump OpenJDK 64-Bit Server VM:\n\n${threads}\nFound one Java-level deadlock:\n=============================\n${cycles}\n\nJava stack information for the threads listed above:\n`);
-    const client = new Client({ name: 'jvmscope-ui-host-test', version: '1.0.0' });
-    await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary }));
+    async function connect() {
+        const client = new Client({ name: 'jvmscope-ui-host-test', version: '1.0.0' });
+        await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.join(plugin, 'server/server.mjs')], cwd: temporary }));
+        return client;
+    }
+    let client = await connect();
     const rendered = {}, calls = [];
     const noFindings = path.join(temporary, path.basename(capturePath || 'no-findings-java25.txt'));
     const nativeOnly = path.join(temporary, 'vm-only.txt');
@@ -114,6 +118,10 @@ export async function startHost({ inventoryOnly = false, conclusionOnly = false,
     const server = createServer(async (req, res) => {
         const url = new URL(req.url, 'http://127.0.0.1');
         try {
+            if (url.pathname === '/restart' && req.method === 'POST') {
+                await client.close(); client = await connect();
+                res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ restarted: true })); return;
+            }
             if (url.pathname === '/conversation') {
                 res.setHeader('Content-Type', 'text/html');
                 res.end(await readFile(new URL('./conversation-host.html', import.meta.url), 'utf8')); return;

@@ -5,14 +5,14 @@ export function createReports({ maxEntries = 12, ttlMs = 600000, now = Date.now 
     const entries = new Map();
     const prune = () => { for (const [id, entry] of entries) if (entry.expires <= now()) entries.delete(id); };
     return {
-        add(report) {
+        add(report, { id = randomUUID(), validate = () => {} } = {}) {
             prune();
-            while (entries.size >= maxEntries) entries.delete(entries.keys().next().value);
-            const id = randomUUID();
             const snapshots = report._cachedSnapshots || report.snapshots?.items || [];
             delete report._cachedSnapshots;
             if (report.analyzer === 'threads') report.cache = { snapshotCount: snapshots.length,
                 complete: snapshots.length === report.snapshotCount, analyzedAt: new Date().toISOString() };
+            validate(report);
+            while (entries.size >= maxEntries) entries.delete(entries.keys().next().value);
             entries.set(id, { report, snapshots, conclusions: new Map(), expires: now() + ttlMs });
             return id;
         },
@@ -52,7 +52,7 @@ export function createReports({ maxEntries = 12, ttlMs = 600000, now = Date.now 
         get(id) {
             prune();
             const entry = entries.get(id);
-            if (!entry) throw new Error('Report expired or belongs to another session. Run analyze_thread_dumps again.');
+            if (!entry) throw Object.assign(new Error('Report expired or belongs to another session. Run analyze_thread_dumps again.'), { code: 'REPORT_NOT_AVAILABLE' });
             return entry.report;
         },
     };
