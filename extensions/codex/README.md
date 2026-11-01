@@ -1,4 +1,4 @@
-# JvmScope for Codex — local preview 0.6.0
+# JvmScope for Codex — local preview 0.6.1
 
 Analyze Java thread dumps, SunJSSE TLS logs and HotSpot GC logs using the same engines as the JvmScope web application and VS Code extension. Includes a Java knowledge base, TLS explanations, public samples and source-line evidence. This is an independently developed local plugin, not an OpenAI-approved directory listing.
 
@@ -8,13 +8,13 @@ The build produces two different archives:
 
 | Archive | Purpose |
 | --- | --- |
-| `jvmscope-codex-plugin-0.6.0.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
-| `jvmscope-codex-0.6.0.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
+| `jvmscope-codex-plugin-0.6.1.zip` | Single plugin with `plugin.json`, `mcp.json`, skills and bundled server at its root; for clients accepting plugin ZIP imports. |
+| `jvmscope-codex-0.6.1.zip` | Complete local marketplace for the folder-based installation below. Do not upload this archive to a single-plugin import dialog. |
 
 For the desktop **Add plugin / New plugin** file picker, select the **single-plugin** archive without unpacking it. The maintainer verified the 0.2.2 import and interactive report in a real desktop conversation. In that session, removing the older installed plugin before importing the replacement resolved a generic import error; this is an observed workaround, not a guarantee for every client. Start a fresh local conversation after updating. Do not remove the MCP configuration: the analysis tools depend on it. Public-directory eligibility is separate from personal import.
 
 1. Install **Node.js 22 or later** and ensure `node --version` works in the desktop app's environment. No Java runtime, npm install, API key or running web server is needed to use the packaged plugin.
-2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.6.0.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
+2. Download the `jvmscope-codex` artifact from a successful **Codex plugin checks** GitHub Actions run. Unzip the artifact, then unzip `jvmscope-codex-0.6.1.zip` into a permanent folder, for example `C:\Tools\JvmScope-Codex` or `~/Tools/JvmScope-Codex`. Keep `.agents` and `plugins` together; `.agents` may be hidden in Finder.
 3. Add that **extracted marketplace folder** using a current Codex CLI:
    ```sh
    codex plugin marketplace add "/absolute/path/to/JvmScope-Codex"
@@ -35,7 +35,7 @@ If your client lacks the documented plugin marketplace commands, update it. As a
 - Results are paged and bounded to 512 KiB; evidence ranges are at most 200 lines / 24,000 JSON characters. Analysis must be rerun if the source SHA-256 changes. Keep files stable while analyzing.
 - Thread snapshot comparison retains the shared engine's process/timestamp/counter checks. GC sessions are analyzed independently. GC pause budget defaults to 200 ms, a review threshold rather than a JVM requirement.
 - Thread analysis starts with a compact MCP Apps summary: the assessment, next check, input context and critical findings. Open analysis for per-snapshot deadlock graphs, thread inventories, comparison and hash-checked source evidence. Compatible host support must be tested in your client; text analysis remains available. Full TLS/GC visualizations remain in the existing application and VS Code extension.
-- Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Overview rendering, comparison and cached snapshot pagination use this cache without rereading or reparsing captures. Each selected-thread inspection or presentation reuses cached measurements and reads/hashes the selected capture once for up to five verified stack ranges, without rerunning the parser. When new evidence is needed for an AI follow-up, inspect first, then present the assessment; presentation rechecks the hash so a changed capture cannot silently reuse the earlier evidence. Additional snapshots are cached when their serialized array fits within 2 Mi characters; otherwise only the requested page is retained and a cache miss is explicit. Public pages retain the 512 KiB response guard. Source clicks always recheck the file hash. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
+- Cached reports last at most 10 minutes, with up to 12 reports per MCP connection. Overview rendering, comparison and cached snapshot pagination use this cache without rereading or reparsing captures. With a warm cache, each selected-thread inspection or presentation reuses cached measurements and reads/hashes the selected capture once for up to five verified stack ranges, without rerunning the parser. When new evidence is needed for an AI follow-up, inspect first, then present the assessment; presentation rechecks the hash so a changed capture cannot silently reuse the earlier evidence. Additional snapshots are cached when their serialized array fits within 2 Mi characters; otherwise only the requested page is retained and a cache miss is explicit. Public pages retain the 512 KiB response guard. The returned reportContext is a bounded reference to the original ordered paths and SHA-256 hashes, not a persisted analysis or a filesystem capability. A widget includes it in interactive calls. If the memory cache expired or the host routes the call to a fresh MCP process, the tool reads the explicit files and verifies every hash before rebuilding the requested page with the shared parser. Recovery preserves the report id, source order and global snapshot identities; changed/unavailable files or a different plugin version stop explicitly. Warm-cache calls retain the no-reparse behavior. Source clicks always recheck the file hash. Read/analysis timings exclude AI and transport latency. Reports are not exported automatically.
 
 ## Build and test from source
 
@@ -52,7 +52,7 @@ codex plugin marketplace add "/absolute/path/to/JvmScope/build/codex-marketplace
 
 The build bundles the official MCP SDK, input validation and existing frontend analysis engines. It copies skill/manifest/assets and public samples into `build/codex-marketplace`. The marketplace ZIP includes that complete directory; the single-plugin ZIP contains only the plugin directory's contents. No generated parser fork or runtime npm installation is required. Do not add the unbuilt Git repository as a marketplace: the distribution directory is generated by the build.
 
-Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. Version 0.6.0 passes 64 package/data/protocol tests and 68 sandboxed browser journeys locally. The independent Swedish/English model trials recorded for 0.5.1 remain replayed through fresh MCP calls; this UI-only release does not rerun those models or change the skill/response instructions. New scripted four-turn scenarios cover overview, main, HTTP threads and text-only advice in three persistent report panels. They are protocol/UI tests, not model evaluations. The browser host is a harness, not the Codex desktop app. Actual desktop behavior for 0.6.0 remains unverified here.
+Tests launch the emitted server from a relocated installation with no `node_modules` or source tree nearby, using the official MCP client. CI runs the same packaged tests on Linux, Windows and macOS. Version 0.6.1 passes 75 Node/package/protocol tests and 74 sandboxed browser journeys locally. New process-restart tests close the original MCP server before using a second real server; browser tests restart the backend while keeping the same widget open. Expiry/eviction tests use a controlled clock. Existing Swedish/English model recordings remain replayed through fresh MCP calls; the skill/response instructions are unchanged and no fresh model evaluation is claimed. The browser host is a harness, not the Codex desktop app. Actual desktop behavior for 0.6.1 remains unverified here.
 
 ## Publication path
 
@@ -62,6 +62,19 @@ Verified documentation (2026-10-23):
 - https://developers.openai.com/plugins/build/plugins
 - https://developers.openai.com/plugins/deploy/desktop-only
 - https://developers.openai.com/plugins/deploy/submission
+
+## 0.6.1 report recovery after session loss
+
+The maintainer's screenshot showed a rendered report whose **Inspect stack** button returned “Report expired or belongs to another session” repeatedly. Previous browser tests used one persistent MCP connection for both analysis and source clicks, so they did not cover this host behavior. The screenshot alone cannot distinguish cache expiry from a different backend connection; both cases are now covered.
+
+- Return a bounded `reportContext` with thread analyses, overviews and focused reports. Widgets include it automatically in cached-report/evidence calls. On a missing cache entry, verify every original source SHA-256 before parsing, preserve original source order (including rejected inputs) and restore the same report id/global snapshot identities. Recovery is on demand and memory-only; it writes no file and scans no directory. Unchanged warm-cache navigation still does not reparse.
+- Reject changed/missing sources, mismatched references, different plugin versions, invalid thread selections and oversized results. Keep worker deadlines/concurrency, 64 MiB capture bounds, 512 KiB public responses and source-range/hash checks. Concurrent recovery for the same reference shares one analysis; failed attempts do not poison retries.
+- Preserve only assessments previously delivered to the open widget, under their exact report/view/snapshot/thread scope. A new backend does not invent or import an AI assessment. Old widgets without a reference explain that a new analysis is needed; updating the plugin cannot retrofit old conversation messages.
+- Replace repeated raw errors with one accessible, actionable message in the report language. Apply the same handling to the overview, inventory, graph sources, stack paging, comparisons and navigation. Clear a prior error on a new attempt; preserve unknown diagnostic detail as text.
+
+Validation on 2026-11-01: 75 Node tests and 74 browser journeys pass. New checks cover a terminated original server, expiry/eviction, concurrent recovery/retry, changed/deleted files, source order with a rejected file, global snapshot 3 and allocation bounds, explicit synthetic-example provenance, response budgets and assessment isolation. Real backend restarts are exercised while an English/Swedish widget stays open, including overview → main → overview, graph sources, stack pagination and both comparison endpoints. Four repeated clicks on a legacy report leave one Swedish error; restoring the original source permits a clean successful retry. Dark/light recovery and error renders were inspected. Shared parser/analyzer and VS Code files are unchanged.
+
+Desktop acceptance: import **jvmscope-codex-plugin-0.6.1.zip**, start a new local conversation and analyze a stable copy. Open a thread stack, return to the overview, and try again after a connection restart or more than ten minutes. An unchanged capture should recover automatically. A deliberately changed copy must require fresh analysis, without reusing its old evidence. Old 0.6.0 messages still need a new analysis because they contain no recovery reference. The real desktop host remains a manual acceptance step; automated tests do not certify its tab placement/display-mode behavior.
 
 ## 0.6.0 grouped stack inspection
 
