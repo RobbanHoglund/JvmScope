@@ -1,3 +1,4 @@
+import { showToolError } from './tool-errors.mjs';
 const copy = {
     en: { title: 'Threads in this snapshot', records: 'parsed records', java: 'with Java state', vm: 'header-only VM records',
         search: 'Find a thread', placeholder: 'Thread name or top stack frame', filter: 'Java state', all: 'All states', unknown: 'Not recorded',
@@ -48,9 +49,9 @@ export function threadInventoryView({ snapshot, snapshotCount, locale, canRead, 
     }
     stateLabel.append(filter); controls.append(searchLabel, stateLabel); section.append(controls);
     const status = el('p', 'muted inventory-status'); status.setAttribute('aria-live', 'polite');
-    const list = el('div', 'inventory-list'), more = el('button', 'inventory-expand', t('more')); more.type = 'button';
+    const list = el('div', 'inventory-list'), feedback = el('div', 'inventory-feedback'), more = el('button', 'inventory-expand', t('more')); more.type = 'button';
     list.id = 'thread-inventory-list'; more.setAttribute('aria-controls', list.id);
-    let expanded = false;
+    let expanded = false, feedbackEpoch = 0;
     function draw() {
         const query = search.value.trim().toLocaleLowerCase();
         const matched = inventory.items.filter(row => (!filter.value || (row.state || 'UNKNOWN') === filter.value)
@@ -64,9 +65,10 @@ export function threadInventoryView({ snapshot, snapshotCount, locale, canRead, 
             identity.append(el('strong', '', row.name), el('code', 'inventory-frame', row.topFrame || t('noFrames')));
             button.append(identity, el('span', 'thread-state', row.state || t('unknown')), el('span', 'inventory-chevron', '›'));
             button.addEventListener('click', async () => {
-                button.disabled = true; const notice = el('p', 'muted', t('opening')); button.after(notice);
-                try { await onOpen({ snapshotIndex: snapshot.index, sourceKey: row.sourceKey }); notice.remove(); }
-                catch (error) { notice.className = 'error'; notice.textContent = error.message; }
+                const epoch = ++feedbackEpoch;
+                button.disabled = true; feedback.replaceChildren(el('p', 'muted', t('opening'))); button.after(feedback);
+                try { await onOpen({ snapshotIndex: snapshot.index, sourceKey: row.sourceKey }); if (epoch === feedbackEpoch) feedback.remove(); }
+                catch (error) { if (epoch === feedbackEpoch) { feedback.replaceChildren(); showToolError(feedback, error, locale); } }
                 finally { button.disabled = !canRead; }
             });
             list.append(button);

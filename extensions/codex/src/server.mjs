@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createJobs } from './jobs.mjs';
 import { createReports } from './reports.mjs';
 import { createReportAccess } from './report-access.mjs';
+import { toolFailure } from './tool-error.mjs';
 import { resolveThreadEvidence } from './thread-evidence.mjs';
 import { comparisonSummary } from './thread-metrics.mjs';
 import { threadDetails } from './thread-details.mjs';
@@ -75,7 +76,7 @@ function createServer() {
             if (name === 'analyze_thread_dumps') access.add(data);
             return result(data);
         }
-        catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+        catch (error) { return toolFailure(error); }
     });
     register('analyze_thread_dumps', 'Analyze 1–50 Java thread-dump files in supplied order with JvmScope rules. Reports deadlocks, contention, measured counters, coverage and uncertainty. offset/limit page snapshots; sublists expose omitted counts. Combined input limit 64 MiB.',
         z.object({ paths: z.array(file).min(1).max(50), ...pagination }).strict());
@@ -119,7 +120,7 @@ function createServer() {
                 ...(focus.view === 'snapshot' && focus.sourceKey ? { sourceKeys: [focus.sourceKey] } : {}) };
             return reports.conclusion(reportId, scope, language, conclusion,
                 aiConclusion => threadReportResult(report, language, focus, aiConclusion));
-        } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+        } catch (error) { return toolFailure(error); }
     });
     const threadSelection = { reportId: z.string().uuid(), reportContext, language, snapshotIndex: z.number().int().min(0),
         sourceKeys: z.array(z.string().min(1).max(400)).min(1).max(5) };
@@ -137,7 +138,7 @@ function createServer() {
                     _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion,
                         jvmscopeReportContext: reports.get(args.reportId).reportContext } };
             });
-        } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+        } catch (error) { return toolFailure(error); }
     };
     server.registerTool('inspect_thread_details', {
         title: 'Inspect selected Java threads',
@@ -166,7 +167,7 @@ function createServer() {
             return result({ ...data, context: evidence,
                 citationLabel: `Snapshot ${snapshotIndex + 1} · ${evidence.name} · ${evidence.threadName} · lines ${startLine}–${endLine}`,
                 nextLine: endLine < evidence.range.endLine ? endLine + 1 : null });
-        } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+        } catch (error) { return toolFailure(error); }
     });
     server.registerTool('show_thread_example', {
         title: 'Try the Java deadlock example',
@@ -184,7 +185,7 @@ function createServer() {
             report.example = { synthetic: true, name: sample.file, provenance: sample.provenance };
             access.add(report);
             return threadReportResult(report, language);
-        } catch (error) { return { isError: true, content: [{ type: 'text', text: error.message }] }; }
+        } catch (error) { return toolFailure(error); }
     });
     server.registerTool('list_samples', { description: 'List bundled public examples with absolute paths and provenance labels for trying JvmScope. Does not scan the user filesystem.',
         inputSchema: z.object({ analyzer: z.enum(['threads', 'tls', 'gc']).optional() }).strict(), annotations }, async ({ analyzer }) => result({

@@ -90,7 +90,7 @@ test('changed capture is reported instead of displaying stale evidence', async (
     await writeFile(host.capture, 'changed capture');
     try {
         await f.getByRole('button', { name: /^alpha\. Waits for/ }).click();
-        await expect(f.locator('.error')).toContainText('changed since analysis');
+        await expect(f.locator('[role=alert]')).toContainText('A source file has changed since this report was created');
         await expect(f.locator('.evidence')).toHaveCount(0);
     } finally { await writeFile(host.capture, host.original); }
 });

@@ -73,7 +73,8 @@ export function createBridge({ onResult, onContext, onUnavailable }) {
             const cachedTool = ['render_thread_report', 'inspect_thread_details', 'render_thread_details', 'read_thread_evidence'].includes(name);
             if (cachedTool && !args.reportContext && reportContext?.reportId === args.reportId) args = { ...args, reportContext };
             const response = await request('tools/call', { name, arguments: args }, 65000);
-            if (response.isError) throw new Error(response.content?.find(c => c.type === 'text')?.text || 'Tool failed.');
+            if (response.isError) throw Object.assign(new Error(response.content?.find(c => c.type === 'text')?.text || 'Tool failed.'),
+                { code: response._meta?.jvmscopeError?.code });
             return response;
         },
     };

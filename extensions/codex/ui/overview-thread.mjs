@@ -1,3 +1,4 @@
+import { clearToolError, showToolError } from './tool-errors.mjs';
 const copy = {
     en: { selected: 'Selected thread', observed: 'Main thread · stack observation', state: 'Java state', unknown: 'Not recorded',
         http: 'Parked in CompletableFuture.get inside HttpClient.send at capture time.',
@@ -38,9 +39,10 @@ export function overviewThreadView({ focus, locale, canRead, onOpen, showNextChe
     const actions = el('div', 'overview-thread-actions'); actions.append(open);
     if (thread.range) actions.append(el('span', 'muted', `${t('source')} ${thread.range.startLine}–${thread.range.endLine}`));
     open.addEventListener('click', async () => {
+        clearToolError(box);
         open.disabled = true; open.textContent = t('opening');
         try { await onOpen(thread.sourceKey); }
-        catch (e) { box.append(el('p', 'error', e.message)); }
+        catch (e) { showToolError(box, e, locale); }
         finally { open.disabled = !canRead; open.textContent = t('stack'); }
     });
     box.append(actions);

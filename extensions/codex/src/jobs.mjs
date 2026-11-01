@@ -26,7 +26,7 @@ export function createJobs({ workerUrl = new URL('./worker.mjs', import.meta.url
                 const cancel = () => finish(new Error('Analysis cancelled.'));
                 const timer = setTimeout(() => finish(new Error('Analysis exceeded 60 seconds. Select fewer snapshots or a smaller interval.')), timeoutMs);
                 signal?.addEventListener('abort', cancel, { once: true });
-                worker.once('message', message => finish(message.error ? new Error(message.error) : null, message.result));
+                worker.once('message', message => finish(message.error ? Object.assign(new Error(message.error), { code: message.code }) : null, message.result));
                 worker.once('error', error => finish(error));
                 worker.once('exit', () => { if (!settled) finish(new Error('Analysis worker exited before returning a result.')); });
             });

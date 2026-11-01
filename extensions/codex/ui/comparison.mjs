@@ -1,3 +1,4 @@
+import { showToolError } from './tool-errors.mjs';
 const words = {
     en: { title: 'Snapshot comparison', subtitle: 'Adjacent intervals · cached analysis', cpu: 'CPU', allocation: 'Allocation',
         peakCpu: 'Peak thread CPU', peakAllocation: 'Peak thread allocation', hot: 'Threads above review thresholds',
@@ -86,7 +87,7 @@ export function comparisonView({ report, locale, metric, rowLimit, canRead, onMe
                     if (!endpoint) continue;
                     const b = button(`${t(key)} · ${t('snapshot')} ${endpoint.snapshotNumber}`, async () => {
                         content.replaceChildren(el('p', 'muted', `${t('snapshot')} ${endpoint.snapshotNumber} · ${endpoint.name} · ${endpoint.range?.startLine}–${endpoint.range?.endLine}`), el('p', 'muted', t('pending')));
-                        try { await onEvidence(endpoint, content); } catch (error) { if (content.isConnected) content.append(el('p', 'error', error.message)); }
+                        try { await onEvidence(endpoint, content); } catch (error) { if (content.isConnected) { content.replaceChildren(); showToolError(content, error, locale); } }
                     });
                     b.disabled = !endpoint.range || !canRead; b.title = !endpoint.range ? t('noSource') : !canRead ? t('unavailableTools') : endpoint.path;
                     actions.append(b);

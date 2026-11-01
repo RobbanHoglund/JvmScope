@@ -1,3 +1,4 @@
+import { clearToolError, showToolError } from './tool-errors.mjs';
 const copy = {
     en: { full: 'Full thread block', lines: 'Lines', wrap: 'Wrap lines', expand: 'Expand stack', limit: 'Limit stack height',
         more: 'Next source lines', loading: 'Checking source…', source: 'Original stack for' },
@@ -29,12 +30,13 @@ export function stackSource({ thread, locale, canRead, onNext, state = {} }) {
     if (thread.nextLine) {
         const more = el('button', 'source-next', t('more')); more.type = 'button'; more.disabled = !canRead;
         more.addEventListener('click', async () => {
+            clearToolError(full);
             more.disabled = true; more.textContent = t('loading');
             try {
                 const result = await onNext(thread);
                 thread.lines.push(...result.lines); thread.nextLine = result.nextLine; paint();
                 if (!thread.nextLine) more.remove();
-            } catch (error) { full.append(el('p', 'error', error.message)); }
+            } catch (error) { showToolError(full, error, locale); }
             finally { more.disabled = !canRead; more.textContent = t('more'); }
         }); full.append(more);
     }

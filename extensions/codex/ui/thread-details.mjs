@@ -3,6 +3,7 @@ import { selectionTitle } from './stack-groups.mjs';
 import { stackSelection } from './stack-selection.mjs';
 import { formatRate } from './comparison.mjs';
 import { aiConclusionView } from './ai-conclusion.mjs';
+import { clearToolError, showToolError } from './tool-errors.mjs';
 const words = {
     en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads', selectedSingle: 'selected thread',
         overview: 'All threads', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
@@ -53,7 +54,8 @@ export function threadDetailsView({ data, locale, version, conclusion, canRead, 
     const nav = el('nav', 'focus-navigation');
     for (const [key, label] of [['snapshot', `${t('overview')} · snapshot ${data.snapshotNumber}`], ['comparison', t('compare')]]) {
         if (key === 'comparison' && data.snapshotCount < 2) continue;
-        const b = button(label, async () => { b.disabled = true; try { await onNavigate(key); } catch (e) { b.disabled = !canRead; view.append(el('p', 'error', e.message)); } });
+        const b = button(label, async () => { clearToolError(view); b.disabled = true;
+            try { await onNavigate(key); } catch (e) { b.disabled = !canRead; showToolError(view, e, locale); } });
         b.disabled = !canRead; nav.append(b);
     }
     const contextRow = el('div', 'focus-context-row'); contextRow.append(context, nav); view.append(contextRow);

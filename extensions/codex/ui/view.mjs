@@ -12,6 +12,7 @@ import { aiConclusionView } from './ai-conclusion.mjs';
 import { compactReport } from './compact-report.mjs';
 import { createReportSurface } from './report-surface.mjs';
 import { createAssessmentCache } from './assessment-cache.mjs';
+import { clearToolError, showToolError } from './tool-errors.mjs';
 
 const app = document.getElementById('app'), root = document.createElement('div');
 root.className = 'analysis-content';
@@ -197,9 +198,10 @@ async function showEvidence(p, startLine) {
         if (!data?.lines || data.source?.sha256 !== source.sha256 || data.context?.snapshotIndex !== current().index || data.context?.sourceKey !== p.id) throw new Error('The host returned mismatched source evidence.');
         container.replaceChildren(el('p', 'evidence-context muted', `${t('snapshot')} ${data.context.snapshotNumber} · ${source.name} · ${t('lines')} ${data.lines[0]?.line}–${data.lines.at(-1)?.line}`), el('p', 'muted', t('refreshed')), el('pre', 'evidence', data.lines.map(l => `${l.line}  ${l.text}`).join('\n')));
         if (endLine < p.evidence.endLine) container.append(button(t('readMore'), () => showEvidence(p, endLine + 1)));
-    } catch (error) { if (epoch === evidenceEpoch && root.contains(container)) container.replaceChildren(el('p', 'error', error.message)); }
+    } catch (error) { if (epoch === evidenceEpoch && root.contains(container)) { container.replaceChildren(); showToolError(container, error, locale); } }
 }
 async function loadPage(offset, b) {
+    const label = b.textContent; clearToolError(root);
     b.disabled = true; b.textContent = t('load');
     const args = { reportId: report.reportId, language: locale, view: activeView, offset, limit: report.snapshots.limit || 10 };
     const paths = report.sources.map(s => s.path);
@@ -215,7 +217,7 @@ async function loadPage(offset, b) {
             }
         });
     }
-    catch (e) { b.disabled = false; b.textContent = e.message; }
+    catch (e) { b.disabled = false; b.textContent = label; showToolError(root, e, locale); }
 }
 function footer() {
     const information = append(el('details', 'report-information'), el('summary', '', `${t('information')} · v${version}`),
@@ -231,20 +233,20 @@ async function switchView(view, b) {
         if (view === 'comparison' && !canCompareLocally()) return;
         activeView = view; render(); return;
     }
-    b.disabled = true;
+    clearToolError(root); b.disabled = true;
     try { await navigateTool('render_thread_report', { reportId: report.reportId, language: locale, view,
         ...(view === 'comparison' ? { offset: 0, limit: 4 } : {
             snapshotIndex: current().index, offset: report.snapshots.offset, limit: report.snapshots.limit || 10 }) }); }
-    catch (error) { b.disabled = false; b.textContent = error.message; }
+    catch (error) { b.disabled = false; showToolError(root, error, locale); }
 }
 const canCompareLocally = () => report.snapshots.offset === 0 && report.snapshots.items.length === report.snapshotCount && report.snapshotCount <= 4;
 async function switchSnapshot(select) {
     const index = Number(select.value);
     if (!bridge.canCallTools) { snapshotIndex = index; cycleIndex = 0; selection = null; render(); return; }
-    select.disabled = true;
+    clearToolError(root); select.disabled = true;
     try { await navigateTool('render_thread_report', { reportId: report.reportId, language: locale, view: 'snapshot',
         snapshotIndex: report.snapshots.items[index].index, offset: report.snapshots.offset, limit: report.snapshots.limit || 10 }); }
-    catch (error) { select.disabled = false; select.value = snapshotIndex; root.append(el('p', 'error', error.message)); }
+    catch (error) { select.disabled = false; select.value = snapshotIndex; showToolError(root, error, locale); }
 }
 async function comparisonEvidence(endpoint, content) {
     const epoch = ++evidenceEpoch;
@@ -259,9 +261,10 @@ async function comparisonEvidence(endpoint, content) {
     if (data.nextLine) content.append(el('p', 'note', t('truncated')));
 }
 async function focusSnapshot(endpoint) {
+    clearToolError(root);
     try { await navigateTool('inspect_thread_details', { reportId: report.reportId, language: locale,
         snapshotIndex: endpoint.snapshotIndex, sourceKeys: [endpoint.sourceKey] }); }
-    catch (error) { root.append(el('p', 'error', error.message)); }
+    catch (error) { showToolError(root, error, locale); }
 }
 function findingCard(f, related = []) {
     const card = el('article', 'finding'), translated = findingCopy(f, locale);

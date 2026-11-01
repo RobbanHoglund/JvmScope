@@ -30,4 +30,4 @@ try {
     const { _cachedSnapshots, ...publicResult } = result;
     if (Buffer.byteLength(JSON.stringify(publicResult), 'utf8') > 512 * 1024) throw new Error('Result exceeds the 512 KiB response limit. Reduce limit or select a smaller capture interval.');
     parentPort.postMessage({ result });
-} catch (error) { parentPort.postMessage({ error: error.message }); }
+} catch (error) { parentPort.postMessage({ error: error.message, code: error.code }); }
