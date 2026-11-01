@@ -2,6 +2,7 @@
 // or saved analysis: recovery reads the explicit paths and verifies every hash
 // before parsing. No capture, assessment or cache is persisted to disk.
 import { randomUUID } from 'node:crypto';
+import { realpath } from 'node:fs/promises';
 const failure = (code, message) => Object.assign(new Error(message), { code });
 const referenceKey = context => JSON.stringify([context.version, context.pluginVersion, context.reportId, context.snapshotCount,
     context.sources.map(s => [s.path, s.sha256]), !!context.example]);
@@ -41,7 +42,9 @@ export function createReportAccess({ reports, jobs, version, example }) {
             if (!pending.has(key)) {
                 const work = (async () => {
                     const isExample = context.example === true;
-                    if (isExample && (!example || context.sources.length !== 1 || context.sources[0].path !== example.path))
+                    // readCapture returns a canonical path. Windows temp/drive
+                    // aliases and symlinks can differ from the installation path.
+                    if (isExample && (!example || context.sources.length !== 1 || context.sources[0].path !== await realpath(example.path)))
                         throw failure('REPORT_CONTEXT_MISMATCH', 'The example reference does not identify the bundled sample.');
                     const restored = await jobs.run(isExample ? 'show_thread_example' : 'analyze_thread_dumps', {
                         paths: context.sources.map(s => s.path), expectedSources: context.sources,

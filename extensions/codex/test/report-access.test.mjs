@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { createReports } from '../src/reports.mjs';
 import { createReportAccess } from '../src/report-access.mjs';
 import { createAssessmentCache } from '../ui/assessment-cache.mjs';
+import { mkdtemp, mkdir, realpath, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 const makeReport = () => ({ analyzer: 'threads', snapshotCount: 1,
     sources: [{ path: '/selected.txt', sha256: 'a'.repeat(64) }], snapshots: { total: 1, offset: 0, limit: 1, items: [{ index: 0 }] } });
 
@@ -55,4 +58,24 @@ test('a recovery reference must fit the response budget before it can evict an a
     oversized.sources[0].path = '/' + 'a'.repeat(270000);
     assert.throws(() => access.add(oversized), /512 KiB/);
     assert.equal(reports.get(id).reportId, id);
+});
+
+test('example recovery compares canonical paths and still rejects a different file with the same name', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'jvmscope example '));
+    try {
+        await mkdir(path.join(directory, 'sub'));
+        const file = path.join(directory, 'demo.txt'); await writeFile(file, 'sample');
+        const report = makeReport(); report.sources[0].path = await realpath(file); report.example = { synthetic: true };
+        const first = createReportAccess({ reports: createReports(), jobs: {}, version: 'test' });
+        const id = first.add(report);
+        const alias = `${directory}${path.sep}sub${path.sep}..${path.sep}demo.txt`;
+        let reads = 0;
+        const jobs = { async run() { reads++; return structuredClone(report); } };
+        const resumed = createReportAccess({ reports: createReports(), jobs, version: 'test', example: { path: alias, definition: report.example } });
+        await resumed.ensure(id, report.reportContext); assert.equal(reads, 1);
+        const unrelated = createReportAccess({ reports: createReports(), jobs, version: 'test', example: { path: path.join(directory, 'sub', 'demo.txt') } });
+        await writeFile(path.join(directory, 'sub', 'demo.txt'), 'different');
+        await assert.rejects(unrelated.ensure(id, report.reportContext), { code: 'REPORT_CONTEXT_MISMATCH' });
+        assert.equal(reads, 1);
+    } finally { await rm(directory, { recursive: true, force: true }); }
 });
