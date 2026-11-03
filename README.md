@@ -49,9 +49,22 @@ without supplying a private capture. [Example guide and provenance](docs/EXAMPLE
 For files to open directly in either the application or VS Code, see the
 [real TLS logs from eight Java versions](testdata/tls-logs/README.md).
 
+## Codex plugin (local preview)
+
+Use JvmScope's shared thread, TLS and GC analysis engines directly from a local
+Codex conversation, with structured findings, source-line evidence and bundled
+Java guidance. The self-contained package includes samples and requires Node.js
+22 or later. Parsing runs locally; returned evidence is shared with the AI host.
+[Install/build the Codex plugin](extensions/codex/README.md). The local preview
+is **0.7.0**, with interactive thread reports, deadlock graphs, snapshot comparison
+and colored source stacks for MCP Apps-compatible hosts, alongside concise chat
+answers. Full TLS/GC visualizations remain in the web application and VS Code
+extension. Public directory submission is a separate step requiring eligibility
+for local MCP plugins.
+
 ## VS Code extension
 
-Both analyzers are generally available as an offline desktop VS Code extension.
+All three analyzers are generally available as an offline desktop VS Code extension.
 Open captures from Explorer or the active editor, compare thread snapshots, and
 use native clipboard, raw-evidence and export actions. No Java server is required.
 [Install/build the VS Code extension](extensions/vscode/README.md) ·
@@ -62,7 +75,11 @@ Codex or Claude Code. Review the evidence before sharing; see [AI analysis](exte
 
 ## Privacy and scope
 
-Your dump/log contents stay in the browser. Both analyzers run in disposable browser
+The following describes the standalone web application. VS Code offers optional
+AI sharing, and the Codex plugin returns selected findings and evidence to its AI
+host; see their linked privacy and installation guides above.
+
+Your dump/log contents stay in the browser. All three analyzers run in disposable browser
 workers; Clear or replacement inputs terminate pending analysis. The Java server delivers static
 files and health checks; it has no upload or analysis API. The standalone application has no AI service,
 analytics SDK, database, or remote CDN required by the analyzers. Example files

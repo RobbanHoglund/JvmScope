@@ -1,0 +1,35 @@
+{
+  "provenance": {
+    "kind": "independent-model-conversation",
+    "recorded": "2026-10-28",
+    "capture": "no-findings-java25.txt",
+    "toolSequence": [
+      "analyze_thread_dumps",
+      "read_thread_evidence",
+      "render_thread_report",
+      "render_thread_details"
+    ],
+    "replay": "AI-authored assessments and final answers, replayed through fresh packaged MCP calls; CI does not rerun the model."
+  },
+  "language": "en",
+  "turns": [
+    {
+      "prompt": "Analyze my attached Java thread dump and explain what it tells us.",
+      "tool": "render_thread_report",
+      "conclusion": {
+        "summary": "No JVM-reported deadlock in this snapshot; no material rule findings were raised. In snapshot 1, main is waiting inside HttpClientImpl.send from StatusClient.runOneCycle; this single platform-thread snapshot cannot establish the wait duration, overall health, or CPU/allocation rates.",
+        "nextCheck": "If investigating slowness, compare another dump captured during the symptom and correlate this HTTP call with request timing logs."
+      },
+      "chatAnswer": "No JVM-reported deadlock in this snapshot; JvmScope raised no material findings. In snapshot 1, `main` is waiting inside `HttpClientImpl.send` from `StatusClient.runOneCycle`; this single platform-thread snapshot cannot establish the wait duration, overall health, or CPU/allocation rates.\n\nIf investigating slowness, compare another dump captured during the symptom and correlate this HTTP call with request timing logs."
+    },
+    {
+      "prompt": "Show the stack for main and explain what it is waiting for.",
+      "tool": "render_thread_details",
+      "conclusion": {
+        "summary": "In snapshot 1, main is parked in Unsafe.park through CompletableFuture.get inside HttpClientImpl.send, called by StatusClient.runOneCycle at line 152: it is waiting for the HTTP operation to complete. The stack does not establish which network phase is pending, how long it has waited, or whether the request is stalled.",
+        "nextCheck": "Correlate this call with request timing logs or tracing to identify the pending HTTP phase and elapsed request time."
+      },
+      "chatAnswer": "In snapshot 1, `main` is parked in `Unsafe.park` via `CompletableFuture.get` inside `HttpClientImpl.send`, called by `StatusClient.runOneCycle` at line 152: **it is waiting for the HTTP operation to complete**.\n\nThe stack does not establish the pending network phase, wait duration, or whether the request is stalled. Correlate this call with request timing logs or tracing to determine where the time is spent."
+    }
+  ]
+}

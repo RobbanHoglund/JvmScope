@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>JvmScope conversation test host</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101720;color:#edf2fb;font:14px system-ui;display:grid;grid-template-columns:minmax(300px,1fr) minmax(360px,1.4fr);height:100vh}
+body.light{background:#f7f9fc;color:#182334}#chat{padding:24px;overflow:auto;border-right:1px solid #536174}h1{font-size:17px;margin:0 0 24px}.message{white-space:pre-wrap;line-height:1.65;margin:18px 0;padding:12px;border-radius:8px}.user{background:#284577;color:white}.assistant{border-bottom:1px solid #536174}#workspace{display:flex;flex-direction:column;min-width:0;min-height:0}#tabs{display:flex;gap:5px;padding:8px;flex-wrap:wrap}button{font:inherit;padding:8px 12px;background:transparent;color:inherit;border:1px solid #536174;border-radius:6px;cursor:pointer}button[aria-selected=true]{background:#284577;color:white}button:focus-visible{outline:3px solid #a5bcff;outline-offset:2px}#panels{overflow:auto;min-height:0}iframe{display:block;width:100%;height:900px;border:0}[hidden]{display:none!important}
+@media(max-width:700px){body{display:block;height:auto}#chat{border:0}#panels{max-height:900px}}
+</style>
+<section id="chat"><h1>Conversation · test host</h1><div id="messages"></div></section>
+<section id="workspace"><nav id="tabs" role="tablist" aria-label="Reports"></nav><div id="panels"></div></section>
+<script>
+const reports = [], query = new URLSearchParams(location.search), theme = query.get('theme') || 'dark';
+document.body.classList.toggle('light', theme === 'light');
+window.events = [];
+function send(report, message) { report.frame.contentWindow.postMessage({ jsonrpc: '2.0', ...message }, '*'); }
+function selectReport(index) {
+    for (const [i, report] of reports.entries()) { report.panel.hidden = i !== index; report.tab.setAttribute('aria-selected', String(i === index)); }
+}
+window.chatMessage = (role, text) => {
+    const p = document.createElement('p'); p.className = 'message ' + role; p.textContent = text;
+    document.getElementById('messages').append(p);
+};
+window.presentReport = (result, title) => {
+    const index = reports.length, panel = document.createElement('section'), tab = document.createElement('button'), frame = document.createElement('iframe');
+    panel.id = 'panel-' + index; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-label', title);
+    tab.type = 'button'; tab.textContent = title; tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', panel.id);
+    tab.addEventListener('click', () => selectReport(index));
+    frame.title = title; frame.setAttribute('sandbox', 'allow-scripts'); frame.src = '/widget';
+    const report = { result, frame, panel, tab, mode: 'fullscreen' }; reports.push(report);
+    panel.append(frame); document.getElementById('tabs').append(tab); document.getElementById('panels').append(panel); selectReport(index);
+};
+addEventListener('message', async e => {
+    const report = reports.find(r => r.frame.contentWindow === e.source);
+    if (!report || e.data?.jsonrpc !== '2.0') return;
+    const m = e.data; window.events.push({ index: reports.indexOf(report), method: m.method });
+    if (m.method === 'ui/initialize') send(report, { id: m.id, result: { protocolVersion: '2026-01-26', hostInfo: { name: 'JvmScope conversation test host', version: '1' },
+        hostCapabilities: { serverTools: {} }, hostContext: { theme, displayMode: report.mode, availableDisplayModes: ['inline', 'fullscreen'] } } });
+    else if (m.method === 'ui/notifications/initialized') send(report, { method: 'ui/notifications/tool-result', params: report.result });
+    else if (m.method === 'ui/request-display-mode') { report.mode = m.params.mode; send(report, { id: m.id, result: { mode: report.mode } }); send(report, { method: 'ui/notifications/host-context-changed', params: { displayMode: report.mode } }); }
+    else if (m.method === 'ui/notifications/size-changed') report.frame.style.height = m.params.height + 'px';
+    else if (m.method === 'tools/call') {
+        try { const result = await (await fetch('/tool', { method: 'POST', body: JSON.stringify(m.params) })).json(); send(report, { id: m.id, result }); }
+        catch (error) { send(report, { id: m.id, error: { code: -32603, message: error.message } }); }
+    }
+});
+</script></html>

@@ -1826,7 +1826,7 @@ function renderSmartAnalysisPanel() {
         .filter((severity) => Number(counts[severity] || 0) > 0)
         .map((severity) => `
           <span class="smart-analysis-count smart-analysis-count-${escapeAttr(severity)}">
-            ${escapeHtml(String(counts[severity]))} ${escapeHtml(severity.toUpperCase())}
+            ${escapeHtml(String(counts[severity]))} ${escapeHtml(severity.toUpperCase())} ${counts[severity] === 1 ? 'CATEGORY' : 'CATEGORIES'}
           </span>
         `).join('');
     const coverage = smartAnalysis.coverage || {};

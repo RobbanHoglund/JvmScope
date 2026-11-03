@@ -1,6 +1,7 @@
 import { allocationRateFloor } from './allocation-metrics.js';
 import { diagnosticEvidenceFor, hasThreadDiagnostic } from './diagnostics.js';
 import { isPossibleStarvationCandidate } from './classification.js';
+import { summarizeDeadlocks } from './deadlock-summary.js';
 
 const SEVERITY_ORDER = Object.freeze({
     critical: 4,
@@ -566,8 +567,11 @@ export function analyzeSnapshotProblems({
         parserWarnings,
     });
 
-    const headline = counts.critical
-        ? `${counts.critical} critical finding${counts.critical === 1 ? '' : 's'} detected`
+    const deadlockSummary = summarizeDeadlocks(snapshot);
+    const headline = deadlockSummary.cycles
+        ? `${deadlockSummary.cycles} JVM-reported deadlock cycle${deadlockSummary.cycles === 1 ? '' : 's'} in this snapshot`
+        : counts.critical
+        ? `${counts.critical} critical finding categor${counts.critical === 1 ? 'y' : 'ies'} in this snapshot`
         : counts.high
             ? `${counts.high} high-severity finding${counts.high === 1 ? '' : 's'} detected`
             : counts.total
@@ -582,6 +586,7 @@ export function analyzeSnapshotProblems({
             : 'The available evidence contains no configured material finding. This is not proof that the application is healthy.',
         findings,
         counts,
+        deadlockSummary,
         limitations: coverageResult.limitations,
         coverage: coverageResult.coverage,
     };

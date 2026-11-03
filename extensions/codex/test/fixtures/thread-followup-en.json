@@ -1,0 +1,52 @@
+{
+  "provenance": {
+    "kind": "independent-model-conversation",
+    "recorded": "2026-11-03",
+    "capture": "no-findings-java25.txt",
+    "candidateRelease": "0.6.2",
+    "packageVersionAtRecording": "0.6.1",
+    "skillSha256": "3d75400ef972ff11fe4d611f4d278682527a294da637b69fe4694f88881912a1",
+    "toolSequence": [
+      "analyze_thread_dumps",
+      "read_thread_evidence",
+      "render_thread_report",
+      "inspect_thread_details",
+      "search_knowledge",
+      "search_knowledge",
+      "get_knowledge_article",
+      "render_thread_details"
+    ],
+    "manualAction": {
+      "tool": "inspect_thread_details",
+      "thread": "main",
+      "snapshotIndex": 0
+    },
+    "replay": "Actual model assessments and answers through a real packaged MCP session, including a manual source click. CI replays the records; it does not rerun the model or the Codex desktop host."
+  },
+  "language": "en",
+  "turns": [
+    {
+      "prompt": "Analyze my attached Java thread dump and explain what it tells us.",
+      "tool": "render_thread_report",
+      "conclusion": {
+        "summary": "No JVM-reported deadlock in this snapshot, and JvmScope found no material rule findings. Snapshot 1 shows main waiting in an HTTP send from StatusClient.runOneCycle (lines 4–13); that alone does not establish a stalled request, its duration, or application health.",
+        "nextCheck": "Capture another dump during the symptom and compare stacks and counter changes, alongside HTTP request timings."
+      },
+      "chatAnswer": "No JVM-reported deadlock in this snapshot, and JvmScope found no material rule findings. Snapshot 1 shows main waiting in an HTTP send from StatusClient.runOneCycle (lines 4–13); that alone does not establish a stalled request, its duration, or application health.\n\nNext check: Capture another dump during the symptom and compare stacks and counter changes, alongside HTTP request timings."
+    },
+    {
+      "prompt": "What does the main thread’s HTTP wait tell us, and how can I investigate whether the request is stuck?",
+      "tool": "render_thread_details",
+      "conclusion": {
+        "summary": "Snapshot 1 shows main parked in CompletableFuture.get during HttpClientImpl.send, called from StatusClient.runOneCycle:152 (dump lines 4–13). It is awaiting HTTP completion; this alone cannot establish a stuck request, the wait's duration, or missing timeouts.",
+        "nextCheck": "Correlate several dumps with request-ID start/completion timings and server logs, then check the effective connect and request timeout settings."
+      },
+      "chatAnswer": "Snapshot 1 shows main parked in CompletableFuture.get during HttpClientImpl.send, called from StatusClient.runOneCycle:152 (dump lines 4–13). It is awaiting HTTP completion; this alone cannot establish a stuck request, the wait's duration, or missing timeouts.\n\nNext check: Correlate several dumps with request-ID start/completion timings and server logs, then check the effective connect and request timeout settings."
+    },
+    {
+      "prompt": "What additional evidence should I collect next?",
+      "tool": null,
+      "chatAnswer": "Collect these together during the symptom:\n\n- **Several timestamped thread dumps from the same JVM**, a few seconds apart. Preserve the PID, JVM vendor/build and collection command.\n- **Client request logs or traces** with a request ID, destination, start/completion/error times and retries. The ID helps distinguish one persistent wait from successive HTTP calls.\n- **The code around StatusClient.runOneCycle:152**, plus client/request construction and the effective connect and request timeout settings.\n- **Matching server and proxy logs or traces** for that request ID, showing whether the request arrived and when processing or response delivery completed.\n\nPrioritize the dumps and request timings; together they can show whether the observed wait persists and exceeds the expected request duration."
+    }
+  ]
+}

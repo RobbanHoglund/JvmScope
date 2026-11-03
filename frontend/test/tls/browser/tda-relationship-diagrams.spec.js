@@ -17,12 +17,14 @@ test('TDA inline graphs retain two/three-thread cycles and expand every class-in
     await page.goto(`${appUrl}/jvmscope/tda.html`);
     await page.locator('#loadSampleBtn').click();
     await expect(page.locator('.deadlock-panel-details')).toHaveAttribute('open', '');
+    await expect(page.locator('.smart-analysis-count-critical')).toHaveText('1 CRITICAL CATEGORY');
+    await expect(page.locator('.app-section-summary-subtitle').filter({ hasText: '2 JVM-reported deadlock cycles in this snapshot' })).toBeVisible();
     const cycles = page.locator('#deadlockPanel .relationship-figure');
     await expect(cycles).toHaveCount(2);
     await expect(cycles.nth(0)).toBeVisible();
     await expect(cycles.nth(1)).toBeHidden();
     await expect(cycles.nth(0).locator('.relationship-edge')).toHaveCount(4);
-    for (const width of [1440, 600, 420]) {
+    for (const width of [1440, 735, 600, 420]) {
         await page.setViewportSize({ width, height: 1000 });
         for (let i = 0; i < 2; i++) {
             await page.locator('.deadlock-cycle-btn').nth(i).click();
@@ -79,7 +81,7 @@ test('TDA five-thread cycle with long labels retains every dependency without ov
     await expect(graph.locator('.relationship-node')).toHaveCount(10);
     await expect(graph.locator('.relationship-edge')).toHaveCount(10);
     await expect(graph.locator('.relationship-edge.is-closing')).toHaveCount(1);
-    for (const width of [1440, 600, 420]) {
+    for (const width of [1440, 735, 600, 420]) {
         await page.setViewportSize({ width, height: 900 });
         await expectClearLayout(graph);
     }

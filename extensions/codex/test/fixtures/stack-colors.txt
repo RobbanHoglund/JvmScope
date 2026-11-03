@@ -1,0 +1,18 @@
+Full thread dump OpenJDK 64-Bit Server VM (27 mixed mode):
+
+"main-<img src=x onerror=alert(1)>" #1 prio=5 tid=0x1 nid=1 waiting on condition
+   java.lang.Thread.State: WAITING (parking)
+	at java.base@27/jdk.internal.misc.Unsafe.park(Native Method)
+	- parking to wait for <0x0000000000000001> (a java.util.concurrent.CompletableFuture$Signaller)
+	at java.base@27/java.util.concurrent.CompletableFuture.get(CompletableFuture.java:2093)
+	at java.net.http@27/jdk.internal.net.http.HttpClientImpl.send(HttpClientImpl.java:902)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:20)
+	at app//com.example.Client.run(Client.java:152)
+	at com.example.Client$$Lambda/0x0000000000000001.run(Unknown Source)
+	at com.example.<img src=x onerror=alert(2)>.run(Unknown Source)
+	- locked <0x0000000000000002> (a java.lang.Object)
+	- waiting to lock <0x0000000000000003> (a java.lang.Object)
+
+   Locked ownable synchronizers:
+	- <0x0000000000000004> (a java.util.concurrent.locks.ReentrantLock$NonfairSync)
+	- None

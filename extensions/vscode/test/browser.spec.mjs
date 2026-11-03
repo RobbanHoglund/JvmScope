@@ -905,6 +905,8 @@ test('TDA reveals the first deadlock immediately and switches cycles without los
     const {page}=host;
     await host.open('/jvmscope/tda.html');
     await page.locator('#loadSampleBtn').click();
+    await expect(page.locator('.smart-analysis-count-critical')).toHaveText('1 CRITICAL CATEGORY');
+    await expect(page.locator('.app-section-summary-subtitle').filter({hasText:'2 JVM-reported deadlock cycles in this snapshot'})).toBeVisible();
     const panel=page.locator('#deadlockPanel');
     const details=panel.locator('.deadlock-panel-details');
     const buttons=panel.getByRole('group',{name:'Deadlock cycles'}).getByRole('button');
@@ -956,7 +958,7 @@ test('TDA inline dependency diagrams fit host themes and keep their labels clear
     await host.open('/jvmscope/tda.html');
     await host.load([{name:'classic-sequence.txt',text:await capture('testdata/jvm-samples/gh-37180401747-1-bisheng-25-all/classic-sequence.txt')}]);
     for(const selector of ['.class-initialization-panel-summary','.contention-panel-summary'])await page.locator(selector).click();
-    for(const width of [1366,600]) {
+    for(const width of [1366,735,600]) {
         await page.setViewportSize({width,height:1000});
         for(const theme of Object.keys(themePalettes)) {
             await applyTheme(page,theme);

@@ -1,0 +1,70 @@
+2026-10-29 05:00:00
+Full thread dump OpenJDK 64-Bit Server VM (25 mixed mode, sharing):
+
+"main" #1 prio=5 tid=0x1 nid=1 waiting on condition
+   java.lang.Thread.State: WAITING (parking)
+        at jdk.internal.misc.Unsafe.park(java.base@25/Native Method)
+        - parking to wait for <0x0000000000000100> (a java.util.concurrent.CompletableFuture$Signaller)
+        at java.util.concurrent.locks.LockSupport.park(java.base@25/LockSupport.java:223)
+        at java.util.concurrent.CompletableFuture.get(java.base@25/CompletableFuture.java:2093)
+        at jdk.internal.net.http.HttpClientImpl.send(java.net.http@25/HttpClientImpl.java:902)
+        at sample.StatusClient.runOneCycle(StatusClient.java:152)
+
+   Locked ownable synchronizers:
+        - None
+
+"HttpClient-1-SelectorManager" #2 prio=5 tid=0x2 nid=2 runnable
+   java.lang.Thread.State: RUNNABLE
+        at sun.nio.ch.EPoll.wait(java.base@25/Native Method)
+        at sun.nio.ch.EPollSelectorImpl.doSelect(java.base@25/EPollSelectorImpl.java:137)
+        - locked <0x0000000000000001> (a sun.nio.ch.Util$2)
+        at sun.nio.ch.SelectorImpl.select(java.base@25/SelectorImpl.java:142)
+        at jdk.internal.net.http.HttpClientImpl$SelectorManager.run(java.net.http@25/HttpClientImpl.java:1338)
+
+   Locked ownable synchronizers:
+        - None
+
+"HttpClient-2-SelectorManager" #3 prio=5 tid=0x3 nid=3 runnable
+   java.lang.Thread.State: RUNNABLE
+        at sun.nio.ch.EPoll.wait(java.base@25/Native Method)
+        at sun.nio.ch.EPollSelectorImpl.doSelect(java.base@25/EPollSelectorImpl.java:137)
+        - locked <0x0000000000000002> (a sun.nio.ch.Util$2)
+        at sun.nio.ch.SelectorImpl.select(java.base@25/SelectorImpl.java:142)
+        at jdk.internal.net.http.HttpClientImpl$SelectorManager.run(java.net.http@25/HttpClientImpl.java:1338)
+
+   Locked ownable synchronizers:
+        - None
+
+"HttpClient-3-SelectorManager" #4 prio=5 tid=0x4 nid=4 runnable
+   java.lang.Thread.State: RUNNABLE
+        at sun.nio.ch.EPoll.wait(java.base@25/Native Method)
+        at sun.nio.ch.EPollSelectorImpl.doSelect(java.base@25/EPollSelectorImpl.java:137)
+        - locked <0x0000000000000003> (a sun.nio.ch.Util$2)
+        at sun.nio.ch.SelectorImpl.select(java.base@25/SelectorImpl.java:142)
+        at jdk.internal.net.http.HttpClientImpl$SelectorManager.run(java.net.http@25/HttpClientImpl.java:1338)
+
+   Locked ownable synchronizers:
+        - None
+
+"HttpClient-4-SelectorManager" #5 prio=5 tid=0x5 nid=5 runnable
+   java.lang.Thread.State: RUNNABLE
+        at sun.nio.ch.EPoll.wait(java.base@25/Native Method)
+        at sun.nio.ch.EPollSelectorImpl.doSelect(java.base@25/EPollSelectorImpl.java:137)
+        - locked <0x0000000000000004> (a sun.nio.ch.Util$2)
+        at sun.nio.ch.SelectorImpl.select(java.base@25/SelectorImpl.java:142)
+        at jdk.internal.net.http.HttpClientImpl$SelectorManager.run(java.net.http@25/HttpClientImpl.java:1338)
+
+   Locked ownable synchronizers:
+        - None
+
+"HttpClient-1-Worker-0" #6 prio=5 tid=0x6 nid=6 waiting on condition
+   java.lang.Thread.State: TIMED_WAITING (parking)
+        at jdk.internal.misc.Unsafe.park(java.base@25/Native Method)
+        - parking to wait for <0x0000000000000200> (a java.util.concurrent.SynchronousQueue$TransferStack)
+        at java.util.concurrent.SynchronousQueue.poll(java.base@25/SynchronousQueue.java:903)
+        at java.util.concurrent.ThreadPoolExecutor.getTask(java.base@25/ThreadPoolExecutor.java:1070)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@25/ThreadPoolExecutor.java:1130)
+        at java.lang.Thread.run(java.base@25/Thread.java:1474)
+
+   Locked ownable synchronizers:
+        - None
