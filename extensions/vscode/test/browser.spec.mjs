@@ -123,6 +123,26 @@ const dropFixtures = {
     tls: 'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt',
     gc: 'testdata/gc-logs/java27-g1.log',
 };
+test('TDA runtime metadata follows real snapshots and native VS Code themes', async ({host}) => {
+    const {page}=host;
+    await host.open('/jvmscope/tda.html');
+    const sources=await Promise.all([26,27].map(async major=>({name:`java${major}-runtime.txt`,
+        text:await capture(`frontend/test/tda/fixtures/runtime/jdk${major}-thread-print.txt`)})));
+    await host.load(sources);
+    const info=page.locator('#runtimeInfo');
+    await expect(info.locator('summary')).toHaveText('Java runtime · 26.0.2.1+1-7');
+    await host.navigation('select','snapshot:1');
+    await expect(info.locator('summary')).toHaveText('Java runtime · 27+35-2325');
+    await info.locator('summary').click();
+    for(const name of Object.keys(themePalettes)){
+        await applyTheme(page,name);
+        await expect(info.locator('dl')).toContainText('27.0+35');
+        expect(await page.locator('body').evaluate(n=>n.scrollWidth>n.clientWidth+1)).toBe(false);
+    }
+    await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiPrompt')).toHaveValue(/27\+35-2325/);
+    await expect(page.locator('#aiPrompt')).not.toHaveValue(/26\.0\.2\.1\+1-7/);
+});
 async function dispatchCaptureDrop(page, { text, name = 'dropped.log', data = {}, selector = 'header' }) {
     return page.evaluate(({ text, name, data, selector }) => {
         const transfer = new DataTransfer();

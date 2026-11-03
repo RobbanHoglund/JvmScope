@@ -38,6 +38,8 @@ import { renderSmartAnalysisThreadButtons, renderSmartAnalysisResources } from '
 import { groupRunnableClusterMembersByStack } from './tda/runnable-stack.js';
 import { filterThreads } from './tda/thread-filters.js';
 import { formatSnapshotTime } from './tda/time-quality.js';
+import { runtimeInfoMarkup } from './tda/runtime-info.js';
+import './tda/runtime-info.css';
 import { buildThreadDetailsViewModel, getThreadDetailsTabOrder } from './tda/thread-modal.js';
 import { bindThreadStackControls } from './tda/thread-stack-view.js';
 import { escapeAttr, escapeHtml } from './tda/ui-safety.js';
@@ -58,6 +60,7 @@ let selectedBlockingPatternKey = '';
 const UI = {
 
     dumpNavigator: document.getElementById('dumpNavigator'),
+    runtimeInfo: document.getElementById('runtimeInfo'),
     dumpCountLabel: document.getElementById('dumpCountLabel'),
     prevDumpBtn: document.getElementById('prevDumpBtn'),
     nextDumpBtn: document.getElementById('nextDumpBtn'),
@@ -1475,6 +1478,10 @@ function renderStats() {
         .filter((chain) => chain.stallCandidate).length;
 
     const selected = parsedDumps[selectedDumpIndex] || null;
+    if (UI.runtimeInfo) {
+        const markup = runtimeInfoMarkup(selected?.runtime);
+        UI.runtimeInfo.innerHTML = markup; UI.runtimeInfo.hidden = !markup;
+    }
     const selectedTime = selected ? formatSnapshotTime(selected) : null;
     const snapshotPrefix = selected
         ? `Snapshot ${selectedDumpIndex + 1}/${parsedDumps.length} • ${selectedTime.headline} • `
@@ -4624,6 +4631,7 @@ UI.clearBtn?.addEventListener('click', () => {
     resetRunnableClusterUiState();
     UI.fileName.textContent = 'No file loaded';
     UI.fileName.title = '';
+    if (UI.runtimeInfo) { UI.runtimeInfo.replaceChildren(); UI.runtimeInfo.hidden = true; }
 
     if (UI.fileInput) {
         UI.fileInput.value = '';
