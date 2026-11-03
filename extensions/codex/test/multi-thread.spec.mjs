@@ -37,12 +37,15 @@ test('five requested HTTP threads share an overview while each original stays in
     await expect(f.locator('.stack-group').first()).toContainText('4 threads');
     await expect(f.locator('.group-qualification')).toContainText('do not establish a shared request or lock');
     const before = host.calls.length;
+    await f.getByRole('checkbox', { name: 'Colors', exact: true }).uncheck();
     for (let i = 1; i <= 4; i++) {
         const member = f.getByRole('button', { name: `HttpClient-${i}-SelectorManager`, exact: true });
         await member.focus(); await page.keyboard.press('Enter');
         const card = f.locator('.thread-focus-card:visible');
         await expect(card.locator('h2')).toHaveText(`HttpClient-${i}-SelectorManager`);
         await expect(card.locator('.evidence')).toContainText(`<0x${i.toString(16).padStart(16, '0')}>`);
+        await expect(card.locator('.evidence')).toHaveAttribute('data-colored', 'false');
+        await expect(card.getByRole('checkbox', { name: 'Colors', exact: true })).not.toBeChecked();
         await expect(member).toHaveAttribute('aria-pressed', 'true');
     }
     await f.getByRole('button', { name: 'HttpClient-1-Worker-0', exact: true }).click();

@@ -13,6 +13,7 @@ import { compactReport } from './compact-report.mjs';
 import { createReportSurface } from './report-surface.mjs';
 import { createAssessmentCache } from './assessment-cache.mjs';
 import { clearToolError, showToolError } from './tool-errors.mjs';
+import { coloredEvidence } from './stack-colors.mjs';
 
 const app = document.getElementById('app'), root = document.createElement('div');
 root.className = 'analysis-content';
@@ -200,7 +201,7 @@ async function showEvidence(p, startLine) {
         if (epoch !== evidenceEpoch || !root.contains(container)) return;
         const data = response.structuredContent;
         if (!data?.lines || data.source?.sha256 !== source.sha256 || data.context?.snapshotIndex !== current().index || data.context?.sourceKey !== p.id) throw new Error('The host returned mismatched source evidence.');
-        container.replaceChildren(el('p', 'evidence-context muted', `${t('snapshot')} ${data.context.snapshotNumber} · ${source.name} · ${t('lines')} ${data.lines[0]?.line}–${data.lines.at(-1)?.line}`), el('p', 'muted', t('refreshed')), el('pre', 'evidence', data.lines.map(l => `${l.line}  ${l.text}`).join('\n')));
+        container.replaceChildren(el('p', 'evidence-context muted', `${t('snapshot')} ${data.context.snapshotNumber} · ${source.name} · ${t('lines')} ${data.lines[0]?.line}–${data.lines.at(-1)?.line}`), el('p', 'muted', t('refreshed')), coloredEvidence(data.lines, locale));
         if (endLine < p.evidence.endLine) container.append(button(t('readMore'), () => showEvidence(p, endLine + 1)));
     } catch (error) { if (epoch === evidenceEpoch && root.contains(container)) { container.replaceChildren(); showToolError(container, error, locale); } }
 }
@@ -261,7 +262,7 @@ async function comparisonEvidence(endpoint, content) {
     if (data.context?.snapshotIndex !== endpoint.snapshotIndex || data.context?.sourceKey !== endpoint.sourceKey || data.source?.sha256 !== endpoint.sha256)
         throw new Error('The host returned mismatched source evidence.');
     content.replaceChildren(el('p', 'evidence-context muted', `${t('snapshot')} ${data.context.snapshotNumber} · ${data.context.name} · ${t('lines')} ${data.lines[0]?.line}–${data.lines.at(-1)?.line}`),
-        el('pre', 'evidence', data.lines.map(l => `${l.line}  ${l.text}`).join('\n')));
+        coloredEvidence(data.lines, locale));
     if (data.nextLine) content.append(el('p', 'note', t('truncated')));
 }
 async function focusSnapshot(endpoint) {

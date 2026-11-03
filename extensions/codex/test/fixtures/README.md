@@ -50,3 +50,9 @@ through fresh MCP calls and real manual UI navigation. It checks the new focused
 report, the untouched earlier source view, natural stack height, text-only advice
 and the correct parent assessment after a backend restart. The replay does not
 repeat the model's knowledge searches, rerun a model, or operate Codex desktop.
+
+`stack-colors.txt` is a synthetic rendering regression, not a runtime capture.
+It combines module-qualified JDK frames, a known library, application and hidden
+lambda frames, monitor/parking/ownable locks and literal HTML-like text. The
+color tests preserve its exact physical lines while checking the application's
+category mapping, escaping, contrast and plain-text toggle.

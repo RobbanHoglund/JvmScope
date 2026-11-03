@@ -14,6 +14,7 @@ test('loaded stack lines use natural height by default and bounded scrolling is 
         const f = page.frameLocator('iframe'), source = f.locator('.thread-stack .evidence');
         await expect(source).toBeVisible();
         const original = await source.textContent();
+        await f.getByRole('checkbox', { name: 'Colors', exact: true }).uncheck();
         expect(await source.evaluate(n => n.scrollHeight - n.clientHeight)).toBeLessThanOrEqual(1);
         expect(await f.locator('body').evaluate(n => n.scrollWidth > n.clientWidth + 1)).toBe(false);
         const limit = f.getByRole('button', { name: 'Limit stack height', exact: true });
@@ -22,12 +23,17 @@ test('loaded stack lines use natural height by default and bounded scrolling is 
         await f.locator('.surface-back').click(); await f.locator('.open-analysis').click();
         expect(await source.evaluate(n => n.scrollHeight > n.clientHeight)).toBe(true);
         await f.getByRole('combobox', { name: 'Report language' }).selectOption('sv');
+        await expect(f.getByRole('checkbox', { name: 'Färger', exact: true })).not.toBeChecked();
         await expect(f.getByRole('button', { name: 'Utöka stacken', exact: true })).toHaveAttribute('aria-pressed', 'false');
         await f.getByRole('button', { name: 'Utöka stacken', exact: true }).click();
         expect(await source.evaluate(n => n.scrollHeight - n.clientHeight)).toBeLessThanOrEqual(1);
         await expect(source).toHaveText(original);
         await f.locator('.source-next').click();
         await expect(source).toContainText('Service.step79');
+        await expect(source).toHaveAttribute('data-colored', 'false');
+        await f.getByRole('checkbox', { name: 'Färger', exact: true }).check();
+        await expect(source).toHaveAttribute('data-colored', 'true');
+        await expect(source.locator('.is-other').last()).toContainText('Service.step79');
         expect(await source.evaluate(n => n.scrollHeight - n.clientHeight)).toBeLessThanOrEqual(1);
         await expect.poll(async () => {
             const body = await f.locator('body').evaluate(n => n.getBoundingClientRect().height);

@@ -131,6 +131,23 @@ main[data-surface=summary]{max-width:780px;padding:22px 24px;background:var(--pa
 .stack-controls{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .stack-controls button{font-size:12px;padding:6px 10px}
 .stack-controls button[aria-pressed=true]{background:var(--soft);border-color:var(--accent)}
+/* Same categories as the application, with a readable palette for each host theme. */
+:root{--stack-jvm:var(--muted);--stack-library:#694591;--stack-other:#146b5b;--stack-lock:#875c09;--stack-state:#694591;--stack-header:#285b99}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--stack-library:#c3b9e5;--stack-other:#8edbcc;--stack-lock:#e3c080;--stack-state:#d2b8f4;--stack-header:#9ac9f5}}
+:root[data-theme=dark]{--stack-library:#c3b9e5;--stack-other:#8edbcc;--stack-lock:#e3c080;--stack-state:#d2b8f4;--stack-header:#9ac9f5}
+.stack-color-toggle{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--muted);padding:4px 2px}
+.stack-color-toggle input{accent-color:var(--accent);margin:0;width:14px;height:14px}
+.stack-color-key{display:flex;flex-wrap:wrap;gap:5px 16px;font-size:11px;margin:6px 0 8px}
+.stack-color-key[hidden]{display:none}
+.stack-color-key span::before{content:'●';margin-right:5px}
+.colored-stack[data-colored=true] .is-jvm,.stack-color-key .is-jvm{color:var(--stack-jvm)}
+.colored-stack[data-colored=true] .is-library,.stack-color-key .is-library{color:var(--stack-library)}
+.colored-stack[data-colored=true] .is-other,.stack-color-key .is-other{color:var(--stack-other)}
+.colored-stack[data-colored=true] .is-lock,.stack-color-key .is-lock{color:var(--stack-lock)}
+.colored-stack[data-colored=true] .is-state{color:var(--stack-state)}
+.colored-stack[data-colored=true] :is(.is-header,.is-section){color:var(--stack-header)}
+.source-line-number{color:var(--muted)}
+@media(forced-colors:active){.colored-stack .thread-stack-line,.source-line-number,.stack-color-key span{color:CanvasText!important}}
 .thread-focus .header>div{min-width:0;overflow-wrap:anywhere}.thread-focus .header h1{font-size:22px}
 .thread-focus-card[hidden]{display:none!important}
 .stack-selection{margin:16px 0}.stack-selection>h2{font-size:16px}

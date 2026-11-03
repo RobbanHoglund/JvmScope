@@ -182,6 +182,8 @@ test('every real snapshot exposes the selected participant source, including aft
         const name = await f.locator('.node-name').first().textContent();
         await expect(f.locator('.evidence')).toContainText(`"${name}"`);
         await expect(f.locator('.evidence')).toContainText('waiting to lock');
+        await expect(f.locator('.evidence')).toHaveAttribute('data-colored', 'true');
+        await expect(f.getByRole('checkbox', { name: 'Colors', exact: true })).toBeChecked();
         await expect(f.locator('.node').first()).toBeFocused();
         const evidence = await f.locator('.evidence').textContent();
         await page.setViewportSize({ width: 735 - Number(snapshot) * 100, height: 1000 });
@@ -264,6 +266,8 @@ test('comparison plots CPU and bounded allocation and reads both exact interval 
     await churn.locator('.metric-cell').nth(1).focus(); await page.keyboard.press('Enter');
     await f.getByRole('button', { name: 'Baseline · Snapshot 2', exact: true }).click();
     await expect(f.locator('.comparison-source .evidence')).toContainText('1397  "scenario-allocation-churn-1"');
+    await expect(f.locator('.comparison-source .evidence')).toHaveAttribute('data-colored', 'true');
+    await expect(f.locator('.comparison-source').getByRole('checkbox', { name: 'Colors', exact: true })).toBeChecked();
     await expect(f.locator('.comparison-source .evidence-context')).toContainText('Snapshot 2');
     await f.getByRole('button', { name: 'Endpoint · Snapshot 3', exact: true }).click();
     await expect(f.locator('.comparison-source .evidence')).toContainText('2239  "scenario-allocation-churn-1"');
