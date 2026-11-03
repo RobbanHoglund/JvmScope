@@ -39,6 +39,8 @@ export function threadAiFacts({ dump, snapshotIndex, threadLimit = 12, stackLimi
         scope: 'Counts describe this complete snapshot; thread and stack details are excerpts. Deadlock edges are in deadlockCycles; CPU details for flagged threads are in measuredCpuThreads. Table filters do not restrict this summary.',
         snapshot: snapshotIndex + 1, source: clip(dump.sourceLabel, 240), processId: dump.processId ?? null,
         jvm: clip(dump.headerLine), timestamp: clip(dump.timestampRaw), timeQuality: clip(dump.timestampQualityReason),
+        runtime: dump.runtime ? Object.fromEntries(Object.entries(dump.runtime).map(([key, value]) =>
+            [key, typeof value === 'string' ? clip(value) : value])) : null,
         collectionScope: dump.collectionScope, parsingStatus: dump.parsingStatus, diagnostics: dump.diagnostics,
         threadCount: threads.length, states, cpuCoverage: cpuCoverage(threads, snapshotIndex).detail,
         reportedDeadlockCycles: (dump.deadlocks || []).length,

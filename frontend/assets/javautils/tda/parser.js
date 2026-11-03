@@ -9,6 +9,7 @@ import { allocationCounterBounds } from './allocation-metrics.js';
 import { MODERN_THREAD_HEADER, parseModernLockLine, readJsonThreadDump, resolveJsonCarriers } from './dump-to-file.js';
 import { assignThreadSourceKeys } from './identity.js';
 import { parseSnapshotTimestamp } from './time-quality.js';
+import { classicRuntimeInfo, fileRuntimeInfo } from './runtime-info.js';
 
 const DUMP_TIMESTAMP_LINE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
 const FULL_THREAD_DUMP_HEADER_LINE = /^Full thread dump /;
@@ -632,7 +633,7 @@ export function splitThreadDumpSnapshots(text) {
     const json = readJsonThreadDump(normalized);
     if (json) return [{ index: 0, timestamp: json.time || null, ...snapshotTimestampFields(json.time),
         boundaryStrategy: 'json', headerLine: null, ...snapshotSource(normalized),
-        processId: json.processId ?? null, collectionScope: 'all-threads' }];
+        processId: json.processId ?? null, collectionScope: 'all-threads', runtime: fileRuntimeInfo(json.runtimeVersion, 'hotspot-file-json') }];
     const lines = normalized.split('\n');
     const boundaries = [];
 
@@ -641,7 +642,7 @@ export function splitThreadDumpSnapshots(text) {
             && /^\d+(?:[.\-+]|$)/.test(lines[headerIndex + 2] || '')) {
             boundaries.push({ headerIndex, startIndex: headerIndex,
                 timestamp: parseTimestampLine(lines[headerIndex + 1]), boundaryStrategy: 'file-text',
-                processId: lines[headerIndex].trim(), collectionScope: 'all-threads' });
+                processId: lines[headerIndex].trim(), collectionScope: 'all-threads', runtime: fileRuntimeInfo(lines[headerIndex + 2], 'hotspot-file-text') });
             continue;
         }
         if (!FULL_THREAD_DUMP_HEADER_LINE.test(lines[headerIndex])) continue;
@@ -670,6 +671,7 @@ export function splitThreadDumpSnapshots(text) {
             boundaryStrategy: timestamp ? 'timestamp-header' : 'header',
             processId: pidPrefix,
             collectionScope: 'platform-threads',
+            runtime: classicRuntimeInfo(lines, headerIndex),
         });
     }
 
@@ -681,6 +683,7 @@ export function splitThreadDumpSnapshots(text) {
             ...missingTimestamp,
             boundaryStrategy: 'single-fallback',
             headerLine: null,
+            runtime: null,
             ...snapshotSource(normalized),
         }];
     }
@@ -707,6 +710,7 @@ export function splitThreadDumpSnapshots(text) {
             boundaryStrategy: boundary.boundaryStrategy,
             processId: boundary.processId ?? null,
             collectionScope: boundary.collectionScope,
+            runtime: boundary.runtime,
             headerLine: lines[boundary.headerIndex].trim(),
             ...snapshotSource(lines.slice(startIndex, endIndex).join('\n'), startIndex + 1),
         };
