@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0 — Captured Java Runtime Information
+
+- Read the JDK-8364106 runtime header and show the captured JDK version, full runtime build, runtime/vendor text and printed debug level for the selected snapshot.
+- Keep Java and VM versions distinct, preserve older and dump-to-file formats, and include the metadata in AI evidence.
+- Add real Java 26/27 sample sequences, snapshot/source regressions and metadata/theme integration checks.
+
 ## 2.1.2 — Clearer Deadlock Counts
 
 - Distinguish JVM-reported deadlock cycles and participants from severity finding categories in the shared thread analysis. Repeated snapshots remain separate observations.
