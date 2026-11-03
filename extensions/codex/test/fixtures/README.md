@@ -34,3 +34,19 @@ rerun in CI and not the Codex desktop host. New independent model trials remain
 necessary when changing the skill or response instructions. The test-only
 `agent-session.mjs` and `agent-request.mjs` helpers can record those trials
 against the packaged server without changing the installed plugin.
+
+`thread-followup-en.json` and `thread-followup-sv.json` record fresh independent
+model conversations on 2026-11-03 using the updated skill for the 0.6.2 candidate.
+The trial bundle still carried the 0.6.1 manifest; the fixture records that value
+and the exact skill SHA-256. Each run analyzed the public synthetic capture,
+verified source and presented a snapshot-wide overview. A separate manual
+`inspect_thread_details` call then opened main's source. The user asked what its
+HTTP wait establishes without asking to show the stack again; both models
+presented a new focused assessment. They also consulted bundled guidance. A final
+procedural question about additional evidence produced text only, with no tools.
+
+`thread-followup-flow.spec.mjs` replays those actual AI assessments and replies
+through fresh MCP calls and real manual UI navigation. It checks the new focused
+report, the untouched earlier source view, natural stack height, text-only advice
+and the correct parent assessment after a backend restart. The replay does not
+repeat the model's knowledge searches, rerun a model, or operate Codex desktop.

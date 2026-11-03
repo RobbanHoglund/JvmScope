@@ -101,6 +101,10 @@ function receive(result) {
         if (['en', 'sv'].includes(result._meta.jvmscopeLanguage)) locale = result._meta.jvmscopeLanguage;
         document.documentElement.lang = locale; focusedThreads = focused; evidenceEpoch++;
         bridge.setReportContext(result._meta.jvmscopeReportContext || focused.reportContext);
+        // A newly opened focused report also needs the parent assessment when
+        // navigating back, even if the backend cache is subsequently lost.
+        assessments.resolve(result._meta.jvmscopeSnapshotConclusion, focused.reportId,
+            { view: 'snapshot', snapshots: [focused.snapshotIndex] });
         aiConclusion = assessments.resolve(incomingConclusion, focused.reportId, assessmentScope());
         clearTimeout(dataDeadline); render(); return;
     }

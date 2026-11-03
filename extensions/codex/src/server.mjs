@@ -98,7 +98,7 @@ function createServer() {
     }] }));
     server.registerTool('render_thread_report', {
         title: 'Show JvmScope thread report',
-        description: 'Present the cached analysis with your AI conclusion at the TOP: supply conclusion.summary and conclusion.nextCheck based on analysis and already verified evidence. Do not leave the actual conclusion only in text after the widget. Use reportId; set view=comparison for CPU/allocation follow-ups. Reuse cached results for follow-ups and pagination; no parsing, file reads or writes. Match snapshotIndex/sourceKey to cited evidence. On hosts without MCP Apps UI, give a concise text answer.',
+        description: 'Present the cached analysis with your AI conclusion at the TOP: supply conclusion.summary and conclusion.nextCheck based on analysis and already verified evidence. Do not leave the actual conclusion only in text after the widget. Use reportId; set view=comparison for CPU/allocation follow-ups. Reuse cached results for follow-ups and pagination; no parsing, file reads or writes. Match snapshotIndex to cited evidence. Omit sourceKey for a general overview even when you verified one named thread; use thread details for a diagnostic follow-up. On hosts without MCP Apps UI, give a concise text answer.',
         inputSchema: z.object({ reportId: z.string().uuid(), reportContext, language, conclusion, view: z.enum(['snapshot', 'comparison']).default('snapshot'),
             snapshotIndex: z.number().int().min(0).optional().describe('Zero-based global snapshot index to focus, matching the cited evidence.'),
             offset: z.number().int().min(0).optional(), limit: z.number().int().min(1).max(50).optional(),
@@ -128,6 +128,7 @@ function createServer() {
         try {
             await access.ensure(args.reportId, args.reportContext, args, ctx.mcpReq.signal);
             const data = await threadDetails(reports, jobs, args, ctx.mcpReq.signal);
+            const snapshotConclusion = reports.conclusion(args.reportId, { view: 'snapshot', snapshots: [args.snapshotIndex] }, language);
             return reports.conclusion(args.reportId, { view: 'threads', snapshots: [args.snapshotIndex], sourceKeys: [...args.sourceKeys].sort() }, language, conclusion, aiConclusion => {
                 const chatAnswer = present ? conversationAnswer(aiConclusion) : null;
                 const structuredContent = { ...data, conclusion: aiConclusion, ...(present ? { chatAnswer } : {}),
@@ -136,6 +137,7 @@ function createServer() {
                 if (Buffer.byteLength(JSON.stringify(structuredContent), 'utf8') > 512 * 1024) throw new Error('Focused report exceeds the response limit. Select fewer threads.');
                 return { ...result(structuredContent), ...(present ? { content: [{ type: 'text', text: `${chatAnswer.text}\n\n${chatInstruction} The selected-thread report contains this assessment and the verified stacks. Do not render a general report again.` }] } : {}),
                     _meta: { jvmscopeThreadDetails: data, jvmscopeLanguage: language, jvmscopeConclusion: aiConclusion,
+                        jvmscopeSnapshotConclusion: snapshotConclusion,
                         jvmscopeReportContext: reports.get(args.reportId).reportContext } };
             });
         } catch (error) { return toolFailure(error); }
@@ -147,7 +149,7 @@ function createServer() {
     }, (args, ctx) => focusedResult(args, ctx, false));
     server.registerTool('render_thread_details', {
         title: 'Show selected Java threads',
-        description: 'Present the selected threads WITH your required evidence-based AI conclusion at the top. First inspect_thread_details if you need stack evidence to answer the user’s question. Supply conclusion.summary and conclusion.nextCheck in the conversation language; an empty assessment is rejected. Rechecks the selected capture hash before showing it, without parsing. Do not render a full overview for a stack follow-up.',
+        description: 'Present the selected threads WITH your required evidence-based AI conclusion at the top. First inspect_thread_details if you need stack evidence to answer the user’s question. Supply conclusion.summary and conclusion.nextCheck in the conversation language; an empty assessment is rejected. Rechecks the selected capture hash before showing it, without parsing. Use this also for diagnostic questions about a named thread even when its source was already verified and the user did not ask to show the stack again. Reuse verified evidence, but present the new focused assessment. Do not render a full overview for a stack follow-up.',
         inputSchema: z.object({ ...threadSelection, conclusion: conclusion.unwrap() }).strict(), annotations,
         _meta: { ui: { resourceUri: reportUri }, 'openai/outputTemplate': reportUri },
     }, (args, ctx) => focusedResult(args, ctx, true));
