@@ -57,6 +57,7 @@ test('stack reading controls preserve exact evidence and remain usable in a narr
     await expect(wrap).toHaveAttribute('aria-pressed', 'false');
     expect(await source.evaluate(n => getComputedStyle(n).whiteSpace)).toBe('pre');
     expect(await f.locator('body').evaluate(n => n.scrollWidth > n.clientWidth + 1)).toBe(false);
+    await f.getByRole('button', { name: 'Limit stack height', exact: true }).click();
     const height = f.getByRole('button', { name: 'Expand stack', exact: true });
     await height.focus(); await page.keyboard.press('Enter');
     await expect(f.getByRole('button', { name: 'Limit stack height', exact: true })).toHaveAttribute('aria-pressed', 'true');

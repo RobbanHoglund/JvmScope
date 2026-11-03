@@ -15,9 +15,12 @@ export function stackSource({ thread, locale, canRead, onNext, state = {} }) {
     const paint = () => { pre.textContent = thread.lines.map(l => `${l.line}  ${l.text}`).join('\n'); };
     const wrap = el('button', '', t('wrap')), height = el('button', '', t('expand'));
     wrap.type = height.type = 'button';
-    pre.classList.toggle('source-nowrap', state.wrap === false); pre.classList.toggle('source-expanded', !!state.expanded);
-    wrap.setAttribute('aria-pressed', String(state.wrap !== false)); height.setAttribute('aria-pressed', String(!!state.expanded));
-    height.textContent = t(state.expanded ? 'limit' : 'expand');
+    // Natural height avoids a nested vertical scrollbar for the loaded source.
+    // A bounded reader remains available as an explicit, persistent choice.
+    const expanded = state.expanded !== false;
+    pre.classList.toggle('source-nowrap', state.wrap === false); pre.classList.toggle('source-expanded', expanded);
+    wrap.setAttribute('aria-pressed', String(state.wrap !== false)); height.setAttribute('aria-pressed', String(expanded));
+    height.textContent = t(expanded ? 'limit' : 'expand');
     wrap.addEventListener('click', () => {
         const unwrapped = pre.classList.toggle('source-nowrap'); state.wrap = !unwrapped; wrap.setAttribute('aria-pressed', String(!unwrapped));
     });
