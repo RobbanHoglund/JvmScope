@@ -444,4 +444,3 @@ function renderContent() {
     root.append(footer());
 }
 void bridge.initialize();
-

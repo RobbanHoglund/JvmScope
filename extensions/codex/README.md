@@ -72,7 +72,9 @@ Verified documentation (2026-10-23):
 
 Validation: all 78 Node/package/protocol tests and 80 sandboxed browser journeys pass. New visual regressions cover both themes at 1060/390 px, minimum 4.5:1 source text contrast, literal HTML-like capture content, keyboard/locale/theme/compact transitions and system high contrast. Extended journeys verify coloring in graph/comparison evidence, source paging and selecting multiple preverified originals without more tool calls. Light/dark renders were inspected. No new model or Codex desktop run is claimed for this presentation-only change.
 
-Desktop acceptance: import **jvmscope-codex-plugin-0.7.0.zip** and start a new local conversation. Inspect a stack and confirm Colors is checked with the four-category key visible. Toggle it, switch threads and language, and try wrap/height controls and source paging. The capture text must remain the same. New reports default to colors; old conversation messages retain their old widget.
+Maintainer screenshots on 2026-11-03 confirm the imported 0.7.0 desktop report in Swedish: the overview has its AI assessment at the top, and a manually opened main-thread source view has colors enabled. These screenshots do not establish the subsequent diagnostic-follow-up behavior or every host display mode. Automated browser checks continue to use a harness.
+
+Remaining desktop acceptance: import **jvmscope-codex-plugin-0.7.0.zip** and start a new local conversation. Inspect a stack and confirm Colors is checked with the four-category key visible. Toggle it, switch threads and language, and try wrap/height controls and source paging. The capture text must remain the same. New reports default to colors; old conversation messages retain their old widget.
 
 ## 0.6.2 thread explanations after manual inspection
 

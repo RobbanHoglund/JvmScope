@@ -68,4 +68,3 @@ test('source paging and both comparison endpoints survive subsequent MCP process
         await expect(f.locator('.thread-focus-card h2')).toHaveText('scenario-allocation-churn-1');
     } finally { await extra.close(); }
 });
-
