@@ -55,7 +55,7 @@ export function analyzeThreads(captures, { offset = 0, limit = 10, includeCached
                 withStackFrames: d.threads.filter(t => t.stackFrames > 0).length,
                 headerOnlyVmThreads: d.diagnostics.headerOnlyVmThreads || 0 },
             index: d.index, sourcePath: source.path, sourceStartLine: d.sourceStartLine, deadlocks,
-            collectionScope: d.collectionScope, parsingStatus: d.parsingStatus, diagnostics: d.diagnostics,
+            collectionScope: d.collectionScope, parsingStatus: d.parsingStatus, diagnostics: d.diagnostics, runtime: d.runtime || null,
             snapshotTime: d.snapshotTime, threadCount: d.threads.length, states: tally(d.threads.map(t => t.javaState || 'UNKNOWN')),
             changes: d.threadChanges ? { baselineCount: d.threadChanges.baselineCount, newCount: d.threadChanges.newCount,
                 endedCount: d.threadChanges.endedCount, changedCount: d.threadChanges.changedCount, endedStatus: d.threadChanges.endedStatus } : null,

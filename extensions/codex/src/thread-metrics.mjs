@@ -55,7 +55,7 @@ export function comparisonSummary(snapshot) {
     const allocation = [...rows].sort((a, b) => allocationCeiling(b) - allocationCeiling(a)).slice(0, 8);
     const selected = m.baselineSnapshotIndex == null ? [] : [...new Map([...cpu, ...allocation].map(r => [r.sourceKey, r])).values()];
     const endpoint = e => e ? { snapshotIndex: e.snapshotIndex, snapshotNumber: e.snapshotNumber, sourceKey: e.sourceKey, range: e.range } : null;
-    return { index: snapshot.index, measurements: { baselineSnapshotIndex: m.baselineSnapshotIndex,
+    return { index: snapshot.index, runtime: snapshot.runtime || null, measurements: { baselineSnapshotIndex: m.baselineSnapshotIndex,
         endSnapshotIndex: m.endSnapshotIndex, thresholds: m.thresholds, hotCpuThreads: m.hotCpuThreads, hotAllocationThreads: m.hotAllocationThreads,
         threads: { total: m.threads.total, shown: selected.length, omitted: m.threads.total - selected.length,
             selection: 'Union of top 8 CPU and allocation rows; the interactive report retains more rows.',

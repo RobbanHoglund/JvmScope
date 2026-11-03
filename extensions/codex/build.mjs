@@ -33,11 +33,14 @@ const samples = [
     ['threads', 'confirmed-deadlock.txt', 'frontend/assets/javautils/samples/tda-deadlock.txt', 'Synthetic regression: JVM-reported deadlock'],
     ['threads', 'repeated-contention.txt', 'frontend/test/tda/fixtures/repeated-contention.txt', 'Synthetic regression: two-snapshot contention'],
     ['threads', 'carrier-classic.txt', 'frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt', 'Runtime capture: see repository ga-regressions provenance'],
+    ...[26, 27].map(major => ['threads', `java${major}-runtime-version.txt`, `testdata/thread-dumps/java${major}-runtime-version.txt`, 'Runtime capture: see runtime-version-provenance.json and thread-runtime-version-README.md']),
     ['tls', 'java25-client-auth.txt', 'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt', 'Runtime capture: Java 25 SunJSSE required-client-auth failure'],
     ...['java8-parallel', 'java27-g1', 'java27-zgc', 'java27-serial', 'java27-parallel', 'java17-shenandoah', 'java8-cms'].map(name =>
         ['gc', `${name}.log`, `testdata/gc-logs/${name}.log`, 'Runtime capture: see bundled GC README and provenance']),
 ];
 for (const [, file, source] of samples) await cp(path.join(repo, source), path.join(plugin, 'samples', file));
+for (const [source, target] of [['README.md', 'thread-runtime-version-README.md'], ['runtime-version-provenance.json', 'runtime-version-provenance.json']])
+    await cp(path.join(repo, 'testdata/thread-dumps', source), path.join(plugin, 'samples', target));
 for (const name of ['README.md', 'java8-provenance.json', 'java17-provenance.json', 'java27-provenance.json'])
     await cp(path.join(repo, 'testdata/gc-logs', name), path.join(plugin, 'samples', name));
 await writeFile(path.join(plugin, 'samples/index.json'), JSON.stringify(samples.map(([analyzer, file, source, provenance]) => ({ analyzer, file, source, provenance })), null, 2) + '\n');
