@@ -123,6 +123,33 @@ const dropFixtures = {
     tls: 'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt',
     gc: 'testdata/gc-logs/java27-g1.log',
 };
+for(const [major,build,vendor] of [[26,'26.0.2.1+1','Temurin-26.0.2.1+1'],[27,'27+35-FR','Corretto-27.0.0.35.1']]) {
+    test(`TDA Browse examples opens the packaged Java ${major} runtime-header sequence offline`,async({host})=>{
+        const {page}=host;
+        await host.open('/jvmscope/tda.html');
+        await page.getByRole('button',{name:'Browse examples',exact:true}).click();
+        await page.locator('#exampleVersion').selectOption(`Java ${major}`);
+        await page.locator('#exampleSearch').fill('runtime version');
+        const card=page.locator(`[data-example-id="tda-java${major}-runtime"]`);
+        await expect(card).toBeVisible();
+        await expect(page.locator('.example-card:visible')).toHaveCount(1);
+        const fetched=page.waitForResponse(response=>response.url().includes(`java${major}-runtime-version`)&&response.url().endsWith('.txt'));
+        await card.click();
+        const response=await fetched;
+        expect(response.status()).toBe(200);
+        expect(await response.text()).toBe(await capture(`testdata/thread-dumps/java${major}-runtime-version.txt`));
+        await expect(page.locator('#dumpSelect option')).toHaveCount(3);
+        const info=page.locator('#runtimeInfo');
+        await expect(info.locator('summary')).toHaveText(`Java runtime · ${build}`);
+        await info.locator('summary').click();
+        await expect(info.locator('dl')).toContainText(vendor);
+        await page.locator('#dumpSelect').selectOption('2');
+        await expect(info.locator('summary')).toHaveText(`Java runtime · ${build}`);
+        await expect(page.locator('#inputFeedbackModal')).not.toBeVisible();
+        await expect(page.locator('#errorState')).toBeHidden();
+    });
+}
+
 test('TDA runtime metadata follows real snapshots and native VS Code themes', async ({host}) => {
     const {page}=host;
     await host.open('/jvmscope/tda.html');

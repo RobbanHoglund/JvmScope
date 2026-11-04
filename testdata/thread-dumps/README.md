@@ -14,6 +14,12 @@ directories and SHA-256 checksums are recorded in
 `runtime-version-provenance.json`; the source directories retain the original
 runtime/capture evidence. No headers, thread names, counters or locks were edited.
 
+In the web application and VS Code, open **Browse examples** and choose
+**Java 26 · Runtime version · 3 snapshots** or
+**Java 27 · Runtime version · 3 snapshots**. The Java-version filter and a search
+for `runtime version` find them directly. Both files are bundled for offline use
+in VS Code and are also available in Codex's bundled sample list.
+
 Load either file in the web application, VS Code or Codex. Expand **Java runtime**
 in a snapshot's report to see the recorded JDK version, full runtime build,
 runtime/vendor text and VM version separately. Select another snapshot to check

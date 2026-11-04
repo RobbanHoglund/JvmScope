@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.1 — Runtime Header Examples
+
+- Add the real Java 26 Temurin and Java 27 Corretto three-snapshot captures to Browse examples, with Java-version filtering and runtime-header descriptions.
+- Bundle both files for offline use and test the delivered examples through the web and native VS Code pickers.
+
 ## 2.2.0 — Captured Java Runtime Information
 
 - Read the JDK-8364106 runtime header and show the captured JDK version, full runtime build, runtime/vendor text and printed debug level for the selected snapshot.
