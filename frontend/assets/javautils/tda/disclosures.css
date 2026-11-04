@@ -1,0 +1,123 @@
+/* Shared TDA disclosure controls. Keep native details/summary semantics and
+   theme tokens so the entire row works with a pointer and keyboard. */
+@media screen {
+    .tda-page .tda-snapshot-inspectors {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        gap: 8px;
+        margin-top: 10px;
+        overflow-wrap: anywhere;
+    }
+    .tda-page .tda-snapshot-inspectors:has(> #runtimeInfo[hidden]) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .tda-page .tda-snapshot-inspectors > div { min-width: 0; }
+    .tda-page .tda-snapshot-inspectors :is(.runtime-info, .tda-snapshot-details) { margin: 0; }
+
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary,
+    body.tda-page .app-section-summary {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        box-sizing: border-box;
+        min-height: 42px;
+        padding: 9px 12px;
+        border: 1px solid var(--tda-panel-border);
+        border-radius: 8px;
+        background: var(--tda-surface-raised);
+        color: var(--text-strong);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.45;
+        list-style: none;
+        cursor: pointer;
+        overflow-wrap: anywhere;
+    }
+    body.tda-page .app-section-summary { flex-wrap: wrap; }
+    body.tda-page .app-section-summary-inner { flex: 1 1 180px; min-width: 0; }
+    body.tda-page .app-section-summary-title { font-size: 14px; line-height: 1.4; }
+    body.tda-page .app-section-summary-subtitle { font-size: 12px; color: var(--text-muted); }
+
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary::-webkit-details-marker,
+    body.tda-page .app-section-summary::-webkit-details-marker { display: none; }
+
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary::before,
+    body.tda-page .app-section-summary::before {
+        content: '';
+        position: static;
+        flex: 0 0 18px;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: currentColor;
+        color: var(--host-link, #93c5fd);
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m9 5 7 7-7 7' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 18px 18px no-repeat;
+        opacity: 1;
+        transform: rotate(0deg);
+        transition: transform 140ms ease;
+    }
+    body.tda-page :is(.tda-snapshot-details, .runtime-info)[open] > summary::before,
+    body.tda-page details[open] > .app-section-summary::before { transform: rotate(90deg); }
+
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary::after,
+    body.tda-page .app-section-summary::after {
+        content: 'Show details';
+        position: static;
+        flex: 0 0 auto;
+        margin-left: auto;
+        padding: 3px 7px;
+        border: 1px solid var(--tda-panel-border);
+        border-radius: 5px;
+        background: var(--tda-surface-inset);
+        color: var(--text-normal);
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.4;
+        white-space: nowrap;
+        transform: none;
+    }
+    body.tda-page :is(.tda-snapshot-details, .runtime-info)[open] > summary::after,
+    body.tda-page details[open] > .app-section-summary::after { content: 'Hide details'; }
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary:hover::after,
+    body.tda-page .app-section-summary:hover::after {
+        background: var(--tda-surface-inset);
+        border-color: var(--host-link, #93c5fd);
+        color: var(--text-normal);
+    }
+
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary:hover,
+    body.tda-page .app-section-summary:hover {
+        background: var(--vscode-list-hoverBackground, var(--tda-surface-inset));
+        border-color: var(--host-link, #93c5fd);
+    }
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary:focus-visible,
+    body.tda-page .app-section-summary:focus-visible {
+        outline: 2px solid var(--vscode-focusBorder, #60a5fa);
+        outline-offset: 2px;
+    }
+    .tda-page .tda-snapshot-details > p { margin: 10px 12px; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+    .tda-page .tda-snapshot-details { font-weight: 400; }
+    .tda-page .tda-snapshot-details[open] > summary,
+    .tda-page .runtime-info[open] > summary { border-color: var(--host-link, #93c5fd); }
+}
+
+@media screen and (max-width: 800px) {
+    .tda-page .tda-snapshot-inspectors { grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: 4px; }
+    .tda-page .tda-snapshot-inspectors ~ #sessionInputStatus { margin-block: 4px; }
+    .tda-page .tda-section-nav { margin-top: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary::before,
+    body.tda-page .app-section-summary::before { transition: none; }
+}
+@media (forced-colors: active) {
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary,
+    body.tda-page .app-section-summary { background: Canvas; color: CanvasText; border-color: ButtonText; }
+    body.tda-page :is(.tda-snapshot-details, .runtime-info) > summary::before,
+    body.tda-page .app-section-summary::before { color: CanvasText; forced-color-adjust: none; }
+}
