@@ -36,6 +36,13 @@ test('runtime details fit light/dark and narrow panels with keyboard access', as
         await f.locator('.runtime-info summary').focus(); await page.keyboard.press('Enter');
         await expect(f.locator('.runtime-info dl')).toBeVisible();
         expect(await f.locator('body').evaluate(n => n.scrollWidth > n.clientWidth + 1)).toBe(false);
+        // Expanding metadata sends an asynchronous host-size notification. The
+        // outer frame must fit the body before Chromium captures the full page.
+        await expect.poll(async () => {
+            const frame = await page.locator('iframe').boundingBox();
+            const bodyHeight = await f.locator('body').evaluate(n => n.getBoundingClientRect().height);
+            return bodyHeight > 0 && frame != null && Math.abs(frame.height - bodyHeight) < 2;
+        }).toBe(true);
         await page.screenshot({ path: fileURLToPath(new URL(`../../../build/codex-previews/runtime-${theme}-${width}.png`, import.meta.url)), fullPage: true });
     }
 });
