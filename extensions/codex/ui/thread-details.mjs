@@ -4,6 +4,7 @@ import { stackSelection } from './stack-selection.mjs';
 import { formatRate } from './comparison.mjs';
 import { aiConclusionView } from './ai-conclusion.mjs';
 import { clearToolError, showToolError } from './tool-errors.mjs';
+import { runtimeInfoView } from './runtime-info.mjs';
 const words = {
     en: { title: 'Selected threads', language: 'Report language', snapshot: 'Snapshot', selected: 'selected threads', selectedSingle: 'selected thread',
         overview: 'All threads', compare: 'Compare snapshots', allocation: 'Allocation', state: 'State', unknown: 'Unavailable',
@@ -59,6 +60,7 @@ export function threadDetailsView({ data, locale, version, conclusion, canRead, 
         b.disabled = !canRead; nav.append(b);
     }
     const contextRow = el('div', 'focus-context-row'); contextRow.append(context, nav); view.append(contextRow);
+    if (data.runtime) view.append(runtimeInfoView(data.runtime, locale));
     const sharedRatesNote = data.threads.every(thread => !hasRate(thread) && !thread.baseline) ? 'noInterval'
         : data.threads.every(thread => !hasRate(thread) && thread.baseline) ? 'noSelectionCounters' : null;
     if (sharedRatesNote) view.append(el('p', 'muted thread-metrics-note', t(sharedRatesNote)));

@@ -118,11 +118,111 @@ const test=base.extend({
     },
 });
 
+test('TDA disclosure rows stay readable and keyboard operable across native themes and narrow editors', async ({host}) => {
+    test.setTimeout(60_000);
+    const {page}=host;
+    await page.setViewportSize({width:1366,height:1000});
+    await host.open('/jvmscope/tda.html');
+    await page.getByRole('button',{name:'Browse examples',exact:true}).click();
+    await page.locator('[data-example-id="tda-java26-runtime"]').click();
+    await expect(page.locator('#dumpSelect option')).toHaveCount(3);
+    const selectors=['.tda-snapshot-details > summary','#runtimeInfo summary','.smart-analysis-details > summary','.deadlock-panel-details > summary'];
+    for(const theme of Object.keys(themePalettes)) {
+        await applyTheme(page,theme);
+        for(const selector of selectors) {
+            const summary=page.locator(selector);
+            await expectReadable(summary);
+            expect((await summary.boundingBox()).height).toBeGreaterThanOrEqual(40);
+            const wasOpen=await summary.evaluate(n=>n.parentElement.open);
+            const arrow=await summary.evaluate(n=>getComputedStyle(n,'::before').transform);
+            await summary.focus();
+            await page.keyboard.press('Enter');
+            await expect.poll(()=>summary.evaluate(n=>n.parentElement.open)).toBe(!wasOpen);
+            expect(await summary.evaluate(n=>getComputedStyle(n,'::after').content)).toContain(wasOpen?'Show details':'Hide details');
+            await expect.poll(()=>summary.evaluate(n=>getComputedStyle(n,'::before').transform)).not.toBe(arrow);
+            await page.keyboard.press('Space');
+            await expect.poll(()=>summary.evaluate(n=>n.parentElement.open)).toBe(wasOpen);
+        }
+        await page.locator('h1').scrollIntoViewIfNeeded();
+        await page.screenshot({path:resolve(root,`build/disclosure-previews/${theme}-1366.png`)});
+    }
+    for(const theme of ['vscode-light','vscode-dark']) {
+        await applyTheme(page,theme);
+        await page.setViewportSize({width:600,height:1000});
+        for(const selector of selectors) {
+            const summary=page.locator(selector),box=await summary.boundingBox();
+            expect(box.x).toBeGreaterThanOrEqual(0);
+            expect(box.x+box.width).toBeLessThanOrEqual(600);
+            await summary.hover();
+            await expectReadable(summary);
+        }
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(600);
+        const context=await page.locator('.tda-snapshot-details > summary').boundingBox();
+        const runtime=await page.locator('#runtimeInfo summary').boundingBox();
+        expect(runtime.y).toBeGreaterThanOrEqual(context.y+context.height);
+        await page.locator('h1').scrollIntoViewIfNeeded();
+        await page.screenshot({path:resolve(root,`build/disclosure-previews/${theme}-600.png`)});
+    }
+    await page.locator('#clearBtn').click();
+    const longName=`capture-${'x'.repeat(120)}.txt`;
+    await host.load([{name:longName,text:await capture('frontend/test/tda/fixtures/runtime/jdk26-thread-print.txt')}]);
+    await page.locator('.tda-snapshot-details > summary').click();
+    await expect(page.locator('.tda-snapshot-details > p').first()).toContainText(longName);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(600);
+});
+
 const dropFixtures = {
     tda: 'frontend/test/tda/fixtures/ga-regressions/carrier-classic.txt',
     tls: 'frontend/test/tls/fixtures/runtime/jdk25-tlsv1.3-required-client-auth-client.txt',
     gc: 'testdata/gc-logs/java27-g1.log',
 };
+for(const [major,build,vendor] of [[26,'26.0.2.1+1','Temurin-26.0.2.1+1'],[27,'27+35-FR','Corretto-27.0.0.35.1']]) {
+    test(`TDA Browse examples opens the packaged Java ${major} runtime-header sequence offline`,async({host})=>{
+        const {page}=host;
+        await host.open('/jvmscope/tda.html');
+        await page.getByRole('button',{name:'Browse examples',exact:true}).click();
+        await page.locator('#exampleVersion').selectOption(`Java ${major}`);
+        await page.locator('#exampleSearch').fill('runtime version');
+        const card=page.locator(`[data-example-id="tda-java${major}-runtime"]`);
+        await expect(card).toBeVisible();
+        await expect(page.locator('.example-card:visible')).toHaveCount(1);
+        const fetched=page.waitForResponse(response=>response.url().includes(`java${major}-runtime-version`)&&response.url().endsWith('.txt'));
+        await card.click();
+        const response=await fetched;
+        expect(response.status()).toBe(200);
+        expect(await response.text()).toBe(await capture(`testdata/thread-dumps/java${major}-runtime-version.txt`));
+        await expect(page.locator('#dumpSelect option')).toHaveCount(3);
+        const info=page.locator('#runtimeInfo');
+        await expect(info.locator('summary')).toHaveText(`Java runtime · ${build}`);
+        await info.locator('summary').click();
+        await expect(info.locator('dl')).toContainText(vendor);
+        await page.locator('#dumpSelect').selectOption('2');
+        await expect(info.locator('summary')).toHaveText(`Java runtime · ${build}`);
+        await expect(page.locator('#inputFeedbackModal')).not.toBeVisible();
+        await expect(page.locator('#errorState')).toBeHidden();
+    });
+}
+
+test('TDA runtime metadata follows real snapshots and native VS Code themes', async ({host}) => {
+    const {page}=host;
+    await host.open('/jvmscope/tda.html');
+    const sources=await Promise.all([26,27].map(async major=>({name:`java${major}-runtime.txt`,
+        text:await capture(`frontend/test/tda/fixtures/runtime/jdk${major}-thread-print.txt`)})));
+    await host.load(sources);
+    const info=page.locator('#runtimeInfo');
+    await expect(info.locator('summary')).toHaveText('Java runtime · 26.0.2.1+1-7');
+    await host.navigation('select','snapshot:1');
+    await expect(info.locator('summary')).toHaveText('Java runtime · 27+35-2325');
+    await info.locator('summary').click();
+    for(const name of Object.keys(themePalettes)){
+        await applyTheme(page,name);
+        await expect(info.locator('dl')).toContainText('27.0+35');
+        expect(await page.locator('body').evaluate(n=>n.scrollWidth>n.clientWidth+1)).toBe(false);
+    }
+    await page.locator('#analyzeAiBtn').click();
+    await expect(page.locator('#aiPrompt')).toHaveValue(/27\+35-2325/);
+    await expect(page.locator('#aiPrompt')).not.toHaveValue(/26\.0\.2\.1\+1-7/);
+});
 async function dispatchCaptureDrop(page, { text, name = 'dropped.log', data = {}, selector = 'header' }) {
     return page.evaluate(({ text, name, data, selector }) => {
         const transfer = new DataTransfer();

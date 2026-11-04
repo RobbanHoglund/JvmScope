@@ -228,13 +228,18 @@ test('a rejected oversized presentation must not replace the cached assessment',
 
 test('all bundled samples are present and analyzed through the real MCP transport', async () => {
     const { samples } = await call('list_samples');
-    assert.equal(samples.length, 11);
+    assert.equal(samples.length, 13);
     for (const s of samples) {
         assert.ok(path.isAbsolute(s.path));
         const tool = { threads: 'analyze_thread_dumps', tls: 'analyze_tls_log', gc: 'analyze_gc_log' }[s.analyzer];
         const result = await call(tool, s.analyzer === 'threads' ? { paths: [s.path] } : { path: s.path });
         assert.ok(['success', 'partial'].includes(result.status), s.file);
         assert.match(result.sources[0].sha256, /^[a-f0-9]{64}$/);
+        const runtimeBuild = { 'java26-runtime-version.txt': '26.0.2.1+1', 'java27-runtime-version.txt': '27+35-FR' }[s.file];
+        if (runtimeBuild) {
+            assert.equal(result.snapshotCount, 3);
+            assert.ok(result.snapshots.items.every(snapshot => snapshot.runtime.runtimeVersion === runtimeBuild));
+        }
     }
 });
 

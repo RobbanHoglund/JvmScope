@@ -46,6 +46,7 @@ function threadReportResult(report, language, { view = 'snapshot', snapshotIndex
             conclusion: aiConclusion, chatAnswer,
             findingCountScope: report.findingCountScope, deadlockObservations: report.deadlockObservations,
             selectedSnapshotIndex: selected?.index, cache: report.cache, reportContext: report.reportContext,
+            selectedRuntime: view === 'snapshot' ? selected?.runtime || null : null,
             selectedThreadObservation: overviewThread(selected, sourceKey),
             selectedThreadSummary: selected ? { ...selected.threadSummary, states: selected.states,
                 parsingStatus: selected.parsingStatus, diagnostics: selected.diagnostics,

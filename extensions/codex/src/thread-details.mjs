@@ -25,7 +25,7 @@ export async function threadDetails(reports, jobs, { reportId, snapshotIndex, so
             citationLabel: `Snapshot ${snapshotIndex + 1} · ${context.threadName}${context.range ? ` · lines ${context.range.startLine}–${context.range.endLine}` : ''}` };
     });
     return { analyzer: 'threads', view: 'threads', reportId, reportContext: report.reportContext, snapshotIndex, snapshotNumber: snapshotIndex + 1,
-        snapshotCount: report.snapshotCount, source: evidence.source, threads,
+        snapshotCount: report.snapshotCount, source: evidence.source, threads, runtime: snapshot.runtime || null,
         snapshotDeadlockCycles: snapshot.analysis.deadlockSummary?.cycles || 0,
         warnings: report.warnings || [], qualifications: snapshot.measurements.qualifications,
         timing: { ...evidence.timing, toolWorkMs: Math.round(performance.now() - started), scope: 'Plugin work only; excludes model reasoning and host rendering.' } };

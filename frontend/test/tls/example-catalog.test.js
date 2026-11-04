@@ -15,6 +15,7 @@ const tdaCounts = {
     'tda-idle': [3], 'tda-lifecycle': [2, 2, 2], 'tda-partial': [2, 1],
     'tda-java25-classic': [3], 'tda-java25-plain': [4], 'tda-java26-json': [6],
     'tda-java27-json': [6], 'tda-java27-virtual': [2],
+    'tda-java26-runtime': [30, 30, 30], 'tda-java27-runtime': [28, 28, 28],
 };
 
 test('public examples have unique identities, controlled provenance, version choices and bounded files', () => {
@@ -84,6 +85,25 @@ for (const sample of THREAD_EXAMPLES) test(`${sample.title} produces its declare
     }
     if (sample.id === 'tda-partial') assert.equal(result.parsedDumps.at(-1).threadChanges.endedCount, null);
     if (sample.id === 'tda-java27-virtual') assert.ok(result.parsedDumps[0].threads.some(thread => thread.carrierSourceKey));
+});
+
+test('runtime-header examples retain the exact provenance bytes and per-snapshot build information', () => {
+    const provenance = JSON.parse(readFileSync(new URL('../../../testdata/thread-dumps/runtime-version-provenance.json', import.meta.url), 'utf8'));
+    for (const [major, build, vendor] of [[26, '26.0.2.1+1', 'Temurin-26.0.2.1+1'], [27, '27+35-FR', 'Corretto-27.0.0.35.1']]) {
+        const sample = THREAD_EXAMPLES.find(item => item.id === `tda-java${major}-runtime`);
+        assert.equal(sample.filename, `java${major}-runtime-version.txt`);
+        const record = provenance.samples.find(item => item.file === sample.filename);
+        const bytes = readFileSync(new URL(sample.url));
+        assert.equal(createHash('sha256').update(bytes).digest('hex'), record.sha256);
+        assert.deepEqual(bytes, readFileSync(new URL(`../../../${record.source}`, import.meta.url)));
+        const { parsedDumps } = analyzeThreadDumpData(text(sample));
+        assert.equal(parsedDumps.length, 3);
+        for (const dump of parsedDumps) {
+            assert.equal(dump.runtime.runtimeVersion, build);
+            assert.ok(dump.runtime.runtimeDescription.includes(vendor));
+            assert.ok(dump.runtime.jdkHeader.startsWith('JDK version:'));
+        }
+    }
 });
 
 test('real library captures retain their source program, JDK provenance and exact captured bytes', () => {

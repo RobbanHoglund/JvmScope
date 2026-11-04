@@ -14,6 +14,7 @@ import { createReportSurface } from './report-surface.mjs';
 import { createAssessmentCache } from './assessment-cache.mjs';
 import { clearToolError, showToolError } from './tool-errors.mjs';
 import { coloredEvidence } from './stack-colors.mjs';
+import { runtimeInfoView } from './runtime-info.mjs';
 
 const app = document.getElementById('app'), root = document.createElement('div');
 root.className = 'analysis-content';
@@ -407,6 +408,7 @@ function renderContent() {
     context.append(el('strong', '', `${t('context')} ${snapshot.index + 1} / ${report.snapshotCount}`));
     const filename = el('p', 'filename', src?.name || snapshot.sourcePath); filename.title = snapshot.sourcePath;
     context.append(filename); root.append(context);
+    if (snapshot.runtime) root.append(runtimeInfoView(snapshot.runtime, locale));
     const cycles = items(snapshot.deadlocks), panel = el('section', 'panel');
     if (cycles.length) {
         const cycle = cycles[cycleIndex] || cycles[0];
