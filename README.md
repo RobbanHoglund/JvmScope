@@ -8,6 +8,9 @@ JvmScope helps you follow a handshake, investigate a blocked thread, and compare
 what changed between JVM snapshots. It links diagnostic observations to the
 original evidence instead of treating a missing diagnostic as proof of health.
 
+[Open JvmScope](https://robbanhoglund.github.io/JvmScope/) ·
+[Java Thread Dump Analyzer: features and walkthroughs](https://robbanhoglund.github.io/JvmScope/java-thread-dump-analyzer.html)
+
 | Thread Dump Analyzer (TDA) | TLS Log Analyzer |
 | --- | --- |
 | Add files and pasted dumps to one session | Inspect Java JSSE client or server traces |
@@ -93,7 +96,7 @@ and your own hosting/access logs remain outside JvmScope's control.
 The UI targets **desktop and laptop**. Large captures are limited by browser
 memory and result-transfer costs. TLS tables display up to 200 interactions per page;
 filters and timelines use the complete capture. The verified formats are
-HotSpot thread dumps and SunJSSE debug traces. OpenJ9 javacores, JFR, GC logs,
+HotSpot thread dumps and SunJSSE debug traces. OpenJ9 javacores, JFR recordings,
 Netty/OpenSSL traces and arbitrarily merged processes are outside the current scope.
 
 ## Java input compatibility

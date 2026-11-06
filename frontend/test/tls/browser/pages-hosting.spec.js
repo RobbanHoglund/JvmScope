@@ -94,7 +94,7 @@ test('Pages graph export produces a PNG locally', async ({ page, appUrl }, info)
 
 test('Pages delivers every manifest file byte-exactly via GET and HEAD and rejects server-only paths', async ({ page, appUrl }) => {
     const manifest=JSON.parse(readFileSync(resolve(pagesOutput,'manifest.json')));
-    const types={html:'text/html',js:'text/javascript',css:'text/css',json:'application/json',txt:'text/plain',log:'text/plain',md:'text/plain',svg:'image/svg+xml'};
+    const types={xml:'application/xml',html:'text/html',js:'text/javascript',css:'text/css',json:'application/json',txt:'text/plain',log:'text/plain',md:'text/plain',svg:'image/svg+xml'};
     for (const file of [...manifest.files,{path:'manifest.json'}]) {
         const response=await page.request.get(appUrl+'/'+file.path);
         expect(response.status(),file.path).toBe(200);
@@ -112,5 +112,43 @@ test('Pages delivers every manifest file byte-exactly via GET and HEAD and rejec
     }
     for (const path of ['/health','/utils.html','/javautils/tda.html','/jvmscope/TDA.html','/not-a-page','/assets/private.txt']) {
         expect((await page.request.get(appUrl+path)).status(),path).toBe(404);
+    }
+});
+
+test('Pages discovery is readable without JavaScript on desktop and mobile, with working guide and analyzer links', async ({ browser, appUrl }, info) => {
+    for (const [name, viewport, colorScheme] of [
+        ['desktop-dark', {width:1440,height:1000}, 'dark'],
+        ['mobile-light', {width:390,height:844}, 'light'],
+    ]) {
+        const context = await browser.newContext({javaScriptEnabled:false,viewport,colorScheme});
+        try {
+            const page = await context.newPage();
+            const failures = [];
+            page.on('requestfailed', request => failures.push(request.url()));
+            await page.goto(appUrl+'/');
+            await page.getByRole('link', {name:'Java thread dump analyzer: features, supported inputs and walkthroughs →',exact:true}).click();
+            await expect(page.getByRole('heading', {level:1})).toContainText('Java thread dump analysis.');
+            await expect(page.getByRole('heading', {name:'Supported inputs and practical limits',exact:true})).toBeVisible();
+            await page.getByText('Does the browser analyzer upload my thread dump?',{exact:true}).click();
+            await expect(page.getByText('No. Parsing happens locally in browser workers.',{exact:false})).toBeVisible();
+            // The skip link must be reachable and visible on keyboard focus.
+            await page.goto(appUrl+'/java-thread-dump-analyzer.html');
+            await page.keyboard.press('Tab');
+            await expect(page.getByRole('link',{name:'Skip to content',exact:true})).toBeFocused();
+            await expect(page.getByRole('link',{name:'Skip to content',exact:true})).toBeVisible();
+            await page.screenshot({path:info.outputPath(`discovery-${name}.png`),fullPage:true});
+            expect(await page.locator('html').evaluate(el=>el.scrollWidth<=window.innerWidth)).toBe(true);
+            await page.getByRole('link',{name:'Read the walkthrough',exact:true}).click();
+            await expect(page.getByRole('heading',{level:1})).toHaveText('How to analyze a Java thread dump');
+            await page.getByRole('link',{name:'JvmScope features, supported inputs and privacy',exact:true}).click();
+            await page.getByRole('link',{name:'Walk through a Java deadlock investigation →',exact:true}).click();
+            await expect(page.getByRole('heading',{level:1})).toHaveText('Follow a Java deadlock back to its locks');
+            expect(await page.locator('html').evaluate(el=>el.scrollWidth<=window.innerWidth)).toBe(true);
+            await page.getByRole('link',{name:'About JvmScope',exact:true}).click();
+            expect(failures).toEqual([]);
+            // The analyzer needs JavaScript; only its destination is checked in this no-JS context.
+            await page.getByRole('link',{name:'Open Thread Dump Analyzer →',exact:true}).click();
+            await expect(page).toHaveURL(appUrl+'/jvmscope/tda.html');
+        } finally { await context.close(); }
     }
 });
