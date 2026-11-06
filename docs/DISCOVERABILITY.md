@@ -26,10 +26,17 @@ endorsements or download counts.
 A project-level `https://robbanhoglund.github.io/JvmScope/robots.txt` **cannot**
 control crawler access. The effective file is
 `https://robbanhoglund.github.io/robots.txt`, owned by the user-site deployment,
-not this project. This change does not deploy or modify that site and does not
-claim that its current rules or search indexes have been verified.
+not this project. A live check on **2026-11-06** returned **HTTP 404** for that
+root URL. No robots.txt exclusion rules were served in that response. A missing
+robots.txt is not itself a crawl blocker: RFC 9309 section 2.3.1.3 permits
+crawlers to access resources when robots.txt is unavailable (including HTTP 404).
+No root-site creation or robots.txt deployment is required for this change.
+This check does not establish search indexing, ranking or the absence of other
+access restrictions. Recheck the live root response if hosting policy changes.
 
-If a root robots file exists, inspect its rules before modifying it. To permit
+Reference: [Robots Exclusion Protocol, RFC 9309](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.3.1.3).
+
+If a root robots file is added later, inspect all its rules before modifying it. To explicitly permit
 OpenAI search access to this project, an appropriate root-level rule is:
 
 ```text
@@ -40,6 +47,8 @@ Sitemap: https://robbanhoglund.github.io/JvmScope/sitemap.xml
 ```
 
 Integrate this with existing rules; do not overwrite unrelated site policy.
+A specific user-agent group does not inherit a wildcard group’s restrictions;
+preserve any applicable exclusions in the specific group too.
 Allowing OAI-SearchBot is separate from allowing GPTBot/model training.
 See [OpenAI crawler documentation](https://developers.openai.com/api/docs/bots).
 Search inclusion, recommendations and ranking are not guaranteed.
