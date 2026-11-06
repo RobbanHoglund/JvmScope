@@ -11,6 +11,8 @@ import { GC_EXAMPLES } from '../frontend/assets/javautils/gc/examples.js';
 import { ARTICLES } from '../frontend/assets/javautils/knowledge/data.js';
 import { projectLegalFiles, verifyProjectLegal } from './project-legal.mjs';
 
+import { discoveryPaths, renderDiscoveryPages, renderSitemap } from './discovery-pages.mjs';
+
 const commit = 'a'.repeat(40), base = '/JvmScope/';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 function temporary(t) {
@@ -42,6 +44,8 @@ function payload(t) {
 }
 function complete(dir) {
     put(dir, 'index.html', renderPagesIndex(base, commit));
+    for (const [path, html] of Object.entries(renderDiscoveryPages(base))) put(dir, path, html);
+    put(dir, 'sitemap.xml', renderSitemap(base, ['', ...discoveryPaths]));
     put(dir, '.nojekyll', '');
     put(dir, 'THIRD-PARTY-NOTICES.md', 'fixture notices');
     put(dir, 'build-info.json', JSON.stringify({ base, revision:commit, target:'pages' }));
@@ -185,7 +189,7 @@ test('Strict Pages delivery exercises real HTTP with exact case, MIME, HEAD and 
     assert.equal(root.status,200);
     assert.match(root.headers.get('content-type'),/^text\/html/);
     assert.match(await root.text(),/Thread Dump Analyzer/);
-    for (const path of ['jvmscope/tda.html','jvmscope/tls.html','jvmscope/gc.html','knowledge/index.html',...ARTICLES.map(a=>`knowledge/${a.id}.html`),'assets/js/d3.min.js','manifest.json']) {
+    for (const path of ['jvmscope/tda.html','jvmscope/tls.html','jvmscope/gc.html','knowledge/index.html',...discoveryPaths,'sitemap.xml',...ARTICLES.map(a=>`knowledge/${a.id}.html`),'assets/js/d3.min.js','manifest.json']) {
         const response = await fetch(url+path+'?cache=1');
         assert.equal(response.status,200);
         assert.equal(hash(Buffer.from(await response.arrayBuffer())),hash(readFileSync(resolve(dir,path))));
@@ -202,4 +206,30 @@ test('Strict Pages delivery exercises real HTTP with exact case, MIME, HEAD and 
     }
     assert.equal((await fetch(server.url+'/jvmscope/tda.html',{method:'POST',body:'private'})).status,405);
     assert.equal((await fetch(url.replace('/JvmScope/','/jvmscope/')+'jvmscope/tda.html')).status,404);
+});
+
+test('Discovery metadata and sitemap use the selected Pages base and only public content URLs', () => {
+    for (const prefix of ['/', base, '/nested/JvmScope/']) {
+        const pages = renderDiscoveryPages(prefix);
+        assert.deepEqual(Object.keys(pages), discoveryPaths);
+        for (const [path, html] of Object.entries(pages)) {
+            assert.ok(html.includes(`rel="canonical" href="https://robbanhoglund.github.io${prefix}${path}"`));
+            assert.match(html, /<html lang="en">/);
+            assert.equal((html.match(/<h1>/g)||[]).length, 1);
+            assert.doesNotMatch(html, /<meta[^>]+noindex|<script[^>]+src=/i);
+        }
+        const product = pages[discoveryPaths[0]];
+        const data = JSON.parse(product.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+        assert.equal(data['@type'], 'SoftwareApplication');
+        assert.equal(data.url, `https://robbanhoglund.github.io${prefix}${discoveryPaths[0]}`);
+        assert.equal(data.isAccessibleForFree, true);
+        const sitemap = renderSitemap(prefix, ['', ...discoveryPaths]);
+        const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(m=>m[1]);
+        assert.deepEqual(locations, ['', ...discoveryPaths].map(path=>`https://robbanhoglund.github.io${prefix}${path}`));
+        assert.equal(new Set(locations).size, locations.length);
+        assert.doesNotMatch(sitemap, /manifest|build-info|assets|testdata/);
+        const home = renderPagesIndex(prefix, commit);
+        assert.match(home, /<title>[^<]*GC Log Analyzers/);
+        assert.ok(home.includes(`href="${prefix}${discoveryPaths[0]}"`));
+    }
 });

@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { lstatSync, readdirSync, readFileSync, realpathSync, writeFileSync, existsSync } from 'node:fs';
+import { lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { THREAD_EXAMPLES, TLS_EXAMPLES } from '../frontend/assets/javautils/example-catalog.js';
 import { GC_EXAMPLES } from '../frontend/assets/javautils/gc/examples.js';
 import { ARTICLES } from '../frontend/assets/javautils/knowledge/data.js';
+import { discoveryPaths, discoveryHead, renderDiscoveryPages, renderSitemap } from './discovery-pages.mjs';
 import { projectLegalAssets, verifyProjectLegal } from './project-legal.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -44,7 +45,7 @@ export function scanPagesArtifact(directory, { completed = false } = {}) {
         'assets/js/d3.min.js', 'assets/img/java-thread-mark.svg', 'assets/img/java-tls-mark.svg', 'assets/img/java-gc-mark.svg',
         'assets/legal/d3-LICENSE.txt', 'assets/legal/Apache-2.0.txt', 'assets/legal/markdown-it-NOTICES.txt',
         ...Object.keys(projectLegalAssets),
-        ...(completed ? ['index.html', '.nojekyll', 'THIRD-PARTY-NOTICES.md', 'build-info.json', 'manifest.json'] : []),
+        ...(completed ? [...discoveryPaths, 'sitemap.xml', 'index.html', '.nojekyll', 'THIRD-PARTY-NOTICES.md', 'build-info.json', 'manifest.json'] : []),
     ]);
     const approved = approvedExamples();
     const foundExamples = new Set();
@@ -83,8 +84,8 @@ export function renderPagesIndex(base, revision) {
     return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="description" content="Investigate Java thread dumps and TLS logs locally in your browser.">
-<title>JvmScope · Java thread dumps and TLS logs</title>
+${discoveryHead(base, '', 'JvmScope — Java Thread Dump, TLS and GC Log Analyzers', 'Analyze Java thread dumps, SunJSSE TLS logs and HotSpot GC logs locally. Explore deadlocks, compare snapshots and inspect GC timelines.')}
+<title>JvmScope — Java Thread Dump, TLS and GC Log Analyzers</title>
 <link rel="icon" type="image/svg+xml" href="${base}assets/img/java-thread-mark.svg">
 <style>
 :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#0e1116;color:#e2edf7}
@@ -95,6 +96,7 @@ p{color:#a6bacf;line-height:1.7;max-width:760px}.tools{display:grid;grid-templat
 .tool{color:inherit;text-decoration:none;padding:28px;border:1px solid #394551;border-radius:14px;background:#151a22}
 .tool:hover{background:#1b2531;border-color:#88bff1}.tool:focus-visible{outline:3px solid #72e0d1;outline-offset:4px}
 .tool img{width:48px;height:48px}.tool h2{font-size:22px;margin:20px 0 10px}.tool p{margin:0 0 22px}.open{color:#88bff1;font-weight:650}
+.learn{margin:0 0 24px} .learn a{color:#88bff1}.learn a:focus-visible{outline:3px solid #72e0d1;outline-offset:4px}
 .tls .open{color:#72e0d1}.privacy{color:#72e0d1;font-size:16px;margin-top:22px}.privacy span{display:block;color:#a6bacf;font-size:14px;margin-top:4px}
 .knowledge{display:block;padding:22px 28px;border:1px solid #394551;border-radius:14px;background:#151a22;color:inherit;text-decoration:none}.knowledge:visited{color:inherit}.knowledge:hover{background:#1b2531;border-color:#88bff1}.knowledge:focus-visible{outline:3px solid #72e0d1;outline-offset:4px}.knowledge h2{font-size:20px;margin:0 0 8px}.knowledge p{margin:0 0 14px}.knowledge .open{font-size:14px}
 footer{display:flex;justify-content:space-between;border-top:1px solid #293440;margin-top:48px;padding-top:20px;font-size:13px;color:#91a4b8}
@@ -107,8 +109,8 @@ footer a{color:#b5cfe8}footer a:focus-visible{outline:2px solid #72e0d1;outline-
 <a class="tool" href="${base}jvmscope/tda.html"><img src="${base}assets/img/java-thread-mark.svg" alt=""><h2>Thread Dump Analyzer</h2><p>Compare snapshots, inspect stacks and explore thread dependencies, deadlocks and measured CPU activity.</p><span class="open">Open thread analyzer →</span></a>
 <a class="tool tls" href="${base}jvmscope/tls.html"><img src="${base}assets/img/java-tls-mark.svg" alt=""><h2>TLS Log Analyzer</h2><p>Follow handshake messages, inspect certificates and narrow a capture by time, host or diagnostic evidence.</p><span class="open">Open TLS analyzer →</span></a>
 <a class="tool gc" href="${base}jvmscope/gc.html"><img src="${base}assets/img/java-gc-mark.svg" alt=""><h2>Garbage Collection Analyzer</h2><p>Explore heap, pauses and concurrent activity on a timeline with source-backed pressure annotations.</p><span class="open">Open GC analyzer →</span></a>
-</section><section aria-label="Java Knowledge Base"><a class="knowledge" href="${base}knowledge/index.html"><h2>Java Knowledge Base</h2><p>Choose diagnostic evidence, check version-dependent capabilities and compare potential upgrade changes.</p><span class="open">Explore eight Java knowledge articles →</span></a></section>
-<footer><span>Version ${version}</span><a href="${base}assets/legal/JvmScope-LICENSE.txt">Apache-2.0 license</a><a href="${base}THIRD-PARTY-NOTICES.md">Third-party notices</a></footer>
+</section><p class="learn"><a href="${base}java-thread-dump-analyzer.html">Java thread dump analyzer: features, supported inputs and walkthroughs →</a></p><section aria-label="Java Knowledge Base"><a class="knowledge" href="${base}knowledge/index.html"><h2>Java Knowledge Base</h2><p>Choose diagnostic evidence, check version-dependent capabilities and compare potential upgrade changes.</p><span class="open">Explore eight Java knowledge articles →</span></a></section>
+<footer><span>Version ${version}</span><a href="https://github.com/RobbanHoglund/JvmScope">Source code</a><a href="${base}assets/legal/JvmScope-LICENSE.txt">Apache-2.0 license</a><a href="${base}THIRD-PARTY-NOTICES.md">Third-party notices</a></footer>
 </main></body></html>\n`;
 }
 
@@ -127,11 +129,16 @@ export async function buildPages(base = defaultPagesBase) {
     const files = scanPagesArtifact(pagesOutput).filter(file => file.path !== 'index.html');
     const commit = revision();
     writeFileSync(resolve(pagesOutput, 'index.html'), renderPagesIndex(base, commit));
+    for (const [path, html] of Object.entries(renderDiscoveryPages(base))) {
+        mkdirSync(dirname(resolve(pagesOutput, path)), { recursive: true });
+        writeFileSync(resolve(pagesOutput, path), html);
+    }
+    writeFileSync(resolve(pagesOutput, 'sitemap.xml'), renderSitemap(base, ['', ...discoveryPaths, 'knowledge/index.html', ...ARTICLES.map(a => `knowledge/${a.id}.html`)]));
     writeFileSync(resolve(pagesOutput, '.nojekyll'), '');
     writeFileSync(resolve(pagesOutput, 'THIRD-PARTY-NOTICES.md'), readFileSync(resolve(root, 'THIRD-PARTY-NOTICES.md')));
     writeFileSync(resolve(pagesOutput, 'build-info.json'), JSON.stringify({ revision: commit, base, target: 'pages' }, null, 2)+'\n');
     // A manifest describes payload files; excluding itself avoids a circular hash.
-    for (const path of ['index.html', '.nojekyll', 'THIRD-PARTY-NOTICES.md', 'build-info.json']) {
+    for (const path of ['index.html', ...discoveryPaths, 'sitemap.xml', '.nojekyll', 'THIRD-PARTY-NOTICES.md', 'build-info.json']) {
         const bytes = readFileSync(resolve(pagesOutput, path));
         files.push({ path, bytes: bytes.length, sha256: sha256(bytes) });
     }
@@ -150,7 +157,7 @@ export function verifyPagesArtifact(directory = pagesOutput) {
         || info.base !== manifest.base || info.target !== 'pages') throw new Error('Pages build metadata does not match.');
     const payload = files.filter(file => file.path !== 'manifest.json').sort(byPath);
     if (JSON.stringify(payload) !== JSON.stringify(manifest.files)) throw new Error('Pages manifest does not match the payload.');
-    for (const name of ['index.html', 'jvmscope/tda.html', 'jvmscope/tls.html', 'jvmscope/gc.html', 'knowledge/index.html', ...ARTICLES.map(a => `knowledge/${a.id}.html`)]) {
+    for (const name of ['index.html', ...discoveryPaths, 'jvmscope/tda.html', 'jvmscope/tls.html', 'jvmscope/gc.html', 'knowledge/index.html', ...ARTICLES.map(a => `knowledge/${a.id}.html`)]) {
         const html = readFileSync(resolve(directory, name), 'utf8');
         for (const match of html.matchAll(/(?:href|src)\s*=\s*(['"])(.*?)\1/g)) {
             const url = match[2];
