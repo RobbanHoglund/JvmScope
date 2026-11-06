@@ -115,11 +115,13 @@ test('Pages delivers every manifest file byte-exactly via GET and HEAD and rejec
     }
 });
 
-test('Pages discovery is readable without JavaScript on desktop and mobile, with working guide and analyzer links', async ({ browser, appUrl }, info) => {
-    for (const [name, viewport, colorScheme] of [
+for (const [name, viewport, colorScheme] of [
         ['desktop-dark', {width:1440,height:1000}, 'dark'],
         ['mobile-light', {width:390,height:844}, 'light'],
+        ['narrow-dark', {width:320,height:700}, 'dark'],
+        ['narrow-light', {width:320,height:700}, 'light'],
     ]) {
+    test(`Pages discovery is readable without JavaScript with working guides and keyboard navigation (${name})`, async ({ browser, appUrl }, info) => {
         const context = await browser.newContext({javaScriptEnabled:false,viewport,colorScheme});
         try {
             const page = await context.newPage();
@@ -136,10 +138,15 @@ test('Pages discovery is readable without JavaScript on desktop and mobile, with
             await page.keyboard.press('Tab');
             await expect(page.getByRole('link',{name:'Skip to content',exact:true})).toBeFocused();
             await expect(page.getByRole('link',{name:'Skip to content',exact:true})).toBeVisible();
+            await page.keyboard.press('Enter');
+            await expect(page.locator('#content')).toBeFocused();
+            await page.keyboard.press('Tab');
+            await expect(page.getByRole('link',{name:'Open Thread Dump Analyzer →',exact:true})).toBeFocused();
             await page.screenshot({path:info.outputPath(`discovery-${name}.png`),fullPage:true});
             expect(await page.locator('html').evaluate(el=>el.scrollWidth<=window.innerWidth)).toBe(true);
             await page.getByRole('link',{name:'Read the walkthrough',exact:true}).click();
             await expect(page.getByRole('heading',{level:1})).toHaveText('How to analyze a Java thread dump');
+            expect(await page.locator('html').evaluate(el=>el.scrollWidth<=window.innerWidth)).toBe(true);
             await page.getByRole('link',{name:'JvmScope features, supported inputs and privacy',exact:true}).click();
             await page.getByRole('link',{name:'Walk through a Java deadlock investigation →',exact:true}).click();
             await expect(page.getByRole('heading',{level:1})).toHaveText('Follow a Java deadlock back to its locks');
@@ -150,5 +157,5 @@ test('Pages discovery is readable without JavaScript on desktop and mobile, with
             await page.getByRole('link',{name:'Open Thread Dump Analyzer →',exact:true}).click();
             await expect(page).toHaveURL(appUrl+'/jvmscope/tda.html');
         } finally { await context.close(); }
-    }
-});
+    });
+}
