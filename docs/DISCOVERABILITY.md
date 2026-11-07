@@ -97,4 +97,7 @@ and in memory; moving between tools does not preserve their loaded captures.
 loaded samples, a thread stack, knowledge navigation and all product pages. It
 also checks explicit overrides against the opposite system theme, reload, live
 system changes, storage denial and static content at 320, 390 and 768 pixels.
+A 400-thread capture-and-clear case guards against global knowledge-style
+selectors slowing analyzer updates. Knowledge styling uses the Pages-only
+`data-site-page` attribute instead of a document-wide descendant search.
 Analyzer investigation views remain intended for desktop/laptop screens.

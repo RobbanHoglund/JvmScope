@@ -246,6 +246,8 @@ test('Website presentation is restricted to Pages and never injected into packag
     const plugin=toolNavigation({pages:true}); plugin.configResolved({base:'/JvmScope/'});
     const html=plugin.transformIndexHtml.handler('<head></head><body></body>',{filename:'jvmscope/gc.html'});
     assert.match(html, /jvmscope.website.theme/);
+    assert.match(html, /data-site-page="gc"/);
+    assert.doesNotMatch(html, /body:has\(#knowledgeRoot\)/);
     assert.match(html, /href="\/JvmScope\/jvmscope\/gc.html" aria-current="page"/);
     assert.doesNotMatch(html, /vscode-entry|tool-navigation.css/);
 });

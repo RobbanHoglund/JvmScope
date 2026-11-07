@@ -69,7 +69,7 @@ export function toolNavigation({ slim = false, vscode = false, pages = false } =
         const icon = /<link\b[^>]*\brel=["']icon["']/i.test(html) ? ''
           : '<link rel="icon" type="image/svg+xml" href="/assets/javautils/java-thread-mark.svg" />\n';
         return html.replace('</head>', `${icon}${pages ? websiteHead() : ''}${vscode ? '<script type="module" src="/assets/javautils/host/vscode-entry.js"></script>' : pages ? '' : '<link rel="stylesheet" href="/assets/tool-navigation.css" />'}\n</head>`)
-          .replace(/(<body\b[^>]*)(>)/, `$1${vscode ? ` data-jvmscope-page="${active}"` : ''}$2\n${navigation}`);
+          .replace(/(<body\b[^>]*)(>)/, `$1${vscode ? ` data-jvmscope-page="${active}"` : pages ? ` data-site-page="${active}"` : ''}$2\n${navigation}`);
       },
     },
   };

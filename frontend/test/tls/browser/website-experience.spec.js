@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures.js';
+import { blockingDump } from '../../tda/blocking-fixture.js';
 
 const bg = {light:'rgb(246, 248, 251)',dark:'rgb(14, 17, 22)'};
 async function palette(page, theme) {
@@ -84,4 +85,21 @@ test('Pages theme still works when preference storage is unavailable',async({bro
     const context=await browser.newContext({colorScheme:'light'});await context.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked');}});});
     const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(appUrl+'/');await palette(page,'light');await page.getByLabel('Website theme').selectOption('dark');await palette(page,'dark');expect(errors).toEqual([]);await context.close();
+});
+
+// Scope knowledge styles with a page attribute. A body:has(#knowledgeRoot)
+// ancestor selector made each large analyzer update repeatedly scan the tree.
+test('Pages website stays responsive after a 400-thread capture in either theme',async({browser,appUrl})=>{
+    const context=await browser.newContext({colorScheme:'light'});const page=await context.newPage();
+    const entries=Array.from({length:400},(_,i)=>({id:i+1,held:[`0x${(i+1).toString(16)}`],...(i?{wait:`0x${i.toString(16)}`}:{})}));
+    for(const theme of ['light','dark']) {
+        await page.goto(appUrl+'/jvmscope/tda.html');
+        await page.getByLabel('Website theme').selectOption(theme);
+        await page.locator('#fileInput').setInputFiles({name:'large-chain.txt',mimeType:'text/plain',buffer:Buffer.from(blockingDump(0,entries))});
+        await expect(page.locator('#rowCount')).toContainText('400 threads');
+        await page.locator('#clearBtn').click();
+        await expect(page.locator('#analyzerStart')).toBeVisible();
+        await expect(page.locator('#fileName')).toHaveText('No file loaded');
+    }
+    await context.close();
 });
