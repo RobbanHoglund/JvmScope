@@ -4,7 +4,9 @@ import { blockingDump } from '../../tda/blocking-fixture.js';
 const bg = {light:'rgb(246, 248, 251)',dark:'rgb(14, 17, 22)'};
 async function palette(page, theme) {
     await expect(page.locator('html')).toHaveAttribute('data-site-theme',theme);
-    expect(await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe(bg[theme]);
+    for (const surface of ['html','body']) {
+        expect(await page.locator(surface).evaluate(el=>getComputedStyle(el).backgroundColor),surface).toBe(bg[theme]);
+    }
 }
 for (const theme of ['light','dark']) {
     test(`Pages website journey keeps ${theme} across home, tools and documentation`, async ({browser,appUrl},info) => {

@@ -2,6 +2,7 @@
    Legacy analyzer rules are scoped here because those components predate tokens. */
 :root {
   color-scheme: light !important;
+  background:var(--site-bg) !important;
   --site-bg:#f6f8fb !important; --site-panel:#ffffff !important; --site-raised:#eaf0f7 !important;
   --site-fg:#19293b !important; --site-muted:#4e6278 !important; --site-border:#bac8d8 !important;
   --site-link:#175991 !important; --site-accent:#007d6c !important;
@@ -13,10 +14,10 @@
     --tls-surface:var(--site-panel) !important; --tls-raised:var(--site-raised) !important; --tls-inset:var(--site-bg) !important; --tls-border:var(--site-border) !important; --tls-accent:var(--site-accent) !important;
     --analyzer-brand-border:var(--site-border) !important; --analyzer-brand-muted:var(--site-muted) !important;
     color:var(--site-fg) !important; color-scheme:light !important;
-    & :where(*) { color:inherit !important; }
+    & :where(*):not(.tool-nav, .tool-nav *) { color:inherit !important; }
     & :is(.analyzer-start,.panel-host,.table-container,.modal-dialog,.tls-analysis,.tls-inspector,.dependency-graph-panel,.docs-card,.tls-period-popover,.tls-table-toolbar,.search-bar,.findings-report,.thread-state-chart-panel) { background:var(--site-panel) !important; border-color:var(--site-border) !important; box-shadow:none !important; }
     & :is(.analyzer-start p,.analyzer-start-format span,.analyzer-brand-tagline,.analyzer-file-name,.muted,.hint-muted,.tls-grouping-note,.tls-coverage,.thread-details-context,.docs-meta) { color:var(--site-muted) !important; }
-    & :is(a,.tls-name-filter,.tls-select-btn,.tls-evidence-link,.tls-source-number) { color:var(--site-link) !important; }
+    & :is(a,.tls-name-filter,.tls-select-btn,.tls-evidence-link,.tls-source-number):not(.tool-nav a) { color:var(--site-link) !important; }
     & :is(.modal-header,.modal-footer,.thread-details-tabs,.thread-details-card,.help-search-toolbar,.help-quickstart,.docs-nav,.chart-filter-bar,.smart-analysis-card,.smart-analysis-overview,.smart-analysis-fact,.smart-analysis-limitations,.class-initialization-card,.contention-card,.locks-card,.carrier-card,.pr-card,.thread-stack-card,.series-diagnostics-card,.runnable-cluster-card,.runnable-cluster-card-summary,.runnable-cluster-member-card,.runnable-compare-card,.runnable-compare-summary-bar,.thread-state-chart-card,.cpu-timeline-card,.dependency-graph-toolbar,.dependency-graph-filterbar,.dependency-graph-control-group,.dependency-graph-metric,.dependency-graph-inspector,.app-tooltip,.rich-tooltip,.dependency-graph-tooltip,.example-dialog,.tls-facet-popover) { background:var(--site-raised) !important; border-color:var(--site-border) !important; box-shadow:none !important; }
     & :is(pre,.thread-details-body,.thread-details-code,.thread-details-stack-shell,.runnable-compare-stack,.runnable-cluster-inline-stack,.dependency-graph-stage,.tls-raw-toolbar) { background:var(--site-bg) !important; border-color:var(--site-border) !important; }
     & :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { color:var(--site-fg) !important; background:var(--site-panel) !important; border-color:var(--site-border) !important; color-scheme:light !important; }
@@ -48,9 +49,10 @@
   }
   & body[data-site-page="knowledge"] {
     & :is(p,li,small,figcaption,[role=status]) { color:var(--site-muted) !important; }
-    & a { color:var(--site-link) !important; }
+    & a:not(.tool-nav a) { color:var(--site-link) !important; }
     & :is(.knowledge-card,pre,td) { background:var(--site-panel) !important; border-color:var(--site-border) !important; }
     & :is(input,select,button,th,.knowledge-find,.knowledge-callout) { color:var(--site-fg) !important; background:var(--site-raised) !important; border-color:var(--site-border) !important; }
+    & .knowledge-unavailable { color:var(--site-warning) !important; background:#fff5da !important; }
     & section { border-color:var(--site-border) !important; }
     & :focus-visible { outline-color:var(--site-accent) !important; }
   }
