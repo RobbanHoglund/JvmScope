@@ -30,17 +30,20 @@ test('TDA blocking progression preserves focus and snapshot-local evidence throu
 });
 
 test('TDA blocking budget warnings survive the worker boundary without discarding the snapshot',async({page,appUrl})=>{
+    // This checks bounded-analysis correctness, not a five-second performance SLA.
+    // Each 400-thread worker/render round can exceed that on constrained browsers.
+    test.setTimeout(45_000);
     await page.goto(`${appUrl}/jvmscope/tda.html`);
     const entries=Array.from({length:400},(_,i)=>({id:i+1,held:[`0x${(i+1).toString(16)}`],...(i?{wait:`0x${i.toString(16)}`}:{})}));
     await upload(page,blockingDump(0,entries),'long-chain.txt');
-    await expect(page.locator('#rowCount')).toContainText('400 threads');
+    await expect(page.locator('#rowCount')).toContainText('400 threads',{timeout:15_000});
     await page.locator('#dependencyGraphDetails > summary').click();
     await expect(page.locator('#blockingPatternView')).toContainText('exceeded its bounded traversal/evidence budget');
     await expect(page.locator('#blockingPatternView')).not.toContainText('No identified blocker');
     await expect(page.locator('#dependencyGraphSvg .dependency-graph-node-thread').first()).toBeVisible();
     await page.locator('#clearBtn').click();
     await upload(page,longClassInitializationDump(),'long-class-chain.txt');
-    await expect(page.locator('#rowCount')).toContainText('400 threads');
+    await expect(page.locator('#rowCount')).toContainText('400 threads',{timeout:15_000});
     await expect(page.locator('#blockingPatternView')).toContainText('exceeded');
     await page.locator('#clearBtn').click();
     await upload(page,blockingSequence.join('\n'),'small-incident.txt');
