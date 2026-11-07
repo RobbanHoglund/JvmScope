@@ -1,3 +1,4 @@
+import { websiteHead, websiteNavigation } from '../scripts/website-shell.mjs';
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
 import { execFileSync } from 'node:child_process';
@@ -44,7 +45,7 @@ function analyzerRedirects() {
 
 // Home, analyzers and knowledge pages ship together on Java and static Pages.
 // Separate output directories keep preview and application assets independent.
-export function toolNavigation({ slim = false, vscode = false } = {}) {
+export function toolNavigation({ slim = false, vscode = false, pages = false } = {}) {
   let base = '/';
   return {
     name: 'tool-navigation',
@@ -62,12 +63,12 @@ export function toolNavigation({ slim = false, vscode = false } = {}) {
         const link = (name, path, label) => `<a href="${path}"${active === name ? ' aria-current="page"' : ''}>${label}</a>`;
         // VS Code provides native tool navigation and a knowledge-base shortcut.
         // Omit the website navigation entirely so it takes no space or tab stops.
-        const navigation = vscode ? '' : `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('gc', `${base}jvmscope/gc.html`, 'Garbage collection')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
+        const navigation = vscode ? '' : pages ? websiteNavigation(base, active) : `<nav class="tool-nav" aria-label="Analysis tools"><a class="tool-nav-home" href="${base}"${active === 'home' ? ' aria-current="page"' : ''}>JvmScope home</a>${link('tda', `${base}jvmscope/tda.html`, 'Thread dumps')}${link('tls', `${base}jvmscope/tls.html`, 'TLS log analyzer')}${link('gc', `${base}jvmscope/gc.html`, 'Garbage collection')}${link('knowledge', `${base}knowledge/index.html`, 'Knowledge base')}</nav>`;
         // Reuse the brand asset and let Vite apply the delivery target's base.
         // Keep each analyzer's own icon; home/knowledge pages need a default.
         const icon = /<link\b[^>]*\brel=["']icon["']/i.test(html) ? ''
           : '<link rel="icon" type="image/svg+xml" href="/assets/javautils/java-thread-mark.svg" />\n';
-        return html.replace('</head>', `${icon}${vscode ? '<script type="module" src="/assets/javautils/host/vscode-entry.js"></script>' : '<link rel="stylesheet" href="/assets/tool-navigation.css" />'}\n</head>`)
+        return html.replace('</head>', `${icon}${pages ? websiteHead() : ''}${vscode ? '<script type="module" src="/assets/javautils/host/vscode-entry.js"></script>' : pages ? '' : '<link rel="stylesheet" href="/assets/tool-navigation.css" />'}\n</head>`)
           .replace(/(<body\b[^>]*)(>)/, `$1${vscode ? ` data-jvmscope-page="${active}"` : ''}$2\n${navigation}`);
       },
     },
@@ -76,7 +77,7 @@ export function toolNavigation({ slim = false, vscode = false } = {}) {
 
 export default defineConfig(({ mode }) => ({
   define: { __JVMSCOPE_REVISION__: JSON.stringify(buildRevision()) },
-  plugins: [analyzerRedirects(), toolNavigation({ slim: ['slim', 'pages'].includes(mode), vscode: mode === 'vscode' }), projectLegalNotices()],
+  plugins: [analyzerRedirects(), toolNavigation({ slim: ['slim', 'pages'].includes(mode), vscode: mode === 'vscode', pages: mode === 'pages' }), projectLegalNotices()],
   root: rootDir,
   base: mode === 'vscode' ? './' : '/',
   resolve: mode === 'vscode' ? { alias: [{ find: /(?:\.\.\/|\.\/)host\/workers\.js$/, replacement: resolve(rootDir, 'assets/javautils/host/vscode-workers.js') }] } : {},

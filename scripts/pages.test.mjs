@@ -62,7 +62,8 @@ test('Pages base accepts project/root paths and rejects ambiguous or injected pr
         assert.throws(() => validatePagesBase(value), /absolute path/);
     }
     assert.ok(renderPagesIndex(base, '<script>').includes('Version local'));
-    assert.ok(!renderPagesIndex(base, '<script>').includes('<script>'));
+    assert.ok(!renderPagesIndex(base, '<script>').includes('Version <script>'));
+    assert.equal(renderPagesIndex(base, '<script>'), renderPagesIndex(base, 'invalid'));
 });
 
 test('Pages output cannot be changed to a live runtime or another build directory', () => {
@@ -232,4 +233,19 @@ test('Discovery metadata and sitemap use the selected Pages base and only public
         assert.match(home, /<title>[^<]*GC Log Analyzers/);
         assert.ok(home.includes(`href="${prefix}${discoveryPaths[0]}"`));
     }
+});
+
+
+test('Website presentation is restricted to Pages and never injected into packaged hosts', async () => {
+    const { toolNavigation } = await import('../frontend/vite.config.js');
+    for (const options of [{}, {slim:true}, {vscode:true}]) {
+        const plugin=toolNavigation(options); plugin.configResolved({base:'/'});
+        const html=plugin.transformIndexHtml.handler('<head></head><body></body>',{filename:'jvmscope/tda.html'});
+        assert.doesNotMatch(html, /jvmscope.website.theme|data-theme-select|data-site-theme/);
+    }
+    const plugin=toolNavigation({pages:true}); plugin.configResolved({base:'/JvmScope/'});
+    const html=plugin.transformIndexHtml.handler('<head></head><body></body>',{filename:'jvmscope/gc.html'});
+    assert.match(html, /jvmscope.website.theme/);
+    assert.match(html, /href="\/JvmScope\/jvmscope\/gc.html" aria-current="page"/);
+    assert.doesNotMatch(html, /vscode-entry|tool-navigation.css/);
 });

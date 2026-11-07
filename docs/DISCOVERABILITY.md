@@ -1,9 +1,11 @@
 # JvmScope public discovery
 
-The GitHub Pages build (`scripts/build-pages.mjs`) publishes three static,
+The GitHub Pages build (`scripts/build-pages.mjs`) publishes five static,
 English-language pages alongside the existing analyzer entry points:
 
 - `java-thread-dump-analyzer.html`: product capabilities, scope, privacy and setup links.
+- `java-tls-log-analyzer.html`: SunJSSE input formats, workflow and evidence limits.
+- `java-gc-log-analyzer.html`: GC input formats, collectors, file limit and annotation caveats.
 - `guides/analyze-java-thread-dump.html`: capture and investigation walkthrough.
 - `guides/java-deadlock-analysis.html`: a monitor-deadlock example and evidence limits.
 
@@ -76,3 +78,23 @@ JavaScript disabled. Existing Pages journeys retain analyzer/worker coverage.
 
 VS Code, Codex and standalone Java packages do not import the discovery renderer;
 this is documentation for the Pages publication, not a release of those packages.
+
+## Website presentation and regression checks
+
+The Pages target shares its navigation and theme through `scripts/website-shell.mjs`.
+The landing page, product pages, guides, analyzers and knowledge base follow the
+system theme by default. A visitor can choose System, Light or Dark in the header.
+Only that display preference is stored (`jvmscope.website.theme`); no capture is
+stored by the theme code. If storage is unavailable, the selection works for the
+current page. Without JavaScript the static pages remain readable and use the
+system color scheme; the theme control is hidden.
+
+The palette is applied only to Pages HTML. Java/slim, VS Code and Codex do not
+receive this shell or its theme script. Browser analysis sessions remain local
+and in memory; moving between tools does not preserve their loaded captures.
+
+`website-experience.spec.js` exercises navigation through all three analyzers,
+loaded samples, a thread stack, knowledge navigation and all product pages. It
+also checks explicit overrides against the opposite system theme, reload, live
+system changes, storage denial and static content at 320, 390 and 768 pixels.
+Analyzer investigation views remain intended for desktop/laptop screens.

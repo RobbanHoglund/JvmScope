@@ -11,7 +11,7 @@ const dump = n => `2026-10-04 12:00:0${n}\nFull thread dump OpenJDK 64-Bit Serve
 test('Pages root, direct links, navigation, reload and module workers use the project prefix', async ({ page, appUrl }) => {
     await page.goto(appUrl+'/');
     await expect(page.getByRole('heading', {name:'Understand Java threads, TLS and garbage collection.'})).toBeVisible();
-    await page.locator('a.tool:not(.tls):not(.gc)').click();
+    await page.locator('.tool:not(.tls):not(.gc) a.open').click();
     await expect(page).toHaveURL(appUrl+'/jvmscope/tda.html');
     await page.locator('#loadSampleBtn').click();
     await expect(page.locator('#rowCount')).toContainText('67 threads');
@@ -27,7 +27,7 @@ test('Pages root, direct links, navigation, reload and module workers use the pr
     await page.getByRole('link', {name:'Thread dumps',exact:true}).click();
     await expect(page).toHaveURL(appUrl+'/jvmscope/tda.html');
     await page.goto(appUrl+'/');
-    await page.locator('a.tool.tls').click();
+    await page.locator('.tool.tls a.open').click();
     await expect(page).toHaveURL(appUrl+'/jvmscope/tls.html');
 });
 
@@ -128,7 +128,7 @@ for (const [name, viewport, colorScheme] of [
             const failures = [];
             page.on('requestfailed', request => failures.push(request.url()));
             await page.goto(appUrl+'/');
-            await page.getByRole('link', {name:'Java thread dump analyzer: features, supported inputs and walkthroughs →',exact:true}).click();
+            await page.getByRole('link', {name:'Features, supported inputs and walkthroughs →',exact:true}).click();
             await expect(page.getByRole('heading', {level:1})).toContainText('Java thread dump analysis.');
             await expect(page.getByRole('heading', {name:'Supported inputs and practical limits',exact:true})).toBeVisible();
             await page.getByText('Does the browser analyzer upload my thread dump?',{exact:true}).click();
